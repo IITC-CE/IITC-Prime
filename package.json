@@ -1,0 +1,15 @@
+{
+  "name": "iitc-prime",
+  "main": "app/app.js",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@nativescript/core": "~8.1.1",
+    "@nativescript/theme": "~3.0.1",
+    "nativescript-vue": "~2.9.0"
+  },
+  "devDependencies": {
+    "@nativescript/webpack": "~5.0.0",
+    "nativescript-vue-template-compiler": "~2.9.0"
+  }
+}
