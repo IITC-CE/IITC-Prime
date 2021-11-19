@@ -27,6 +27,8 @@
   import AppWebView from './AppWebView';
   import AppBar from './AppBar';
 
+  import { runExtension } from '~/background/manager'
+
   export default {
     data() {
       return {
@@ -65,7 +67,13 @@
       },
 
 
-    }
+    },
+
+    created() {
+      console.log("IITC create event fired");
+
+      runExtension().then(() => {});
+    },
   };
 </script>
 

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@nativescript/appversion": "^2.0.0",
     "@nativescript/core": "~8.1.1",
     "@nativescript/theme": "~3.0.1",
     "@nota/nativescript-webview-ext": "^8.0.0",
