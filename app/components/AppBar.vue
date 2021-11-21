@@ -13,7 +13,7 @@
     },
     methods: {
       runIITC() {
-        eventBus.$emit('init-iitc')
+        // eventBus.$emit('init-iitc')
       }
     }
   }
