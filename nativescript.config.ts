@@ -1,7 +1,7 @@
 import { NativeScriptConfig } from '@nativescript/core';
 
 export default {
-  id: 'org.exarhteam.iitcprime',
+  id: 'org.exarhteam.iitc_prime',
   appPath: 'app',
   appResourcesPath: 'App_Resources',
   android: {

@@ -5,18 +5,29 @@
 </template>
 
 <script>
+  import Vue from 'vue';
+  import { NativeScriptVue } from 'nativescript-vue';
   import { eventBus } from '~/app'
+  import LayersView from './LayersView';
 
-  export default {
+  export default Vue.extend({
     data() {
       return {}
     },
     methods: {
       runIITC() {
         // eventBus.$emit('init-iitc')
+        const options = {};
+        this.$showBottomSheet(LayersView, {
+          transparent: true,
+          skipCollapsedState: true,
+          closeCallback: (args) => {
+            console.log('bottom sheet closed', args);
+          }
+        });
       }
     }
-  }
+  });
 </script>
 
 <style scoped lang="scss">
@@ -24,17 +35,17 @@
 
   .appbar_wrapper {
     left: 0;
-    height: 200gd;
-    padding: 12gd 12gd 0 12gd;
+    height: 200;
+    padding: 12 12 0 12;
   }
 
   .appbar_container {
     width: 100%;
-    height: 48gd;
-    background-color: $accent;
-    border-color: rgba(255, 255, 255, 0.2);
-    border-width: 1px;
-    border-radius: 8gd;
-    box-shadow: 0 1gd 4gd rgba(0, 0, 0, 0.6);
+    height: 48;
+    background-color: $base;
+    border-color: $complementary;
+    border-width: 1;
+    border-radius: 8;
+    box-shadow: 0 1 4 rgba(0, 0, 0, 0.6);
   }
 </style>

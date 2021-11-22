@@ -3,21 +3,22 @@
     src="https://intel.ingress.com/"
     viewPortSize="width=device-width, initial-scale=1.0"
     domStorage=true
-    @loaded="webviewLoaded"
+    @loaded="webViewLoaded"
     @loadFinished="loadFinished"
     @shouldOverrideUrlLoading="shouldOverrideUrlLoading"
+    @JSBridge="JSBridge"
   />
 </template>
 
 <script>
   import WebViewExt from '@nota/nativescript-webview-ext/vue'
   import { InAppBrowser } from 'nativescript-inappbrowser';
-  import { ApplicationSettings, Utils, Dialogs } from "@nativescript/core";
+  import { ApplicationSettings, Utils, Dialogs, isAndroid } from "@nativescript/core";
   import { ToastDuration, Toasty } from '@triniwiz/nativescript-toasty';
   import { handleOpenURL } from 'nativescript-appurl';
 
-  import { eventBus } from '~/app'
   import storage from "~/utils/storage"
+  import { router } from "@/utils/bridge";
 
   let webview;
 
@@ -29,8 +30,19 @@
 
     methods: {
 
-      webviewLoaded(args) {
+      JSBridge(args) {
+        const eventData = args.data;
+        console.log("JSBridge data");
+        console.log(eventData);
+
+        router(eventData);
+      },
+
+      webViewLoaded(args) {
         webview = args.object;
+        if (isAndroid) {
+          android.webkit.WebView['setWebContentsDebuggingEnabled'](true);
+        }
       },
 
       showLoginToast() {
@@ -89,6 +101,15 @@
       },
 
       async loadFinished(args) {
+        await webview.executeJavaScript("" +
+          "window.android = window.nsWebViewBridge;" +
+          "window.nsWebViewBridge.setLayers = function(base_layer, overlay_layer) {" +
+          "    window.nsWebViewBridge.emit('JSBridge', {'setLayers': {'base_layer': base_layer, 'overlay_layer': overlay_layer}});" +
+          "};" +
+          "window.nsWebViewBridge.setPermalink = function(href) {" +
+          "    window.nsWebViewBridge.emit('JSBridge', {'setPermalink': {'href': href}});" +
+          "};");
+
         const iitc_code = await storage.get("release_iitc_code").then(obj => obj["release_iitc_code"]);
         await webview.executeJavaScript(iitc_code);
       }
@@ -98,10 +119,6 @@
       handleOpenURL(function(appURL) {
         webview.loadUrl(String(appURL));
       });
-
-      // eventBus.$on('openURL', async (url) => {
-      //   this.webview_url = url;
-      // })
     }
   }
 </script>
