@@ -73,34 +73,6 @@
     created() {
       console.log("IITC create event fired");
       runExtension().then(() => {});
-
-      eventBus.$on('bridgeOverlayLayers', async (data) => {
-        console.log("bridgeOverlayLayers");
-        console.log(data);
-
-        const lst = [];
-        let active = -1;
-        data.forEach(element => {
-          lst.push(element.name);
-          if (element.active === true) active = element.layerId;
-        });
-        this.$store.overlay_layers_list = lst;
-        this.$store.overlay_layer_selected = active;
-      })
-
-      eventBus.$on('bridgeBaseLayers', async (data) => {
-        console.log("bridgeBaseLayers");
-        console.log(data);
-
-        const lst = [];
-        let active = -1;
-        data.forEach(element => {
-          lst.push(element.name);
-          if (element.active === true) active = element.layerId;
-        });
-        this.$store.base_layers_list = lst;
-        this.$store.base_layer_selected = active;
-      });
     },
   };
 </script>

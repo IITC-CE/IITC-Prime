@@ -39,8 +39,8 @@
   export default {
     data() {
       return {
-        base_layer_selected: this.$store.base_layer_selected,
-        base_layers_list: this.$store.base_layers_list
+        base_layer_selected: this.$store.state.base_layer_selected,
+        base_layers_list: this.$store.state.base_layers_list
       }
     },
     components: { BottomSheet },
