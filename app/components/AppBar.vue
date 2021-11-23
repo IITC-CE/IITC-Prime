@@ -7,7 +7,6 @@
 <script>
   import Vue from 'vue';
   import { NativeScriptVue } from 'nativescript-vue';
-  import { eventBus } from '~/app'
   import LayersView from './LayersView';
 
   export default Vue.extend({
@@ -16,7 +15,6 @@
     },
     methods: {
       runIITC() {
-        // eventBus.$emit('init-iitc')
         const options = {};
         this.$showBottomSheet(LayersView, {
           transparent: true,

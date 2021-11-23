@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@nativescript-community/ui-material-bottomsheet": "^6.2.3",
+    "@nativescript-community/ui-svg": "^0.0.8",
     "@nativescript/appversion": "^2.0.0",
     "@nativescript/core": "~8.1.1",
     "@nativescript/theme": "~3.0.1",

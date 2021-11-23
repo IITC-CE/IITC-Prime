@@ -8,12 +8,14 @@ import { install } from "@nativescript-community/ui-material-bottomsheet";
 install();
 Vue.use(BottomSheetPlugin);
 
+import CanvasSVG from '@nativescript-community/ui-svg/vue';
+Vue.use(CanvasSVG);
+
 import store from './store';
 
 Vue.use(VueDevtools, { host: '192.168.42.10' })
 Vue.config.silent = false;
 
-export const eventBus = new Vue();
 new Vue({
   render: (h) => h('frame', [h(Main)]),
   store

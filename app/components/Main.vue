@@ -24,7 +24,6 @@
   import { Screen } from '@nativescript/core/platform';
   import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform'
 
-  import { eventBus } from '~/app'
   import AppWebView from './AppWebView';
   import AppBar from './AppBar';
 
