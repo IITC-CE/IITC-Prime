@@ -1,42 +1,18 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Creator: CorelDRAW Home & Student 2018 -->
-
-<svg
-   xml:space="preserve"
-   width="18mm"
-   height="18mm"
-   version="1.1"
-   style="clip-rule:evenodd;fill-rule:evenodd;image-rendering:optimizeQuality;shape-rendering:geometricPrecision;text-rendering:geometricPrecision"
-   viewBox="0 0 1800 1800"
-   id="svg843"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
- <defs
-   id="defs834">
-  <style
-   type="text/css"
-   id="style832">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18mm" height="18mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" version="1.1" viewBox="0 0 1800 1800" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style type="text/css">
    <![CDATA[
     .fil0 {fill:#676767}
     .fil1 {fill:#2B2A29;fill-opacity:0.721569}
    ]]>
   </style>
  </defs>
- <g
-   id="Capa_x0020_1"
-   transform="translate(219.65997,219.60999)">
-  <metadata
-   id="CorelCorpID_0Corel-Layer" />
-  <g
-   id="_801674280">
-   <path
-   class="fil0"
-   d="m 680.35,256.64 149.81,62.07 149.82,62.05 62.05,149.81 62.05,149.82 -62.05,149.82 -62.05,149.81 -149.82,62.05 -149.81,62.07 L 530.53,1042.07 380.71,980.02 318.64,830.21 256.6,680.39 318.64,530.57 372.4,400.83 l -69.73,-69.72 -92,92 c -0.79,0.77 -1.8,1.14 -2.91,1.01 -1.11,-0.13 -2.01,-0.71 -2.58,-1.67 L 119.74,282.68 c -0.86,-1.41 -0.67,-3.16 0.51,-4.34 L 278.28,120.32 c 1.15,-1.18 2.93,-1.37 4.32,-0.52 l 139.79,85.44 c 0.94,0.58 1.53,1.48 1.66,2.59 0.13,1.11 -0.23,2.11 -1,2.91 l -92,92 69.72,69.7 129.76,-53.73 z"
-   id="path837" />
-   <polygon
-   class="fil1"
-   points="920.79,439.94 970.58,560.17 1020.39,680.39 970.58,800.62 920.79,920.84 800.56,970.64 680.34,1020.44 560.11,970.64 439.89,920.84 390.09,800.62 340.29,680.39 390.09,560.17 439.89,439.94 560.11,390.15 680.34,340.34 800.56,390.15 "
-   id="polygon839" />
-  </g>
+ <g transform="translate(220 220)" opacity=".5">
+  
+  
+   <path class="fil0" d="m680 257 300 124 124 300-124 300-300 124-300-124-62.1-150-62-150 62-150 53.8-130-69.7-69.7-92 92c-0.79 0.77-1.8 1.14-2.91 1.01s-2.01-0.71-2.58-1.67l-85.4-140c-0.86-1.41-0.67-3.16 0.51-4.34l158-158c1.15-1.18 2.93-1.37 4.32-0.52l140 85.4c0.94 0.58 1.53 1.48 1.66 2.59s-0.23 2.11-1 2.91l-92 92 69.7 69.7 130-53.7z"/>
+   <polygon class="fil1" points="921 440 971 560 1020 680 971 801 921 921 801 971 680 1020 560 971 440 921 390 801 340 680 390 560 440 440 560 390 680 340 801 390"/>
+  
  </g>
 </svg>

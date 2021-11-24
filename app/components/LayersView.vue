@@ -121,12 +121,7 @@
     margin: 2;
     border-radius: 50%;
     background-color: $complementary-bottom-sheet;
-    opacity: 0.5;
     horizontal-align: center;
-  }
-
-  .overlay_portal.active {
-    opacity: 1;
   }
 
   .overlay_item_stack {
