@@ -1,4 +1,4 @@
-import { setLayers } from "@/utils/events-from-iitc";
+import {getVersionName, setLayers} from "@/utils/events-from-iitc";
 
 export const router = (event) => {
   console.log("JSBridge router data");
@@ -19,7 +19,6 @@ export const injectBridgeIITC = () => {
     shareString: ["str"],
     spinnerEnabled: ["en"],
     copy: ["s"],
-    getVersionName: [],
     switchToPane: ["id"],
     dialogFocused: ["id"],
     dialogOpened: ["id", "open"],
@@ -28,10 +27,8 @@ export const injectBridgeIITC = () => {
     addPortalHighlighter: ["name"],
     setActiveHighlighter: ["name"],
     addPane: ["name", "label", "icon"],
-    showZoom: [],
     setFollowMode: ["follow"],
     setProgress: ["progress"],
-    getFileRequestUrlPrefix: [],
     setPermalink: ["href"],
     saveFile: ["filename", "type", "content"],
     reloadIITC: ["clearCache"]
@@ -40,8 +37,9 @@ export const injectBridgeIITC = () => {
     const [key, value] = entry;
     bridge += "\n" +
       "window.nsWebViewBridge."+key+" = function("+value.join(', ')+") {" +
-      " window.nsWebViewBridge.emit('JSBridge', ['"+key+"', {"+value.map(name => "'"+name+"': "+name).join(', ')+"}]); " +
+      " return window.nsWebViewBridge.emit('JSBridge', ['"+key+"', {"+value.map(name => "'"+name+"': "+name).join(', ')+"}]); " +
       "};"
   });
+  bridge += "\nwindow.nsWebViewBridge.getVersionName = function() {return '"+getVersionName()+"'};";
   return bridge;
 }
