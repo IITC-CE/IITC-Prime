@@ -19,7 +19,8 @@
 
   import { mapState } from 'vuex';
   import storage from "~/utils/storage"
-  import { injectBridgeIITC, router, setLayerIITC } from "@/utils/bridge";
+  import { injectBridgeIITC, router } from "@/utils/bridge";
+  import { showLayer } from "@/utils/events-to-iitc";
 
   let webview;
 
@@ -116,12 +117,11 @@
         after: async (action, state) => {
           switch (action.type) {
             case "setActiveBaseLayer":
-              const base_layer = {layerId: action.payload, active: true};
-              await webview.executeJavaScript(setLayerIITC(base_layer));
+              await webview.executeJavaScript(showLayer(action.payload, true));
               break;
             case "setOverlayLayerProperty":
               const overlay_layer = state.overlay_layers[action.payload.index];
-              await webview.executeJavaScript(setLayerIITC(overlay_layer));
+              await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
               break;
           }
         }

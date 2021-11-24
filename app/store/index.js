@@ -28,6 +28,7 @@ const store = new Vuex.Store({
     }
   },
   actions: {
+    // TODO: store base_layers as object: layerId may not be equal to id
     setBaseLayers({ commit }, base_layers) {
       const lst = [];
       let active = -1;

@@ -1,35 +1,47 @@
-import store from '~/store';
+import { setLayers } from "@/utils/events-from-iitc";
 
-export const router = (eventData) => {
+export const router = (event) => {
   console.log("JSBridge router data");
-  console.log(eventData);
+  console.log(event);
+  const [eventName, eventData] = event;
 
-  if (eventData.setLayers) {
-
-    const base_layers = JSON.parse(eventData.setLayers.base_layer);
-    store.dispatch('setBaseLayers', base_layers);
-
-    const overlay_layer = JSON.parse(eventData.setLayers.overlay_layer);
-    store.dispatch('setOverlayLayers', overlay_layer);
+  switch (eventName) {
+    case "setLayers":
+      setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer))
+      break;
   }
 }
 
 export const injectBridgeIITC = () => {
   let bridge = "window.android = window.nsWebViewBridge;";
   const events = {
+    intentPosLink: ["lat", "lng", "zoom", "title", "isPortal"],
+    shareString: ["str"],
+    spinnerEnabled: ["en"],
+    copy: ["s"],
+    getVersionName: [],
+    switchToPane: ["id"],
+    dialogFocused: ["id"],
+    dialogOpened: ["id", "open"],
+    bootFinished: [],
     setLayers: ["base_layer", 'overlay_layer'],
-    setPermalink: ["href"]
+    addPortalHighlighter: ["name"],
+    setActiveHighlighter: ["name"],
+    addPane: ["name", "label", "icon"],
+    showZoom: [],
+    setFollowMode: ["follow"],
+    setProgress: ["progress"],
+    getFileRequestUrlPrefix: [],
+    setPermalink: ["href"],
+    saveFile: ["filename", "type", "content"],
+    reloadIITC: ["clearCache"]
   }
   Object.entries(events).forEach(entry => {
     const [key, value] = entry;
     bridge += "\n" +
       "window.nsWebViewBridge."+key+" = function("+value.join(', ')+") {" +
-      " window.nsWebViewBridge.emit('JSBridge', {'"+key+"': {"+value.map(name => "'"+name+"': "+name).join(', ')+"}}); " +
+      " window.nsWebViewBridge.emit('JSBridge', ['"+key+"', {"+value.map(name => "'"+name+"': "+name).join(', ')+"}]); " +
       "};"
   });
   return bridge;
-}
-
-export const setLayerIITC = (layer) => {
-  return "window.layerChooser.showLayer(" + layer.layerId + "," + layer.active + ");";
 }
