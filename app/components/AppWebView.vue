@@ -17,14 +17,16 @@
   import { ToastDuration, Toasty } from '@triniwiz/nativescript-toasty';
   import { handleOpenURL } from 'nativescript-appurl';
 
+  import { mapState } from 'vuex';
   import storage from "~/utils/storage"
-  import { router } from "@/utils/bridge";
+  import { injectBridgeIITC, router, setLayerIITC } from "@/utils/bridge";
 
   let webview;
 
   export default {
     data() {
       return {
+        store_unsubscribe: function() {}
       }
     },
 
@@ -32,9 +34,6 @@
 
       JSBridge(args) {
         const eventData = args.data;
-        console.log("JSBridge data");
-        console.log(eventData);
-
         router(eventData);
       },
 
@@ -101,24 +100,36 @@
       },
 
       async loadFinished(args) {
-        await webview.executeJavaScript("" +
-          "window.android = window.nsWebViewBridge;" +
-          "window.nsWebViewBridge.setLayers = function(base_layer, overlay_layer) {" +
-          "    window.nsWebViewBridge.emit('JSBridge', {'setLayers': {'base_layer': base_layer, 'overlay_layer': overlay_layer}});" +
-          "};" +
-          "window.nsWebViewBridge.setPermalink = function(href) {" +
-          "    window.nsWebViewBridge.emit('JSBridge', {'setPermalink': {'href': href}});" +
-          "};");
+        await webview.executeJavaScript(injectBridgeIITC());
 
         const iitc_code = await storage.get("release_iitc_code").then(obj => obj["release_iitc_code"]);
         await webview.executeJavaScript(iitc_code);
       }
     },
 
-    created() {
+    async created() {
       handleOpenURL(function(appURL) {
         webview.loadUrl(String(appURL));
       });
+
+      this.store_unsubscribe = this.$store.subscribeAction({
+        after: async (action, state) => {
+          switch (action.type) {
+            case "setActiveBaseLayer":
+              const base_layer = {layerId: action.payload, active: true};
+              await webview.executeJavaScript(setLayerIITC(base_layer));
+              break;
+            case "setOverlayLayerProperty":
+              const overlay_layer = state.overlay_layers[action.payload.index];
+              await webview.executeJavaScript(setLayerIITC(overlay_layer));
+              break;
+          }
+        }
+      })
+    },
+
+    onDestroy() {
+      this.store_unsubscribe();
     }
   }
 </script>

@@ -13,8 +13,8 @@ const store = new Vuex.Store({
     overlay_layers: [],
   },
   mutations: {
-    setBaseLayerSelected(state, data) {
-      state.base_layer_selected = data;
+    setBaseLayerSelected(state, index) {
+      state.base_layer_selected = index;
     },
     setBaseLayersList(state, data) {
       state.base_layers_list = data;
@@ -29,7 +29,6 @@ const store = new Vuex.Store({
   },
   actions: {
     setBaseLayers({ commit }, base_layers) {
-
       const lst = [];
       let active = -1;
       base_layers.forEach(element => {
@@ -38,14 +37,17 @@ const store = new Vuex.Store({
       });
       commit('setBaseLayerSelected', active);
       commit('setBaseLayersList', lst);
-
     },
+    setActiveBaseLayer({ commit }, index) {
+      commit('setBaseLayerSelected', index);
+    },
+
     setOverlayLayers({ commit }, overlay_layers) {
       commit('setOverlayLayers', overlay_layers);
     },
     setOverlayLayerProperty({ commit }, property) {
       commit('setOverlayLayerProperty', property);
-    },
+    }
   },
   strict: debug,
 });

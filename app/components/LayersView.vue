@@ -10,7 +10,16 @@
 
       <StackLayout class="drow_down_stack">
         <label class="drow_down_label" text="Base layer" />
-        <DropDown col="0" class="drop_down" :items="base_layers_list" :selectedIndex="base_layer_selected" row="0" colSpan="2" itemsPadding="10"></DropDown>
+        <DropDown
+          col="0"
+          row="0"
+          colSpan="2"
+          class="drop_down"
+          :items="base_layers_list"
+          :selectedIndex="base_layer_selected"
+          @selectedIndexChanged="onDropDownSelectedIndexChanged($event, 'base_layer')"
+          itemsPadding="10"
+        ></DropDown>
       </StackLayout>
 
     </StackLayout>
@@ -21,7 +30,7 @@
       class="block"
     >
         <SVGView
-          :class="{ overlay_portal: true, active: layer.active === true }"
+          :class="{ overlay_portal: true }"
           :col="index"
           v-for="(layer, index) in overlay_layers"
           v-bind:key="layer.layerId"
@@ -81,6 +90,12 @@
       onOverlayLayerPropertyChange(index) {
         const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
         store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+      },
+      onDropDownSelectedIndexChanged(e, type) {
+        console.log("onDropDownSelectedIndexChanged");
+        if (type === "base_layer") {
+          store.dispatch('setActiveBaseLayer', e.newIndex);
+        }
       }
     }
   }
@@ -103,11 +118,11 @@
   }
 
   .drow_down_label {
-    font-size: 14;
+    font-size: $font-small-size;
   }
 
   .drop_down {
-    font-size: 16;
+    font-size: $font-size;
     color: $text-bottom-sheet;
 
     // Hack to remove arrow on the right
@@ -144,7 +159,7 @@
   }
 
   .overlay_item_label {
-    font-size: 16;
+    font-size: $font-size;
     padding: 14;
   }
 </style>
