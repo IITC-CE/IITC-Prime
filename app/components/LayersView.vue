@@ -1,3 +1,5 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 <template>
   <BottomSheet class="bottom_sheet">
 
@@ -63,7 +65,6 @@
   import Vue from 'nativescript-vue'
   Vue.registerElement("DropDown", () => require("nativescript-drop-down/drop-down").DropDown)
 
-  import store from '~/store';
   import BottomSheet from './BottomSheet';
 
   export default {
@@ -81,7 +82,7 @@
       onOverlayPortalPropertyChange(e, index) {
         const active = !(this.$store.state.overlay_layers[index].active === true);
         e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
-        store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
       },
       onOverlayLayerPropertyTap(index) {
         const switch_obj = this.$refs['overlaySwitch' + index][0].nativeView;
@@ -89,16 +90,16 @@
       },
       onOverlayLayerPropertyChange(index) {
         const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
-        store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
       },
       onDropDownSelectedIndexChanged(e, type) {
         console.log("onDropDownSelectedIndexChanged");
         if (type === "base_layer") {
-          store.dispatch('setActiveBaseLayer', e.newIndex);
+          this.$store.dispatch('setActiveBaseLayer', e.newIndex);
         }
       }
     }
-  }
+  };
 </script>
 
 <style scoped lang="scss">

@@ -1,3 +1,5 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 <template>
   <Page actionBarHidden="true" @layoutChanged="onLayoutChanged">
     <RootLayout height="100%" width="100%">
@@ -9,6 +11,12 @@
           width="100%"
           height="100%"
         ></AppWebView>
+
+        <ProgressBar
+          left="0"
+          top="0"
+          width="100%"
+        ></ProgressBar>
 
         <AppBar
           :top="status_bar_height"
@@ -26,6 +34,7 @@
 
   import AppWebView from './AppWebView';
   import AppBar from './AppBar';
+  import ProgressBar from './ProgressBar';
 
   import { runExtension } from '~/background/manager'
 
@@ -37,7 +46,7 @@
         navigation_bar_height: 0
       }
     },
-    components: { AppWebView, AppBar },
+    components: { AppWebView, AppBar, ProgressBar },
 
     computed: {
     },

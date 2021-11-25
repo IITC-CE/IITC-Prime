@@ -1,3 +1,5 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 <template>
   <StackLayout class="appbar_wrapper">
     <FlexboxLayout class="appbar_container" @tap="runIITC"></FlexboxLayout>
@@ -9,7 +11,7 @@
   import { NativeScriptVue } from 'nativescript-vue';
   import LayersView from './LayersView';
 
-  export default Vue.extend({
+  export default {
     data() {
       return {}
     },
@@ -25,7 +27,7 @@
         });
       }
     }
-  });
+  };
 </script>
 
 <style scoped lang="scss">

@@ -1,3 +1,5 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 import Vue from 'nativescript-vue';
 import Vuex from 'vuex';
 
@@ -11,6 +13,8 @@ const store = new Vuex.Store({
     base_layers_list: [],
 
     overlay_layers: [],
+
+    progress: 0
   },
   mutations: {
     setBaseLayerSelected(state, index) {
@@ -25,6 +29,10 @@ const store = new Vuex.Store({
     },
     setOverlayLayerProperty(state, property) {
       state.overlay_layers[property.index].active = property.active;
+    },
+
+    setProgress(state, progress) {
+      state.progress = progress;
     }
   },
   actions: {
@@ -48,6 +56,10 @@ const store = new Vuex.Store({
     },
     setOverlayLayerProperty({ commit }, property) {
       commit('setOverlayLayerProperty', property);
+    },
+
+    setProgress({ commit }, property) {
+      commit('setProgress', property);
     }
   },
   strict: debug,

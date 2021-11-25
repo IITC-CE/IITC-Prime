@@ -1,14 +1,20 @@
-import {getVersionName, setLayers} from "@/utils/events-from-iitc";
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
+import {getVersionName, setLayers, setProgress} from "@/utils/events-from-iitc";
 
 export const router = (event) => {
-  console.log("JSBridge router data");
-  console.log(event);
   const [eventName, eventData] = event;
 
   switch (eventName) {
     case "setLayers":
       setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer))
       break;
+    case "setProgress":
+      setProgress(JSON.parse(eventData.progress));
+      break;
+    default:
+      console.log("Unknown event data in JSBridge router");
+      console.log(event);
   }
 }
 
