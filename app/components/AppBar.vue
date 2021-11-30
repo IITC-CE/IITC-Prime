@@ -2,7 +2,15 @@
 
 <template>
   <StackLayout class="appbar_wrapper">
-    <FlexboxLayout class="appbar_container" @tap="runIITC"></FlexboxLayout>
+    <FlexboxLayout class="appbar_container">
+      <AppBarButton name="fa-bars"></AppBarButton>
+
+      <FlexboxLayout class="expander"></FlexboxLayout>
+
+      <AppBarButton name="fa-search"></AppBarButton>
+      <AppBarButton name="fa-location-arrow"></AppBarButton>
+      <AppBarButton @tap="openLayersView" name="fa-layer-group"></AppBarButton>
+    </FlexboxLayout>
   </StackLayout>
 </template>
 
@@ -11,13 +19,17 @@
   import { NativeScriptVue } from 'nativescript-vue';
   import LayersView from './LayersView';
 
+  import AppBarButton from './AppBarButton';
+
   export default {
     data() {
-      return {}
+      return {
+        bgColor: false
+      }
     },
+    components: { AppBarButton },
     methods: {
-      runIITC() {
-        const options = {};
+      openLayersView() {
         this.$showBottomSheet(LayersView, {
           transparent: true,
           skipCollapsedState: true,
@@ -47,5 +59,9 @@
     border-width: 1;
     border-radius: 8;
     box-shadow: 0 1 4 rgba(0, 0, 0, 0.6);
+  }
+
+  .expander {
+    width: 100%;
   }
 </style>
