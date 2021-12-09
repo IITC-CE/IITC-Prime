@@ -20,7 +20,6 @@
 
         <AppBar
           :top="status_bar_height"
-          :width="appbar_width"
         ></AppBar>
 
       </AbsoluteLayout>
@@ -41,7 +40,6 @@
   export default {
     data() {
       return {
-        appbar_width: 100,
         status_bar_height: 0,
         navigation_bar_height: 0
       }
@@ -56,7 +54,7 @@
         this.status_bar_height = getStatusBarHeight();
         this.navigation_bar_height = getNavigationBarHeight();
 
-        this.appbar_width = this.getAppBarWidth();
+        this.$store.dispatch('setAppBarWidth', this.getAppBarWidth());
       },
       getAppBarWidth() {
         const screen_width = Screen.mainScreen.widthDIPs;

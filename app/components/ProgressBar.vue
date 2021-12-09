@@ -2,7 +2,6 @@
 
 <template>
   <progress
-    ref="progress"
     :class="{ progress: true, opacity: progress >= 100 }"
     :value="progress"
     maxValue="100"

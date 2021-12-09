@@ -1,5 +1,7 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 <template>
-  <StackLayout class="sheet_wrapper">
+  <StackLayout class="sheet_wrapper" :width="appbar_width">
     <label class="sheet_drag"></label>
     <ScrollView class="sheet_scroll_view" scrollBarIndicatorVisible="false">
       <FlexboxLayout class="sheet_container"  flexDirection="column">
@@ -12,7 +14,25 @@
 <script>
   export default {
     data() {
-      return {}
+      return {
+        appbar_width: this.$store.state.appbar_width
+      }
+    },
+
+    async created() {
+      this.store_unsubscribe = this.$store.subscribeAction({
+        after: async (action, state) => {
+          switch (action.type) {
+            case "setAppBarWidth":
+              this.appbar_width = action.payload;
+              break;
+          }
+        }
+      })
+    },
+
+    onDestroy() {
+      this.store_unsubscribe();
     }
   }
 </script>
