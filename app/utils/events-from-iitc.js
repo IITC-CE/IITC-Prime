@@ -22,11 +22,20 @@ export const setLayers = (base_layers, overlay_layer) => {
 }
 
 /**
+ * Adding IITC panels. Panels allow to display some windows in full screen in mobile IITC.
+ * @param {string} name Panel ID
+ * @param {string} label Display name
+ * @param {string} icon Icon name
+ */
+export const addPane = (name, label, icon) => {
+  store.dispatch('addPane', {name: name, label: label, icon: icon});
+}
+
+/**
  * Sets the progress of loading page resources.
  * @param {number} progress Number from 0 to 1. If there is request, but it is impossible to determine progress, then -1.
  */
 export const setProgress = (progress) => {
-  console.log('setProgress', progress, Math.round(progress * 100));
   if (progress !== -1) {
     // maximum for setProgress is 100
     store.dispatch('setProgress', Math.round(progress * 100));

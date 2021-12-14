@@ -3,7 +3,7 @@
 <template>
   <StackLayout class="appbar_wrapper" :width="appbar_width">
     <FlexboxLayout class="appbar_container">
-      <AppBarButton name="fa-bars"></AppBarButton>
+      <AppBarButton @tap="openQuickAccessView" name="fa-bars"></AppBarButton>
 
       <FlexboxLayout class="expander"></FlexboxLayout>
 
@@ -15,8 +15,7 @@
 </template>
 
 <script>
-  import Vue from 'vue';
-  import { NativeScriptVue } from 'nativescript-vue';
+  import QuickAccessView from './QuickAccessView';
   import LayersView from './LayersView';
 
   import AppBarButton from './AppBarButton';
@@ -30,15 +29,11 @@
     },
     components: { AppBarButton },
     methods: {
+      openQuickAccessView() {
+        this.$showBottomSheet(QuickAccessView, { transparent: true, skipCollapsedState: true });
+      },
       openLayersView() {
-        console.log(this.appbar_width);
-        this.$showBottomSheet(LayersView, {
-          transparent: true,
-          skipCollapsedState: true,
-          closeCallback: (args) => {
-            console.log('bottom sheet closed', args);
-          }
-        });
+        this.$showBottomSheet(LayersView, { transparent: true, skipCollapsedState: true });
       }
     },
 

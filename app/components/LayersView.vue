@@ -32,7 +32,7 @@
       class="block"
     >
         <SVGView
-          :class="{ overlay_portal: true }"
+          class="overlay_portal"
           :col="index"
           v-for="(layer, index) in overlay_layers"
           v-bind:key="layer.layerId"
@@ -105,10 +105,6 @@
 <style scoped lang="scss">
   @import '../app';
 
-  .bottom_sheet {
-    background-color: $base-bottom-sheet;
-  }
-
   .block {
     margin-bottom: 10;
   }
@@ -161,6 +157,6 @@
 
   .overlay_item_label {
     font-size: $font-size;
-    padding: 14;
+    padding: 15;
   }
 </style>

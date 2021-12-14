@@ -8,11 +8,7 @@
 </template>
 
 <script>
-  import Vue from 'vue';
-  import { NativeScriptVue } from 'nativescript-vue';
-  import { Label, LayoutBase, View } from "@nativescript/core";
-
-  import LayersView from './LayersView';
+  import { Label } from "@nativescript/core";
 
   export default {
     props: {
@@ -28,7 +24,6 @@
     },
     methods: {
       hoverOver: function (e) {
-        console.log('hoverOver', e.action);
         if (e.action === "down") {
           this.hover = true;
         } else if (e.action === "up") {

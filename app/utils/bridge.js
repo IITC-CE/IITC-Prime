@@ -1,19 +1,27 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import {getVersionName, setLayers, setProgress} from "@/utils/events-from-iitc";
+import {
+  getVersionName,
+  setLayers,
+  addPane,
+  setProgress
+} from "@/utils/events-from-iitc";
 
 export const router = (event) => {
   const [eventName, eventData] = event;
 
   switch (eventName) {
     case "setLayers":
-      setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer))
+      setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer));
+      break;
+    case "addPane":
+      addPane(eventData.name, eventData.label, eventData.icon);
       break;
     case "setProgress":
-      setProgress(JSON.parse(eventData.progress));
+      setProgress(eventData.progress);
       break;
     default:
-      console.log("Unknown event data in JSBridge router");
+      console.log("Unknown event in JSBridge router");
       console.log(event);
   }
 }

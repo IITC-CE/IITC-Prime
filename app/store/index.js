@@ -11,6 +11,13 @@ const store = new Vuex.Store({
   state: {
     appbar_width: 100,
 
+    panes: [
+      {name: "all", label: "All", icon: "fa-list"},
+      {name: "faction", label: "Faction", icon: "fa-user-friends"},
+      {name: "alerts", label: "Alerts", icon: "fa-bell"},
+      {name: "info", label: "Info", icon: "fa-info-circle"},
+      {name: "map", label: "Map", icon: "fa-map"}
+    ],
     base_layer_selected: 0,
     base_layers_list: [],
     overlay_layers: [],
@@ -21,6 +28,9 @@ const store = new Vuex.Store({
       state.appbar_width = width;
     },
 
+    addPane(state, pane) {
+      state.panes.push(pane);
+    },
     setBaseLayerSelected(state, index) {
       state.base_layer_selected = index;
     },
@@ -42,6 +52,9 @@ const store = new Vuex.Store({
       commit('setAppBarWidth', property);
     },
 
+    addPane({ commit }, pane) {
+      commit('addPane', pane);
+    },
     // TODO: store base_layers as object: layerId may not be equal to id
     setBaseLayers({ commit }, base_layers) {
       const lst = [];
