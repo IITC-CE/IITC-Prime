@@ -5,12 +5,17 @@
     <RootLayout height="100%" width="100%">
       <AbsoluteLayout class="page">
 
-        <AppWebView
+        <FlexboxLayout
+          flexDirection="column"
           left="0"
           top="0"
           width="100%"
-          height="100%"
-        ></AppWebView>
+          height="100%">
+
+          <label text="" :class="{ hide: pane_is_close }" :height="status_bar_height+48+12*2" />
+          <AppWebView flexGrow="1"></AppWebView>
+
+        </FlexboxLayout>
 
         <ProgressBar
           left="0"
@@ -42,7 +47,8 @@
     data() {
       return {
         status_bar_height: 0,
-        navigation_bar_height: 0
+        navigation_bar_height: 0,
+        pane_is_close: true
       }
     },
     components: { AppWebView, AppBar, ProgressBar },
@@ -89,7 +95,21 @@
           }
         });
       }
+
+      this.store_unsubscribe = this.$store.subscribeAction({
+        after: async (action, state) => {
+          switch (action.type) {
+            case "setCurrentPane":
+              this.pane_is_close = action.payload === "map";
+              break;
+          }
+        }
+      });
     },
+
+    onDestroy() {
+      this.store_unsubscribe();
+    }
   };
 </script>
 
@@ -98,5 +118,9 @@
 
   .page {
     background-color: $accent;
+  }
+
+  .hide {
+    visibility: collapse;
   }
 </style>
