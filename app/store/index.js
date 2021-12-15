@@ -10,6 +10,7 @@ const debug = process.env.NODE_ENV !== 'production';
 const store = new Vuex.Store({
   state: {
     appbar_width: 100,
+    is_opened_bottom_sheet: false,
 
     panes: [
       {name: "all", label: "All", icon: "fa-list"},
@@ -18,6 +19,7 @@ const store = new Vuex.Store({
       {name: "info", label: "Info", icon: "fa-info-circle"},
       {name: "map", label: "Map", icon: "fa-map"}
     ],
+    current_pane: "map",
     base_layer_selected: 0,
     base_layers_list: [],
     overlay_layers: [],
@@ -27,9 +29,15 @@ const store = new Vuex.Store({
     setAppBarWidth(state, width) {
       state.appbar_width = width;
     },
+    setIsOpenedBottomSheet(state, status) {
+      state.is_opened_bottom_sheet = status;
+    },
 
     addPane(state, pane) {
       state.panes.push(pane);
+    },
+    setCurrentPane(state, name) {
+      state.current_pane = name;
     },
     setBaseLayerSelected(state, index) {
       state.base_layer_selected = index;
@@ -51,9 +59,15 @@ const store = new Vuex.Store({
     setAppBarWidth({ commit }, property) {
       commit('setAppBarWidth', property);
     },
+    setIsOpenedBottomSheet({ commit }, status) {
+      commit('setIsOpenedBottomSheet', status);
+    },
 
     addPane({ commit }, pane) {
       commit('addPane', pane);
+    },
+    setCurrentPane({ commit }, name) {
+      commit('setCurrentPane', name);
     },
     // TODO: store base_layers as object: layerId may not be equal to id
     setBaseLayers({ commit }, base_layers) {

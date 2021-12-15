@@ -30,10 +30,26 @@
     components: { AppBarButton },
     methods: {
       openQuickAccessView() {
-        this.$showBottomSheet(QuickAccessView, { transparent: true, skipCollapsedState: true });
+        if (this.$store.state.is_opened_bottom_sheet) return;
+        this.$store.dispatch('setIsOpenedBottomSheet', true);
+        this.$showBottomSheet(QuickAccessView, {
+          transparent: true,
+          skipCollapsedState: true,
+          closeCallback: () => {
+            this.$store.dispatch('setIsOpenedBottomSheet', false);
+          }
+        });
       },
       openLayersView() {
-        this.$showBottomSheet(LayersView, { transparent: true, skipCollapsedState: true });
+        if (this.$store.state.is_opened_bottom_sheet) return;
+        this.$store.dispatch('setIsOpenedBottomSheet', true);
+        this.$showBottomSheet(LayersView, {
+          transparent: true,
+          skipCollapsedState: true,
+          closeCallback: () => {
+            this.$store.dispatch('setIsOpenedBottomSheet', false);
+          }
+        });
       }
     },
 

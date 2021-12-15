@@ -20,7 +20,7 @@
   import { mapState } from 'vuex';
   import storage from "~/utils/storage"
   import { injectBridgeIITC, router } from "@/utils/bridge";
-  import { showLayer } from "@/utils/events-to-iitc";
+  import {showLayer, switchToPane} from "@/utils/events-to-iitc";
 
   let webview;
 
@@ -122,6 +122,9 @@
             case "setOverlayLayerProperty":
               const overlay_layer = state.overlay_layers[action.payload.index];
               await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
+              break;
+            case "setCurrentPane":
+              await webview.executeJavaScript(switchToPane(action.payload));
               break;
           }
         }

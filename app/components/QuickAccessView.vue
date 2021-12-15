@@ -21,6 +21,7 @@
       rows="50"
       v-for="(pane, index) in panes"
       v-bind:key="pane.name"
+      @tap="switchToPane(pane.name)"
     >
       <Label class="fa icon" :text="pane.icon | fonticon" col="0" :row="index" />
       <Label class="pane_item_label" :text="pane.label" col="1" :row="index" />
@@ -43,6 +44,10 @@
     created() {
     },
     methods: {
+      switchToPane(name) {
+        this.$store.dispatch('setCurrentPane', name);
+        this.$closeBottomSheet();
+      }
     }
   };
 </script>

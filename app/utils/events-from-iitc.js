@@ -12,6 +12,16 @@ export const getVersionName = () => {
 }
 
 /**
+ * Switching the active panel, if required.
+ * @param {string} name Panel ID
+ */
+export const switchToPane = (name) => {
+  if (store.state.current_pane !== name) {
+    store.dispatch('setCurrentPane', name);
+  }
+}
+
+/**
  * Assigns the basemap and overlay layers.
  * @param {Array.Object.<string, number|string|boolean>} base_layers List of objects of map providers
  * @param {Array.Object.<string, number|string|boolean>} overlay_layer List of objects of overlay layers
@@ -28,7 +38,9 @@ export const setLayers = (base_layers, overlay_layer) => {
  * @param {string} icon Icon name
  */
 export const addPane = (name, label, icon) => {
-  store.dispatch('addPane', {name: name, label: label, icon: icon});
+  if (!store.state.panes.find(o => o.name === name)) {
+    store.dispatch('addPane', {name: name, label: label, icon: icon});
+  }
 }
 
 /**

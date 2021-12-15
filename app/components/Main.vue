@@ -36,6 +36,7 @@
   import ProgressBar from './ProgressBar';
 
   import { runExtension } from '~/background/manager'
+  import {AndroidApplication, Application} from "@nativescript/core";
 
   export default {
     data() {
@@ -79,6 +80,15 @@
     created() {
       console.log("IITC create event fired");
       runExtension().then(() => {});
+
+      if (Application.android) {
+        Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
+          if (!this.$store.state.is_opened_bottom_sheet) {
+            this.$store.dispatch('setCurrentPane', 'map');
+            args.cancel = true;
+          }
+        });
+      }
     },
   };
 </script>
