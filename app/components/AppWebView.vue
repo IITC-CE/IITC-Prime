@@ -21,6 +21,7 @@
   import storage from "~/utils/storage"
   import { injectBridgeIITC, router } from "@/utils/bridge";
   import {showLayer, switchToPane} from "@/utils/events-to-iitc";
+  import {injectIITCPrimeResources} from "~/utils/iitc-prime-resources";
 
   let webview;
 
@@ -101,10 +102,12 @@
       },
 
       async loadFinished(args) {
-        await webview.executeJavaScript(injectBridgeIITC());
+        await injectBridgeIITC(webview);
 
         const iitc_code = await storage.get("release_iitc_code").then(obj => obj["release_iitc_code"]);
         await webview.executeJavaScript(iitc_code);
+
+        await injectIITCPrimeResources(webview);
       }
     },
 

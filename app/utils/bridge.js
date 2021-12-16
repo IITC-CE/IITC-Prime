@@ -30,7 +30,7 @@ export const router = (event) => {
   }
 }
 
-export const injectBridgeIITC = () => {
+export const injectBridgeIITC = async (webview) => {
   let bridge = "window.android = window.nsWebViewBridge;";
   const events = {
     intentPosLink: ["lat", "lng", "zoom", "title", "isPortal"],
@@ -54,10 +54,11 @@ export const injectBridgeIITC = () => {
   Object.entries(events).forEach(entry => {
     const [key, value] = entry;
     bridge += "\n" +
-      "window.nsWebViewBridge."+key+" = function("+value.join(', ')+") {" +
-      " return window.nsWebViewBridge.emit('JSBridge', ['"+key+"', {"+value.map(name => "'"+name+"': "+name).join(', ')+"}]); " +
+      "window.nsWebViewBridge." + key + " = function(" + value.join(', ') + ") {" +
+      " return window.nsWebViewBridge.emit('JSBridge', ['" + key + "', {" + value.map(name => "'" + name + "': " + name).join(', ') + "}]); " +
       "};"
   });
-  bridge += "\nwindow.nsWebViewBridge.getVersionName = function() {return '"+getVersionName()+"'};";
-  return bridge;
+  bridge += "\nwindow.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};";
+
+  await webview.executeJavaScript(bridge);
 }

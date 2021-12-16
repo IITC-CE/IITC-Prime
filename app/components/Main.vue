@@ -12,7 +12,7 @@
           width="100%"
           height="100%">
 
-          <label text="" :class="{ hide: pane_is_close }" :height="status_bar_height+48+12*2" />
+          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />
           <AppWebView flexGrow="1"></AppWebView>
 
         </FlexboxLayout>
@@ -48,7 +48,7 @@
       return {
         status_bar_height: 0,
         navigation_bar_height: 0,
-        pane_is_close: true
+        show_top_padding: false
       }
     },
     components: { AppWebView, AppBar, ProgressBar },
@@ -100,7 +100,7 @@
         after: async (action, state) => {
           switch (action.type) {
             case "setCurrentPane":
-              this.pane_is_close = action.payload === "map";
+              this.show_top_padding = !["all", "faction", "alerts", "info", "map"].includes(action.payload);
               break;
           }
         }
