@@ -2,7 +2,7 @@
 
 <template>
   <FlexboxLayout flexDirection="column" class="btn" @touch="hoverOver($event)">
-    <Label class="fa icon" :text="icon | fonticon" />
+    <Label class="mdi icon" :text="icon | fonticon" />
     <Label :text="name" />
   </FlexboxLayout>
 </template>
@@ -50,7 +50,7 @@
   .icon {
     margin: 0 13 2 13;
     padding: 16 0;
-    font-size: 18;
+    font-size: 20;
     text-align: center;
     border-radius: 50%;
     color: $text-bottom-sheet;

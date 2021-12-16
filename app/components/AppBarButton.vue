@@ -3,7 +3,9 @@
 <template>
   <AbsoluteLayout class="btn" @touch="hoverOver($event)" @tap="$emit('tap')">
     <label :class="{'background': true, 'background-active': hover }"></label>
-    <Label class="fa" :text="name | fonticon" />
+    <StackLayout class="icon-wrapper">
+      <Label class="mdi icon" :text="icon | fonticon" />
+    </StackLayout>
   </AbsoluteLayout>
 </template>
 
@@ -12,7 +14,7 @@
 
   export default {
     props: {
-      name: {
+      icon: {
         type: String,
         required: true
       }
@@ -72,13 +74,17 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .fa {
+  .icon-wrapper {
     top: 0;
     left: 0;
     width: 46;
     height: 46;
-    font-size: 21;
-    padding-top: 12;
-    text-align:center;
+    vertical-alignment: center;
+    horizontal-alignment: center;
+  }
+
+  .icon {
+    font-size: 24;
+    text-align: center;
   }
 </style>

@@ -13,11 +13,11 @@ const store = new Vuex.Store({
     is_opened_bottom_sheet: false,
 
     panes: [
-      {name: "all", label: "All", icon: "fa-list"},
-      {name: "faction", label: "Faction", icon: "fa-user-friends"},
-      {name: "alerts", label: "Alerts", icon: "fa-bell"},
-      {name: "info", label: "Info", icon: "fa-info-circle"},
-      {name: "map", label: "Map", icon: "fa-map"}
+      {name: "all", label: "All", icon: "mdi-list"},
+      {name: "faction", label: "Faction", icon: "mdi-group"},
+      {name: "alerts", label: "Alerts", icon: "mdi-notifications-active"},
+      {name: "info", label: "Info", icon: "mdi-info"},
+      {name: "map", label: "Map", icon: "mdi-map"}
     ],
     current_pane: "map",
     base_layer_selected: 0,
