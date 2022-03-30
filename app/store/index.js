@@ -3,6 +3,9 @@
 import Vue from 'nativescript-vue';
 import Vuex from 'vuex';
 
+import mutations from './mutations'
+import actions from './actions'
+
 Vue.use(Vuex);
 
 const debug = process.env.NODE_ENV !== 'production';
@@ -23,76 +26,11 @@ const store = new Vuex.Store({
     base_layer_selected: 0,
     base_layers_list: [],
     overlay_layers: [],
-    progress: 0
+    progress: 0,
+    location: {lat: 0, lng: 0, accuracy: 0, is_target: false},
   },
-  mutations: {
-    setAppBarWidth(state, width) {
-      state.appbar_width = width;
-    },
-    setIsOpenedBottomSheet(state, status) {
-      state.is_opened_bottom_sheet = status;
-    },
-
-    addPane(state, pane) {
-      state.panes.push(pane);
-    },
-    setCurrentPane(state, name) {
-      state.current_pane = name;
-    },
-    setBaseLayerSelected(state, index) {
-      state.base_layer_selected = index;
-    },
-    setBaseLayersList(state, data) {
-      state.base_layers_list = data;
-    },
-    setOverlayLayers(state, data) {
-      state.overlay_layers = data;
-    },
-    setOverlayLayerProperty(state, property) {
-      state.overlay_layers[property.index].active = property.active;
-    },
-    setProgress(state, progress) {
-      state.progress = progress;
-    }
-  },
-  actions: {
-    setAppBarWidth({ commit }, property) {
-      commit('setAppBarWidth', property);
-    },
-    setIsOpenedBottomSheet({ commit }, status) {
-      commit('setIsOpenedBottomSheet', status);
-    },
-
-    addPane({ commit }, pane) {
-      commit('addPane', pane);
-    },
-    setCurrentPane({ commit }, name) {
-      commit('setCurrentPane', name);
-    },
-    // TODO: store base_layers as object: layerId may not be equal to id
-    setBaseLayers({ commit }, base_layers) {
-      const lst = [];
-      let active = -1;
-      base_layers.forEach(element => {
-        lst.push(element.name);
-        if (element.active === true) active = element.layerId;
-      });
-      commit('setBaseLayerSelected', active);
-      commit('setBaseLayersList', lst);
-    },
-    setActiveBaseLayer({ commit }, index) {
-      commit('setBaseLayerSelected', index);
-    },
-    setOverlayLayers({ commit }, overlay_layers) {
-      commit('setOverlayLayers', overlay_layers);
-    },
-    setOverlayLayerProperty({ commit }, property) {
-      commit('setOverlayLayerProperty', property);
-    },
-    setProgress({ commit }, property) {
-      commit('setProgress', property);
-    }
-  },
+  mutations,
+  actions,
   strict: debug,
 });
 

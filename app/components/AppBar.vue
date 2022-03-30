@@ -8,7 +8,7 @@
       <FlexboxLayout class="expander"></FlexboxLayout>
 
       <AppBarButton icon="mdi-search"></AppBarButton>
-      <AppBarButton icon="mdi-near-me"></AppBarButton>
+      <AppBarButton @tap="onLocate" icon="mdi-near-me"></AppBarButton>
       <AppBarButton @tap="openLayersView" icon="mdi-layers"></AppBarButton>
     </FlexboxLayout>
   </StackLayout>
@@ -19,12 +19,14 @@
   import LayersView from './LayersView';
 
   import AppBarButton from './AppBarButton';
+  import userLocation from '~/utils/user-location';
 
   export default {
     data() {
       return {
         appbar_width: this.$store.state.appbar_width,
-        bgColor: false
+        bgColor: false,
+        location: new userLocation(),
       }
     },
     components: { AppBarButton },
@@ -50,6 +52,9 @@
             this.$store.dispatch('setIsOpenedBottomSheet', false);
           }
         });
+      },
+      onLocate() {
+        this.location.locate();
       }
     },
 
