@@ -1,7 +1,9 @@
-name: Publish app
+name: Make test build
 
 on:
   push:
+    branches:
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -41,10 +43,10 @@ jobs:
         run: yarn
 
       - name: Make test build
-        run: tns build android --clean
+        run: tns build android --debug --clean
 
-      - name: Upload Artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: app-debug
+          name: android-app-debug
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
