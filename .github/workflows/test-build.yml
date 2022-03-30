@@ -1,0 +1,45 @@
+name: Publish app
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  publish_apps:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v1
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install six
+        run: pip install six
+
+      - name: Install NativeScript
+        run: |
+          yarn global add nativescript@latest
+          tns doctor
+          tns package-manager set yarn
+
+      - name: Yarn dependencies
+        run: yarn
+
+      - name: Make test build
+        run: tns build android --clean
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-debug
+          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
