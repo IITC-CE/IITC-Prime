@@ -40,7 +40,8 @@
   import AppBar from './AppBar';
   import ProgressBar from './ProgressBar';
 
-  import { runExtension } from '~/background/manager'
+  import storage from "~/utils/storage"
+  import { Manager } from 'lib-iitc-manager'
   import {AndroidApplication, Application} from "@nativescript/core";
 
   export default {
@@ -83,9 +84,12 @@
 
     },
 
-    created() {
+    async created() {
       console.log("IITC create event fired");
-      runExtension().then(() => {});
+      const manager = new Manager({
+        storage: storage
+      });
+      await manager.run()
 
       if (Application.android) {
         Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
