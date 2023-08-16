@@ -31,7 +31,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install six
-        run: pip install six
+        run: python3 -m pip install six
 
       - name: Install NativeScript
         run: |
