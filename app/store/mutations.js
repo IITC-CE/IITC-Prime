@@ -7,6 +7,9 @@ export default {
   setIsOpenedBottomSheet(state, status) {
     state.is_opened_bottom_sheet = status;
   },
+  setIsWebViewLoadFinished(state, status) {
+    state.is_webview_load_finished = status;
+  },
 
   addPane(state, pane) {
     state.panes.push(pane);
@@ -29,7 +32,10 @@ export default {
   setProgress(state, progress) {
     state.progress = progress;
   },
-  setLocation(state, progress) {
-    state.location = progress;
+  setLocation(state, location) {
+    state.location = location;
+  },
+  setInjectPlugin(state, injectPlugin) {
+    state.injectPlugin = injectPlugin;
   }
 }

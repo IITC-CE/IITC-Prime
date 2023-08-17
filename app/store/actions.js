@@ -7,6 +7,9 @@ export default {
   setIsOpenedBottomSheet({commit}, status) {
     commit('setIsOpenedBottomSheet', status);
   },
+  setIsWebViewLoadFinished({commit}, status) {
+    commit('setIsWebViewLoadFinished', status);
+  },
 
   addPane({commit}, pane) {
     commit('addPane', pane);
@@ -39,5 +42,8 @@ export default {
   },
   setLocation({commit}, property) {
     commit('setLocation', property);
+  },
+  setInjectPlugin({commit}, property) {
+    commit('setInjectPlugin', property);
   }
 }

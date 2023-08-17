@@ -49,7 +49,8 @@
       return {
         status_bar_height: 0,
         navigation_bar_height: 0,
-        show_top_padding: false
+        show_top_padding: false,
+        store_unsubscribe: function() {}
       }
     },
     components: { AppWebView, AppBar, ProgressBar },
@@ -86,10 +87,26 @@
 
     async created() {
       console.log("IITC create event fired");
-      const manager = new Manager({
-        storage: storage
-      });
-      await manager.run()
+
+      const params = {
+        storage: storage,
+        message: (message, args) => {
+          console.log("Message for user:");
+          console.log(message+", args: "+args);
+        },
+        progressbar: is_show => {
+          if (is_show) {
+            console.log("Show progress bar");
+          } else {
+            console.log("Hide progress bar");
+          }
+        },
+        inject_plugin: (p) => {
+          this.$store.dispatch('setInjectPlugin', p);
+        }
+      };
+      const manager = new Manager(params);
+      manager.run().then();
 
       if (Application.android) {
         Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
@@ -103,6 +120,11 @@
       this.store_unsubscribe = this.$store.subscribeAction({
         after: async (action, state) => {
           switch (action.type) {
+            case "setIsWebViewLoadFinished":
+              if (action.payload) {
+                await manager.inject();
+              }
+              break;
             case "setCurrentPane":
               this.show_top_padding = !["all", "faction", "alerts", "info", "map"].includes(action.payload);
               break;

@@ -1,6 +1,6 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import VueDevtools from 'nativescript-vue-devtools'
+// import VueDevtools from 'nativescript-vue-devtools'
 import Vue from 'nativescript-vue'
 
 import Main from '~/components/Main'
@@ -20,7 +20,7 @@ Vue.use(CanvasSVG);
 
 import store from './store';
 
-Vue.use(VueDevtools, { host: '192.168.42.10' })
+// Vue.use(VueDevtools, { host: '192.168.42.10' })
 Vue.config.silent = false;
 
 new Vue({

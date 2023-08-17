@@ -14,6 +14,7 @@ const store = new Vuex.Store({
   state: {
     appbar_width: 100,
     is_opened_bottom_sheet: false,
+    is_webview_load_finished: false,
 
     panes: [
       {name: "all", label: "All", icon: "mdi-list"},
@@ -28,6 +29,7 @@ const store = new Vuex.Store({
     overlay_layers: [],
     progress: 0,
     location: {lat: 0, lng: 0, accuracy: 0, is_target: false},
+    injectPlugin: {}
   },
   mutations,
   actions,
