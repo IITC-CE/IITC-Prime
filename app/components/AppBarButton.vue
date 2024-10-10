@@ -1,17 +1,13 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <AbsoluteLayout class="btn" @touch="hoverOver($event)" @tap="$emit('tap')">
+  <AbsoluteLayout class="btn" @longPress="hoverOver($event)" @tap="$emit('tap')">
     <label :class="{'background': true, 'background-active': hover }"></label>
-    <StackLayout class="icon-wrapper">
-      <Label class="fa icon" :text="icon | fonticon" />
-    </StackLayout>
+    <Label class="fa icon" :text="icon | fonticon" />
   </AbsoluteLayout>
 </template>
 
 <script>
-  import { Label } from "@nativescript/core";
-
   export default {
     props: {
       icon: {
@@ -74,22 +70,13 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .icon-wrapper {
-    top: 0;
-    left: 0;
-    width: 46;
-    height: 46;
-    vertical-alignment: center;
-    horizontal-alignment: center;
-  }
-
   .fa.icon {
     top: 0;
     left: 0;
     width: 46;
     height: 46;
     font-size: 21;
-    padding-top: 12;
+    padding-top: 2;
     text-align:center;
   }
 </style>

@@ -3,7 +3,7 @@
 <template>
   <StackLayout class="appbar_wrapper" :width="appbar_width">
     <FlexboxLayout class="appbar_container">
-      <AppBarButton @tap="openQuickAccessView" name="fa-bars"></AppBarButton>
+      <AppBarButton @tap="openQuickAccessView" icon="fa-bars"></AppBarButton>
 
       <FlexboxLayout class="expander"></FlexboxLayout>
 
