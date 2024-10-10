@@ -4,7 +4,7 @@
   <AbsoluteLayout class="btn" @touch="hoverOver($event)" @tap="$emit('tap')">
     <label :class="{'background': true, 'background-active': hover }"></label>
     <StackLayout class="icon-wrapper">
-      <Label class="mdi icon" :text="icon | fonticon" />
+      <Label class="fa icon" :text="icon | fonticon" />
     </StackLayout>
   </AbsoluteLayout>
 </template>
@@ -83,8 +83,13 @@
     horizontal-alignment: center;
   }
 
-  .icon {
-    font-size: 24;
-    text-align: center;
+  .fa.icon {
+    top: 0;
+    left: 0;
+    width: 46;
+    height: 46;
+    font-size: 21;
+    padding-top: 12;
+    text-align:center;
   }
 </style>

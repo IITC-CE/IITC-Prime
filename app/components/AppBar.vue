@@ -3,13 +3,13 @@
 <template>
   <StackLayout class="appbar_wrapper" :width="appbar_width">
     <FlexboxLayout class="appbar_container">
-      <AppBarButton @tap="openQuickAccessView" icon="mdi-menu"></AppBarButton>
+      <AppBarButton @tap="openQuickAccessView" name="fa-bars"></AppBarButton>
 
       <FlexboxLayout class="expander"></FlexboxLayout>
 
-      <AppBarButton icon="mdi-search"></AppBarButton>
-      <AppBarButton @tap="onLocate" icon="mdi-near-me"></AppBarButton>
-      <AppBarButton @tap="openLayersView" icon="mdi-layers"></AppBarButton>
+      <AppBarButton icon="fa-search"></AppBarButton>
+      <AppBarButton icon="fa-location-arrow"></AppBarButton>
+      <AppBarButton @tap="openLayersView" icon="fa-layer-group"></AppBarButton>
     </FlexboxLayout>
   </StackLayout>
 </template>

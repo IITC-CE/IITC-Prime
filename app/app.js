@@ -6,7 +6,7 @@ import Vue from 'nativescript-vue'
 import Main from '~/components/Main'
 
 import { TNSFontIcon, fonticon } from 'nativescript-fonticon'
-TNSFontIcon.paths = { 'mdi': './assets/css/material-design-icons.css' }
+TNSFontIcon.paths = { 'fa': './assets/css/Font-Awesome.css' }
 TNSFontIcon.loadCss()
 Vue.filter('fonticon', fonticon)
 

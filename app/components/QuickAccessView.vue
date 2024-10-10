@@ -7,10 +7,10 @@
       columns="*, *, *, *"
       class="block"
     >
-      <QuickAccessBigButton col="0" icon="mdi-settings" name="Settings" />
-      <QuickAccessBigButton col="1" icon="mdi-extension" name="Plugins" />
-      <QuickAccessBigButton col="2" icon="mdi-adb" name="Debug" />
-      <QuickAccessBigButton col="3" icon="mdi-cached" name="Reload IITC" />
+      <QuickAccessBigButton col="0" icon="fa-tools" name="Settings" />
+      <QuickAccessBigButton col="1" icon="fa-toolbox" name="Plugins" />
+      <QuickAccessBigButton col="2" icon="fa-terminal" name="Debug" />
+      <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" />
     </GridLayout>
 
     <Label class="separator" />
@@ -23,7 +23,7 @@
       v-bind:key="pane.name"
       @tap="switchToPane(pane.name)"
     >
-      <Label class="mdi icon" :text="pane.icon | fonticon" col="0" :row="index" />
+      <Label class="fa icon" :text="pane.icon | fonticon" col="0" :row="index" />
       <Label class="pane_item_label" :text="pane.label" col="1" :row="index" />
     </GridLayout>
 
@@ -68,7 +68,7 @@
   }
 
   .icon {
-    font-size: 20;
+    font-size: 18;
     width: 24;
     vertical-align: center;
     text-align: center;
