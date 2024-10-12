@@ -2,24 +2,27 @@
 
 import Vue from 'nativescript-vue'
 
-import Main from '~/components/Main'
-
 import { FontIcon, fonticon } from '@nativescript-community/fonticon';
+import BottomSheetPlugin from '@nativescript-community/ui-material-bottomsheet/vue';
+import CanvasSVG from '@nativescript-community/ui-svg/vue';
+import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
+
+import Main from '~/components/Main'
+import store from './store';
+
 FontIcon.paths = {
   'fa': './assets/css/Font-Awesome.css',
 };
 FontIcon.loadCss();
 Vue.filter('fonticon', fonticon);
 
-import BottomSheetPlugin from '@nativescript-community/ui-material-bottomsheet/vue';
 import { install } from "@nativescript-community/ui-material-bottomsheet";
 install();
 Vue.use(BottomSheetPlugin);
 
-import CanvasSVG from '@nativescript-community/ui-svg/vue';
 Vue.use(CanvasSVG);
 
-import store from './store';
+Vue.use(ButtonPlugin);
 
 Vue.config.silent = false;
 
