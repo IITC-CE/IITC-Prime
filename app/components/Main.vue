@@ -27,6 +27,12 @@
           :top="status_bar_height"
         ></AppBar>
 
+        <SlidingPanel
+          top="0"
+          left="0"
+          width="100%"
+          height="100%"
+        ></SlidingPanel>
       </AbsoluteLayout>
     </RootLayout>
   </Page>
@@ -39,6 +45,7 @@
   import AppWebView from './AppWebView';
   import AppBar from './AppBar';
   import ProgressBar from './ProgressBar';
+  import SlidingPanel from './SlidingPanel';
 
   import storage from "~/utils/storage"
   import { Manager } from 'lib-iitc-manager'
@@ -53,7 +60,7 @@
         store_unsubscribe: function() {}
       }
     },
-    components: { AppWebView, AppBar, ProgressBar },
+    components: { AppWebView, AppBar, ProgressBar, SlidingPanel },
 
     computed: {
     },
