@@ -45,7 +45,7 @@
   import AppWebView from './AppWebView';
   import AppBar from './AppBar';
   import ProgressBar from './ProgressBar';
-  import SlidingPanel from './SlidingPanel';
+  import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 
   import storage from "~/utils/storage"
   import { Manager } from 'lib-iitc-manager'
