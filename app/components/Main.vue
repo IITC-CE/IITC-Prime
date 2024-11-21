@@ -21,18 +21,18 @@
           left="0"
           top="0"
           width="100%"
-        ></ProgressBar>
+        />
 
         <AppBar
           :top="status_bar_height"
-        ></AppBar>
+        />
 
         <SlidingPanel
           top="0"
           left="0"
           width="100%"
           height="100%"
-        ></SlidingPanel>
+        />
       </AbsoluteLayout>
     </RootLayout>
   </Page>

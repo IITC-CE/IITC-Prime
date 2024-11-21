@@ -2,25 +2,24 @@
 
 <template>
   <AbsoluteLayout class="layer">
-    <GridLayout
+    <FlexboxLayout
       ref="panel"
       class="sliding-panel"
-      rows="auto, *"
       :top="panelCurrentTop"
       :height="panelHeight"
       @pan="onPan">
 
-      <StackLayout orientation="horizontal" row="0">
-        <Button text="button 1" />
-        <Button text="button 2" />
-        <Button text="button 3" />
-      </StackLayout>
+      <AppControlPanel
+        :max-height="appControlPanelMaxHeight"
+      />
 
-      <StackLayout row="1">
-        <Label text="content" />
-
-      </StackLayout>
-    </GridLayout>
+    </FlexboxLayout>
+    <MapStateBar
+      :top="screenHeight - mapStateBarHeight"
+      width="100%"
+      :height="mapStateBarHeight"
+      class="map-state-bar"
+    />
   </AbsoluteLayout>
 </template>
 
@@ -28,6 +27,9 @@
 import { Screen } from '@nativescript/core/platform';
 import { CoreTypes } from "@nativescript/core";
 import { Animation } from "@nativescript/core";
+
+import AppControlPanel from './AppControlPanel.vue';
+import MapStateBar from "./MapStateBar.vue";
 
 // Panel position constants
 const PanelPosition = {
@@ -38,6 +40,11 @@ const PanelPosition = {
 
 export default {
   name: 'SlidingPanel',
+
+  components: {
+    AppControlPanel,
+    MapStateBar
+  },
 
   props: {
     // Current panel position (controlled from parent)
@@ -53,9 +60,13 @@ export default {
       // Screen dimensions
       screenHeight: Screen.mainScreen.heightDIPs,
 
+      // Map state bar
+      mapStateBarHeight: 46,
+
       // Panel configuration
-      panelVisibleHeight: 60,
+      panelVisibleHeight: 110,
       panelHeight: 0,
+      appControlPanelMaxHeight: 0,
 
       // Position constants
       positions: {
@@ -210,15 +221,17 @@ export default {
     this.lastTop = this.positions.bottom;
     this.panelCurrentTop = this.positions.bottom;
   },
+
+  computed: {
+    appControlPanelMaxHeight() {
+      return this.panelHeight - this.mapStateBarHeight;
+    }
+  },
 };
 </script>
 
 <style scoped lang="scss">
 .sliding-panel {
-  background-color: #ccc;
   width: 100%;
-  border-top-width: 1;
-  border-color: black;
-  position: absolute;
 }
 </style>
