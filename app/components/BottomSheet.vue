@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <StackLayout class="sheet_wrapper" :width="appbar_width">
+  <StackLayout class="sheet_wrapper" :width="sliding_panel_width">
     <label class="sheet_drag"></label>
     <ScrollView class="sheet_scroll_view" scrollBarIndicatorVisible="false">
       <FlexboxLayout class="sheet_container"  flexDirection="column">
@@ -15,7 +15,7 @@
   export default {
     data() {
       return {
-        appbar_width: this.$store.state.appbar_width
+        sliding_panel_width: this.$store.state.sliding_panel_width
       }
     },
 
@@ -23,8 +23,8 @@
       this.store_unsubscribe = this.$store.subscribeAction({
         after: async (action, state) => {
           switch (action.type) {
-            case "setAppBarWidth":
-              this.appbar_width = action.payload;
+            case "setSlidingPanelWidth":
+              this.sliding_panel_width = action.payload;
               break;
           }
         }

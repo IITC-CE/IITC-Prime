@@ -24,7 +24,6 @@
 </template>
 
 <script>
-import { Screen } from '@nativescript/core/platform';
 import { CoreTypes } from "@nativescript/core";
 import { Animation } from "@nativescript/core";
 
@@ -46,19 +45,10 @@ export default {
     MapStateBar
   },
 
-  props: {
-    // Current panel position (controlled from parent)
-    position: {
-      type: String,
-      default: PanelPosition.BOTTOM,
-      validator: (value) => Object.values(PanelPosition).includes(value)
-    }
-  },
-
   data() {
     return {
       // Screen dimensions
-      screenHeight: Screen.mainScreen.heightDIPs,
+      screenHeight: this.$store.state.screen_height,
 
       // Map state bar
       mapStateBarHeight: 46,
@@ -69,13 +59,12 @@ export default {
       appControlPanelMaxHeight: 0,
 
       // Position constants
+      position: PanelPosition.BOTTOM,
       positions: {
         top: 50,           // Top position
-        middle: 0,         // Will be calculated: bottom position - middleOffset
+        middle: 0,         // Will be calculated: screenHeight/2
         bottom: 0          // Will be calculated: screenHeight - panelVisibleHeight
       },
-
-      middleOffset: 200,   // Offset from bottom for middle position
 
       // Current panel state
       panelCurrentTop: 0,
@@ -92,13 +81,6 @@ export default {
       animationRunning: false,
       animationSet: undefined,
     };
-  },
-
-  watch: {
-    // Watch for position changes from parent
-    position(newPosition) {
-      this.moveToPosition(newPosition);
-    }
   },
 
   methods: {
@@ -121,35 +103,32 @@ export default {
     snapPanel() {
       // Determine target position based on current location and movement
       let targetTop = this.positions.middle;
+      let targetPosition = PanelPosition.MIDDLE;
 
       if (this.lastTop === this.positions.top &&
           this.panelCurrentTop < this.positions.middle &&
           this.panelCurrentTop - this.positions.top >= this.snapThresholds.topToMiddle) {
         targetTop = this.positions.middle;
+        targetPosition = PanelPosition.MIDDLE;
       } else if (this.lastTop === this.positions.bottom &&
                 this.panelCurrentTop > this.positions.middle &&
                 this.positions.bottom - this.panelCurrentTop >= this.snapThresholds.middleToBottom) {
         targetTop = this.positions.middle;
+        targetPosition = PanelPosition.MIDDLE;
       } else if (this.panelCurrentTop >= this.positions.middle &&
                 this.panelCurrentTop - this.positions.middle >= this.snapThresholds.middleToBottom) {
         targetTop = this.positions.bottom;
+        targetPosition = PanelPosition.BOTTOM;
       } else if (this.panelCurrentTop < this.positions.middle &&
                 this.positions.middle - this.panelCurrentTop >= this.snapThresholds.topToMiddle) {
         targetTop = this.positions.top;
+        targetPosition = PanelPosition.TOP;
       }
+
+      this.position = targetPosition;
 
       this.lastTop = targetTop;
       this.animatePanel(targetTop);
-
-      // Emit current position to parent
-      const position = this.getPositionByTop(targetTop);
-      this.$emit('update:position', position);
-    },
-
-    getPositionByTop(top) {
-      if (top === this.positions.top) return PanelPosition.TOP;
-      if (top === this.positions.middle) return PanelPosition.MIDDLE;
-      return PanelPosition.BOTTOM;
     },
 
     animatePanel(targetTop) {
@@ -205,27 +184,53 @@ export default {
         this.snapPanel();
       }
     },
-  },
 
-  created() {
-    // Calculate initial positions and thresholds
-    this.positions.bottom = this.screenHeight - this.panelVisibleHeight;
-    this.positions.middle = this.positions.bottom - this.middleOffset;
+    updatePanelPositions() {
+      // Update key points
+      this.positions.bottom = this.screenHeight - this.panelVisibleHeight;
+      this.positions.middle = this.screenHeight / 2;
 
-    // Calculate snap thresholds (1/5 of distance between positions)
-    this.snapThresholds.middleToBottom = (this.positions.bottom - this.positions.middle) / 5;
-    this.snapThresholds.topToMiddle = (this.positions.middle - this.positions.top) / 5;
+      // Recalculate snap thresholds
+      this.snapThresholds.middleToBottom = (this.positions.bottom - this.positions.middle) / 5;
+      this.snapThresholds.topToMiddle = (this.positions.middle - this.positions.top) / 5;
 
-    // Set initial panel configuration
-    this.panelHeight = this.screenHeight - this.positions.top;
-    this.lastTop = this.positions.bottom;
-    this.panelCurrentTop = this.positions.bottom;
+      // Set initial panel configuration
+      this.panelHeight = this.screenHeight - this.positions.top;
+      this.lastTop = this.positions.bottom;
+      this.panelCurrentTop = this.positions.bottom;
+
+      // Move the panel to the current position
+      this.moveToPosition(this.position);
+    },
+
+    handleScreenHeightChange(newHeight) {
+      this.screenHeight = newHeight;
+      this.updatePanelPositions();
+    },
   },
 
   computed: {
     appControlPanelMaxHeight() {
       return this.panelHeight - this.mapStateBarHeight;
     }
+  },
+
+  created() {
+    this.updatePanelPositions();
+
+    this.store_unsubscribe = this.$store.subscribeAction({
+      after: async (action, state) => {
+        switch (action.type) {
+          case "setScreenHeight":
+            this.handleScreenHeightChange(action.payload);
+            break;
+        }
+      }
+    })
+  },
+
+  onDestroy() {
+    this.store_unsubscribe();
   },
 };
 </script>

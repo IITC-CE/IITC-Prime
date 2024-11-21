@@ -66,34 +66,34 @@
     },
 
     methods: {
-      onLayoutChanged() {
+      async onLayoutChanged() {
         this.status_bar_height = getStatusBarHeight();
         this.navigation_bar_height = getNavigationBarHeight();
 
-        this.$store.dispatch('setAppBarWidth', this.getAppBarWidth());
+        await this.$store.dispatch('setSlidingPanelWidth', this.getSlidingPanelWidth());
+        await this.$store.dispatch('setScreenHeight', Screen.mainScreen.heightDIPs);
       },
-      getAppBarWidth() {
+      getSlidingPanelWidth() {
         const screen_width = Screen.mainScreen.widthDIPs;
         const screen_height = Screen.mainScreen.heightDIPs;
 
-        let appbar_width = 0;
+        let sliding_panel_width = 0;
         if (screen_width > screen_height) {
           if (screen_width > 600) {
-            appbar_width = 500;
+            sliding_panel_width = 500;
           } else {
-            appbar_width = screen_width - this.status_bar_height - this.navigation_bar_height;
+            sliding_panel_width = screen_width - this.status_bar_height - this.navigation_bar_height;
           }
         } else {
-          appbar_width = screen_width;
+          sliding_panel_width = screen_width;
         }
-        return appbar_width
+        return sliding_panel_width
       },
-
-
     },
 
     async created() {
       console.log("IITC create event fired");
+      await this.$store.dispatch('setScreenHeight', Screen.mainScreen.heightDIPs);
 
       const params = {
         storage: storage,

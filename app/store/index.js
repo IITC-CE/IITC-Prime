@@ -12,7 +12,8 @@ const debug = process.env.NODE_ENV !== 'production';
 
 const store = new Vuex.Store({
   state: {
-    appbar_width: 100,
+    screen_height: 0,
+    sliding_panel_width: 100,
     is_opened_bottom_sheet: false,
     is_webview_load_finished: false,
 

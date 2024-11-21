@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <StackLayout class="appbar_wrapper" :width="appbar_width">
+  <StackLayout class="appbar_wrapper" :width="sliding_panel_width">
     <FlexboxLayout class="appbar_container">
       <AppBarButton @tap="openQuickAccessView" icon="fa-bars"></AppBarButton>
 
@@ -24,7 +24,7 @@
   export default {
     data() {
       return {
-        appbar_width: this.$store.state.appbar_width,
+        sliding_panel_width: this.$store.state.sliding_panel_width,
         bgColor: false,
         location: new userLocation(),
       }
@@ -62,8 +62,8 @@
       this.store_unsubscribe = this.$store.subscribeAction({
         after: async (action, state) => {
           switch (action.type) {
-            case "setAppBarWidth":
-              this.appbar_width = action.payload;
+            case "setSlidingPanelWidth":
+              this.sliding_panel_width = action.payload;
               break;
           }
         }
