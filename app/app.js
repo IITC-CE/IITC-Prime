@@ -13,7 +13,7 @@ import store from './store';
 FontIcon.paths = {
   'fa': './assets/css/Font-Awesome.css',
 };
-FontIcon.loadCss();
+FontIcon.loadCssSync();
 Vue.filter('fonticon', fonticon);
 
 import { install } from "@nativescript-community/ui-material-bottomsheet";

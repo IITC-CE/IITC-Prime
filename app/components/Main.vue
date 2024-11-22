@@ -23,10 +23,6 @@
           width="100%"
         />
 
-        <AppBar
-          :top="status_bar_height"
-        />
-
         <SlidingPanel
           top="0"
           left="0"
@@ -43,7 +39,6 @@
   import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform'
 
   import AppWebView from './AppWebView';
-  import AppBar from './AppBar';
   import ProgressBar from './ProgressBar';
   import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 
@@ -60,7 +55,7 @@
         store_unsubscribe: function() {}
       }
     },
-    components: { AppWebView, AppBar, ProgressBar, SlidingPanel },
+    components: { AppWebView, ProgressBar, SlidingPanel },
 
     computed: {
     },

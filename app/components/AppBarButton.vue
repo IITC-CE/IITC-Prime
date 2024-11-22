@@ -1,18 +1,52 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <MDButton variant="flat" rippleColor="#ffffff" class="fa icon" :text="icon | fonticon" @tap="$emit('tap')" />
+  <MDButton
+    variant="flat"
+    rippleColor="#ffffff"
+    class="fa icon"
+    :text="icon | fonticon"
+    @tap="handleTap"
+    @pan="handlePan"
+    passthrough-events="true"
+  />
 </template>
 
 <script>
-  export default {
-    props: {
-      icon: {
-        type: String,
-        required: true
+export default {
+  props: {
+    icon: {
+      type: String,
+      required: true
+    }
+  },
+
+  data() {
+    return {
+      isPanning: false,
+      panThreshold: 10
+    }
+  },
+  methods: {
+    handlePan(event) {
+      const distance = Math.sqrt(
+        Math.pow(event.deltaX, 2) +
+        Math.pow(event.deltaY, 2)
+      );
+
+      if (distance > this.panThreshold) {
+        this.isPanning = true;
+        this.$emit('pan', event);
       }
+    },
+    handleTap(event) {
+      if (!this.isPanning) {
+        this.$emit('tap', event);
+      }
+      this.isPanning = false;
     }
   }
+}
 </script>
 
 <style scoped lang="scss">
