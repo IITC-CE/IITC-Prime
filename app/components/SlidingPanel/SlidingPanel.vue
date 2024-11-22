@@ -7,7 +7,7 @@
       class="sliding-panel"
       :top="panelCurrentTop"
       :height="panelHeight"
-      @pan="onPan">
+      @pan="handlePanGesture">
 
       <AppControlPanel
         :max-height="appControlPanelMaxHeight"
@@ -28,12 +28,12 @@ import AppControlPanel from './AppControlPanel.vue';
 import MapStateBar from "./MapStateBar.vue";
 import { slideAnimationMixin } from "./mixins/slideAnimation";
 import { panelPositionMixin } from "./mixins/panelPosition";
-import { PanelPositions } from "@/components/SlidingPanel/constants/panelPositions";
+import { panelGestureMixin } from "./mixins/panelGesture";
 
 export default {
   name: 'SlidingPanel',
 
-  mixins: [slideAnimationMixin, panelPositionMixin],
+  mixins: [slideAnimationMixin, panelPositionMixin, panelGestureMixin],
 
   components: {
     AppControlPanel,
@@ -56,31 +56,6 @@ export default {
   },
 
   methods: {
-    onPan(args) {
-      if (this.isAnimating) {
-        this.cancelAnimation();
-      }
-
-      const panel = this.$refs.panel?.nativeView;
-      if (!panel) return;
-
-      if (args.state === 1) { // Pan start
-        this.startTop = panel.top;
-        this.panelCurrentTop = panel.top;
-      } else if (args.state === 2) { // Pan in progress
-        const newTop = this.startTop + args.deltaY;
-
-        // Limit panel movement within bounds
-        if (newTop >= PanelPositions.TOP.value && newTop <= PanelPositions.BOTTOM.value) {
-          panel.top = newTop;
-          this.panelCurrentTop = newTop;
-        }
-      } else if (args.state === 3) { // Pan end
-        this.panelCurrentTop = panel.top;
-        this.snapPanel();
-      }
-    },
-
     handleScreenHeightChange(newHeight) {
       this.screenHeight = newHeight;
       this.updatePanelPositions();
