@@ -14,14 +14,8 @@ export const panelPositionMixin = {
         middleToBottom: 0,
         topToMiddle: 0
       },
-      // Initialize state machine
       stateMachine: new PanelStateMachine()
     };
-  },
-
-  created() {
-    // Initialize state machine with positions
-    this.stateMachine.init(PanelPositions);
   },
 
   methods: {

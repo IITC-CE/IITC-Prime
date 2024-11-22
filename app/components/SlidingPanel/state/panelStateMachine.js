@@ -1,44 +1,21 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
+import { PanelPositions, PanelPositionHelpers } from '../constants/panelPositions';
+
 // State machine for managing panel positions and transitions
 export class PanelStateMachine {
   constructor() {
-    // Define available states and their transitions
-    this.states = {
-      TOP: {
-        allowedTransitions: ['MIDDLE', 'BOTTOM'],
-        getValue: () => this.positions.TOP.value,
-      },
-      MIDDLE: {
-        allowedTransitions: ['TOP', 'BOTTOM'],
-        getValue: () => this.positions.MIDDLE.value,
-      },
-      BOTTOM: {
-        allowedTransitions: ['MIDDLE', 'TOP'],
-        getValue: () => this.positions.BOTTOM.value,
-      }
-    };
-
-    // Reference to position values
-    this.positions = null;
-
-    // Current state
-    this.currentState = 'BOTTOM';
-  }
-
-  // Initialize with position values reference
-  init(positions) {
-    this.positions = positions;
-  }
-
-  // Check if transition is allowed
-  canTransition(targetState) {
-    return this.states[this.currentState].allowedTransitions.includes(targetState);
+    this.currentState = PanelPositions.BOTTOM.id;
   }
 
   // Get current position value
   getCurrentPosition() {
-    return this.states[this.currentState].getValue();
+    return PanelPositionHelpers.getPositionValue(this.currentState);
+  }
+
+  // Check if transition is allowed
+  canTransition(targetState) {
+    return PanelPositionHelpers.canTransition(this.currentState, targetState);
   }
 
   // Perform state transition
@@ -52,38 +29,40 @@ export class PanelStateMachine {
 
   // Determine next state based on current position and movement
   determineNextState(currentTop, lastTop, middleValue, snapThresholds) {
+    const positions = PanelPositions;
+
     // Start from previous position (lastTop)
-    if (lastTop === this.positions.TOP.value) {
+    if (lastTop === positions.TOP.value) {
       // Moving from TOP position
       if (currentTop < middleValue) {
-        return currentTop - this.positions.TOP.value >= snapThresholds.topToMiddle
-          ? 'MIDDLE'
-          : 'TOP';
+        return currentTop - positions.TOP.value >= snapThresholds.topToMiddle
+          ? positions.MIDDLE.id
+          : positions.TOP.id;
       } else {
-        return 'BOTTOM';
+        return positions.BOTTOM.id;
       }
     }
 
-    if (lastTop === this.positions.BOTTOM.value) {
+    if (lastTop === positions.BOTTOM.value) {
       // Moving from BOTTOM position
       if (currentTop > middleValue) {
-        return this.positions.BOTTOM.value - currentTop >= snapThresholds.middleToBottom
-          ? 'MIDDLE'
-          : 'BOTTOM';
+        return positions.BOTTOM.value - currentTop >= snapThresholds.middleToBottom
+          ? positions.MIDDLE.id
+          : positions.BOTTOM.id;
       } else {
-        return 'TOP';
+        return positions.TOP.id;
       }
     }
 
     // Default behavior - snap to closest position
     if (currentTop >= middleValue) {
       return currentTop - middleValue >= snapThresholds.middleToBottom
-        ? 'BOTTOM'
-        : 'MIDDLE';
+        ? positions.BOTTOM.id
+        : positions.MIDDLE.id;
     } else {
       return middleValue - currentTop >= snapThresholds.topToMiddle
-        ? 'TOP'
-        : 'MIDDLE';
+        ? positions.TOP.id
+        : positions.MIDDLE.id;
     }
   }
 }
