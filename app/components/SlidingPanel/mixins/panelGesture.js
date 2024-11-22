@@ -18,28 +18,19 @@ export const panelGestureMixin = {
      * @returns {number} Final position after applying resistance
      */
     calculateResistancePosition(newTop, topBoundary, bottomBoundary) {
-      let finalTop = newTop;
-
-      if (newTop < topBoundary) {
-        // Calculate resistance when pulling above TOP position
-        const overflow = topBoundary - newTop;
-        const resistance = Math.min(
-          overflow * PANEL_CONSTANTS.RESISTANCE_FACTOR,
-          PANEL_CONSTANTS.MAX_OVERFLOW
-        );
-        finalTop = topBoundary - resistance;
-      }
-      else if (newTop > bottomBoundary) {
-        // Calculate resistance when pulling below BOTTOM position
-        const overflow = newTop - bottomBoundary;
-        const resistance = Math.min(
-          overflow * PANEL_CONSTANTS.RESISTANCE_FACTOR,
-          PANEL_CONSTANTS.MAX_OVERFLOW
-        );
-        finalTop = bottomBoundary + resistance;
+      if (newTop >= topBoundary && newTop <= bottomBoundary) {
+        return newTop;
       }
 
-      return finalTop;
+      const isOverTop = newTop < topBoundary;
+      const boundary = isOverTop ? topBoundary : bottomBoundary;
+      const overflow = Math.abs(newTop - boundary);
+      const resistance = Math.min(
+        overflow * PANEL_CONSTANTS.RESISTANCE_FACTOR,
+        PANEL_CONSTANTS.MAX_OVERFLOW
+      );
+
+      return boundary + (isOverTop ? -resistance : resistance);
     },
 
     /**
