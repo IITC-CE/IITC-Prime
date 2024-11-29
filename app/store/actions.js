@@ -7,9 +7,6 @@ export default {
   setSlidingPanelWidth({commit}, property) {
     commit('setSlidingPanelWidth', property);
   },
-  setIsOpenedBottomSheet({commit}, status) {
-    commit('setIsOpenedBottomSheet', status);
-  },
   setIsWebViewLoadFinished({commit}, status) {
     commit('setIsWebViewLoadFinished', status);
   },

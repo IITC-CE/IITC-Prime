@@ -37,7 +37,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .btn {
     font-size: $font-size;

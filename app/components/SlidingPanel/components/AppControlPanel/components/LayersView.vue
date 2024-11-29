@@ -1,7 +1,9 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <BottomSheet class="bottom_sheet">
+  <FlexboxLayout
+    flexDirection="column"
+  >
 
     <StackLayout orientation="horizontal" class="block">
 
@@ -58,14 +60,12 @@
       </GridLayout>
     </WrapLayout>
 
-  </BottomSheet>
+  </FlexboxLayout>
 </template>
 
 <script>
   import Vue from 'nativescript-vue'
   Vue.registerElement("DropDown", () => require("nativescript-drop-down/drop-down").DropDown)
-
-  import BottomSheet from './BottomSheet';
 
   export default {
     data() {
@@ -75,9 +75,7 @@
         overlay_layers: this.$store.state.overlay_layers
       }
     },
-    components: { BottomSheet },
-    created() {
-    },
+
     methods: {
       onOverlayPortalPropertyChange(e, index) {
         const active = !(this.$store.state.overlay_layers[index].active === true);
@@ -103,7 +101,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .block {
     margin-bottom: 10;

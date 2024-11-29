@@ -7,9 +7,6 @@ export default {
   setSlidingPanelWidth(state, width) {
     state.sliding_panel_width = width;
   },
-  setIsOpenedBottomSheet(state, status) {
-    state.is_opened_bottom_sheet = status;
-  },
   setIsWebViewLoadFinished(state, status) {
     state.is_webview_load_finished = status;
   },

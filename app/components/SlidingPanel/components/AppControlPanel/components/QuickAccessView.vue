@@ -1,7 +1,9 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <BottomSheet class="bottom_sheet">
+  <FlexboxLayout
+    flexDirection="column"
+  >
 
     <GridLayout
       columns="*, *, *, *"
@@ -27,12 +29,11 @@
       <Label class="pane_item_label" :text="pane.label" col="1" :row="index" />
     </GridLayout>
 
-  </BottomSheet>
+  </FlexboxLayout>
 </template>
 
 <script>
-  import BottomSheet from './BottomSheet';
-  import QuickAccessBigButton from './QuickAccessBigButton';
+  import QuickAccessBigButton from './QuickAccessBigButton.vue';
 
   export default {
     data() {
@@ -40,20 +41,19 @@
         panes: this.$store.state.panes,
       }
     },
-    components: { BottomSheet, QuickAccessBigButton },
-    created() {
-    },
+
+    components: { QuickAccessBigButton },
+
     methods: {
       switchToPane(name) {
         this.$store.dispatch('setCurrentPane', name);
-        this.$closeBottomSheet();
       }
     }
   };
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .separator {
     width: 100%;

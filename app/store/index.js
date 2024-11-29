@@ -14,7 +14,6 @@ const store = new Vuex.Store({
   state: {
     screen_height: 0,
     sliding_panel_width: 100,
-    is_opened_bottom_sheet: false,
     is_webview_load_finished: false,
 
     panes: [

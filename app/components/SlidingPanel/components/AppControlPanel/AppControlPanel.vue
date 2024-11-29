@@ -7,36 +7,75 @@
     :height="maxHeight"
     flexDirection="column">
 
+    <StackLayout class="panel-header">
+      <Label
+        class="panel-header-line"
+      />
+    </StackLayout>
+
     <!-- buttons -->
-    <FlexboxLayout class="appbar_container">
-      <AppBarButton @tap="openQuickAccessView" icon="fa-bars"></AppBarButton>
+    <FlexboxLayout class="panel-buttons">
+      <AppControlButton
+        icon="fa-bars"
+        :isActive="activeButton === 'quick'"
+        @activate="setActiveButton('quick')"
+        @deactivate="setActiveButton(null)" />
+      />
 
-      <FlexboxLayout class="expander"></FlexboxLayout>
+      <FlexboxLayout class="expander" />
 
-      <AppBarButton icon="fa-search"></AppBarButton>
-      <AppBarButton icon="fa-location-arrow"></AppBarButton>
-      <AppBarButton @tap="openLayersView" icon="fa-layer-group"></AppBarButton>
+      <AppControlButton
+        icon="fa-search"
+        :isActive="activeButton === 'search'"
+        @activate="setActiveButton('search')"
+        @deactivate="setActiveButton(null)" />
+
+      <AppControlButton
+        icon="fa-location-arrow"
+        :isToggleable="false"
+        @tap="onLocate" />
+
+      <AppControlButton
+        icon="fa-layer-group"
+        :isActive="activeButton === 'layers'"
+        @activate="setActiveButton('layers')"
+        @deactivate="setActiveButton(null)" />
+
     </FlexboxLayout>
 
     <!-- content -->
-    <StackLayout
-      class="panel-body"
-      flexGrow="1">
-      <Label text="content" />
+    <StackLayout class="panel-body" flexGrow="1">
+      <QuickAccessView
+        v-show="activeButton === 'quick' || activeButton === null"
+      />
+
+      <LayersView
+        v-show="activeButton === 'layers'"
+      />
+
+      <SearchView
+        v-show="activeButton === 'search'"
+      />
     </StackLayout>
   </FlexboxLayout>
 </template>
 
 <script>
-import AppBarButton from "@/components/AppBarButton.vue";
-import QuickAccessView from "@/components/QuickAccessView.vue";
-import LayersView from "@/components/LayersView.vue";
+import AppControlButton from "./components/AppControlButton.vue";
+import QuickAccessView from "./components/QuickAccessView.vue";
+import LayersView from "./components/LayersView.vue";
+import SearchView from "./components/SearchView.vue";
 import userLocation from "@/utils/user-location";
 
 export default {
   name: 'AppControlPanel',
 
-  components: { AppBarButton },
+  components: {
+    AppControlButton,
+    QuickAccessView,
+    LayersView,
+    SearchView,
+  },
 
   props: {
     maxHeight: {
@@ -48,32 +87,19 @@ export default {
   data() {
     return {
       location: new userLocation(),
+      activeButton: null,
     }
   },
 
   methods: {
-    openQuickAccessView() {
-      if (this.$store.state.is_opened_bottom_sheet) return;
-      this.$store.dispatch('setIsOpenedBottomSheet', true);
-      this.$showBottomSheet(QuickAccessView, {
-        transparent: true,
-        skipCollapsedState: true,
-        closeCallback: () => {
-          this.$store.dispatch('setIsOpenedBottomSheet', false);
-        }
-      });
+    setActiveButton(button) {
+      if (button === this.activeButton) {
+        this.activeButton = null;
+      } else {
+        this.activeButton = button;
+      }
     },
-    openLayersView() {
-      if (this.$store.state.is_opened_bottom_sheet) return;
-      this.$store.dispatch('setIsOpenedBottomSheet', true);
-      this.$showBottomSheet(LayersView, {
-        transparent: true,
-        skipCollapsedState: true,
-        closeCallback: () => {
-          this.$store.dispatch('setIsOpenedBottomSheet', false);
-        }
-      });
-    },
+
     onLocate() {
       this.location.locate();
     }
@@ -93,11 +119,24 @@ export default {
 }
 
 .panel-header {
-  height: 50;
-  justify-content: space-around;
+  height: 14;
+  min-height: 14;
 }
 
-.panel-body {
+.panel-header-line {
+  background-color: $complementary;
+  width: 32;
+  height: 4;
+  margin: 5 0;
+  border-radius: 4;
+  horizontal-alignment: center;
+}
+
+.panel-buttons {
+  height: 42; // 110 - 46 - 14 - 8
+  min-height: 42;
+  margin: 0 10 8 10;
+  justify-content: space-around;
 }
 
 .expander {
