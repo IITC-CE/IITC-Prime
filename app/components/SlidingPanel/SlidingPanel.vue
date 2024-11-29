@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import AppControlPanel from './AppControlPanel.vue';
+import AppControlPanel from './components/AppControlPanel/AppControlPanel.vue';
 import MapStateBar from "./MapStateBar.vue";
 import { slideAnimationMixin } from "./mixins/slideAnimation";
 import { panelPositionMixin } from "./mixins/panelPosition";
