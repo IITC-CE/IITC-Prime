@@ -12,8 +12,10 @@
           width="100%"
           height="100%">
 
-          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />
-          <AppWebView flexGrow="1"></AppWebView>
+<!--          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />-->
+          <label text="" :height="12*2" />
+          <AppWebView flexGrow="1" @createPopup="showPopup"></AppWebView>
+          <label text="" height="100" />
 
         </FlexboxLayout>
 
@@ -29,6 +31,13 @@
           width="100%"
           height="100%"
         />
+
+        <PopupWebView
+          v-if="isShowPopup"
+          :url="popupUrl"
+          :transport="popupTransport"
+          @close="closePopup"
+        />
       </AbsoluteLayout>
     </RootLayout>
   </Page>
@@ -37,14 +46,15 @@
 <script>
   import { Screen } from '@nativescript/core/platform';
   import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform'
+  import { AndroidApplication, Application } from "@nativescript/core";
 
   import AppWebView from './AppWebView';
   import ProgressBar from './ProgressBar';
   import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
+  import PopupWebView from './PopupWebView.vue';
 
   import storage from "~/utils/storage"
   import { Manager } from 'lib-iitc-manager'
-  import {AndroidApplication, Application} from "@nativescript/core";
 
   export default {
     data() {
@@ -52,12 +62,18 @@
         status_bar_height: 0,
         navigation_bar_height: 0,
         show_top_padding: false,
-        store_unsubscribe: function() {}
+        store_unsubscribe: function() {},
+        isShowPopup: false,
+        popupUrl: null,
+        popupTransport: null,
       }
     },
-    components: { AppWebView, ProgressBar, SlidingPanel },
 
-    computed: {
+    components: {
+      AppWebView,
+      ProgressBar,
+      SlidingPanel,
+      PopupWebView
     },
 
     methods: {
@@ -68,6 +84,7 @@
         await this.$store.dispatch('setSlidingPanelWidth', this.getSlidingPanelWidth());
         await this.$store.dispatch('setScreenHeight', Screen.mainScreen.heightDIPs);
       },
+
       getSlidingPanelWidth() {
         const screen_width = Screen.mainScreen.widthDIPs;
         const screen_height = Screen.mainScreen.heightDIPs;
@@ -83,6 +100,18 @@
           sliding_panel_width = screen_width;
         }
         return sliding_panel_width
+      },
+
+      showPopup(data) {
+        this.popupUrl = data.url || null;
+        this.popupTransport = data.transport || null;
+        this.isShowPopup = true;
+      },
+
+      closePopup() {
+        this.isShowPopup = false;
+        this.popupUrl = null;
+        this.popupTransport = null;
       },
     },
 
@@ -142,13 +171,13 @@
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+@import '../app';
 
-  .page {
-    background-color: $accent;
-  }
+.page {
+  background-color: $accent;
+}
 
-  .hide {
-    visibility: collapse;
-  }
+.hide {
+  visibility: collapse;
+}
 </style>

@@ -6,6 +6,7 @@ import { FontIcon, fonticon } from '@nativescript-community/fonticon';
 import BottomSheetPlugin from '@nativescript-community/ui-material-bottomsheet/vue';
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
+import WebViewPlugin from '@nativescript-community/ui-webview/vue';
 
 import Main from '~/components/Main'
 import store from './store';
@@ -23,6 +24,8 @@ Vue.use(BottomSheetPlugin);
 Vue.use(CanvasSVG);
 
 Vue.use(ButtonPlugin);
+
+Vue.use(WebViewPlugin);
 
 Vue.config.silent = false;
 
