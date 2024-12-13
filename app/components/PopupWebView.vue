@@ -15,23 +15,26 @@
           />
         </FlexboxLayout>
 
-        <Progress
-          :value="loadingProgress"
-          maxValue="100"
-          class="progress-bar"
-        />
+        <AbsoluteLayout class="webview-wrapper">
+          <BaseWebView
+            ref="baseWebView"
+            class="webview-container"
+            :src="url"
+            @webview-loaded="onWebViewLoaded"
+            @title-changed="updatePageTitle"
+            @external-url="handleExternalUrl"
+            @progress="updateProgress"
+            @close-popup="closePopup"
+            @load-error="handleLoadError"
+          />
 
-        <BaseWebView
-          ref="baseWebView"
-          class="webview-container"
-          :src="url"
-          @webview-loaded="onWebViewLoaded"
-          @title-changed="updatePageTitle"
-          @external-url="handleExternalUrl"
-          @progress="updateProgress"
-          @close-popup="closePopup"
-          @load-error="handleLoadError"
-        />
+          <Progress
+            v-show="isLoading"
+            :value="loadingProgress"
+            maxValue="100"
+            class="progress-bar"
+          />
+        </AbsoluteLayout>
 
       </FlexboxLayout>
     </StackLayout>
@@ -131,6 +134,8 @@ export default {
   height: 50;
   min-height: 50;
   background-color: #f8f8f8;
+  border-bottom-width: 1;
+  border-bottom-color: #e0e0e0;
   border-top-left-radius: 10;
   border-top-right-radius: 10;
   justify-content: space-between;
@@ -160,6 +165,15 @@ export default {
 
 .progress-bar {
   height: 2;
-  min-height: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+.webview-container {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
