@@ -9,6 +9,7 @@
     @loaded="onWebViewLoaded"
     @loadStarted="onLoadStarted"
     @loadFinished="onLoadFinished"
+    @loadError="onLoadError"
     @shouldOverrideUrlLoading="onShouldOverrideUrlLoading"
   />
 </template>
@@ -17,6 +18,7 @@
 import WebViewExt from '@nota/nativescript-webview-ext/vue'
 import { isAndroid } from "@nativescript/core";
 import { applyWebViewSettings } from "@/utils/webview/webview-settings";
+import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
 
 export default {
   name: 'BaseWebView',
@@ -33,12 +35,20 @@ export default {
     debugMode: {
       type: Boolean,
       default: true
+    },
+    allowedDomains: {
+      type: Array,
+      default: () => []
     }
   },
 
   data() {
     return {
-      webViewInstance: null
+      webViewInstance: null,
+      chromeClient: null,
+      isLoading: false,
+      hasError: false,
+      errorDetails: null
     }
   },
 
@@ -49,9 +59,38 @@ export default {
   },
 
   methods: {
+    // Chrome Client Management
+    createWebChromeClient() {
+      const client = new BaseWebChromeClient();
+      client.initWithComponent({
+        setProgress: (progress) => {
+          this.$emit('progress', progress);
+        },
+        setPageTitle: (title) => {
+          this.$emit('title-changed', title);
+        },
+        showPopup: (resultMsg) => {
+          this.$emit('show-popup', { transport: resultMsg });
+        },
+        closePopup: () => {
+          this.$emit('close-popup');
+        },
+      });
+      this.chromeClient = client;
+      return client;
+    },
+
+    setupWebChromeClient() {
+      if (isAndroid && this.webViewInstance) {
+        const chromeClient = this.createWebChromeClient();
+        this.webViewInstance.android.setWebChromeClient(chromeClient);
+      }
+    },
+
+    // WebView State Management
     onWebViewLoaded(args) {
       this.webViewInstance = args.object;
-      applyWebViewSettings(this.webViewInstance);
+      this.setupWebView();
 
       this.$emit('webview-loaded', {
         webview: this.webViewInstance,
@@ -59,36 +98,91 @@ export default {
       });
     },
 
+    setupWebView() {
+      if (!this.webViewInstance) return;
+
+      applyWebViewSettings(this.webViewInstance);
+      this.setupWebChromeClient();
+    },
+
     onLoadStarted(args) {
-      console.log("Loading started:", args.url);
+      this.isLoading = true;
+      this.hasError = false;
+      this.errorDetails = null;
       this.$emit('load-started', args);
     },
 
     onLoadFinished(args) {
-      console.log("Loading finished:", args.url);
+      this.isLoading = false;
       this.$emit('load-finished', args);
     },
 
+    onLoadError(args) {
+      this.isLoading = false;
+      this.hasError = true;
+      this.errorDetails = {
+        code: args.code,
+        message: args.message,
+        url: args.url
+      };
+      this.$emit('load-error', this.errorDetails);
+    },
+
+    // URL Navigation Control
     onShouldOverrideUrlLoading(args) {
+      if (!this.isUrlAllowed(args.url)) {
+        args.cancel = true;
+        this.$emit('external-url', args.url);
+      }
       this.$emit('should-override-url-loading', args);
       return args;
+    },
+
+    isUrlAllowed(url) {
+      if (!this.allowedDomains.length) return true;
+
+      try {
+        const uri = new URL(url);
+        return this.allowedDomains.includes(uri.hostname);
+      } catch (e) {
+        console.error('Invalid URL:', url);
+        return false;
+      }
     },
 
     executeJavaScript(code) {
       return this.webViewInstance?.executeJavaScript(code);
     },
 
+    reload() {
+      if (this.webViewInstance) {
+        this.webViewInstance.reload();
+      }
+    },
+
+    // Cleanup
     cleanupWebView() {
       if (this.webViewInstance && isAndroid) {
         try {
+          if (this.chromeClient) {
+            this.chromeClient.cleanup();
+            this.webViewInstance.android?.setWebChromeClient(null);
+            this.chromeClient = null;
+          }
+
           const androidWebView = this.webViewInstance.android;
-          androidWebView.stopLoading();
-          androidWebView.clearHistory();
-          androidWebView.clearCache(true);
-          androidWebView.clearFormData();
-          androidWebView.loadUrl("about:blank");
-          androidWebView.destroy();
+
+          androidWebView.stopLoading(); // Stop any ongoing loads
+          androidWebView.clearHistory(); // Clear navigation history
+          androidWebView.clearCache(true); // Clear cache
+          androidWebView.loadUrl("about:blank"); // Clear all content
+          this.webViewInstance.off(); // Clear any callbacks
+          androidWebView.destroy(); // Destroy the WebView
+
           this.webViewInstance = null;
+          this.isLoading = false;
+          this.hasError = false;
+          this.errorDetails = null;
         } catch (e) {
           console.error("Error during cleanup:", e);
         }

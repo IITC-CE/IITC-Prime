@@ -15,23 +15,35 @@
           />
         </FlexboxLayout>
 
+        <Progress
+          :value="loadingProgress"
+          maxValue="100"
+          class="progress-bar"
+        />
+
         <BaseWebView
           ref="baseWebView"
           class="webview-container"
+          :src="url"
           @webview-loaded="onWebViewLoaded"
-          @should-override-url-loading="onShouldOverrideUrlLoading"
+          @title-changed="updatePageTitle"
+          @external-url="handleExternalUrl"
+          @progress="updateProgress"
+          @close-popup="closePopup"
+          @load-error="handleLoadError"
         />
+
       </FlexboxLayout>
     </StackLayout>
   </AbsoluteLayout>
 </template>
 
 <script>
-import { isAndroid } from "@nativescript/core";
 import BaseWebView from './BaseWebView.vue';
-import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
 
 export default {
+  name: 'PopupWebView',
+
   components: {
     BaseWebView
   },
@@ -39,16 +51,20 @@ export default {
   props: {
     url: {
       type: String,
+      default: ''
     },
     transport: {
       type: Object,
-    },
+      default: null
+    }
   },
 
   data() {
     return {
       pageTitle: 'Loading...',
-      chromeClient: null
+      isLoading: false,
+      loadingProgress: 0,
+      hasError: false
     }
   },
 
@@ -59,70 +75,37 @@ export default {
   },
 
   methods: {
-    createWebChromeClient() {
-      const client = new BaseWebChromeClient();
-      client.initWithComponent({
-        closePopup: () => this.closePopup(),
-        setPageTitle: (title) => {
-          this.pageTitle = title;
-        },
-      });
-      this.chromeClient = client;
-      return client;
+    updatePageTitle(title) {
+      this.pageTitle = title || 'Loading...';
+    },
+
+    updateProgress(progress) {
+      this.loadingProgress = progress;
+      this.isLoading = progress < 100;
+    },
+
+    handleExternalUrl(url) {
+      console.log('External URL in popup:', url);
+    },
+
+    handleLoadError(error) {
+      this.hasError = true;
+      console.error('Popup WebView load error:', error);
     },
 
     closePopup() {
-      this.cleanupWebView();
       this.$emit('close');
     },
 
-    cleanupWebView() {
-      if (this.webview && isAndroid) {
-        if (this.chromeClient) {
-          this.chromeClient.cleanup();
-          this.webview.android.setWebChromeClient(null);
-          this.chromeClient = null;
-        }
-        this.$refs.baseWebView.cleanupWebView();
-      }
-    },
-
-    setTransport() {
-      if (isAndroid && this.transport && this.webview) {
+    onWebViewLoaded({ webview }) {
+      if (this.transport) {
         const transport = this.transport.obj;
-        transport?.setWebView(this.webview.android);
+        transport?.setWebView(webview.android);
         this.transport.sendToTarget();
       }
-    },
-
-    setUrl() {
-      if (this.url && this.webview) {
-        this.webview.loadUrl(this.url);
-      }
-    },
-
-    onWebViewLoaded({ webview }) {
-      if (isAndroid) {
-        const chromeClient = this.createWebChromeClient();
-        webview.android.setWebChromeClient(chromeClient);
-      }
-      this.setTransport();
-      this.setUrl();
-    },
-
-    onShouldOverrideUrlLoading(args) {
-      if (args.url.includes("intel.ingress.com")) {
-        this.closePopup();
-        args.cancel = true;
-      }
-      return args;
     }
-  },
-
-  beforeDestroy() {
-    this.cleanupWebView();
   }
-}
+};
 </script>
 
 <style scoped lang="scss">
@@ -144,10 +127,10 @@ export default {
 }
 
 .popup-header {
-  padding: 10;
+  padding: 5;
+  height: 50;
+  min-height: 50;
   background-color: #f8f8f8;
-  border-bottom-width: 1;
-  border-bottom-color: #e0e0e0;
   border-top-left-radius: 10;
   border-top-right-radius: 10;
   justify-content: space-between;
@@ -155,7 +138,7 @@ export default {
 }
 
 .popup-title {
-  font-size: 18;
+  font-size: 16;
   font-weight: bold;
   padding-left: 10;
 }
@@ -164,6 +147,7 @@ export default {
   margin: 0;
   padding: 0;
   width: 40;
+  min-width: 40;
   max-width: 40;
   background-color: transparent;
   color: #222;
@@ -172,5 +156,10 @@ export default {
 
 .webview-container {
   flex-grow: 1;
+}
+
+.progress-bar {
+  height: 2;
+  min-height: 2;
 }
 </style>

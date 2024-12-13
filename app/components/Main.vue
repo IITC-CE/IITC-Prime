@@ -14,7 +14,7 @@
 
 <!--          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />-->
           <label text="" :height="12*2" />
-          <AppWebView flexGrow="1" @createPopup="showPopup"></AppWebView>
+          <AppWebView flexGrow="1" @show-popup="showPopup"></AppWebView>
           <label text="" height="100" />
 
         </FlexboxLayout>

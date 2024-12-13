@@ -4,22 +4,24 @@
   <BaseWebView
     ref="baseWebView"
     src="https://intel.ingress.com/"
+    :allowedDomains="['intel.ingress.com', 'signin.nianticlabs.com']"
     @webview-loaded="onWebViewLoaded"
     @load-started="onLoadStarted"
     @load-finished="onLoadFinished"
-    @should-override-url-loading="onShouldOverrideUrlLoading"
+    @external-url="handleExternalUrl"
+    @show-popup="handleShowPopup"
+    @load-error="handleLoadError"
   />
 </template>
 
 <script>
-import { isAndroid } from "@nativescript/core";
-import { injectBridgeIITC, router } from "@/utils/bridge";
-import { showLayer, switchToPane } from "@/utils/events-to-iitc";
+import { injectBridgeIITC } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import BaseWebView from './BaseWebView.vue';
-import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
 
 export default {
+  name: 'AppWebView',
+
   components: {
     BaseWebView
   },
@@ -37,47 +39,16 @@ export default {
   },
 
   methods: {
-    createWebChromeClient() {
-      const client = new BaseWebChromeClient();
-      client.initWithComponent({
-        createAuthPopup: (resultMsg) => {
-          this.$emit(
-            'createPopup',
-            {
-              transport: resultMsg,
-            }
-          );
-        },
-      });
-      this.chromeClient = client;
-      return client;
+    handleShowPopup(data) {
+      this.$emit('show-popup', data);
     },
 
-    cleanupWebView() {
-      if (this.webview && isAndroid) {
-        if (this.chromeClient) {
-          this.chromeClient.cleanup();
-          this.webview.android.setWebChromeClient(null);
-          this.chromeClient = null;
-        }
-
-        this.$refs.baseWebView.cleanupWebView();
-      }
+    handleExternalUrl(url) {
+      this.$emit('show-popup', { url });
     },
 
-    JSBridge(args) {
-      router(args.data);
-    },
-
-    onWebViewLoaded({ webview }) {
-      if (isAndroid) {
-        const chromeClient = this.createWebChromeClient();
-        webview.android.setWebChromeClient(chromeClient);
-      }
-
-      this.$emit('webview-loaded', {
-        webview,
-      });
+    handleLoadError(error) {
+      console.error('WebView load error:', error);
     },
 
     onLoadStarted() {
@@ -90,18 +61,8 @@ export default {
       await this.$store.dispatch('setIsWebViewLoadFinished', true);
     },
 
-    onShouldOverrideUrlLoading(args) {
-      const uri = new URL(args.url);
-      if (!["intel.ingress.com", "signin.nianticlabs.com"].includes(uri.hostname)) {
-        this.$emit(
-          'createPopup',
-          {
-            url: args.url,
-          }
-        );
-        args.cancel = true;
-      }
-      return args;
+    async onWebViewLoaded({ webview }) {
+      this.$emit('webview-loaded', { webview });
     }
   },
 
@@ -109,6 +70,7 @@ export default {
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
         const webview = this.webview;
+        if (!webview) return;
 
         switch (action.type) {
           case "setInjectPlugin":
@@ -126,18 +88,11 @@ export default {
             break;
         }
       }
-    })
+    });
   },
 
   beforeDestroy() {
     this.store_unsubscribe();
-    this.cleanupWebView();
   }
-}
+};
 </script>
-
-<style scoped lang="scss">
-GridLayout {
-  background-color: white;
-}
-</style>

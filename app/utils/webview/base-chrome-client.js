@@ -34,8 +34,8 @@ export const BaseWebChromeClient = android.webkit.WebChromeClient.extend({
   onCreateWindow: function(view, isDialog, isUserGesture, resultMsg) {
     if (!isUserGesture) return false;
 
-    if (this.component?.createAuthPopup) {
-      this.component.createAuthPopup(resultMsg);
+    if (this.component?.showPopup) {
+      this.component.showPopup(resultMsg);
       return true;
     }
     return false;
