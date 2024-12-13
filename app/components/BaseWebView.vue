@@ -170,14 +170,23 @@ export default {
             this.chromeClient = null;
           }
 
-          const androidWebView = this.webViewInstance.android;
+          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading'];
+          events.forEach(event => {
+            try {
+              this.webViewInstance.removeEventListener(event);
+            } catch (e) {
+              console.log(`Warning: Could not remove listener for ${event}`);
+            }
+          });
 
-          androidWebView.stopLoading(); // Stop any ongoing loads
-          androidWebView.clearHistory(); // Clear navigation history
-          androidWebView.clearCache(true); // Clear cache
-          androidWebView.loadUrl("about:blank"); // Clear all content
-          this.webViewInstance.off(); // Clear any callbacks
-          androidWebView.destroy(); // Destroy the WebView
+          const androidWebView = this.webViewInstance.android;
+          if (androidWebView) {
+            androidWebView.stopLoading(); // Stop any ongoing loads
+            androidWebView.clearHistory(); // Clear navigation history
+            androidWebView.clearCache(true); // Clear cache
+            androidWebView.loadUrl("about:blank"); // Clear all content
+            androidWebView.destroy(); // Destroy the WebView
+          }
 
           this.webViewInstance = null;
           this.isLoading = false;
