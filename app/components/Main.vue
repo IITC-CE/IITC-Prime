@@ -12,10 +12,8 @@
           width="100%"
           height="100%">
 
-<!--          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />-->
-          <label text="" :height="12*2" />
           <AppWebView flexGrow="1" @show-popup="showPopup"></AppWebView>
-          <label text="" height="100" />
+          <label text="" :height="webviewBottomPadding" />
 
         </FlexboxLayout>
 
@@ -61,7 +59,7 @@
       return {
         status_bar_height: 0,
         navigation_bar_height: 0,
-        show_top_padding: false,
+        webviewBottomPadding: 100,
         store_unsubscribe: function() {},
         isShowPopup: false,
         popupUrl: null,
@@ -81,8 +79,17 @@
         this.status_bar_height = getStatusBarHeight();
         this.navigation_bar_height = getNavigationBarHeight();
 
+        const screen_width = Screen.mainScreen.widthDIPs;
+        const screen_height = Screen.mainScreen.heightDIPs;
+
+        if (screen_width > screen_height) {
+          this.webviewBottomPadding = screen_width > 600 ? 0 : 100;
+        } else {
+          this.webviewBottomPadding = 100;
+        }
+
         await this.$store.dispatch('setSlidingPanelWidth', this.getSlidingPanelWidth());
-        await this.$store.dispatch('setScreenHeight', Screen.mainScreen.heightDIPs);
+        await this.$store.dispatch('setScreenHeight', Screen.mainScreen.heightDIPs - this.status_bar_height);
       },
 
       getSlidingPanelWidth() {
@@ -94,7 +101,7 @@
           if (screen_width > 600) {
             sliding_panel_width = 500;
           } else {
-            sliding_panel_width = screen_width - this.status_bar_height - this.navigation_bar_height;
+            sliding_panel_width = screen_width - this.navigation_bar_height;
           }
         } else {
           sliding_panel_width = screen_width;
@@ -113,6 +120,13 @@
         this.popupUrl = null;
         this.popupTransport = null;
       },
+    },
+
+    computed: {
+      webviewBottomPadding() {
+        console.log('compute ', Screen.mainScreen.widthDIPs);
+        return Screen.mainScreen.widthDIPs > 600 ? 0 : 100;
+      }
     },
 
     async created() {
@@ -155,9 +169,6 @@
               if (action.payload) {
                 await manager.inject();
               }
-              break;
-            case "setCurrentPane":
-              this.show_top_padding = !["all", "faction", "alerts", "info", "map"].includes(action.payload);
               break;
           }
         }
