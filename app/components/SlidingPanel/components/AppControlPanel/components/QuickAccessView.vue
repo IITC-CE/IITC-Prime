@@ -12,7 +12,7 @@
       <QuickAccessBigButton col="0" icon="fa-tools" name="Settings" />
       <QuickAccessBigButton col="1" icon="fa-toolbox" name="Plugins" />
       <QuickAccessBigButton col="2" icon="fa-terminal" name="Debug" />
-      <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" />
+      <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" @tap="reloadWebView" />
     </GridLayout>
 
     <Label class="separator" />
@@ -45,6 +45,9 @@
     components: { QuickAccessBigButton },
 
     methods: {
+      reloadWebView() {
+        this.$store.dispatch('reloadWebView');
+      },
       switchToPane(name) {
         this.$store.dispatch('setCurrentPane', name);
       }

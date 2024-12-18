@@ -3,8 +3,8 @@
 <template>
   <BaseWebView
     ref="baseWebView"
-    src="https://intel.ingress.com/"
-    :allowedDomains="['intel.ingress.com', 'signin.nianticlabs.com']"
+    :src="intelMapUrl"
+    :allowedDomains="allowedDomains"
     @webview-loaded="onWebViewLoaded"
     @load-started="onLoadStarted"
     @load-finished="onLoadFinished"
@@ -18,6 +18,7 @@
 import { injectBridgeIITC } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import BaseWebView from './BaseWebView.vue';
+import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
 
 export default {
   name: 'AppWebView',
@@ -28,7 +29,9 @@ export default {
 
   data() {
     return {
-      store_unsubscribe: () => {}
+      store_unsubscribe: () => {},
+      intelMapUrl: INGRESS_INTEL_MAP,
+      allowedDomains: WEBVIEW_ALLOWED_DOMAINS
     }
   },
 
@@ -73,6 +76,9 @@ export default {
         if (!webview) return;
 
         switch (action.type) {
+          case "reloadWebView":
+            await this.$refs.baseWebView.reload();
+            break;
           case "setInjectPlugin":
             await webview.executeJavaScript(action.payload['code']);
             break;

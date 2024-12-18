@@ -45,5 +45,6 @@ export default {
   },
   setInjectPlugin({commit}, property) {
     commit('setInjectPlugin', property);
-  }
+  },
+  reloadWebView() {},
 }

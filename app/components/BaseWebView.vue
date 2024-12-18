@@ -155,9 +155,8 @@ export default {
     },
 
     reload() {
-      if (this.webViewInstance) {
-        this.webViewInstance.reload();
-      }
+      this.webViewInstance.loadUrl("about:blank");
+      this.webViewInstance.loadUrl(this.src);
     },
 
     // Cleanup

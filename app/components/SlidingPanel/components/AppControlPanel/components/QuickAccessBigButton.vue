@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout flexDirection="column" alignItems="center" class="btn" @touch="hoverOver($event)">
+  <FlexboxLayout flexDirection="column" alignItems="center" class="btn" @tap="handleTap($event)">
     <Label class="fa icon" :text="icon | fonticon" />
     <Label class="text" :text="name" />
   </FlexboxLayout>
@@ -25,12 +25,8 @@
       }
     },
     methods: {
-      hoverOver: function (e) {
-        if (e.action === "down") {
-          this.hover = true;
-        } else if (e.action === "up") {
-          this.hover = false;
-        }
+      handleTap: function (event) {
+        this.$emit('tap', event);
       },
     }
   }
