@@ -11,6 +11,7 @@
     @loadFinished="onLoadFinished"
     @loadError="onLoadError"
     @shouldOverrideUrlLoading="onShouldOverrideUrlLoading"
+    @JSBridge="onJSBridge"
   />
 </template>
 
@@ -148,6 +149,10 @@ export default {
         console.error('Invalid URL:', url);
         return false;
       }
+    },
+
+    onJSBridge(args) {
+      this.$emit('bridge-message', args.data);
     },
 
     executeJavaScript(code) {

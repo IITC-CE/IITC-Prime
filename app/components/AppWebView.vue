@@ -11,11 +11,12 @@
     @external-url="handleExternalUrl"
     @show-popup="handleShowPopup"
     @load-error="handleLoadError"
+    @bridge-message="handleBridgeMessage"
   />
 </template>
 
 <script>
-import { injectBridgeIITC } from "@/utils/bridge";
+import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
@@ -66,7 +67,11 @@ export default {
 
     async onWebViewLoaded({ webview }) {
       this.$emit('webview-loaded', { webview });
-    }
+    },
+
+    handleBridgeMessage(eventData) {
+      router(eventData);
+    },
   },
 
   created() {
