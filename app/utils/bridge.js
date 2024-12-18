@@ -8,21 +8,21 @@ import {
   setProgress
 } from "@/utils/events-from-iitc";
 
-export const router = (event) => {
+export const router = async (event) => {
   const [eventName, eventData] = event;
 
   switch (eventName) {
     case "switchToPane":
-      switchToPane(eventData.id);
+      await switchToPane(eventData.id);
       break;
     case "setLayers":
-      setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer));
+      await setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer));
       break;
     case "addPane":
-      addPane(eventData.name, eventData.label, eventData.icon);
+      await addPane(eventData.name, eventData.label, eventData.icon);
       break;
     case "setProgress":
-      setProgress(eventData.progress);
+      await setProgress(eventData.progress);
       break;
     default:
       console.log("Unknown event in JSBridge router");

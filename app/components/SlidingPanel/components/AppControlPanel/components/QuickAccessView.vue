@@ -38,7 +38,7 @@
   export default {
     data() {
       return {
-        panes: this.$store.state.panes,
+        panes: this.$store.state.navigation.panes,
       }
     },
 
@@ -46,10 +46,10 @@
 
     methods: {
       reloadWebView() {
-        this.$store.dispatch('reloadWebView');
+        this.$store.dispatch('ui/reloadWebView');
       },
       switchToPane(name) {
-        this.$store.dispatch('setCurrentPane', name);
+        this.$store.dispatch('navigation/setCurrentPane', name);
       }
     }
   };

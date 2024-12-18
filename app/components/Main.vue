@@ -83,8 +83,8 @@ export default {
       };
 
       await Promise.all([
-        this.$store.dispatch('setSlidingPanelWidth', this.calculatePanelWidth(widthDIPs, heightDIPs)),
-        this.$store.dispatch('setScreenHeight', heightDIPs - this.layoutConfig.statusBarHeight)
+        this.$store.dispatch('ui/setSlidingPanelWidth', this.calculatePanelWidth(widthDIPs, heightDIPs)),
+        this.$store.dispatch('ui/setScreenHeight', heightDIPs - this.layoutConfig.statusBarHeight)
       ]);
     },
 
@@ -117,7 +117,7 @@ export default {
         storage,
         message: (message, args) => console.log(`Message: ${message}, args: ${args}`),
         progressbar: is_show => console.log(`Progress bar: ${is_show ? 'show' : 'hide'}`),
-        inject_plugin: (p) => this.$store.dispatch('setInjectPlugin', p)
+        inject_plugin: (p) => this.$store.dispatch('map/setInjectPlugin', p)
       });
 
       manager.run();
@@ -128,7 +128,7 @@ export default {
       if (!Application.android) return;
 
       Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
-        this.$store.dispatch('setCurrentPane', 'map');
+        this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
     }
@@ -141,7 +141,7 @@ export default {
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
         switch (action.type) {
-          case "setIsWebViewLoadFinished":
+          case "ui/setWebviewLoadStatus":
             if (action.payload) {
               await manager.inject();
             }

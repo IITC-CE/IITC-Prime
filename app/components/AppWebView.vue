@@ -55,13 +55,13 @@ export default {
     },
 
     onLoadStarted() {
-      this.$store.dispatch('setIsWebViewLoadFinished', false);
+      this.$store.dispatch('ui/setWebviewLoadStatus', false);
     },
 
     async onLoadFinished() {
       await injectBridgeIITC(this.webview);
       await injectIITCPrimeResources(this.webview);
-      await this.$store.dispatch('setIsWebViewLoadFinished', true);
+      await this.$store.dispatch('ui/setWebviewLoadStatus', true);
     },
 
     async onWebViewLoaded({ webview }) {
@@ -76,20 +76,20 @@ export default {
         if (!webview) return;
 
         switch (action.type) {
-          case "reloadWebView":
+          case "ui/reloadWebView":
             await this.$refs.baseWebView.reload();
             break;
-          case "setInjectPlugin":
+          case "map/setInjectPlugin":
             await webview.executeJavaScript(action.payload['code']);
             break;
-          case "setActiveBaseLayer":
+          case "map/setActiveBaseLayer":
             await webview.executeJavaScript(showLayer(action.payload, true));
             break;
-          case "setOverlayLayerProperty":
-            const overlay_layer = state.overlay_layers[action.payload.index];
+          case "map/setOverlayLayerProperty":
+            const overlay_layer = state.map.overlayLayers[action.payload.index];
             await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
             break;
-          case "setCurrentPane":
+          case "navigation/setCurrentPane":
             await webview.executeJavaScript(switchToPane(action.payload));
             break;
         }

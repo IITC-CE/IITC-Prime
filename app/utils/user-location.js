@@ -49,7 +49,7 @@ export default class userLocation {
 
   locationReceived(position) {
     store.dispatch(
-      'setLocation',
+      'map/setLocation',
       {
         lat: position.latitude,
         lng: position.longitude,

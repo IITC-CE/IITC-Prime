@@ -19,8 +19,8 @@
           row="0"
           colSpan="2"
           class="drop_down"
-          :items="base_layers_list"
-          :selectedIndex="base_layer_selected"
+          :items="baseLayersList"
+          :selectedIndex="baseLayerSelected"
           @selectedIndexChanged="onDropDownSelectedIndexChanged($event, 'base_layer')"
           itemsPadding="10"
         ></DropDown>
@@ -36,7 +36,7 @@
         <SVGView
           class="overlay_portal"
           :col="index"
-          v-for="(layer, index) in overlay_layers"
+          v-for="(layer, index) in overlayLayers"
           v-bind:key="layer.layerId"
           v-if="index <= 8"
           @tap="onOverlayPortalPropertyChange($event, index)"
@@ -51,7 +51,7 @@
         :class="{ overlay_item: true, overlay_item_half: index <= 12 }"
         columns="*, auto"
         rows="50"
-        v-for="(layer, index) in overlay_layers"
+        v-for="(layer, index) in overlayLayers"
         v-bind:key="layer.layerId"
         v-if="index > 8"
       >
@@ -70,17 +70,17 @@
   export default {
     data() {
       return {
-        base_layer_selected: this.$store.state.base_layer_selected,
-        base_layers_list: this.$store.state.base_layers_list,
-        overlay_layers: this.$store.state.overlay_layers
+        baseLayerSelected: this.$store.state.map.baseLayerSelected,
+        baseLayersList: this.$store.state.map.baseLayersList,
+        overlayLayers: this.$store.state.map.overlayLayers
       }
     },
 
     methods: {
       onOverlayPortalPropertyChange(e, index) {
-        const active = !(this.$store.state.overlay_layers[index].active === true);
+        const active = !(this.$store.state.map.overlayLayers[index].active === true);
         e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
-        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
       },
       onOverlayLayerPropertyTap(index) {
         const switch_obj = this.$refs['overlaySwitch' + index][0].nativeView;
@@ -88,12 +88,12 @@
       },
       onOverlayLayerPropertyChange(index) {
         const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
-        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
       },
       onDropDownSelectedIndexChanged(e, type) {
         console.log("onDropDownSelectedIndexChanged");
         if (type === "base_layer") {
-          this.$store.dispatch('setActiveBaseLayer', e.newIndex);
+          this.$store.dispatch('map/setActiveBaseLayer', e.newIndex);
         }
       }
     }

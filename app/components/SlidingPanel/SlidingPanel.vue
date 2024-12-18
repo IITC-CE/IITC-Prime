@@ -43,7 +43,7 @@ export default {
   data() {
     return {
       // Screen dimensions
-      screenHeight: this.$store.state.screen_height,
+      screenHeight: this.$store.state.ui.screenHeight,
 
       // Map state bar
       mapStateBarHeight: 46,
@@ -51,7 +51,7 @@ export default {
       // Panel configuration
       panelVisibleHeight: 110,
       panelHeight: 0,
-      panelWidth: this.$store.state.sliding_panel_width,
+      panelWidth: this.$store.state.ui.slidingPanelWidth,
     };
   },
 
@@ -74,10 +74,10 @@ export default {
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
         switch (action.type) {
-          case "setScreenHeight":
+          case "ui/setScreenHeight":
             this.handleScreenHeightChange(action.payload);
             break;
-          case "setSlidingPanelWidth":
+          case "ui/setSlidingPanelWidth":
             this.panelWidth = action.payload;
             break;
         }
