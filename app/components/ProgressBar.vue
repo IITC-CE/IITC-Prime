@@ -12,14 +12,14 @@
   export default {
     data() {
       return {
-        progress: this.$store.state.progress,
+        progress: this.$store.state.ui.progress,
       }
     },
     async created() {
       this.store_unsubscribe = this.$store.subscribeAction({
         after: async (action, state) => {
           switch (action.type) {
-            case "setProgress":
+            case "ui/setProgress":
               this.progress = action.payload;
               break;
           }

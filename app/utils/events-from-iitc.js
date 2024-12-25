@@ -15,9 +15,9 @@ export const getVersionName = () => {
  * Switching the active panel, if required.
  * @param {string} name Panel ID
  */
-export const switchToPane = (name) => {
-  if (store.state.current_pane !== name) {
-    store.dispatch('setCurrentPane', name);
+export const switchToPane = async (name) => {
+  if (store.state.navigation.currentPane !== name) {
+    await store.dispatch('navigation/setCurrentPane', name);
   }
 }
 
@@ -26,9 +26,9 @@ export const switchToPane = (name) => {
  * @param {Array.Object.<string, number|string|boolean>} base_layers List of objects of map providers
  * @param {Array.Object.<string, number|string|boolean>} overlay_layer List of objects of overlay layers
  */
-export const setLayers = (base_layers, overlay_layer) => {
-  store.dispatch('setBaseLayers', base_layers);
-  store.dispatch('setOverlayLayers', overlay_layer);
+export const setLayers = async (base_layers, overlay_layer) => {
+  await store.dispatch('map/setBaseLayers', base_layers);
+  await store.dispatch('map/setOverlayLayers', overlay_layer);
 }
 
 /**
@@ -37,9 +37,9 @@ export const setLayers = (base_layers, overlay_layer) => {
  * @param {string} label Display name
  * @param {string} icon Icon name
  */
-export const addPane = (name, label, icon) => {
-  if (!store.state.panes.find(o => o.name === name)) {
-    store.dispatch('addPane', {name: name, label: label, icon: icon});
+export const addPane = async (name, label, icon) => {
+  if (!store.state.navigation.panes.find(o => o.name === name)) {
+    await store.dispatch('navigation/addPane', {name: name, label: label, icon: icon});
   }
 }
 
@@ -47,11 +47,11 @@ export const addPane = (name, label, icon) => {
  * Sets the progress of loading page resources.
  * @param {number} progress Number from 0 to 1. If there is request, but it is impossible to determine progress, then -1.
  */
-export const setProgress = (progress) => {
+export const setProgress = async (progress) => {
   if (progress !== -1) {
     // maximum for setProgress is 100
-    store.dispatch('setProgress', Math.round(progress * 100));
+    await store.dispatch('ui/setProgress', Math.round(progress * 100));
   } else {
-    store.dispatch('setProgress', 0);
+    await store.dispatch('ui/setProgress', 0);
   }
 }

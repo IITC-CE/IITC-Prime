@@ -1,150 +1,109 @@
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
 <template>
-  <WebViewExt
-    src="https://intel.ingress.com/"
-    viewPortSize="width=device-width, initial-scale=1.0"
-    domStorage=true
-    @loaded="webViewLoaded"
-    @loadStarted="loadStarted"
-    @loadFinished="loadFinished"
-    @shouldOverrideUrlLoading="shouldOverrideUrlLoading"
-    @JSBridge="JSBridge"
+  <BaseWebView
+    ref="baseWebView"
+    :src="intelMapUrl"
+    :allowedDomains="allowedDomains"
+    @webview-loaded="onWebViewLoaded"
+    @load-started="onLoadStarted"
+    @load-finished="onLoadFinished"
+    @external-url="handleExternalUrl"
+    @show-popup="handleShowPopup"
+    @load-error="handleLoadError"
+    @bridge-message="handleBridgeMessage"
   />
 </template>
 
 <script>
-  import WebViewExt from '@nota/nativescript-webview-ext/vue'
-  import { InAppBrowser } from 'nativescript-inappbrowser';
-  import { ApplicationSettings, Utils, Dialogs, isAndroid } from "@nativescript/core";
-  import { ToastDuration, Toasty } from '@triniwiz/nativescript-toasty';
-  import { handleOpenURL } from 'nativescript-appurl';
+import { injectBridgeIITC, router } from "@/utils/bridge";
+import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
+import BaseWebView from './BaseWebView.vue';
+import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
 
-  import { mapState } from 'vuex';
-  import storage from "~/utils/storage"
-  import { injectBridgeIITC, router } from "@/utils/bridge";
-  import {showLayer, switchToPane} from "@/utils/events-to-iitc";
-  import {injectIITCPrimeResources} from "~/utils/iitc-prime-resources";
+export default {
+  name: 'AppWebView',
 
-  let webview;
+  components: {
+    BaseWebView
+  },
 
-  export default {
-    data() {
-      return {
-        store_unsubscribe: function() {}
-      }
-    },
-
-    methods: {
-
-      JSBridge(args) {
-        const eventData = args.data;
-        router(eventData);
-      },
-
-      webViewLoaded(args) {
-        webview = args.object;
-        if (isAndroid) {
-          android.webkit.WebView['setWebContentsDebuggingEnabled'](true);
-        }
-      },
-
-      showLoginToast() {
-        new Toasty({ text: 'After successful authorization, click "Open in App" and select "IITC Prime"' })
-          .setToastDuration(ToastDuration.LONG)
-          .setTextColor("#000000")
-          .setBackgroundColor('#ffffff')
-          .show();
-      },
-
-      shouldOverrideUrlLoading(args) {
-        const URL = require('url-parse');
-        const uri = new URL(args.url);
-
-        if (uri.hostname !== "intel.ingress.com") {
-
-          if (uri.hostname === "accounts.google.com") {
-            console.log("Google login");
-            this.showLoginToast();
-          } else if (uri.hostname === "www.facebook.com") {
-            console.log("Facebook login");
-            this.showLoginToast();
-          }
-
-          this.openExternalUrl(args.url);
-          args.cancel = true;
-        }
-        return args;
-      },
-
-      async openExternalUrl(url) {
-        // Custom Tabs API:
-        // https://github.com/proyecto26/nativescript-inappbrowser
-        try {
-          if (await InAppBrowser.isAvailable()) {
-            await InAppBrowser.open(url, {
-              // iOS Properties
-              enableBarCollapsing: false,
-              // Android Properties
-              forceCloseOnRedirection: true,
-              hasBackButton: true,
-              showInRecents: false
-            });
-          }
-          else {
-            Utils.openUrl(url);
-          }
-        }
-        catch (error) {
-          await Dialogs.alert({
-            title: 'Error',
-            message: error.message,
-            okButtonText: 'Ok'
-          });
-        }
-      },
-
-      async loadStarted(args) {
-        await this.$store.dispatch('setIsWebViewLoadFinished', false);
-      },
-
-      async loadFinished(args) {
-        await injectBridgeIITC(webview);
-        await injectIITCPrimeResources(webview);
-        await this.$store.dispatch('setIsWebViewLoadFinished', true);
-      }
-    },
-
-    async created() {
-      handleOpenURL(function(appURL) {
-        webview.loadUrl(String(appURL));
-      });
-
-      this.store_unsubscribe = this.$store.subscribeAction({
-        after: async (action, state) => {
-          switch (action.type) {
-            case "setInjectPlugin":
-              await webview.executeJavaScript(action.payload['code']);
-              break;
-            case "setActiveBaseLayer":
-              await webview.executeJavaScript(showLayer(action.payload, true));
-              break;
-            case "setOverlayLayerProperty":
-              const overlay_layer = state.overlay_layers[action.payload.index];
-              await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
-              break;
-            case "setCurrentPane":
-              await webview.executeJavaScript(switchToPane(action.payload));
-              break;
-          }
-        }
-      })
-    },
-
-    onDestroy() {
-      this.store_unsubscribe();
+  data() {
+    return {
+      store_unsubscribe: () => {},
+      intelMapUrl: INGRESS_INTEL_MAP,
+      allowedDomains: WEBVIEW_ALLOWED_DOMAINS
     }
+  },
+
+  computed: {
+    webview() {
+      return this.$refs.baseWebView?.webview;
+    }
+  },
+
+  methods: {
+    handleShowPopup(data) {
+      this.$emit('show-popup', data);
+    },
+
+    handleExternalUrl(url) {
+      this.$emit('show-popup', { url });
+    },
+
+    handleLoadError(error) {
+      console.error('WebView load error:', error);
+    },
+
+    onLoadStarted() {
+      this.$store.dispatch('ui/setWebviewLoadStatus', false);
+    },
+
+    async onLoadFinished() {
+      await injectBridgeIITC(this.webview);
+      await injectIITCPrimeResources(this.webview);
+      await this.$store.dispatch('ui/setWebviewLoadStatus', true);
+    },
+
+    async onWebViewLoaded({ webview }) {
+      this.$emit('webview-loaded', { webview });
+    },
+
+    handleBridgeMessage(eventData) {
+      router(eventData);
+    },
+  },
+
+  created() {
+    this.store_unsubscribe = this.$store.subscribeAction({
+      after: async (action, state) => {
+        const webview = this.webview;
+        if (!webview) return;
+
+        switch (action.type) {
+          case "ui/reloadWebView":
+            await this.$refs.baseWebView.reload();
+            break;
+          case "map/setInjectPlugin":
+            await webview.executeJavaScript(action.payload['code']);
+            break;
+          case "map/setActiveBaseLayer":
+            await webview.executeJavaScript(showLayer(action.payload, true));
+            break;
+          case "map/setOverlayLayerProperty":
+            const overlay_layer = state.map.overlayLayers[action.payload.index];
+            await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
+            break;
+          case "navigation/setCurrentPane":
+            await webview.executeJavaScript(switchToPane(action.payload));
+            break;
+        }
+      }
+    });
+  },
+
+  beforeDestroy() {
+    this.store_unsubscribe();
   }
+};
 </script>
-
-<style scoped lang="scss">
-
-</style>

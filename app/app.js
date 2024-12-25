@@ -1,26 +1,32 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-// import VueDevtools from 'nativescript-vue-devtools'
 import Vue from 'nativescript-vue'
 
-import Main from '~/components/Main'
-
-import { TNSFontIcon, fonticon } from 'nativescript-fonticon'
-TNSFontIcon.paths = { 'mdi': './assets/css/material-design-icons.css' }
-TNSFontIcon.loadCss()
-Vue.filter('fonticon', fonticon)
-
+import { FontIcon, fonticon } from '@nativescript-community/fonticon';
 import BottomSheetPlugin from '@nativescript-community/ui-material-bottomsheet/vue';
+import CanvasSVG from '@nativescript-community/ui-svg/vue';
+import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
+import WebViewPlugin from '@nativescript-community/ui-webview/vue';
+
+import Main from '~/components/Main'
+import store from './store';
+
+FontIcon.paths = {
+  'fa': './assets/css/Font-Awesome.css',
+};
+FontIcon.loadCssSync();
+Vue.filter('fonticon', fonticon);
+
 import { install } from "@nativescript-community/ui-material-bottomsheet";
 install();
 Vue.use(BottomSheetPlugin);
 
-import CanvasSVG from '@nativescript-community/ui-svg/vue';
 Vue.use(CanvasSVG);
 
-import store from './store';
+Vue.use(ButtonPlugin);
 
-// Vue.use(VueDevtools, { host: '192.168.42.10' })
+Vue.use(WebViewPlugin);
+
 Vue.config.silent = false;
 
 new Vue({

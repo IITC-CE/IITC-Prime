@@ -1,7 +1,9 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <BottomSheet class="bottom_sheet">
+  <FlexboxLayout
+    flexDirection="column"
+  >
 
     <StackLayout orientation="horizontal" class="block">
 
@@ -17,8 +19,8 @@
           row="0"
           colSpan="2"
           class="drop_down"
-          :items="base_layers_list"
-          :selectedIndex="base_layer_selected"
+          :items="baseLayersList"
+          :selectedIndex="baseLayerSelected"
           @selectedIndexChanged="onDropDownSelectedIndexChanged($event, 'base_layer')"
           itemsPadding="10"
         ></DropDown>
@@ -34,7 +36,7 @@
         <SVGView
           class="overlay_portal"
           :col="index"
-          v-for="(layer, index) in overlay_layers"
+          v-for="(layer, index) in overlayLayers"
           v-bind:key="layer.layerId"
           v-if="index <= 8"
           @tap="onOverlayPortalPropertyChange($event, index)"
@@ -49,7 +51,7 @@
         :class="{ overlay_item: true, overlay_item_half: index <= 12 }"
         columns="*, auto"
         rows="50"
-        v-for="(layer, index) in overlay_layers"
+        v-for="(layer, index) in overlayLayers"
         v-bind:key="layer.layerId"
         v-if="index > 8"
       >
@@ -58,31 +60,27 @@
       </GridLayout>
     </WrapLayout>
 
-  </BottomSheet>
+  </FlexboxLayout>
 </template>
 
 <script>
   import Vue from 'nativescript-vue'
   Vue.registerElement("DropDown", () => require("nativescript-drop-down/drop-down").DropDown)
 
-  import BottomSheet from './BottomSheet';
-
   export default {
     data() {
       return {
-        base_layer_selected: this.$store.state.base_layer_selected,
-        base_layers_list: this.$store.state.base_layers_list,
-        overlay_layers: this.$store.state.overlay_layers
+        baseLayerSelected: this.$store.state.map.baseLayerSelected,
+        baseLayersList: this.$store.state.map.baseLayersList,
+        overlayLayers: this.$store.state.map.overlayLayers
       }
     },
-    components: { BottomSheet },
-    created() {
-    },
+
     methods: {
       onOverlayPortalPropertyChange(e, index) {
-        const active = !(this.$store.state.overlay_layers[index].active === true);
+        const active = !(this.$store.state.map.overlayLayers[index].active === true);
         e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
-        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
       },
       onOverlayLayerPropertyTap(index) {
         const switch_obj = this.$refs['overlaySwitch' + index][0].nativeView;
@@ -90,12 +88,12 @@
       },
       onOverlayLayerPropertyChange(index) {
         const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
-        this.$store.dispatch('setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
       },
       onDropDownSelectedIndexChanged(e, type) {
         console.log("onDropDownSelectedIndexChanged");
         if (type === "base_layer") {
-          this.$store.dispatch('setActiveBaseLayer', e.newIndex);
+          this.$store.dispatch('map/setActiveBaseLayer', e.newIndex);
         }
       }
     }
@@ -103,7 +101,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .block {
     margin-bottom: 10;

@@ -1,15 +1,13 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout flexDirection="column" class="btn" @touch="hoverOver($event)">
-    <Label class="mdi icon" :text="icon | fonticon" />
-    <Label :text="name" />
+  <FlexboxLayout flexDirection="column" alignItems="center" class="btn" @tap="handleTap($event)">
+    <Label class="fa icon" :text="icon | fonticon" />
+    <Label class="text" :text="name" />
   </FlexboxLayout>
 </template>
 
 <script>
-  import { Label } from "@nativescript/core";
-
   export default {
     props: {
       icon: {
@@ -27,31 +25,27 @@
       }
     },
     methods: {
-      hoverOver: function (e) {
-        if (e.action === "down") {
-          this.hover = true;
-        } else if (e.action === "up") {
-          this.hover = false;
-        }
+      handleTap: function (event) {
+        this.$emit('tap', event);
       },
     }
   }
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .btn {
     font-size: $font-size;
     text-align: center;
-    padding: 14;
+    padding: 0 10;
   }
 
   .icon {
-    margin: 0 13 2 13;
-    padding: 16 0;
+    margin: 0 0 2 0;
+    width: 54;
+    height: 54;
     font-size: 20;
-    text-align: center;
     border-radius: 50%;
     color: $text-bottom-sheet;
     background-color: $complementary-bottom-sheet;

@@ -12,14 +12,15 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
 
         <item name="android:windowActionBarOverlay">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@color/ns_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="LaunchScreenTheme" parent="LaunchScreenThemeBase">
     </style>
 
     <!-- theme to use AFTER launch screen is loaded-->
-    <style name="AppThemeBase" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppThemeBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="toolbarStyle">@style/NativeScriptToolbarStyle</item>
 
         <item name="colorPrimary">@color/ns_primary</item>

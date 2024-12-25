@@ -1,16 +1,18 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <BottomSheet class="bottom_sheet">
+  <FlexboxLayout
+    flexDirection="column"
+  >
 
     <GridLayout
       columns="*, *, *, *"
       class="block"
     >
-      <QuickAccessBigButton col="0" icon="mdi-settings" name="Settings" />
-      <QuickAccessBigButton col="1" icon="mdi-extension" name="Plugins" />
-      <QuickAccessBigButton col="2" icon="mdi-adb" name="Debug" />
-      <QuickAccessBigButton col="3" icon="mdi-cached" name="Reload IITC" />
+      <QuickAccessBigButton col="0" icon="fa-tools" name="Settings" />
+      <QuickAccessBigButton col="1" icon="fa-toolbox" name="Plugins" />
+      <QuickAccessBigButton col="2" icon="fa-terminal" name="Debug" />
+      <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" @tap="reloadWebView" />
     </GridLayout>
 
     <Label class="separator" />
@@ -23,37 +25,38 @@
       v-bind:key="pane.name"
       @tap="switchToPane(pane.name)"
     >
-      <Label class="mdi icon" :text="pane.icon | fonticon" col="0" :row="index" />
+      <Label class="fa icon" :text="pane.icon | fonticon" col="0" :row="index" />
       <Label class="pane_item_label" :text="pane.label" col="1" :row="index" />
     </GridLayout>
 
-  </BottomSheet>
+  </FlexboxLayout>
 </template>
 
 <script>
-  import BottomSheet from './BottomSheet';
-  import QuickAccessBigButton from './QuickAccessBigButton';
+  import QuickAccessBigButton from './QuickAccessBigButton.vue';
 
   export default {
     data() {
       return {
-        panes: this.$store.state.panes,
+        panes: this.$store.state.navigation.panes,
       }
     },
-    components: { BottomSheet, QuickAccessBigButton },
-    created() {
-    },
+
+    components: { QuickAccessBigButton },
+
     methods: {
+      reloadWebView() {
+        this.$store.dispatch('ui/reloadWebView');
+      },
       switchToPane(name) {
-        this.$store.dispatch('setCurrentPane', name);
-        this.$closeBottomSheet();
+        this.$store.dispatch('navigation/setCurrentPane', name);
       }
     }
   };
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+  @import '@/app';
 
   .separator {
     width: 100%;
@@ -68,7 +71,7 @@
   }
 
   .icon {
-    font-size: 20;
+    font-size: 18;
     width: 24;
     vertical-align: center;
     text-align: center;

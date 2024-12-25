@@ -1,152 +1,188 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <Page actionBarHidden="true" @layoutChanged="onLayoutChanged">
+  <Page actionBarHidden="true" @layoutChanged="handleLayoutChange">
     <RootLayout height="100%" width="100%">
       <AbsoluteLayout class="page">
 
         <FlexboxLayout
           flexDirection="column"
-          left="0"
-          top="0"
-          width="100%"
-          height="100%">
-
-          <label text="" :class="{ hide: !show_top_padding }" :height="status_bar_height+48+12*2" />
-          <AppWebView flexGrow="1"></AppWebView>
-
+          class="main-content"
+        >
+          <AppWebView
+            flexGrow="1"
+            @show-popup="handlePopup"
+          />
+          <label :height="layoutConfig.bottomPadding" />
         </FlexboxLayout>
 
-        <ProgressBar
-          left="0"
-          top="0"
-          width="100%"
-        ></ProgressBar>
+        <ProgressBar class="progress-bar" />
+        <SlidingPanel class="sliding-panel" />
 
-        <AppBar
-          :top="status_bar_height"
-        ></AppBar>
-
+        <PopupWebView
+          v-if="popup.isVisible"
+          v-bind="popup.props"
+          @close="handlePopupClose"
+        />
       </AbsoluteLayout>
     </RootLayout>
   </Page>
 </template>
 
 <script>
-  import { Screen } from '@nativescript/core/platform';
-  import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform'
+import { Screen } from '@nativescript/core/platform';
+import { AndroidApplication, Application } from "@nativescript/core";
+import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform';
+import { Manager } from 'lib-iitc-manager';
+import storage from "~/utils/storage";
 
-  import AppWebView from './AppWebView';
-  import AppBar from './AppBar';
-  import ProgressBar from './ProgressBar';
+import AppWebView from './AppWebView';
+import ProgressBar from './ProgressBar';
+import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
+import PopupWebView from './PopupWebView.vue';
 
-  import storage from "~/utils/storage"
-  import { Manager } from 'lib-iitc-manager'
-  import {AndroidApplication, Application} from "@nativescript/core";
+const DEFAULT_PANEL_WIDTH = 500;
+const BOTTOM_PADDING = 100;
 
-  export default {
-    data() {
-      return {
-        status_bar_height: 0,
-        navigation_bar_height: 0,
-        show_top_padding: false,
-        store_unsubscribe: function() {}
-      }
-    },
-    components: { AppWebView, AppBar, ProgressBar },
+export default {
+  name: 'MainView',
 
-    computed: {
-    },
+  components: {
+    AppWebView,
+    ProgressBar,
+    SlidingPanel,
+    PopupWebView
+  },
 
-    methods: {
-      onLayoutChanged() {
-        this.status_bar_height = getStatusBarHeight();
-        this.navigation_bar_height = getNavigationBarHeight();
-
-        this.$store.dispatch('setAppBarWidth', this.getAppBarWidth());
+  data() {
+    return {
+      layoutConfig: {
+        statusBarHeight: 0,
+        navigationBarHeight: 0,
+        bottomPadding: BOTTOM_PADDING,
       },
-      getAppBarWidth() {
-        const screen_width = Screen.mainScreen.widthDIPs;
-        const screen_height = Screen.mainScreen.heightDIPs;
-
-        let appbar_width = 0;
-        if (screen_width > screen_height) {
-          if (screen_width > 600) {
-            appbar_width = 500;
-          } else {
-            appbar_width = screen_width - this.status_bar_height - this.navigation_bar_height;
-          }
-        } else {
-          appbar_width = screen_width;
+      popup: {
+        isVisible: false,
+        props: {
+          url: null,
+          transport: null
         }
-        return appbar_width
       },
-
-
-    },
-
-    async created() {
-      console.log("IITC create event fired");
-
-      const params = {
-        storage: storage,
-        message: (message, args) => {
-          console.log("Message for user:");
-          console.log(message+", args: "+args);
-        },
-        progressbar: is_show => {
-          if (is_show) {
-            console.log("Show progress bar");
-          } else {
-            console.log("Hide progress bar");
-          }
-        },
-        inject_plugin: (p) => {
-          this.$store.dispatch('setInjectPlugin', p);
-        }
-      };
-      const manager = new Manager(params);
-      manager.run().then();
-
-      if (Application.android) {
-        Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
-          if (!this.$store.state.is_opened_bottom_sheet) {
-            this.$store.dispatch('setCurrentPane', 'map');
-            args.cancel = true;
-          }
-        });
-      }
-
-      this.store_unsubscribe = this.$store.subscribeAction({
-        after: async (action, state) => {
-          switch (action.type) {
-            case "setIsWebViewLoadFinished":
-              if (action.payload) {
-                await manager.inject();
-              }
-              break;
-            case "setCurrentPane":
-              this.show_top_padding = !["all", "faction", "alerts", "info", "map"].includes(action.payload);
-              break;
-          }
-        }
-      });
-    },
-
-    onDestroy() {
-      this.store_unsubscribe();
+      unsubscribeStore: null
     }
-  };
+  },
+
+  methods: {
+    async handleLayoutChange() {
+      const { widthDIPs, heightDIPs } = Screen.mainScreen;
+
+      this.layoutConfig = {
+        statusBarHeight: getStatusBarHeight(),
+        navigationBarHeight: getNavigationBarHeight(),
+        bottomPadding: this.calculateBottomPadding(widthDIPs, heightDIPs)
+      };
+
+      await Promise.all([
+        this.$store.dispatch('ui/setSlidingPanelWidth', this.calculatePanelWidth(widthDIPs, heightDIPs)),
+        this.$store.dispatch('ui/setScreenHeight', heightDIPs - this.layoutConfig.statusBarHeight)
+      ]);
+    },
+
+    calculateBottomPadding(width, height) {
+      if (width <= height) return BOTTOM_PADDING;
+      return width > 600 ? 0 : BOTTOM_PADDING;
+    },
+
+    calculatePanelWidth(width, height) {
+      if (width <= height) return width;
+      return width > 600 ? DEFAULT_PANEL_WIDTH : width - this.layoutConfig.navigationBarHeight;
+    },
+
+    handlePopup({ url, transport }) {
+      this.popup = {
+        isVisible: true,
+        props: { url, transport }
+      };
+    },
+
+    handlePopupClose() {
+      this.popup = {
+        isVisible: false,
+        props: { url: null, transport: null }
+      };
+    },
+
+    setupManager() {
+      const manager = new Manager({
+        storage,
+        message: (message, args) => console.log(`Message: ${message}, args: ${args}`),
+        progressbar: is_show => console.log(`Progress bar: ${is_show ? 'show' : 'hide'}`),
+        inject_plugin: (p) => this.$store.dispatch('map/setInjectPlugin', p)
+      });
+
+      manager.run();
+      return manager;
+    },
+
+    setupAndroidBackHandler() {
+      if (!Application.android) return;
+
+      Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
+        this.$store.dispatch('navigation/setCurrentPane', 'map');
+        args.cancel = true;
+      });
+    }
+  },
+
+  async created() {
+    const manager = this.setupManager();
+    this.setupAndroidBackHandler();
+
+    this.unsubscribeStore = this.$store.subscribeAction({
+      after: async (action) => {
+        switch (action.type) {
+          case "ui/setWebviewLoadStatus":
+            if (action.payload) {
+              await manager.inject();
+            }
+            break;
+        }
+      }
+    });
+  },
+
+  beforeDestroy() {
+    if (this.unsubscribeStore) {
+      this.unsubscribeStore();
+    }
+  }
+};
 </script>
 
 <style scoped lang="scss">
-  @import '../app';
+@import '../app';
 
-  .page {
-    background-color: $accent;
-  }
+.page {
+  background-color: $accent;
+}
 
-  .hide {
-    visibility: collapse;
-  }
+.main-content {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.progress-bar {
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+.sliding-panel {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
 </style>
