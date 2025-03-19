@@ -30,20 +30,23 @@ export const map = {
     }
   },
   actions: {
-    // TODO: store base_layers as object: layerId may not be equal to id
     setBaseLayers({ commit }, baseLayers) {
-      const layerNames = [];
-      let activeIndex = -1;
+      const layers = [];
+      let activeId = 0;
 
-      baseLayers.forEach(layer => {
-        layerNames.push(layer.name);
+      baseLayers.forEach((layer, index) => {
+        layers.push({
+          name: layer.name,
+          layerId: layer.layerId
+        });
+
         if (layer.active === true) {
-          activeIndex = layer.layerId;
+          activeId = layer.layerId;
         }
       });
 
-      commit('SET_BASE_LAYER_SELECTED', activeIndex);
-      commit('SET_BASE_LAYERS_LIST', layerNames);
+      commit('SET_BASE_LAYER_SELECTED', activeId);
+      commit('SET_BASE_LAYERS_LIST', layers);
     },
     setActiveBaseLayer({ commit }, index) {
       commit('SET_BASE_LAYER_SELECTED', index);

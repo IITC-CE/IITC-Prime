@@ -1,29 +1,39 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout
-    flexDirection="column"
-  >
+  <FlexboxLayout flexDirection="column">
 
     <StackLayout orientation="horizontal" class="block">
 
-      <StackLayout class="drow_down_stack">
-        <label class="drow_down_label" text="Highlighter" />
-<!--        <DropDown col="0" class="drop_down" :items="highlighter_layers_list" :selectedIndex="highlighter_layer_selected" row="0" colSpan="2" itemsPadding="10"></DropDown>-->
+      <StackLayout class="select_stack">
+        <Label class="select_label" text="Highlighter" />
+<!--        <PickerField-->
+<!--          col="0"-->
+<!--          row="0"-->
+<!--          colSpan="2"-->
+<!--          class="picker-field"-->
+<!--          hint="Select highlighter"-->
+<!--          :items="highlighterLayersList"-->
+<!--          :selectedIndex="highlighterLayerSelected"-->
+<!--          @pickerClosed="onHighlighterSelected"-->
+<!--          pickerTitle="Select Highlighter Layer"-->
+<!--        />-->
       </StackLayout>
 
-      <StackLayout class="drow_down_stack">
-        <label class="drow_down_label" text="Base layer" />
-        <DropDown
+      <StackLayout class="select_stack">
+        <Label class="select_label" text="Base layer" />
+        <SelectField
           col="0"
           row="0"
           colSpan="2"
-          class="drop_down"
           :items="baseLayersList"
           :selectedIndex="baseLayerSelected"
-          @selectedIndexChanged="onDropDownSelectedIndexChanged($event, 'base_layer')"
-          itemsPadding="10"
-        ></DropDown>
+          idField="layerId"
+          textField="name"
+          title="Select Base Layer"
+          @change="onBaseLayerSelected"
+          v-if="baseLayersList && baseLayersList.length > 0"
+        />
       </StackLayout>
 
     </StackLayout>
@@ -64,37 +74,44 @@
 </template>
 
 <script>
-  import Vue from 'nativescript-vue'
-  Vue.registerElement("DropDown", () => require("nativescript-drop-down/drop-down").DropDown)
+  import SelectField from "@/components/base/SelectField.vue";
 
   export default {
     data() {
       return {
-        baseLayerSelected: this.$store.state.map.baseLayerSelected,
-        baseLayersList: this.$store.state.map.baseLayersList,
+        baseLayerSelected: this.$store.state.map.baseLayerSelected || 0,
+        baseLayersList: this.$store.state.map.baseLayersList || [],
         overlayLayers: this.$store.state.map.overlayLayers
       }
     },
 
+    components: {
+      SelectField
+    },
+
     methods: {
+      onBaseLayerSelected(args) {
+        const id = args.selectedId;
+        if (id !== undefined && id !== this.baseLayerSelected) {
+          this.baseLayerSelected = id;
+          this.$store.dispatch('map/setActiveBaseLayer', id);
+        }
+      },
+
       onOverlayPortalPropertyChange(e, index) {
         const active = !(this.$store.state.map.overlayLayers[index].active === true);
         e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
         this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
       },
+
       onOverlayLayerPropertyTap(index) {
         const switch_obj = this.$refs['overlaySwitch' + index][0].nativeView;
         switch_obj.checked = !switch_obj.checked;
       },
+
       onOverlayLayerPropertyChange(index) {
         const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
         this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
-      },
-      onDropDownSelectedIndexChanged(e, type) {
-        console.log("onDropDownSelectedIndexChanged");
-        if (type === "base_layer") {
-          this.$store.dispatch('map/setActiveBaseLayer', e.newIndex);
-        }
       }
     }
   };
@@ -107,30 +124,19 @@
     margin-bottom: 10;
   }
 
-  .drow_down_stack {
+  .select_stack {
     width: 50%;
     padding-left: 14;
   }
 
-  .drow_down_label {
+  .select_label {
     font-size: $font-small-size;
-  }
-
-  .drop_down {
-    font-size: $font-size;
-    color: $text-bottom-sheet;
-
-    // Hack to remove arrow on the right
-    // https://github.com/PeterStaev/NativeScript-Drop-Down/issues/91#issuecomment-336069519
-    /*border-color: rgba(0, 0, 0, 0);*/
-    /*border-width: 1;*/
-    /*border-style: solid;*/
   }
 
   .overlay_portal {
     margin: 2;
     border-radius: 50%;
-    background-color: $complementary-bottom-sheet;
+    background-color: $surface-variant;
     horizontal-align: center;
   }
 
@@ -140,17 +146,17 @@
 
   .overlay_item {
     border-bottom-width: 1;
-    border-bottom-color: $complementary-bottom-sheet;
+    border-bottom-color: $surface-variant;
   }
 
   .overlay_item_half {
     width: 50%;
-    background-color: $complementary-bottom-sheet;
+    background-color: $surface-variant;
 
     border-bottom-width: 1;
-    border-bottom-color: $base-bottom-sheet;
+    border-bottom-color: $surface-variant;
     border-right-width: 1;
-    border-right-color: $base-bottom-sheet;
+    border-right-color: $surface-variant;
   }
 
   .overlay_item_label {

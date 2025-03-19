@@ -7,6 +7,7 @@ import BottomSheetPlugin from '@nativescript-community/ui-material-bottomsheet/v
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import WebViewPlugin from '@nativescript-community/ui-webview/vue';
+import { CheckBox } from '@nstudio/nativescript-checkbox';
 
 import Main from '~/components/Main'
 import store from './store';
@@ -26,6 +27,17 @@ Vue.use(CanvasSVG);
 Vue.use(ButtonPlugin);
 
 Vue.use(WebViewPlugin);
+
+Vue.registerElement(
+  'CheckBox',
+  () => CheckBox,
+  {
+    model: {
+      prop: 'checked',
+      event: 'checkedChange'
+    }
+  }
+);
 
 Vue.config.silent = false;
 
