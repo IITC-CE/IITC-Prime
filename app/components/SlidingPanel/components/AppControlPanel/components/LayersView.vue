@@ -5,8 +5,8 @@
 
     <StackLayout orientation="horizontal" class="block">
 
-      <StackLayout class="select_stack">
-        <Label class="select_label" text="Highlighter" />
+      <StackLayout class="select-stack">
+        <Label class="select-label" text="Highlighter" />
 <!--        <PickerField-->
 <!--          col="0"-->
 <!--          row="0"-->
@@ -20,8 +20,11 @@
 <!--        />-->
       </StackLayout>
 
-      <StackLayout class="select_stack">
-        <Label class="select_label" text="Base layer" />
+      <StackLayout
+        class="select-stack"
+        v-if="baseLayersList && baseLayersList.length > 0"
+      >
+        <Label class="select-label" text="Base layer" />
         <SelectField
           col="0"
           row="0"
@@ -32,7 +35,6 @@
           textField="name"
           title="Select Base Layer"
           @change="onBaseLayerSelected"
-          v-if="baseLayersList && baseLayersList.length > 0"
         />
       </StackLayout>
 
@@ -44,29 +46,29 @@
       class="block"
     >
         <SVGView
-          class="overlay_portal"
+          class="overlay-portal"
+          :class="{ 'overlay-portal--active': layer.active === true }"
           :col="index"
           v-for="(layer, index) in overlayLayers"
           v-bind:key="layer.layerId"
           v-if="index <= 8"
-          @tap="onOverlayPortalPropertyChange($event, index)"
-          height="90%"
+          @tap="onOverlayPortalToggle($event, index)"
           :src="'~/assets/icons/portals/portal_L'+index+'_'+String(layer.active)+'.svg'"
           stretch="aspectFit"
         />
     </GridLayout>
 
-    <WrapLayout class="overlay_item_stack block">
+    <WrapLayout class="block">
       <GridLayout
-        :class="{ overlay_item: true, overlay_item_half: index <= 12 }"
+        :class="{ 'overlay-item': true, 'overlay-item-half': index <= 12 }"
         columns="*, auto"
         rows="50"
         v-for="(layer, index) in overlayLayers"
         v-bind:key="layer.layerId"
         v-if="index > 8"
       >
-        <Label class="overlay_item_label" :text="layer.name" @tap="onOverlayLayerPropertyTap(index)" col="0" :row="index" colSpan="2" />
-        <Switch :ref="'overlaySwitch'+index" :checked="layer.active" @checkedChange="onOverlayLayerPropertyChange(index)" col="1" :row="index" colSpan="2" />
+        <Label class="overlay-item-label" :text="layer.name" @tap="onOverlayToggle(index, true)" col="0" :row="index" colSpan="2" />
+        <Switch :ref="'overlaySwitch'+index" :checked="layer.active" @checkedChange="onOverlayToggle(index)" col="1" :row="index" colSpan="2" />
       </GridLayout>
     </WrapLayout>
 
@@ -103,21 +105,23 @@
         }
       },
 
-      onOverlayPortalPropertyChange(e, index) {
-        const active = !(this.$store.state.map.overlayLayers[index].active === true);
+      onOverlayPortalToggle(e, index) {
+        const active = !this.overlayLayers[index].active;
         e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
-        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
+        this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
       },
 
-      onOverlayLayerPropertyTap(index) {
-        const switch_obj = this.$refs['overlaySwitch' + index][0].nativeView;
-        switch_obj.checked = !switch_obj.checked;
+      onOverlayToggle(index, isLabelTap = false) {
+        if (isLabelTap) {
+          // Toggle switch state when label is tapped
+          const switchEl = this.$refs['overlaySwitch' + index][0].nativeView;
+          switchEl.checked = !switchEl.checked;
+        } else {
+          // Update store based on switch state
+          const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
+          this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
+        }
       },
-
-      onOverlayLayerPropertyChange(index) {
-        const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
-        this.$store.dispatch('map/setOverlayLayerProperty', {index: index, active: active});
-      }
     }
   };
 </script>
@@ -126,45 +130,40 @@
   @import '@/app';
 
   .block {
-    margin-bottom: 10;
+    margin-bottom: $spacing-m;
   }
 
-  .select_stack {
+  .select-stack {
     width: 50%;
-    padding-left: 14;
+    padding-left: $spacing-m;
   }
 
-  .select_label {
+  .select-label {
     font-size: $font-small-size;
   }
 
-  .overlay_portal {
-    margin: 2;
-    border-radius: 50%;
-    background-color: $surface-variant;
+  .overlay-portal {
+    margin: $spacing-xs;
+    border-radius: $radius-large;
     horizontal-align: center;
+
+    &--active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
   }
 
-  .overlay_item_stack {
-    width: 100%;
-  }
-
-  .overlay_item {
+  .overlay-item {
     border-bottom-width: 1;
-    border-bottom-color: $surface-variant;
+    border-bottom-color: $surface-dim;
   }
 
-  .overlay_item_half {
+  .overlay-item-half {
     width: 50%;
-    background-color: $surface-variant;
-
-    border-bottom-width: 1;
-    border-bottom-color: $surface-variant;
-    border-right-width: 1;
-    border-right-color: $surface-variant;
+    background-color: $surface-container;
+    border-bottom-color: $surface-container;
   }
 
-  .overlay_item_label {
+  .overlay-item-label {
     font-size: $font-size;
     padding: 15;
   }
