@@ -20,6 +20,7 @@ import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
+import {showLayer, switchToPane} from "@/utils/events-to-iitc";
 
 export default {
   name: 'AppWebView',
