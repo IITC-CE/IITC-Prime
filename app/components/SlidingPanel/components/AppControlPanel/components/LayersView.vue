@@ -75,13 +75,11 @@
 
 <script>
   import SelectField from "@/components/base/SelectField.vue";
+  import { mapState } from 'vuex';
 
   export default {
     data() {
       return {
-        baseLayerSelected: this.$store.state.map.baseLayerSelected || 0,
-        baseLayersList: this.$store.state.map.baseLayersList || [],
-        overlayLayers: this.$store.state.map.overlayLayers
       }
     },
 
@@ -89,11 +87,18 @@
       SelectField
     },
 
+    computed: {
+      ...mapState({
+        baseLayerSelected: state => state.map.baseLayerSelected,
+        baseLayersList: state => state.map.baseLayersList,
+        overlayLayers: state => state.map.overlayLayers
+      })
+    },
+
     methods: {
       onBaseLayerSelected(args) {
         const id = args.selectedId;
         if (id !== undefined && id !== this.baseLayerSelected) {
-          this.baseLayerSelected = id;
           this.$store.dispatch('map/setActiveBaseLayer', id);
         }
       },
