@@ -32,6 +32,22 @@ export const setLayers = async (base_layers, overlay_layer) => {
 }
 
 /**
+ * Adds a new portal highlighter to the available list
+ * @param {string} name Highlighter name
+ */
+export const addPortalHighlighter = async (name) => {
+  await store.dispatch('map/addHighlighter', name);
+}
+
+/**
+ * Sets the active portal highlighter
+ * @param {string} name Highlighter name
+ */
+export const setActiveHighlighter = async (name) => {
+  await store.dispatch('map/setActiveHighlighter', name);
+}
+
+/**
  * Adding IITC panels. Panels allow to display some windows in full screen in mobile IITC.
  * @param {string} name Panel ID
  * @param {string} label Display name

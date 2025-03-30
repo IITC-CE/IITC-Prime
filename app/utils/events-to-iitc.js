@@ -10,6 +10,14 @@ export const showLayer = (id, show) => {
 }
 
 /**
+ * Changes active portal highlighter
+ * @param {string} name Highlighter name
+ */
+export const changePortalHighlights = (name) => {
+  return "window.changePortalHighlights('" + name + "'); true";
+}
+
+/**
  * Switching the active panel.
  * @param {string} name Panel ID
  */

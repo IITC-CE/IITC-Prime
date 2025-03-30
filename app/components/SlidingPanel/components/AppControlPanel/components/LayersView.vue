@@ -5,23 +5,24 @@
 
     <StackLayout orientation="horizontal" class="block">
 
-      <StackLayout class="select-stack">
+      <StackLayout
+        class="select-stack select-stack--first"
+        v-if="highlightersList && highlightersList.length > 0"
+      >
         <Label class="select-label" text="Highlighter" />
-<!--        <PickerField-->
-<!--          col="0"-->
-<!--          row="0"-->
-<!--          colSpan="2"-->
-<!--          class="picker-field"-->
-<!--          hint="Select highlighter"-->
-<!--          :items="highlighterLayersList"-->
-<!--          :selectedIndex="highlighterLayerSelected"-->
-<!--          @pickerClosed="onHighlighterSelected"-->
-<!--          pickerTitle="Select Highlighter Layer"-->
-<!--        />-->
+        <SelectField
+          col="0"
+          row="0"
+          colSpan="2"
+          :items="highlightersList"
+          :selectedIndex="highlightersList.indexOf(highlighterSelected)"
+          title="Select Highlighter"
+          @change="onHighlighterSelected"
+        />
       </StackLayout>
 
       <StackLayout
-        class="select-stack"
+        class="select-stack select-stack--last"
         v-if="baseLayersList && baseLayersList.length > 0"
       >
         <Label class="select-label" text="Base layer" />
@@ -93,7 +94,9 @@
       ...mapState({
         baseLayerSelected: state => state.map.baseLayerSelected,
         baseLayersList: state => state.map.baseLayersList,
-        overlayLayers: state => state.map.overlayLayers
+        overlayLayers: state => state.map.overlayLayers,
+        highlightersList: state => state.map.highlightersList,
+        highlighterSelected: state => state.map.highlighterSelected,
       })
     },
 
@@ -112,14 +115,26 @@
       },
 
       onOverlayToggle(index, isLabelTap = false) {
+        const switchRef = this.$refs['overlaySwitch' + index];
+
+        if (!switchRef || !switchRef.length) {
+          return;
+        }
+
         if (isLabelTap) {
           // Toggle switch state when label is tapped
-          const switchEl = this.$refs['overlaySwitch' + index][0].nativeView;
+          const switchEl = switchRef[0].nativeView;
           switchEl.checked = !switchEl.checked;
         } else {
           // Update store based on switch state
-          const active = this.$refs['overlaySwitch' + index][0].nativeView.checked;
+          const active = switchRef[0].nativeView.checked;
           this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
+        }
+      },
+
+      onHighlighterSelected(args) {
+        if (args.item) {
+          this.$store.dispatch('map/setActiveHighlighter', args.item);
         }
       },
     }
@@ -135,7 +150,16 @@
 
   .select-stack {
     width: 50%;
-    padding-left: $spacing-m;
+    padding-right: $spacing-s;
+    padding-left: $spacing-s;
+
+    &--first {
+      padding-left: 0;
+    }
+
+    &--last {
+      padding-right: 0;
+    }
   }
 
   .select-label {

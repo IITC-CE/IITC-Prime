@@ -6,6 +6,8 @@ export const map = {
     baseLayerSelected: 0,
     baseLayersList: [],
     overlayLayers: [],
+    highlightersList: ["No Highlights"],
+    highlighterSelected: "No Highlights",
     location: { lat: 0, lng: 0, accuracy: 0, isTarget: false },
     injectPlugin: {}
   }),
@@ -27,6 +29,14 @@ export const map = {
     },
     SET_INJECT_PLUGIN(state, plugin) {
       state.injectPlugin = plugin;
+    },
+    ADD_HIGHLIGHTER(state, name) {
+      if (!state.highlightersList.includes(name)) {
+        state.highlightersList.push(name);
+      }
+    },
+    SET_ACTIVE_HIGHLIGHTER(state, name) {
+      state.highlighterSelected = name;
     }
   },
   actions: {
@@ -62,6 +72,12 @@ export const map = {
     },
     setInjectPlugin({ commit }, plugin) {
       commit('SET_INJECT_PLUGIN', plugin);
+    },
+    addHighlighter({ commit }, name) {
+      commit('ADD_HIGHLIGHTER', name);
+    },
+    setActiveHighlighter({ commit }, name) {
+      commit('SET_ACTIVE_HIGHLIGHTER', name);
     }
   }
 };

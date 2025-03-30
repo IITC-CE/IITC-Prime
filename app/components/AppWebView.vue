@@ -20,7 +20,7 @@ import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
-import {showLayer, switchToPane} from "@/utils/events-to-iitc";
+import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
 
 export default {
   name: 'AppWebView',
@@ -94,6 +94,9 @@ export default {
           case "map/setOverlayLayerProperty":
             const overlay_layer = state.map.overlayLayers[action.payload.index];
             await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
+            break;
+          case "map/setActiveHighlighter":
+            await webview.executeJavaScript(changePortalHighlights(action.payload));
             break;
           case "navigation/setCurrentPane":
             await webview.executeJavaScript(switchToPane(action.payload));
