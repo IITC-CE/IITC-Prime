@@ -6,20 +6,148 @@
 // Place any CSS rules you want to apply on both iOS and Android here.
 // This is where the vast majority of your CSS code goes.
 
+//-----------------------------------------------
+// TYPOGRAPHY AND ICONS
+//-----------------------------------------------
+
 .fa {
   font-family: "Font Awesome 5 Free", "fa-solid-900";
   font-weight: 900;
 }
 
-$base: #0e3d4e;
-$accent: #0b303e;
-$complementary: #4a9299;
-$text: #ffffff;
+//-----------------------------------------------
+// COLOR SYSTEM
+//-----------------------------------------------
 
-$base-bottom-sheet: #ffffff;
-$accent-bottom-sheet: #cccccc;
-$complementary-bottom-sheet: #f6f6f6;
-$text-bottom-sheet: #222222;
+// Original colors
+$surface: #0e3d4e;         // Base background color (dark blue)
+$surface-variant: #0b303e; // Slightly darker variant (was $accent)
+$primary: #4a9299;         // Main accent color (teal)
+$on-surface: #ffffff;      // Text color on dark surfaces
 
-$font-size: 14;
-$font-small-size: 12;
+// Extended palette (hybrid approach)
+$primary-light: #56b0b9;     // Lighter version of primary
+$primary-dark: #3a7f85;      // Darker version of primary
+$on-primary: #ffffff;        // Text on primary color
+
+$surface-bright: #164a5d;    // Brighter version of surface
+$surface-dim: #0c2d3a;       // Dimmer version of surface
+$surface-container: #11394a; // Container on surface
+
+// States
+$state-hover: rgba(255, 255, 255, 0.08);
+$state-focus: rgba(255, 255, 255, 0.12);
+$state-pressed: rgba(255, 255, 255, 0.16);
+$state-drag: rgba(255, 255, 255, 0.16);
+
+// Elevation overlay (for depth effect)
+$elevation-level1: rgba(255, 255, 255, 0.05);
+$elevation-level2: rgba(255, 255, 255, 0.08);
+$elevation-level3: rgba(255, 255, 255, 0.11);
+
+//-----------------------------------------------
+// TYPOGRAPHY SYSTEM
+//-----------------------------------------------
+
+// Font sizes
+$font-size-display: 24;    // Large titles
+$font-size-headline: 20;   // Section headers
+$font-size-title: 16;      // Content titles
+$font-size: 14;            // Body text
+$font-size-small: 12;      // Captions, labels
+
+// Line heights
+$line-height-relaxed: 1.5;
+$line-height-tight: 1.2;
+
+//-----------------------------------------------
+// SPACING SYSTEM
+//-----------------------------------------------
+
+// Based on 8dp grid system
+$spacing-xs: 4;
+$spacing-s: 8;
+$spacing-m: 16;
+$spacing-l: 24;
+$spacing-xl: 32;
+$spacing-xxl: 48;
+
+// Border radius
+$radius-small: 4;
+$radius-medium: 8;
+$radius-large: 16;
+$radius-full: 9999;  // For circular elements
+
+//-----------------------------------------------
+// COMPONENT STYLES
+//-----------------------------------------------
+
+// Elevated surfaces (dialogs, dropdowns, etc.)
+.elevated-surface {
+  background-color: $surface-bright;
+  border-radius: $radius-medium;
+}
+
+// Buttons
+.btn-primary {
+  background-color: $primary;
+  color: $on-primary;
+  border-radius: $radius-small;
+  font-size: $font-size;
+  font-weight: bold;
+  padding: $spacing-s $spacing-m;
+}
+
+.btn-text {
+  color: $primary;
+  font-size: $font-size;
+  font-weight: bold;
+  padding: $spacing-s $spacing-m;
+}
+
+// Lists
+.list-item {
+  padding: $spacing-m;
+  border-bottom-width: 1;
+  border-bottom-color: $surface-variant;
+}
+
+// Dialog styles
+.dialog-container {
+  background-color: $surface-bright;
+  padding: $spacing-l;
+}
+
+.dialog-title {
+  font-size: $font-size-headline;
+  font-weight: bold;
+  margin-bottom: $spacing-m;
+  color: $on-surface;
+}
+
+// Form elements
+.form-field {
+  margin-bottom: $spacing-m;
+}
+
+.form-label {
+  font-size: $font-size-small;
+  margin-bottom: $spacing-xs;
+}
+
+//-----------------------------------------------
+// LEGACY VARIABLES (for backward compatibility)
+//-----------------------------------------------
+
+// Bottom sheet specific colors
+$bottom-sheet-surface: #f6f6f6;  // Light background for bottom sheets
+$on-bottom-sheet: #222222;       // Dark text for bottom sheets
+
+$base: $surface;
+$accent: $surface-variant;
+$complementary: $primary;
+$text: $on-surface;
+
+$complementary-bottom-sheet: $bottom-sheet-surface;
+$text-bottom-sheet: $on-bottom-sheet;
+$font-small-size: $font-size-small;

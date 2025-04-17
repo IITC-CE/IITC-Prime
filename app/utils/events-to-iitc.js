@@ -6,7 +6,15 @@
  * @param {boolean} show Pass `false` to hide the layer
  */
 export const showLayer = (id, show) => {
-  return "window.layerChooser.showLayer(" + id + "," + show + ");";
+  return "window.layerChooser.showLayer(" + id + "," + show + "); true";
+}
+
+/**
+ * Changes active portal highlighter
+ * @param {string} name Highlighter name
+ */
+export const changePortalHighlights = (name) => {
+  return "window.changePortalHighlights('" + name + "'); true";
 }
 
 /**
@@ -14,5 +22,5 @@ export const showLayer = (id, show) => {
  * @param {string} name Panel ID
  */
 export const switchToPane = (name) => {
-  return "window.show('" + name + "');";
+  return "window.show('" + name + "'); true";
 }

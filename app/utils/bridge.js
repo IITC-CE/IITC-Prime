@@ -5,7 +5,9 @@ import {
   getVersionName,
   setLayers,
   addPane,
-  setProgress
+  setProgress,
+  addPortalHighlighter,
+  setActiveHighlighter
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -17,6 +19,12 @@ export const router = async (event) => {
       break;
     case "setLayers":
       await setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer));
+      break;
+    case "addPortalHighlighter":
+      await addPortalHighlighter(eventData.name);
+      break;
+    case "setActiveHighlighter":
+      await setActiveHighlighter(eventData.name);
       break;
     case "addPane":
       await addPane(eventData.name, eventData.label, eventData.icon);

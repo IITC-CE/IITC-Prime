@@ -6,6 +6,8 @@ export const map = {
     baseLayerSelected: 0,
     baseLayersList: [],
     overlayLayers: [],
+    highlightersList: ["No Highlights"],
+    highlighterSelected: "No Highlights",
     location: { lat: 0, lng: 0, accuracy: 0, isTarget: false },
     injectPlugin: {}
   }),
@@ -27,23 +29,34 @@ export const map = {
     },
     SET_INJECT_PLUGIN(state, plugin) {
       state.injectPlugin = plugin;
+    },
+    ADD_HIGHLIGHTER(state, name) {
+      if (!state.highlightersList.includes(name)) {
+        state.highlightersList.push(name);
+      }
+    },
+    SET_ACTIVE_HIGHLIGHTER(state, name) {
+      state.highlighterSelected = name;
     }
   },
   actions: {
-    // TODO: store base_layers as object: layerId may not be equal to id
     setBaseLayers({ commit }, baseLayers) {
-      const layerNames = [];
-      let activeIndex = -1;
+      const layers = [];
+      let activeId = 0;
 
-      baseLayers.forEach(layer => {
-        layerNames.push(layer.name);
+      baseLayers.forEach((layer, index) => {
+        layers.push({
+          name: layer.name,
+          layerId: layer.layerId
+        });
+
         if (layer.active === true) {
-          activeIndex = layer.layerId;
+          activeId = layer.layerId;
         }
       });
 
-      commit('SET_BASE_LAYER_SELECTED', activeIndex);
-      commit('SET_BASE_LAYERS_LIST', layerNames);
+      commit('SET_BASE_LAYER_SELECTED', activeId);
+      commit('SET_BASE_LAYERS_LIST', layers);
     },
     setActiveBaseLayer({ commit }, index) {
       commit('SET_BASE_LAYER_SELECTED', index);
@@ -59,6 +72,12 @@ export const map = {
     },
     setInjectPlugin({ commit }, plugin) {
       commit('SET_INJECT_PLUGIN', plugin);
+    },
+    addHighlighter({ commit }, name) {
+      commit('ADD_HIGHLIGHTER', name);
+    },
+    setActiveHighlighter({ commit }, name) {
+      commit('SET_ACTIVE_HIGHLIGHTER', name);
     }
   }
 };

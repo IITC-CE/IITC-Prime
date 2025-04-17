@@ -139,6 +139,10 @@ export default {
   justify-content: space-around;
 }
 
+.panel-body {
+  margin: 10;
+}
+
 .expander {
   width: 100%;
 }
