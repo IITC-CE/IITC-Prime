@@ -28,6 +28,7 @@ Vue.use(ButtonPlugin);
 
 Vue.use(WebViewPlugin);
 
+Vue.registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').Label);
 Vue.registerElement(
   'CheckBox',
   () => CheckBox,

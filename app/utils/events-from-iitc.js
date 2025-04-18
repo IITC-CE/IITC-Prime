@@ -60,6 +60,45 @@ export const addPane = async (name, label, icon) => {
 }
 
 /**
+ * Handles portal status data from IITC
+ * @param {string} guid - Portal's globally unique identifier
+ * @param {string} team - Portal's team (faction)
+ * @param {number} level - Portal's level
+ * @param {string} title - Portal's name/title
+ * @param {number} health - Portal's health percentage
+ * @param {Array} resonators - Portal's resonators data
+ * @param {string} levelColor - Portal's level color
+ */
+export const setPortalStatus = async (guid, team, level, title, health, resonators, levelColor) => {
+  const data = {
+    guid,
+    team,
+    level,
+    isNeutral: team === 'N' || team === 'NEUTRAL',
+    title,
+    health,
+    resonators: resonators || [],
+    levelColor,
+  };
+  await store.dispatch('map/setPortalStatus', data);
+}
+
+/**
+ * Handles map status data from IITC
+ * @param {Object} portalLevels - Information about visible portal levels and link lengths
+ * @param {Object} mapStatus - Current map loading status and progress
+ * @param {Object} requests - Active and failed request counts
+ */
+export const setMapStatus = async (portalLevels, mapStatus, requests) => {
+  const data = {
+    portalLevels,
+    mapStatus,
+    requests
+  };
+  await store.dispatch('map/setMapStatus', data);
+}
+
+/**
  * Sets the progress of loading page resources.
  * @param {number} progress Number from 0 to 1. If there is request, but it is impossible to determine progress, then -1.
  */
