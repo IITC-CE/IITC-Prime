@@ -5,6 +5,8 @@ import {
   getVersionName,
   setLayers,
   addPane,
+  setPortalStatus,
+  setMapStatus,
   setProgress,
   addPortalHighlighter,
   setActiveHighlighter
@@ -28,6 +30,12 @@ export const router = async (event) => {
       break;
     case "addPane":
       await addPane(eventData.name, eventData.label, eventData.icon);
+      break;
+    case "setPortalStatus":
+      await setPortalStatus(eventData.guid, eventData.team, eventData.level, eventData.title, eventData.health, eventData.resonators, eventData.ui);
+      break;
+    case "setMapStatus":
+      await setMapStatus(eventData.portalLevels, eventData.mapStatus, eventData.requests);
       break;
     case "setProgress":
       await setProgress(eventData.progress);
@@ -54,6 +62,8 @@ export const injectBridgeIITC = async (webview) => {
     setActiveHighlighter: ["name"],
     addPane: ["name", "label", "icon"],
     setFollowMode: ["follow"],
+    setPortalStatus: ["guid", "team", "level", "title", "health", "resonators", "ui"],
+    setMapStatus: ["portalLevels", "mapStatus", "requests"],
     setProgress: ["progress"],
     setPermalink: ["href"],
     saveFile: ["filename", "type", "content"],

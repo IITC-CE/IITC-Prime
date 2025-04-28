@@ -9,7 +9,36 @@ export const map = {
     highlightersList: ["No Highlights"],
     highlighterSelected: "No Highlights",
     location: { lat: 0, lng: 0, accuracy: 0, isTarget: false },
-    injectPlugin: {}
+    injectPlugin: {},
+    portalStatus: {
+      guid: null,
+      team: 'N',
+      level: 0,
+      isNeutral: true,
+      title: 'No portal selected',
+      health: 0,
+      resonators: [],
+      levelColor: null,
+    },
+    mapStatus: {
+      portalLevels: {
+        hasPortals: false,
+        minLinkLength: 0,
+        formattedLength: '0m'
+      },
+      mapStatus: {
+        short: null,
+        long: null,
+        progress: 1,
+        progressPercent: 100
+      },
+      requests: {
+        active: 0,
+        failed: 0,
+        hasActive: false,
+        hasFailed: false
+      }
+    },
   }),
   mutations: {
     SET_BASE_LAYER_SELECTED(state, index) {
@@ -37,7 +66,30 @@ export const map = {
     },
     SET_ACTIVE_HIGHLIGHTER(state, name) {
       state.highlighterSelected = name;
-    }
+    },
+    SET_PORTAL_STATUS(state, data) {
+      // If no data (or null), reset to default state
+      if (!data) {
+        state.portalStatus = {
+          guid: null,
+          team: 'N',
+          level: 0,
+          isNeutral: true,
+          title: 'No portal selected',
+          health: 0,
+          resonators: [],
+          levelColor: null,
+        };
+      } else {
+        // Update with data from IITC
+        state.portalStatus = { ...data };
+      }
+    },
+    SET_MAP_STATUS(state, data) {
+      if (data) {
+        state.mapStatus = { ...data };
+      }
+    },
   },
   actions: {
     setBaseLayers({ commit }, baseLayers) {
@@ -78,6 +130,12 @@ export const map = {
     },
     setActiveHighlighter({ commit }, name) {
       commit('SET_ACTIVE_HIGHLIGHTER', name);
-    }
+    },
+    setPortalStatus({ commit }, data) {
+      commit('SET_PORTAL_STATUS', data);
+    },
+    setMapStatus({ commit }, data) {
+      commit('SET_MAP_STATUS', data);
+    },
   }
 };

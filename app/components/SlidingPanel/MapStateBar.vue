@@ -7,21 +7,35 @@
     justifyContent="space-between"
     alignItems="center">
 
-    <Label
-      class="map-state-left"
-      flexGrow="1"
-      text="Left Content" />
+    <!-- Portal status component - left side -->
+    <PortalStatusView
+      width="68%"
+      :portalStatus="portalStatus" />
 
-    <Label
-      class="map-state-right"
-      flexGrow="1"
-      text="Right Content" />
+    <!-- Map status component - right side -->
+    <MapStatusView
+      width="32%"
+      :mapStatus="mapStatus" />
   </FlexboxLayout>
 </template>
 
 <script>
+import { mapState } from 'vuex';
+import PortalStatusView from './components/MapStateBar/PortalStatusView';
+import MapStatusView from './components/MapStateBar/MapStatusView';
+
 export default {
   name: 'MapStateBar',
+  components: {
+    PortalStatusView,
+    MapStatusView
+  },
+  computed: {
+    ...mapState({
+      mapStatus: state => state.map.mapStatus,
+      portalStatus: state => state.map.portalStatus
+    })
+  }
 }
 </script>
 
@@ -32,11 +46,6 @@ export default {
   width: 100%;
   height: 100%;
   background-color: $base;
-  padding: 0 10;
-}
-
-.map-state-left, .map-state-right {
-  text-align: center;
-  color: $text;
+  padding: 0 10 8;
 }
 </style>
