@@ -6,7 +6,7 @@
     <StackLayout orientation="horizontal" class="block">
 
       <StackLayout
-        class="select-stack select-stack--first"
+        class="column-stack column-stack--first half"
         v-if="highlightersList && highlightersList.length > 0"
       >
         <Label class="select-label" text="Highlighter" />
@@ -22,7 +22,7 @@
       </StackLayout>
 
       <StackLayout
-        class="select-stack select-stack--last"
+        class="column-stack column-stack--last half"
         v-if="baseLayersList && baseLayersList.length > 0"
       >
         <Label class="select-label" text="Base layer" />
@@ -59,20 +59,65 @@
         />
     </GridLayout>
 
-    <WrapLayout class="block">
-      <GridLayout
-        :class="{ 'overlay-item': true, 'overlay-item-half': index <= 12 }"
-        columns="*, auto"
-        rows="50"
-        v-for="(layer, index) in overlayLayers"
-        v-bind:key="layer.layerId"
-        v-if="index > 8"
+    <FlexboxLayout flexDirection="column" class="block">
+      <StackLayout
+        orientation="horizontal"
+        v-for="(row, rowIndex) in pairedItemRows"
+        :key="'row-' + rowIndex"
       >
-        <Label class="overlay-item-label" :text="layer.name" @tap="onOverlayToggle(index, true)" col="0" :row="index" colSpan="2" />
-        <Switch :ref="'overlaySwitch'+index" :checked="layer.active" @checkedChange="onOverlayToggle(index)" col="1" :row="index" colSpan="2" />
-      </GridLayout>
-    </WrapLayout>
+        <StackLayout
+          v-for="(item, colIndex) in row"
+          :key="item.layerId"
+          :class="['column-stack half', colIndex === 0 ? 'column-stack--first' : 'column-stack--last']"
+        >
+          <GridLayout
+            class="btn-primary"
+            columns="*, 50"
+            rows="50"
+          >
+            <Label
+              class="overlay-item-label"
+              :text="item.name"
+              @tap="onOverlayToggle(item.index, true)"
+              col="0"
+              row="0"
+            />
+            <Switch
+              class="switch"
+              :ref="'overlaySwitch' + item.index"
+              :checked="item.active"
+              @checkedChange="onOverlayToggle(item.index)"
+              col="1"
+              row="0"
+            />
+          </GridLayout>
+        </StackLayout>
+      </StackLayout>
 
+      <GridLayout
+        v-for="layer in singleItems"
+        :key="layer.layerId"
+        class="list-item"
+        columns="*, 50"
+        rows="50"
+      >
+        <Label
+          class="overlay-item-label"
+          :text="layer.name"
+          @tap="onOverlayToggle(layer.index, true)"
+          col="0"
+          row="0"
+        />
+        <Switch
+          class="switch"
+          :ref="'overlaySwitch' + layer.index"
+          :checked="layer.active"
+          @checkedChange="onOverlayToggle(layer.index)"
+          col="1"
+          row="0"
+        />
+      </GridLayout>
+    </FlexboxLayout>
   </FlexboxLayout>
 </template>
 
@@ -97,7 +142,26 @@
         overlayLayers: state => state.map.overlayLayers,
         highlightersList: state => state.map.highlightersList,
         highlighterSelected: state => state.map.highlighterSelected,
-      })
+      }),
+      filteredLayers() {
+        return this.overlayLayers
+          .map((layer, index) => ({ ...layer, index }))
+          .filter(layer => layer.index > 8);
+      },
+      pairedItemRows() {
+        const itemsPerRow = 2;
+        const rows = [];
+        const pairedItems = this.filteredLayers.slice(0, 4);
+
+        for (let i = 0; i < pairedItems.length; i += itemsPerRow) {
+          rows.push(pairedItems.slice(i, i + itemsPerRow));
+        }
+
+        return rows;
+      },
+      singleItems() {
+        return this.filteredLayers.slice(4);
+      }
     },
 
     methods: {
@@ -148,20 +212,6 @@
     margin-bottom: $spacing-m;
   }
 
-  .select-stack {
-    width: 50%;
-    padding-right: $spacing-s;
-    padding-left: $spacing-s;
-
-    &--first {
-      padding-left: 0;
-    }
-
-    &--last {
-      padding-right: 0;
-    }
-  }
-
   .select-label {
     font-size: $font-small-size;
   }
@@ -172,23 +222,16 @@
     horizontal-align: center;
 
     &--active {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: $surface-bright;
+      box-shadow: 0 2 5 rgba(0, 0, 0, 0.1);
     }
-  }
-
-  .overlay-item {
-    border-bottom-width: 1;
-    border-bottom-color: $surface-dim;
-  }
-
-  .overlay-item-half {
-    width: 50%;
-    background-color: $surface-container;
-    border-bottom-color: $surface-container;
   }
 
   .overlay-item-label {
     font-size: $font-size;
-    padding: 15;
+  }
+
+  .switch {
+    width: 50;
   }
 </style>

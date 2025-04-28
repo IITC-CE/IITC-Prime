@@ -38,16 +38,17 @@
   .btn {
     font-size: $font-size;
     text-align: center;
-    padding: 0 10;
+    padding: 0 $spacing-s;
   }
 
   .icon {
-    margin: 0 0 2 0;
+    margin: 0 0 $spacing-xs 0;
     width: 54;
     height: 54;
-    font-size: 20;
-    border-radius: 50%;
-    color: $text-bottom-sheet;
-    background-color: $complementary-bottom-sheet;
+    font-size: $font-size-headline;
+    border-radius: $radius-large;
+    color: $on-primary;
+    background-color: $surface-bright;
+    box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
   }
 </style>

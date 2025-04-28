@@ -15,37 +15,16 @@
       <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" @tap="reloadWebView" />
     </GridLayout>
 
-    <Label class="separator" />
-
     <GridLayout
-      columns="auto, *, auto, *, auto, *"
-      rows="50"
-      class="chat-buttons"
-    >
-      <template v-for="(pane, index) in topPanes">
-        <Label class="fa chat-icon"
-               :text="pane.icon | fonticon"
-               :col="index * 2"
-               @tap="switchToPane(pane.name)" />
-        <Label class="chat-label"
-               :text="pane.label"
-               :col="index * 2 + 1"
-               @tap="switchToPane(pane.name)" />
-      </template>
-    </GridLayout>
-
-    <Label v-if="remainingPanes.length > 0" class="separator" />
-
-    <GridLayout
-      class="pane_item"
+      v-for="(pane, index) in filteredPanes"
+      :key="pane.name"
+      class="list-item"
       columns="auto, *"
       rows="50"
-      v-for="(pane, index) in remainingPanes"
-      :key="pane.name"
       @tap="switchToPane(pane.name)"
     >
       <Label class="fa icon" :text="pane.icon | fonticon" col="0" :row="index" />
-      <Label class="pane_item_label" :text="pane.label" col="1" :row="index" />
+      <Label class="pane-item-label" :text="pane.label" col="1" :row="index" />
     </GridLayout>
 
   </FlexboxLayout>
@@ -68,15 +47,11 @@
         panes: state => state.navigation.panes,
       }),
 
-      // First 3 panes for chat buttons in one row
-      topPanes() {
-        return this.panes.slice(0, 3);
+      filteredPanes() {
+        const START_EXCLUDE = 3;
+        const END_EXCLUDE = 5;
+        return this.panes.filter((_, index) => index < START_EXCLUDE || index >= END_EXCLUDE);
       },
-
-      // Remaining panes for plugin panels as a list
-      remainingPanes() {
-        return this.panes.slice(5);
-      }
     },
 
     methods: {
@@ -93,20 +68,9 @@
 <style scoped lang="scss">
   @import '@/app';
 
-  .separator {
-    width: 100%;
-    height: 5;
-    margin: 10 0;
-    background-color: $surface-dim;
-  }
-
   .block {
     height: 80;
-  }
-
-  .pane_item {
-    border-bottom-width: 1;
-    border-bottom-color: $surface-dim;
+    margin-bottom: $spacing-m;
   }
 
   .icon {
@@ -114,30 +78,11 @@
     width: 24;
     vertical-align: center;
     text-align: center;
-    margin-left: 10;
   }
 
-  .pane_item_label {
+  .pane-item-label {
     font-size: $font-size;
     padding: 15;
   }
 
-  .chat-buttons {
-    border-bottom-width: 1;
-    border-bottom-color: $surface-dim;
-  }
-
-  .chat-icon {
-    font-size: 18;
-    width: 24;
-    vertical-align: center;
-    text-align: center;
-    margin-left: 10;
-  }
-
-  .chat-label {
-    font-size: $font-size;
-    padding: 15;
-    vertical-align: center;
-  }
 </style>

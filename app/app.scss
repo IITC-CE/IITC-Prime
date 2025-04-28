@@ -30,7 +30,7 @@ $primary-light: #56b0b9;     // Lighter version of primary
 $primary-dark: #3a7f85;      // Darker version of primary
 $on-primary: #ffffff;        // Text on primary color
 
-$surface-bright: #164a5d;    // Brighter version of surface
+$surface-bright: #275160;    // Brighter version of surface
 $surface-dim: #0c2d3a;       // Dimmer version of surface
 $surface-container: #11394a; // Container on surface
 
@@ -65,6 +65,7 @@ $line-height-tight: 1.2;
 //-----------------------------------------------
 
 // Based on 8dp grid system
+$spacing-xxs: 2;
 $spacing-xs: 4;
 $spacing-s: 8;
 $spacing-m: 16;
@@ -82,6 +83,23 @@ $radius-full: 9999;  // For circular elements
 // COMPONENT STYLES
 //-----------------------------------------------
 
+.half {
+  width: 50%;
+}
+
+.column-stack {
+  padding-right: $spacing-s;
+  padding-left: $spacing-s;
+
+  &--first {
+    padding-left: 0;
+  }
+
+  &--last {
+    padding-right: 0;
+  }
+}
+
 // Elevated surfaces (dialogs, dropdowns, etc.)
 .elevated-surface {
   background-color: $surface-bright;
@@ -90,12 +108,13 @@ $radius-full: 9999;  // For circular elements
 
 // Buttons
 .btn-primary {
-  background-color: $primary;
-  color: $on-primary;
+  background-color: $surface-bright;
   border-radius: $radius-small;
+  margin: $spacing-xs 0;
+  color: $on-primary;
   font-size: $font-size;
-  font-weight: bold;
-  padding: $spacing-s $spacing-m;
+  padding: $spacing-xxs $spacing-l;
+  box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
 }
 
 .btn-text {
@@ -107,9 +126,11 @@ $radius-full: 9999;  // For circular elements
 
 // Lists
 .list-item {
-  padding: $spacing-m;
+  color: $on-primary;
+  font-size: $font-size;
+  padding: $spacing-xxs $spacing-l;
   border-bottom-width: 1;
-  border-bottom-color: $surface-variant;
+  border-bottom-color: $surface-dim;
 }
 
 // Dialog styles
