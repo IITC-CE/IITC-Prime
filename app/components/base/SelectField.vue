@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <GridLayout columns="*, auto" class="select-field" @tap="showSelectDialog">
+  <GridLayout columns="*, auto" class="btn-primary select-field" @tap="showSelectDialog">
     <Label col="0" :text="selectedText" class="select-text" verticalAlignment="center" />
     <Label col="1" text="▼" class="select-icon" verticalAlignment="center" />
   </GridLayout>
@@ -133,12 +133,7 @@ export default {
 @import '@/app';
 
 .select-field {
-  height: 48;
-  background-color: $surface-container;
-  border-width: 1;
-  border-color: $primary-dark;
-  border-radius: $radius-small;
-  margin: $spacing-xs 0;
+  height: 52;
 }
 
 .select-field:active {
@@ -148,13 +143,12 @@ export default {
 .select-text {
   color: $on-surface;
   font-size: $font-size;
-  margin-left: $spacing-m;
   text-overflow: ellipsis;
 }
 
 .select-icon {
-  width: 48;
-  font-size: 12;
+  width: 18;
+  font-size: 14;
   text-align: center;
   color: $primary-light;
 }
