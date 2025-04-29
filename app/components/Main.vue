@@ -17,7 +17,10 @@
         </FlexboxLayout>
 
         <ProgressBar class="progress-bar" />
-        <SlidingPanel class="sliding-panel" />
+        <SlidingPanel
+          v-show="sliding.isVisible"
+          class="sliding-panel"
+        />
 
         <PopupWebView
           v-if="popup.isVisible"
@@ -31,6 +34,7 @@
 
 <script>
 import { AndroidApplication, Application } from "@nativescript/core";
+import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { Manager } from 'lib-iitc-manager';
 import storage from "~/utils/storage";
 import { layoutService } from '~/utils/layout-service';
@@ -65,8 +69,12 @@ export default {
           transport: null
         }
       },
+      sliding: {
+        isVisible: true,
+      },
       unsubscribeStore: null,
-      removeLayoutListener: null
+      removeLayoutListener: null,
+      keyboard: null
     }
   },
 
@@ -146,6 +154,18 @@ export default {
         this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
+    },
+
+    onKeyboardOpened(args) {
+      console.log('The keyboard is opened, height:', args.data.height);
+      this.sliding.isVisible = false;
+    },
+    onKeyboardChanged(args) {
+      console.log('The keyboard is changed, new height:', args.data.height);
+    },
+    onKeyboardClosed() {
+      console.log('The keyboard is closed');
+      this.sliding.isVisible = true;
     }
   },
 
@@ -169,6 +189,12 @@ export default {
     // Subscribe to layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
 
+    this.keyboard = keyboardOpening();
+
+    this.keyboard.on('opened', this.onKeyboardOpened);
+    this.keyboard.on('changed', this.onKeyboardChanged);
+    this.keyboard.on('closed', this.onKeyboardClosed);
+
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
         switch (action.type) {
@@ -190,6 +216,12 @@ export default {
 
     if (this.removeLayoutListener) {
       this.removeLayoutListener();
+    }
+
+    if (this.keyboard) {
+      this.keyboard.off('opened');
+      this.keyboard.off('changed');
+      this.keyboard.off('closed');
     }
   }
 };
