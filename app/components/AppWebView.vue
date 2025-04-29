@@ -12,12 +12,15 @@
     @show-popup="handleShowPopup"
     @load-error="handleLoadError"
     @bridge-message="handleBridgeMessage"
+    @console-log="handleConsoleLog"
+    @console-result="handleConsoleResult"
   />
 </template>
 
 <script>
 import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
+import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
 import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
@@ -62,6 +65,7 @@ export default {
 
     async onLoadFinished() {
       await injectBridgeIITC(this.webview);
+      await injectDebugBridge(this.webview);
       await this.$store.dispatch('ui/setWebviewLoadStatus', true);
     },
 
@@ -72,6 +76,37 @@ export default {
     handleBridgeMessage(eventData) {
       router(eventData);
     },
+
+    handleConsoleLog(logData) {
+      this.$store.dispatch('debug/addLog', logData);
+
+      // Forward console log event to parent component
+      this.$emit('console-log', logData);
+    },
+
+    handleConsoleResult(resultData) {
+      // Add formatted result to logs
+      this.$store.dispatch('debug/addLog', {
+        type: resultData.success ? 'result' : 'error',
+        message: resultData.success ? resultData.result : resultData.error,
+        timestamp: resultData.timestamp,
+        command: resultData.command
+      });
+
+      // Forward console result event to parent component
+      this.$emit('console-result', resultData);
+    },
+
+    // Public method to execute debug command
+    executeDebugCommand(command) {
+      if (!this.$refs.baseWebView) return;
+
+      // Store command in history first
+      this.$store.dispatch('debug/addCommand', command);
+
+      // Execute command in webview
+      this.$refs.baseWebView.executeCommand(command);
+    }
   },
 
   created() {

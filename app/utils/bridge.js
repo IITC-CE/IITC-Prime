@@ -44,6 +44,10 @@ export const router = async (event) => {
     case "setProgress":
       await setProgress(eventData.progress);
       break;
+    case "console:log":
+    case "console:result":
+      // These events are handled by direct listeners in BaseWebView
+      break;
     default:
       console.log("Unknown event in JSBridge router");
       console.log(event);

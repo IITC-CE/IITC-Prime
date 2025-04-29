@@ -104,6 +104,22 @@ export default {
 
       applyWebViewSettings(this.webViewInstance);
       this.setupWebChromeClient();
+
+      // Setup console log event handlers
+      this.setupDebugEventHandlers();
+    },
+
+    // Setup event handlers for console bridge
+    setupDebugEventHandlers() {
+      if (!this.webViewInstance) return;
+
+      this.webViewInstance.on('console:log', (event) => {
+        this.$emit('console-log', event.data);
+      });
+
+      this.webViewInstance.on('console:result', (event) => {
+        this.$emit('console-result', event.data);
+      });
     },
 
     onLoadStarted(args) {
@@ -153,6 +169,13 @@ export default {
 
     onJSBridge(args) {
       this.$emit('bridge-message', args.data);
+    },
+
+    // Execute JavaScript command in webview
+    executeCommand(command) {
+      if (!this.webViewInstance || !command || command.trim() === '') return;
+
+      this.webViewInstance.emitToWebView('console:execute', { command });
     },
 
     executeJavaScript(code) {
