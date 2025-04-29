@@ -116,10 +116,6 @@ export default {
       this.webViewInstance.on('console:log', (event) => {
         this.$emit('console-log', event.data);
       });
-
-      this.webViewInstance.on('console:result', (event) => {
-        this.$emit('console-result', event.data);
-      });
     },
 
     onLoadStarted(args) {
@@ -173,8 +169,9 @@ export default {
 
     // Execute JavaScript command in webview
     executeCommand(command) {
-      if (!this.webViewInstance || !command || command.trim() === '') return;
-
+      if (!this.webViewInstance || !command || command.trim() === '') {
+        return;
+      }
       this.webViewInstance.emitToWebView('console:execute', { command });
     },
 

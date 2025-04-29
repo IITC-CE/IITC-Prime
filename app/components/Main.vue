@@ -5,13 +5,17 @@
     <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
       <AbsoluteLayout class="page">
 
+        <!-- Main content with WebView (hidden when debug is active) -->
         <FlexboxLayout
           flexDirection="column"
           class="main-content"
+          v-show="!isDebugActive"
         >
           <AppWebView
+            ref="appWebView"
             flexGrow="1"
             @show-popup="handlePopup"
+            @console-log="onConsoleLog"
           />
           <label
             v-show="sliding.isVisible"
@@ -19,9 +23,15 @@
           />
         </FlexboxLayout>
 
+        <DebugConsole
+          v-if="isDebugActive"
+          class="debug-console"
+          @execute-command="executeDebugCommand"
+        />
+
         <ProgressBar class="progress-bar" />
         <SlidingPanel
-          v-show="sliding.isVisible"
+          v-show="sliding.isVisible && !isDebugActive"
           class="sliding-panel"
         />
 
@@ -46,6 +56,7 @@ import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 import PopupWebView from './PopupWebView.vue';
+import DebugConsole from './DebugConsole.vue';
 
 export default {
   name: 'MainView',
@@ -54,7 +65,8 @@ export default {
     AppWebView,
     ProgressBar,
     SlidingPanel,
-    PopupWebView
+    PopupWebView,
+    DebugConsole
   },
 
   data() {
@@ -78,6 +90,12 @@ export default {
       unsubscribeStore: null,
       removeLayoutListener: null,
       keyboard: null
+    }
+  },
+
+  computed: {
+    isDebugActive() {
+      return this.$store.state.ui.isDebugActive;
     }
   },
 
@@ -138,6 +156,20 @@ export default {
       };
     },
 
+    // Handle console logs from AppWebView
+    onConsoleLog(logData) {
+      this.$store.dispatch('debug/addLog', logData);
+    },
+
+    // Execute debug command from Debug Console
+    executeDebugCommand(command) {
+      if (this.$refs.appWebView) {
+        this.$refs.appWebView.executeDebugCommand(command);
+      } else {
+        console.error("AppWebView reference not found");
+      }
+    },
+
     setupManager() {
       const manager = new Manager({
         storage,
@@ -154,6 +186,13 @@ export default {
       if (!Application.android) return;
 
       Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
+        // If debug is active, exit debug mode instead of navigating back
+        if (this.isDebugActive) {
+          this.$store.dispatch('ui/toggleDebugMode');
+          args.cancel = true;
+          return;
+        }
+
         this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
@@ -255,5 +294,13 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.debug-console {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
 }
 </style>

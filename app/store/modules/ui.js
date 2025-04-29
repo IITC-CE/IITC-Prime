@@ -6,7 +6,8 @@ export const ui = {
     screenHeight: 0,
     slidingPanelWidth: 100,
     isWebviewLoadFinished: false,
-    progress: 0
+    progress: 0,
+    isDebugActive: false
   }),
   mutations: {
     SET_SCREEN_HEIGHT(state, height) {
@@ -20,6 +21,9 @@ export const ui = {
     },
     SET_PROGRESS(state, progress) {
       state.progress = progress;
+    },
+    SET_DEBUG_MODE(state, isActive) {
+      state.isDebugActive = isActive;
     }
   },
   actions: {
@@ -37,5 +41,8 @@ export const ui = {
     },
     reloadWebView() {},
     iitcBootFinished() {},
+    toggleDebugMode({ commit, state }) {
+      commit('SET_DEBUG_MODE', !state.isDebugActive);
+    }
   }
 };

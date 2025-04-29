@@ -12,7 +12,6 @@ export const debug = {
   }),
   mutations: {
     ADD_LOG(state, log) {
-      // Add log entry and maintain max size
       state.logs.push(log);
       if (state.logs.length > state.maxLogEntries) {
         state.logs.shift();
@@ -22,9 +21,10 @@ export const debug = {
       state.logs = [];
     },
     ADD_COMMAND(state, command) {
-      // Skip if command is empty or same as last one
-      if (!command || command.trim() === '' ||
-          (state.commandHistory.length > 0 && state.commandHistory[0] === command)) {
+      if (!command || command.trim() === '') return;
+
+      // Skip if same as last command
+      if (state.commandHistory.length > 0 && state.commandHistory[0] === command) {
         return;
       }
 
@@ -56,35 +56,35 @@ export const debug = {
       commit('ADD_COMMAND', command);
     },
     navigateHistory({ commit, state }, direction) {
-      // direction: 1 for down, -1 for up in history
+      // If history is empty, nothing to navigate
+      if (state.commandHistory.length === 0) return "";
+
+      // Calculate new position
       const newPosition = state.historyPosition + direction;
 
-      // Going down in history (or exiting history)
-      if (direction > 0 && newPosition >= 0) {
-        commit('SET_HISTORY_POSITION', -1);
-        return state.tempCommand;
-      }
-      // Going up in history
-      else if (direction < 0 && newPosition >= -1 &&
-                Math.abs(newPosition) <= state.commandHistory.length) {
+      if (direction > 0) { // Down in history
+        if (newPosition >= 0) { // Moving beyond history - return to temp command
+          commit('SET_HISTORY_POSITION', -1);
+          return state.tempCommand;
+        } else { // Moving up in history but not to the end
+          commit('SET_HISTORY_POSITION', newPosition);
+          return state.commandHistory[Math.abs(newPosition)];
+        }
+      } else if (direction < 0) { // Up in history
+        if (state.historyPosition === -1) { // First time going into history
+          commit('SET_TEMP_COMMAND', ""); // Save current input
+        }
 
-        // Save current command when entering history
-        if (state.historyPosition === -1) {
-          commit('SET_TEMP_COMMAND', state.currentCommand || "");
+        // Don't go past the end of history
+        if (Math.abs(newPosition) > state.commandHistory.length) {
+          return state.commandHistory[state.commandHistory.length - 1];
         }
 
         commit('SET_HISTORY_POSITION', newPosition);
-
-        if (newPosition === -1) {
-          return state.tempCommand;
-        }
-        return state.commandHistory[newPosition];
+        return state.commandHistory[Math.abs(newPosition)];
       }
 
-      // Return current command or history item
-      return state.historyPosition === -1 ?
-             state.tempCommand :
-             state.commandHistory[state.historyPosition];
+      return "";
     }
   }
 };

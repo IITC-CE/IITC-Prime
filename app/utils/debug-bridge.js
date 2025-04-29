@@ -93,21 +93,8 @@ export const injectDebugBridge = async (webview) => {
           if (result !== undefined) {
             console.log(formatArg(result));
           }
-          window.nsWebViewBridge.emit('console:result', {
-            success: true,
-            command: data.command,
-            result: formatArg(result),
-            timestamp: new Date().toISOString()
-          });
         } catch (error) {
           console.error(error.stack || error.message);
-          window.nsWebViewBridge.emit('console:result', {
-            success: false,
-            command: data.command,
-            error: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString()
-          });
         }
       });
 
