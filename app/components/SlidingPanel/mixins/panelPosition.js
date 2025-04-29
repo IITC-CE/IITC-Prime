@@ -20,15 +20,17 @@ export const panelPositionMixin = {
 
   methods: {
     updatePanelPositions() {
-      PanelPositions.BOTTOM.value = this.screenHeight - this.panelVisibleHeight;
-      PanelPositions.MIDDLE.value = this.screenHeight / 2;
+      const screenHeight = this.screenHeight;
+
+      PanelPositions.BOTTOM.value = screenHeight - this.panelVisibleHeight;
+      PanelPositions.MIDDLE.value = screenHeight / 2;
 
       this.snapThresholds = {
         middleToBottom: (PanelPositions.BOTTOM.value - PanelPositions.MIDDLE.value) / 5,
         topToMiddle: (PanelPositions.MIDDLE.value - PanelPositions.TOP.value) / 5
       };
 
-      this.panelHeight = this.screenHeight - PanelPositions.TOP.value;
+      this.panelHeight = screenHeight - PanelPositions.TOP.value;
       this.lastTop = PanelPositions.BOTTOM.value;
       this.panelCurrentTop = PanelPositions.BOTTOM.value;
 

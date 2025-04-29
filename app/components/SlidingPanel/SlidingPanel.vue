@@ -29,6 +29,7 @@ import MapStateBar from "./MapStateBar.vue";
 import { slideAnimationMixin } from "./mixins/slideAnimation";
 import { panelPositionMixin } from "./mixins/panelPosition";
 import { panelGestureMixin } from "./mixins/panelGesture";
+import { layoutService } from '~/utils/layout-service';
 
 export default {
   name: 'SlidingPanel',
@@ -43,7 +44,7 @@ export default {
   data() {
     return {
       // Screen dimensions
-      screenHeight: this.$store.state.ui.screenHeight,
+      screenHeight: this._getScreenHeight(),
 
       // Map state bar
       mapStateBarHeight: 46,
@@ -51,13 +52,41 @@ export default {
       // Panel configuration
       panelVisibleHeight: 110,
       panelHeight: 0,
-      panelWidth: this.$store.state.ui.slidingPanelWidth,
+      panelWidth: this._getPanelWidth(),
     };
   },
 
   methods: {
-    handleScreenHeightChange(newHeight) {
-      this.screenHeight = newHeight;
+    /**
+     * Get screen height from best available source
+     */
+    _getScreenHeight() {
+      if (layoutService.isInitialized) {
+        return layoutService.dimensions.availableHeight;
+      }
+      return this.$store.state.ui.screenHeight;
+    },
+
+    /**
+     * Get panel width from best available source
+     */
+    _getPanelWidth() {
+      if (layoutService.isInitialized) {
+        return layoutService.dimensions.panelWidth;
+      }
+      return this.$store.state.ui.slidingPanelWidth;
+    },
+
+    /**
+     * Handle layout changes from layout service
+     */
+    handleLayoutChange(event) {
+      const { dimensions } = event;
+
+      // Update with the measured height directly
+      this.screenHeight = dimensions.availableHeight;
+      this.panelWidth = dimensions.panelWidth;
+
       this.updatePanelPositions();
     },
   },
@@ -69,25 +98,41 @@ export default {
   },
 
   created() {
+    // Initialize panel positions
     this.updatePanelPositions();
 
+    // Subscribe to layout changes
+    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
+
+    // Keep store subscription for backward compatibility
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
         switch (action.type) {
           case "ui/setScreenHeight":
-            this.handleScreenHeightChange(action.payload);
+            if (!layoutService.isInitialized) {
+              this.screenHeight = action.payload;
+              this.updatePanelPositions();
+            }
             break;
           case "ui/setSlidingPanelWidth":
-            this.panelWidth = action.payload;
+            if (!layoutService.isInitialized) {
+              this.panelWidth = action.payload;
+            }
             break;
         }
       }
-    })
+    });
   },
 
-  onDestroy() {
-    this.store_unsubscribe();
-  },
+  beforeDestroy() {
+    if (this.store_unsubscribe) {
+      this.store_unsubscribe();
+    }
+
+    if (this.removeLayoutListener) {
+      this.removeLayoutListener();
+    }
+  }
 };
 </script>
 

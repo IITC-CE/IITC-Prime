@@ -1,8 +1,8 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <Page actionBarHidden="true" @layoutChanged="handleLayoutChange">
-    <RootLayout height="100%" width="100%">
+  <Page actionBarHidden="true">
+    <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
       <AbsoluteLayout class="page">
 
         <FlexboxLayout
@@ -13,7 +13,7 @@
             flexGrow="1"
             @show-popup="handlePopup"
           />
-          <label :height="layoutConfig.bottomPadding" />
+          <label :height="layout.bottomPadding" />
         </FlexboxLayout>
 
         <ProgressBar class="progress-bar" />
@@ -30,19 +30,15 @@
 </template>
 
 <script>
-import { Screen } from '@nativescript/core/platform';
 import { AndroidApplication, Application } from "@nativescript/core";
-import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform';
 import { Manager } from 'lib-iitc-manager';
 import storage from "~/utils/storage";
+import { layoutService } from '~/utils/layout-service';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 import PopupWebView from './PopupWebView.vue';
-
-const DEFAULT_PANEL_WIDTH = 500;
-const BOTTOM_PADDING = 100;
 
 export default {
   name: 'MainView',
@@ -56,10 +52,11 @@ export default {
 
   data() {
     return {
-      layoutConfig: {
-        statusBarHeight: 0,
-        navigationBarHeight: 0,
-        bottomPadding: BOTTOM_PADDING,
+      // Layout dimensions from the layout service
+      layout: {
+        bottomPadding: 0,
+        panelWidth: 0,
+        contentHeight: 0
       },
       popup: {
         isVisible: false,
@@ -68,34 +65,52 @@ export default {
           transport: null
         }
       },
-      unsubscribeStore: null
+      unsubscribeStore: null,
+      removeLayoutListener: null
     }
   },
 
   methods: {
-    async handleLayoutChange() {
-      const { widthDIPs, heightDIPs } = Screen.mainScreen;
+    /**
+     * Called when RootLayout changes size
+     * This captures real available space including keyboard state
+     */
+    onRootLayoutChanged(args) {
+      if (!this.$refs.rootLayout || !this.$refs.rootLayout.nativeView) {
+        console.log("RootLayout reference not available");
+        return;
+      }
 
-      this.layoutConfig = {
-        statusBarHeight: getStatusBarHeight(),
-        navigationBarHeight: getNavigationBarHeight(),
-        bottomPadding: this.calculateBottomPadding(widthDIPs, heightDIPs)
+      // Measure the real available dimensions with our layout service
+      layoutService.measureLayout(this.$refs.rootLayout.nativeView);
+    },
+
+    /**
+     * Handle layout changes from the layout service
+     */
+    handleLayoutChanged(args) {
+      const { dimensions } = args;
+      console.log("Layout changed:", dimensions);
+
+      // Update local layout state
+      this.layout = {
+        bottomPadding: dimensions.bottomPadding,
+        panelWidth: dimensions.panelWidth,
+        contentHeight: dimensions.contentHeight
       };
 
+      // Update Vuex store
+      this.updateStoreLayout(dimensions);
+    },
+
+    /**
+     * Update layout related values in the Vuex store
+     */
+    async updateStoreLayout(dimensions) {
       await Promise.all([
-        this.$store.dispatch('ui/setSlidingPanelWidth', this.calculatePanelWidth(widthDIPs, heightDIPs)),
-        this.$store.dispatch('ui/setScreenHeight', heightDIPs - this.layoutConfig.statusBarHeight)
+        this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth),
+        this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight)
       ]);
-    },
-
-    calculateBottomPadding(width, height) {
-      if (width <= height) return BOTTOM_PADDING;
-      return width > 600 ? 0 : BOTTOM_PADDING;
-    },
-
-    calculatePanelWidth(width, height) {
-      if (width <= height) return width;
-      return width > 600 ? DEFAULT_PANEL_WIDTH : width - this.layoutConfig.navigationBarHeight;
     },
 
     handlePopup({ url, transport }) {
@@ -138,6 +153,22 @@ export default {
     const manager = this.setupManager();
     this.setupAndroidBackHandler();
 
+    // Initialize layout service with default dimensions
+    layoutService.initWithDefaults();
+
+    // Set initial layout values
+    this.layout = {
+      bottomPadding: layoutService.dimensions.bottomPadding,
+      panelWidth: layoutService.dimensions.panelWidth,
+      contentHeight: layoutService.dimensions.contentHeight
+    };
+
+    // Update store with initial values
+    this.updateStoreLayout(layoutService.dimensions);
+
+    // Subscribe to layout changes
+    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
+
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
         switch (action.type) {
@@ -152,8 +183,13 @@ export default {
   },
 
   beforeDestroy() {
+    // Clean up all listeners
     if (this.unsubscribeStore) {
       this.unsubscribeStore();
+    }
+
+    if (this.removeLayoutListener) {
+      this.removeLayoutListener();
     }
   }
 };
