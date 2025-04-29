@@ -13,7 +13,10 @@
             flexGrow="1"
             @show-popup="handlePopup"
           />
-          <label :height="layout.bottomPadding" />
+          <label
+            v-show="sliding.isVisible"
+            :height="layout.bottomPadding"
+          />
         </FlexboxLayout>
 
         <ProgressBar class="progress-bar" />

@@ -2,6 +2,7 @@
 
 import {
   switchToPane,
+  bootFinished,
   getVersionName,
   setLayers,
   addPane,
@@ -18,6 +19,9 @@ export const router = async (event) => {
   switch (eventName) {
     case "switchToPane":
       await switchToPane(eventData.id);
+      break;
+    case "bootFinished":
+      await bootFinished();
       break;
     case "setLayers":
       await setLayers(JSON.parse(eventData.base_layer), JSON.parse(eventData.overlay_layer));

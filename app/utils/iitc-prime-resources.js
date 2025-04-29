@@ -13,6 +13,8 @@ const getResource = async (filepath) => {
 }
 
 export const injectIITCPrimeResources = async (webview) => {
-  const scriptCode = `window.nsWebViewBridge.injectStyleSheet("iitcprimecss", ${await getResource("~/assets/css/iitc-prime.css")});`;
-  await webview.executeJavaScript(scriptCode, false);
+  const cssPath = "~/assets/css/iitc-prime.css";
+  const fullPath = resolveLocalResourceFilePath(cssPath);
+
+  await webview.loadStyleSheetFile("iitcprimecss", fullPath, false);
 }

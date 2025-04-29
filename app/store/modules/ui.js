@@ -35,6 +35,7 @@ export const ui = {
     setProgress({ commit }, progress) {
       commit('SET_PROGRESS', progress);
     },
-    reloadWebView() {}
+    reloadWebView() {},
+    iitcBootFinished() {},
   }
 };

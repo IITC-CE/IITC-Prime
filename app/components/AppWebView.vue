@@ -62,7 +62,6 @@ export default {
 
     async onLoadFinished() {
       await injectBridgeIITC(this.webview);
-      await injectIITCPrimeResources(this.webview);
       await this.$store.dispatch('ui/setWebviewLoadStatus', true);
     },
 
@@ -84,6 +83,9 @@ export default {
         switch (action.type) {
           case "ui/reloadWebView":
             await this.$refs.baseWebView.reload();
+            break;
+          case "ui/iitcBootFinished":
+            await injectIITCPrimeResources(webview);
             break;
           case "map/setInjectPlugin":
             await webview.executeJavaScript(action.payload['code']);
