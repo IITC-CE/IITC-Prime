@@ -4,9 +4,9 @@ export const debug = {
   namespaced: true,
   state: () => ({
     logs: [],
-    commandHistory: [],
-    historyPosition: -1,
-    tempCommand: "",
+    commandHistory: [],     // Array of commands with newest at the end (index length-1)
+    historyPosition: -1,    // -1 means "input mode", 0-N represent history positions
+    tempCommand: "",        // Stores current input when navigating through history
     maxLogEntries: 1000,
     maxHistoryEntries: 50
   }),
@@ -23,18 +23,21 @@ export const debug = {
     ADD_COMMAND(state, command) {
       if (!command || command.trim() === '') return;
 
-      // Skip if same as last command
-      if (state.commandHistory.length > 0 && state.commandHistory[0] === command) {
+      // Skip if command is identical to the most recent one
+      if (state.commandHistory.length > 0 &&
+          state.commandHistory[state.commandHistory.length - 1] === command) {
         return;
       }
 
-      // Add command to history
-      state.commandHistory.unshift(command);
+      // Add command to the end of history array
+      state.commandHistory.push(command);
+
+      // Maintain maximum history size by removing oldest entries
       if (state.commandHistory.length > state.maxHistoryEntries) {
-        state.commandHistory.pop();
+        state.commandHistory.shift();
       }
 
-      // Reset history navigation
+      // Reset to input mode after adding a command
       state.historyPosition = -1;
       state.tempCommand = "";
     },
@@ -55,36 +58,46 @@ export const debug = {
     addCommand({ commit }, command) {
       commit('ADD_COMMAND', command);
     },
-    navigateHistory({ commit, state }, direction) {
-      // If history is empty, nothing to navigate
+    navigateHistory({ commit, state }, { direction, currentCommand }) {
+      // Return empty string if history is empty
       if (state.commandHistory.length === 0) return "";
 
-      // Calculate new position
-      const newPosition = state.historyPosition + direction;
+      const currentPosition = state.historyPosition;
+      let newPosition;
 
-      if (direction > 0) { // Down in history
-        if (newPosition >= 0) { // Moving beyond history - return to temp command
-          commit('SET_HISTORY_POSITION', -1);
-          return state.tempCommand;
-        } else { // Moving up in history but not to the end
-          commit('SET_HISTORY_POSITION', newPosition);
-          return state.commandHistory[Math.abs(newPosition)];
-        }
-      } else if (direction < 0) { // Up in history
-        if (state.historyPosition === -1) { // First time going into history
-          commit('SET_TEMP_COMMAND', ""); // Save current input
-        }
-
-        // Don't go past the end of history
-        if (Math.abs(newPosition) > state.commandHistory.length) {
-          return state.commandHistory[state.commandHistory.length - 1];
-        }
-
-        commit('SET_HISTORY_POSITION', newPosition);
-        return state.commandHistory[Math.abs(newPosition)];
+      // Direction < 0 means down (toward newer commands)
+      // Direction > 0 means up (toward older commands)
+      if (direction < 0) {
+        newPosition = currentPosition - 1;
+      } else {
+        newPosition = currentPosition + 1;
       }
 
-      return "";
+      // Apply boundary constraints to position
+      if (newPosition < -1) {
+        // Can't go below input mode
+        newPosition = -1;
+      } else if (newPosition >= state.commandHistory.length) {
+        // Can't go beyond oldest command
+        newPosition = state.commandHistory.length - 1;
+      }
+
+      // When first moving from input mode to history, store current input
+      if (currentPosition === -1 && newPosition !== -1) {
+        commit('SET_TEMP_COMMAND', currentCommand || "");
+      }
+
+      // Update history position
+      commit('SET_HISTORY_POSITION', newPosition);
+
+      // When position is -1, return to input mode with saved input
+      if (newPosition === -1) {
+        return state.tempCommand;
+      } else {
+        // Convert position to actual array index (since newest is at the end)
+        const historyIndex = state.commandHistory.length - 1 - newPosition;
+        return state.commandHistory[historyIndex];
+      }
     }
   }
 };

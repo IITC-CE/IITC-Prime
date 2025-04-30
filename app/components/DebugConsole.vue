@@ -180,16 +180,24 @@ export default {
 
     // Navigate up through command history
     async navigateHistoryUp() {
-      const result = await this.$store.dispatch('debug/navigateHistory', -1);
-      if (result) {
+      const result = await this.$store.dispatch('debug/navigateHistory', {
+        direction: 1,
+        currentCommand: this.command
+      });
+      if (result !== undefined) {
         this.command = result;
       }
     },
 
     // Navigate down through command history
     async navigateHistoryDown() {
-      const result = await this.$store.dispatch('debug/navigateHistory', 1);
-      this.command = result || '';
+      const result = await this.$store.dispatch('debug/navigateHistory', {
+        direction: -1,
+        currentCommand: this.command
+      });
+      if (result !== undefined) {
+        this.command = result;
+      }
     }
   },
 
