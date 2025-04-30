@@ -7,7 +7,7 @@
       ref="logsList"
       row="0"
       class="logs-list"
-      :items="logs"
+      :items="displayLogs"
       @scroll="handleScroll"
     >
       <v-template>
@@ -41,7 +41,7 @@
 
     <!-- Scroll to bottom button (shown conditionally) -->
     <Button
-      v-show="!isAtBottom"
+      v-show="!isAtBottom && showControls"
       class="scroll-bottom-button"
       text="↓"
       @tap="scrollToBottom"
@@ -55,11 +55,20 @@ import { isAndroid } from '@nativescript/core/platform';
 import store from "@/store";
 
 export default {
+  props: {
+    isVisible: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   data() {
     return {
       command: '',
       isAtBottom: true,
-      scrollTimeout: null
+      scrollTimeout: null,
+      loadedItems: [], // Stores logs when console is visible
+      showControls: false // Controls UI elements visibility
     }
   },
 
@@ -68,7 +77,45 @@ export default {
       logs: state => state.debug.logs,
       commandHistory: state => state.debug.commandHistory,
       historyPosition: state => state.debug.historyPosition
-    })
+    }),
+
+    displayLogs() {
+      return this.isVisible ? this.logs : this.loadedItems;
+    }
+  },
+
+  watch: {
+    isVisible(newValue) {
+      if (newValue) {
+        this.showControls = true;
+
+        this.$nextTick(() => {
+          setTimeout(() => {
+            if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
+              this.$refs.commandInput.nativeView.focus();
+            }
+            // Scroll to bottom after UI is fully rendered
+            this.scrollToBottom();
+          }, 50);
+        });
+      } else {
+        // Console being hidden - clear loaded items
+        this.loadedItems = [];
+        this.showControls = false;
+      }
+    },
+
+    // When logs change and console is visible, update and scroll
+    logs(newLogs) {
+      if (this.isVisible && this.isAtBottom) {
+        // Schedule scroll to bottom for next UI update
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 0);
+        });
+      }
+    }
   },
 
   methods: {
@@ -112,6 +159,8 @@ export default {
 
     // Handle scroll events to detect if we're at the bottom
     handleScroll(args) {
+      if (!this.isVisible) return;
+
       // Clear previous timeout if it exists
       if (this.scrollTimeout) {
         clearTimeout(this.scrollTimeout);
@@ -152,7 +201,8 @@ export default {
 
     // Scroll to the bottom of the list
     scrollToBottom() {
-      if (!this.logs.length || !this.$refs.logsList || !this.$refs.logsList.nativeView) return;
+      // Skip if not visible or no logs
+      if (!this.isVisible || !this.logs.length || !this.$refs.logsList || !this.$refs.logsList.nativeView) return;
 
       this.$nextTick(() => {
         try {
@@ -200,27 +250,6 @@ export default {
       }
     }
   },
-
-  watch: {
-    // Auto-scroll when new logs are added and we're at the bottom
-    logs() {
-      if (this.isAtBottom) {
-        // Use setTimeout to ensure we're outside of the current rendering cycle
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 0);
-      }
-    }
-  },
-
-  mounted() {
-    // Initial scroll to bottom when component is mounted
-    this.$nextTick(() => {
-      setTimeout(() => {
-        this.scrollToBottom();
-      }, 100);
-    });
-  }
 }
 </script>
 

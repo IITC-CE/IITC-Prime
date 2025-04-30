@@ -24,8 +24,9 @@
         </FlexboxLayout>
 
         <DebugConsole
-          v-if="isDebugActive"
+          v-show="isDebugActive"
           class="debug-console"
+          :is-visible="isDebugActive"
           @execute-command="executeDebugCommand"
         />
 
