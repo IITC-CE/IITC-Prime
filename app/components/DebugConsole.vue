@@ -12,7 +12,12 @@
       @scrollEnd="handleScrollEnd"
     >
       <v-template>
-        <StackLayout class="log-item" :class="'log-' + item.type">
+        <StackLayout
+          class="log-item"
+          :class="'log-' + item.type"
+          @touch="onTouch($event, item)"
+          @longPress="copyLogToClipboard(item)"
+        >
           <!-- Header row with timestamp, log level and source -->
           <Label :text="formatLogHeader(item)" class="log-header" once="true" />
 
@@ -54,6 +59,10 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import * as Clipboard from 'nativescript-clipboard';
+import { Toasty } from "@triniwiz/nativescript-toasty";
+import { Animation } from "@nativescript/core";
+import { Color } from "@nativescript/core/color";
 
 export default {
   props: {
@@ -73,7 +82,14 @@ export default {
       isAtBottom: true,
       scrollTimeout: null,
       showControls: false, // Controls UI elements visibility
-      logsVisible: false   // Controls whether logs should be shown or not
+      logsVisible: false,  // Controls whether logs should be shown or not
+      activeAnimation: null, // Track current animation
+      restoreTimeout: null, // Timeout for auto-restoring highlight
+      touchedView: null, // Reference to currently touched view
+      isProcessingTouch: false, // Flag to prevent overlapping touch operations
+      // Define color constants
+      HIGHLIGHT_BG: new Color("rgba(255, 255, 255, 0.15)"),
+      TRANSPARENT_BG: new Color("transparent")
     }
   },
 
@@ -86,7 +102,10 @@ export default {
 
     // Display logs only when both component is visible and logs should be shown
     displayLogs() {
-      return (this.isVisible && this.logsVisible) ? this.logs : [];
+      if (this.isVisible && this.logsVisible) {
+        return this.logs.map((log, index) => ({ ...log, index }));
+      }
+      return [];
     }
   },
 
@@ -104,13 +123,15 @@ export default {
 
         // Add logs with delay to prevent UI freezing
         setTimeout(() => {
-          // Show logs
           this.logsVisible = true;
         }, 10);
       } else {
         // Console being hidden
         this.logsVisible = false;
         this.showControls = false;
+
+        // Reset touch state when console is hidden
+        this.resetTouchState();
       }
     },
 
@@ -142,6 +163,120 @@ export default {
       'navigateHistory'
     ]),
 
+    // Reset touch state and cancel all animations
+    resetTouchState() {
+      // Cancel timeout if exists
+      if (this.restoreTimeout) {
+        clearTimeout(this.restoreTimeout);
+        this.restoreTimeout = null;
+      }
+
+      // Cancel animation if exists
+      if (this.activeAnimation) {
+        this.activeAnimation.cancel();
+        this.activeAnimation = null;
+      }
+
+      // Reset touched view directly
+      if (this.touchedView) {
+        this.touchedView.backgroundColor = this.TRANSPARENT_BG;
+        this.touchedView = null;
+      }
+
+      // Reset processing flag
+      this.isProcessingTouch = false;
+    },
+
+    // Handle touch events on log items
+    onTouch(args, item) {
+      const view = args.object;
+
+      switch (args.action) {
+        case 'down':
+          // Skip if already processing touch
+          if (this.isProcessingTouch) {
+            return;
+          }
+
+          // Set processing flag to prevent parallel operations
+          this.isProcessingTouch = true;
+
+          // Reset previous state
+          this.resetTouchState();
+
+          // Just re-set the processing flag since resetTouchState cleared it
+          this.isProcessingTouch = true;
+
+          // Apply highlight
+          this.touchedView = view;
+          view.backgroundColor = this.HIGHLIGHT_BG;
+
+          // Set timeout for auto-restore
+          this.restoreTimeout = setTimeout(() => {
+            this.restoreLogItem();
+          }, 1000);
+          break;
+
+        case 'up':
+        case 'cancel':
+          // Only restore if this is the current touched view
+          if (view === this.touchedView) {
+            this.restoreLogItem();
+          }
+          break;
+      }
+    },
+
+    // Restore log item to original appearance with animation
+    restoreLogItem() {
+      // Skip if no view is being touched
+      if (!this.touchedView) {
+        this.isProcessingTouch = false;
+        return;
+      }
+
+      // Cancel timeout if exists
+      if (this.restoreTimeout) {
+        clearTimeout(this.restoreTimeout);
+        this.restoreTimeout = null;
+      }
+
+      // Cancel animation if exists
+      if (this.activeAnimation) {
+        this.activeAnimation.cancel();
+        this.activeAnimation = null;
+      }
+
+      // Store references before clearing
+      const viewRef = this.touchedView;
+      this.touchedView = null;
+
+      // Create animation
+      const restoreAnimation = new Animation([
+        {
+          target: viewRef,
+          backgroundColor: this.TRANSPARENT_BG,
+          duration: 200
+        }
+      ]);
+
+      // Store animation reference
+      this.activeAnimation = restoreAnimation;
+
+      // Play animation and handle completion
+      restoreAnimation.play()
+        .then(() => {
+          this.activeAnimation = null;
+          this.isProcessingTouch = false;
+        })
+        .catch(e => {
+          // On error, reset directly
+          viewRef.backgroundColor = this.TRANSPARENT_BG;
+          this.activeAnimation = null;
+          this.isProcessingTouch = false;
+        });
+    },
+
     // Format timestamp to display time with milliseconds
     formatTimestamp(timestamp) {
       if (!timestamp) return '';
@@ -162,6 +297,37 @@ export default {
       const category = item.category ? `[${item.category}]` : '';
 
       return `${timestamp} ${type} ${source} ${category}`;
+    },
+
+    // Get full log text (header + message)
+    getFullLogText(item) {
+      const header = this.formatLogHeader(item);
+      const message = item.message || '';
+      return `${header}\n${message}`;
+    },
+
+    // Copy log text to clipboard on long press
+    copyLogToClipboard(item) {
+      // Reset touch state to clear any highlights
+      this.resetTouchState();
+
+      const fullText = this.getFullLogText(item);
+
+      // Copy to clipboard
+      Clipboard.setText(fullText)
+        .then(() => {
+          this.showToast("Log copied to clipboard");
+        })
+        .catch(error => {
+          console.error("Error copying to clipboard:", error);
+          this.showToast("Failed to copy log");
+        });
+    },
+
+    // Show toast notification
+    showToast(message) {
+      const toast = new Toasty({ text: message });
+      toast.show();
     },
 
     // Execute JavaScript command in WebView
@@ -258,6 +424,11 @@ export default {
       }
     }
   },
+
+  // Cleanup when component is destroyed
+  beforeDestroy() {
+    this.resetTouchState();
+  }
 }
 </script>
 
