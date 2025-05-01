@@ -12,6 +12,10 @@ import CollectionView from '@nativescript-community/ui-collectionview/vue';
 
 import Main from '~/components/Main'
 import store from './store';
+import { initializeTracing } from './app-trace';
+
+// Initialize app logging
+initializeTracing();
 
 FontIcon.paths = {
   'fa': './assets/css/Font-Awesome.css',

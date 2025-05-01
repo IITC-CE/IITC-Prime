@@ -12,10 +12,13 @@
       @scrollEnd="handleScrollEnd"
     >
       <v-template>
-        <GridLayout columns="auto, *" class="log-item" :class="item.type ? 'log-' + item.type : ''">
-          <Label col="0" :text="formatTimestamp(item.timestamp)" class="log-timestamp" />
-          <Label col="1" :text="item.message" textWrap="true" class="log-message" />
-        </GridLayout>
+        <StackLayout class="log-item" :class="'log-' + item.type">
+          <!-- Header row with timestamp, log level and source -->
+          <Label :text="formatLogHeader(item)" class="log-header" once="true" />
+
+          <!-- Message content -->
+          <Label :text="item.message" textWrap="true" class="log-message" once="true" />
+        </StackLayout>
       </v-template>
     </CollectionView>
 
@@ -53,7 +56,6 @@
 import { mapState, mapActions } from 'vuex';
 import { isAndroid } from '@nativescript/core/platform';
 import store from "@/store";
-import { CollectionView } from "@nativescript-community/ui-collectionview";
 
 export default {
   props: {
@@ -136,6 +138,16 @@ export default {
       const seconds = date.getSeconds().toString().padStart(2, '0');
 
       return `${hours}:${minutes}:${seconds}`;
+    },
+
+    // Format log header with timestamp, type and source
+    formatLogHeader(item) {
+      const timestamp = this.formatTimestamp(item.timestamp);
+      const type = item.type ? item.type.toUpperCase() : 'LOG';
+      const source = item.source ? item.source.toUpperCase() : 'UNKNOWN';
+      const category = item.category ? `[${item.category}]` : '';
+
+      return `${timestamp} ${type} ${source} ${category}`;
     },
 
     // Execute JavaScript command in WebView
@@ -254,33 +266,54 @@ export default {
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-.log-timestamp {
-  color: rgba(255, 255, 255, 0.6);
+.log-header {
+  color: rgba(255, 255, 255, 0.7);
   font-size: 12;
-  padding-right: 8;
   font-family: monospace;
+  height: 20;
 }
 
 .log-message {
   color: #ffffff;
   font-size: 14;
   font-family: monospace;
+  padding-left: 8;
+}
+
+.log-error .log-header {
+  color: #ff5252;
 }
 
 .log-error .log-message {
   color: #ff5252;
 }
 
+.log-warn .log-header {
+  color: #ffd740;
+}
+
 .log-warn .log-message {
   color: #ffd740;
+}
+
+.log-info .log-header {
+  color: #40c4ff;
 }
 
 .log-info .log-message {
   color: #40c4ff;
 }
 
+.log-debug .log-header {
+  color: #b0bec5;
+}
+
 .log-debug .log-message {
   color: #b0bec5;
+}
+
+.log-result .log-header {
+  color: #69f0ae;
 }
 
 .log-result .log-message {

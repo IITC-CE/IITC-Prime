@@ -199,7 +199,7 @@ export default {
             try {
               this.webViewInstance.removeEventListener(event);
             } catch (e) {
-              console.log(`Warning: Could not remove listener for ${event}`);
+              console.error(`Warning: Could not remove listener for ${event}`);
             }
           });
 

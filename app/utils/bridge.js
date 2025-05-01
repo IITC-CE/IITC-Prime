@@ -48,8 +48,8 @@ export const router = async (event) => {
       // This event is handled by direct listeners in BaseWebView
       break;
     default:
-      console.log("Unknown event in JSBridge router");
-      console.log(event);
+      console.debug("Unknown event in JSBridge router");
+      console.debug(event);
   }
 }
 

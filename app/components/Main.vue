@@ -107,7 +107,7 @@ export default {
      */
     onRootLayoutChanged(args) {
       if (!this.$refs.rootLayout || !this.$refs.rootLayout.nativeView) {
-        console.log("RootLayout reference not available");
+        console.error("RootLayout reference not available");
         return;
       }
 
@@ -120,7 +120,6 @@ export default {
      */
     handleLayoutChanged(args) {
       const { dimensions } = args;
-      console.log("Layout changed:", dimensions);
 
       // Update local layout state
       this.layout = {
@@ -200,14 +199,9 @@ export default {
     },
 
     onKeyboardOpened(args) {
-      console.log('The keyboard is opened, height:', args.data.height);
       this.sliding.isVisible = false;
     },
-    onKeyboardChanged(args) {
-      console.log('The keyboard is changed, new height:', args.data.height);
-    },
     onKeyboardClosed() {
-      console.log('The keyboard is closed');
       this.sliding.isVisible = true;
     }
   },
@@ -235,7 +229,6 @@ export default {
     this.keyboard = keyboardOpening();
 
     this.keyboard.on('opened', this.onKeyboardOpened);
-    this.keyboard.on('changed', this.onKeyboardChanged);
     this.keyboard.on('closed', this.onKeyboardClosed);
 
     this.unsubscribeStore = this.$store.subscribeAction({
@@ -263,7 +256,6 @@ export default {
 
     if (this.keyboard) {
       this.keyboard.off('opened');
-      this.keyboard.off('changed');
       this.keyboard.off('closed');
     }
   }

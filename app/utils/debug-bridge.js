@@ -40,7 +40,8 @@ export const injectDebugBridge = async (webview) => {
         window.nsWebViewBridge.emit('console:log', {
           type: 'log',
           message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'webview'
         });
         return originalConsole.log.apply(console, args);
       };
@@ -50,7 +51,8 @@ export const injectDebugBridge = async (webview) => {
         window.nsWebViewBridge.emit('console:log', {
           type: 'warn',
           message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'webview'
         });
         return originalConsole.warn.apply(console, args);
       };
@@ -60,7 +62,8 @@ export const injectDebugBridge = async (webview) => {
         window.nsWebViewBridge.emit('console:log', {
           type: 'error',
           message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'webview'
         });
         return originalConsole.error.apply(console, args);
       };
@@ -70,7 +73,8 @@ export const injectDebugBridge = async (webview) => {
         window.nsWebViewBridge.emit('console:log', {
           type: 'info',
           message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'webview'
         });
         return originalConsole.info.apply(console, args);
       };
@@ -80,7 +84,8 @@ export const injectDebugBridge = async (webview) => {
         window.nsWebViewBridge.emit('console:log', {
           type: 'debug',
           message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          source: 'webview'
         });
         return originalConsole.debug.apply(console, args);
       };
