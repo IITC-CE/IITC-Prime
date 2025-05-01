@@ -13,6 +13,54 @@ function isDeveloperOnlyLog(message) {
 }
 
 /**
+ * Format log arguments to string representation consistently across all log types
+ */
+function formatLogArguments(args) {
+  return args.map(arg => {
+    if (arg === null) return 'null';
+    if (arg === undefined) return 'undefined';
+
+    // Special handling for Error objects
+    if (arg instanceof Error) {
+      return String(arg);
+    }
+
+    if (typeof arg === 'object') {
+      try { return JSON.stringify(arg); }
+      catch (e) { return String(arg); }
+    }
+    return String(arg);
+  }).join(' ');
+}
+
+/**
+ * Factory function to create console method wrappers
+ */
+function createConsoleWrapper(originalMethod, logType) {
+  return function() {
+    const args = Array.from(arguments);
+    const message = formatLogArguments(args);
+
+    // Call original method to maintain development visibility
+    originalMethod.apply(console, args);
+
+    // Skip storing developer-only logs
+    if (isDeveloperOnlyLog(message)) {
+      return;
+    }
+
+    // Add to store with app source
+    store.dispatch('debug/addLog', {
+      type: logType,
+      message: message,
+      timestamp: Date.now(),
+      source: 'app',
+      category: 'console'
+    });
+  };
+}
+
+/**
  * Initialize Trace system to capture application logs
  */
 export function initializeTracing() {
@@ -48,7 +96,7 @@ export function initializeTracing() {
       }
 
       // Skip storing framework logs, but they remain visible in console
-      if (isDeveloperOnlyLog(message, category)) {
+      if (isDeveloperOnlyLog(message)) {
         return;
       }
 
@@ -63,7 +111,7 @@ export function initializeTracing() {
     }
   };
 
-  // Intercept console methods to capture direct console usage
+  // Store original console methods
   const originalConsole = {
     log: console.log,
     warn: console.warn,
@@ -72,112 +120,12 @@ export function initializeTracing() {
     debug: console.debug
   };
 
-  // Override console methods
-  console.log = function() {
-    const args = Array.from(arguments);
-    const message = args.map(arg => {
-      if (arg === null) return 'null';
-      if (arg === undefined) return 'undefined';
-      if (typeof arg === 'object') {
-        try { return JSON.stringify(arg); }
-        catch (e) { return String(arg); }
-      }
-      return String(arg);
-    }).join(' ');
-
-    // Call original method
-    originalConsole.log.apply(console, args);
-
-    // Skip storing framework logs
-    if (isDeveloperOnlyLog(message, 'console')) {
-      return;
-    }
-
-    // Add to store
-    store.dispatch('debug/addLog', {
-      type: 'log',
-      message: message,
-      timestamp: Date.now(),
-      source: 'app',
-      category: 'console'
-    });
-  };
-
-  console.warn = function() {
-    const args = Array.from(arguments);
-    const message = args.map(arg => String(arg)).join(' ');
-    originalConsole.warn.apply(console, args);
-
-    // Skip storing framework logs
-    if (isDeveloperOnlyLog(message, 'console')) {
-      return;
-    }
-
-    store.dispatch('debug/addLog', {
-      type: 'warn',
-      message: message,
-      timestamp: Date.now(),
-      source: 'app',
-      category: 'console'
-    });
-  };
-
-  console.error = function() {
-    const args = Array.from(arguments);
-    const message = args.map(arg => String(arg)).join(' ');
-    originalConsole.error.apply(console, args);
-
-    // Skip storing framework logs
-    if (isDeveloperOnlyLog(message, 'console')) {
-      return;
-    }
-
-    store.dispatch('debug/addLog', {
-      type: 'error',
-      message: message,
-      timestamp: Date.now(),
-      source: 'app',
-      category: 'console'
-    });
-  };
-
-  console.info = function() {
-    const args = Array.from(arguments);
-    const message = args.map(arg => String(arg)).join(' ');
-    originalConsole.info.apply(console, args);
-
-    // Skip storing framework logs
-    if (isDeveloperOnlyLog(message, 'console')) {
-      return;
-    }
-
-    store.dispatch('debug/addLog', {
-      type: 'info',
-      message: message,
-      timestamp: Date.now(),
-      source: 'app',
-      category: 'console'
-    });
-  };
-
-  console.debug = function() {
-    const args = Array.from(arguments);
-    const message = args.map(arg => String(arg)).join(' ');
-    originalConsole.debug.apply(console, args);
-
-    // Skip storing framework logs
-    if (isDeveloperOnlyLog(message, 'console')) {
-      return;
-    }
-
-    store.dispatch('debug/addLog', {
-      type: 'debug',
-      message: message,
-      timestamp: Date.now(),
-      source: 'app',
-      category: 'console'
-    });
-  };
+  // Override console methods using factory function
+  console.log = createConsoleWrapper(originalConsole.log, 'log');
+  console.warn = createConsoleWrapper(originalConsole.warn, 'warn');
+  console.error = createConsoleWrapper(originalConsole.error, 'error');
+  console.info = createConsoleWrapper(originalConsole.info, 'info');
+  console.debug = createConsoleWrapper(originalConsole.debug, 'debug');
 
   // Register our trace writer and enable tracing
   Trace.addWriter(DebugConsoleTraceWriter);
