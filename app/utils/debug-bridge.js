@@ -7,8 +7,7 @@
 export const injectDebugBridge = async (webview) => {
   const script = `
   (function() {
-    // Wait for bridge to be ready
-    window.addEventListener('ns-bridge-ready', function() {
+    function debugBridge() {
       if (window.__debugBridgeInstalled) return;
 
       // Store original console methods
@@ -104,8 +103,15 @@ export const injectDebugBridge = async (webview) => {
       });
 
       window.__debugBridgeInstalled = true;
-      console.log('[Debug Bridge] Initialized');
-    });
+    };
+    // Wait for bridge to be ready
+    if ("nsWebViewBridge" in window) {
+      debugBridge();
+    } else {
+      window.addEventListener('ns-bridge-ready', function() {
+        debugBridge();
+      });
+    }
   })();
   `;
 
