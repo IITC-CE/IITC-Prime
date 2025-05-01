@@ -3,20 +3,21 @@
 <template>
   <GridLayout rows="*, auto, auto" class="debug-console">
     <!-- Logs list -->
-    <ListView
+    <CollectionView
       ref="logsList"
       row="0"
       class="logs-list"
       :items="displayLogs"
       @scroll="handleScroll"
+      @scrollEnd="handleScrollEnd"
     >
       <v-template>
-        <GridLayout columns="auto, *" class="log-item" :class="'log-' + item.type">
+        <GridLayout columns="auto, *" class="log-item" :class="item.type ? 'log-' + item.type : ''">
           <Label col="0" :text="formatTimestamp(item.timestamp)" class="log-timestamp" />
           <Label col="1" :text="item.message" textWrap="true" class="log-message" />
         </GridLayout>
       </v-template>
-    </ListView>
+    </CollectionView>
 
     <!-- Controls panel -->
     <GridLayout row="1" columns="auto, *, auto, auto" class="controls-panel">
@@ -39,7 +40,6 @@
       <Button col="1" class="send-button" text="Send" @tap="executeCommand" />
     </GridLayout>
 
-    <!-- Scroll to bottom button (shown conditionally) -->
     <Button
       v-show="!isAtBottom && showControls"
       class="scroll-bottom-button"
@@ -53,6 +53,7 @@
 import { mapState, mapActions } from 'vuex';
 import { isAndroid } from '@nativescript/core/platform';
 import store from "@/store";
+import { CollectionView } from "@nativescript-community/ui-collectionview";
 
 export default {
   props: {
@@ -106,7 +107,7 @@ export default {
     },
 
     // When logs change and console is visible, update and scroll
-    logs(newLogs) {
+    displayLogs(newLogs) {
       if (this.isVisible && this.isAtBottom) {
         // Schedule scroll to bottom for next UI update
         this.$nextTick(() => {
@@ -168,64 +169,45 @@ export default {
 
       // Set a timeout to check if we're at the bottom after scrolling stops
       this.scrollTimeout = setTimeout(() => {
-        if (!this.$refs.logsList || !this.$refs.logsList.nativeView) return;
-
-        const listView = this.$refs.logsList.nativeView;
-
-        if (isAndroid) {
-          // Android implementation
-          try {
-            const layoutManager = listView.getLayoutManager();
-            const itemCount = layoutManager.getItemCount();
-            const lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
-            this.isAtBottom = lastVisiblePosition >= itemCount - 2;
-          } catch (e) {
-            console.log("Error checking scroll position:", e);
-            this.isAtBottom = true;
-          }
-        } else {
-          // iOS implementation
-          try {
-            const indexPathsArray = listView.indexPathsForVisibleRows;
-            if (indexPathsArray && indexPathsArray.count > 0) {
-              const lastVisibleIndex = indexPathsArray.objectAtIndex(indexPathsArray.count - 1).row;
-              this.isAtBottom = lastVisibleIndex >= this.logs.length - 2;
-            }
-          } catch (e) {
-            console.log("Error checking scroll position:", e);
-            this.isAtBottom = true;
-          }
-        }
+        this.checkScrollPosition();
       }, 200);
+    },
+
+    // Additional handler for scrollEnd event
+    handleScrollEnd(args) {
+      if (!this.isVisible) return;
+      this.checkScrollPosition();
+    },
+
+    // Check if the scroll position is at the bottom
+    checkScrollPosition() {
+      if (!this.$refs.logsList || !this.displayLogs.length) return;
+
+      try {
+        const nativeCollectionView = this.$refs.logsList.nativeView;
+
+        const lastVisibleIndex = nativeCollectionView.findLastVisibleItemIndex();
+
+        this.isAtBottom = lastVisibleIndex >= (this.logs.length - 2);
+      } catch (e) {
+        console.error("Error checking scroll position:", e);
+        this.isAtBottom = true;
+      }
     },
 
     // Scroll to the bottom of the list
     scrollToBottom() {
       // Skip if not visible or no logs
-      if (!this.isVisible || !this.logs.length || !this.$refs.logsList || !this.$refs.logsList.nativeView) return;
+      if (!this.isVisible || !this.logs.length || !this.$refs.logsList) return;
 
-      this.$nextTick(() => {
-        try {
-          const listView = this.$refs.logsList.nativeView;
-
-          if (isAndroid) {
-            // Android implementation using scrollToIndex
-            if (typeof listView.scrollToIndex === 'function') {
-              listView.scrollToIndex(this.logs.length - 1);
-            } else if (listView.scrollToPosition) {
-              listView.scrollToPosition(this.logs.length - 1);
-            }
-          } else {
-            // iOS implementation
-            const indexPath = NSIndexPath.indexPathForItemInSection(this.logs.length - 1, 0);
-            listView.scrollToIndexPathAtScrollPositionAnimated(indexPath, 2, true);
-          }
-
-          this.isAtBottom = true;
-        } catch (e) {
-          console.log("Error scrolling to bottom:", e);
-        }
-      });
+      try {
+        // CollectionView has a convenient scrollToIndex method
+        const lastIndex = this.logs.length - 1;
+        this.$refs.logsList.scrollToIndex(lastIndex);
+        this.isAtBottom = true;
+      } catch (e) {
+        console.error("Error scrolling to bottom:", e);
+      }
     },
 
     // Navigate up through command history
