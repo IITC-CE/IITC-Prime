@@ -27,6 +27,7 @@
           v-show="isDebugActive"
           class="debug-console"
           :is-visible="isDebugActive"
+          :is-keyboard-open="isKeyboardOpen"
           @execute-command="executeDebugCommand"
         />
 
@@ -90,7 +91,8 @@ export default {
       },
       unsubscribeStore: null,
       removeLayoutListener: null,
-      keyboard: null
+      keyboard: null,
+      isKeyboardOpen: false,
     }
   },
 
@@ -200,9 +202,11 @@ export default {
 
     onKeyboardOpened(args) {
       this.sliding.isVisible = false;
+      this.isKeyboardOpen = true;
     },
     onKeyboardClosed() {
       this.sliding.isVisible = true;
+      this.isKeyboardOpen = false;
     }
   },
 

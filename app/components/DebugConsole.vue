@@ -54,12 +54,14 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import { isAndroid } from '@nativescript/core/platform';
-import store from "@/store";
 
 export default {
   props: {
     isVisible: {
+      type: Boolean,
+      default: false
+    },
+    isKeyboardOpen: {
       type: Boolean,
       default: false
     }
@@ -70,8 +72,8 @@ export default {
       command: '',
       isAtBottom: true,
       scrollTimeout: null,
-      loadedItems: [], // Stores logs when console is visible
-      showControls: false // Controls UI elements visibility
+      showControls: false, // Controls UI elements visibility
+      logsVisible: false   // Controls whether logs should be shown or not
     }
   },
 
@@ -82,8 +84,9 @@ export default {
       historyPosition: state => state.debug.historyPosition
     }),
 
+    // Display logs only when both component is visible and logs should be shown
     displayLogs() {
-      return this.isVisible ? this.logs : this.loadedItems;
+      return (this.isVisible && this.logsVisible) ? this.logs : [];
     }
   },
 
@@ -91,19 +94,22 @@ export default {
     isVisible(newValue) {
       if (newValue) {
         this.showControls = true;
+        this.logsVisible = false;
 
         this.$nextTick(() => {
-          setTimeout(() => {
-            if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
-              this.$refs.commandInput.nativeView.focus();
-            }
-            // Scroll to bottom after UI is fully rendered
-            this.scrollToBottom();
-          }, 50);
+          if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
+            this.$refs.commandInput.nativeView.focus();
+          }
         });
+
+        // Add logs with delay to prevent UI freezing
+        setTimeout(() => {
+          // Show logs
+          this.logsVisible = true;
+        }, 10);
       } else {
-        // Console being hidden - clear loaded items
-        this.loadedItems = [];
+        // Console being hidden
+        this.logsVisible = false;
         this.showControls = false;
       }
     },
@@ -116,6 +122,14 @@ export default {
           setTimeout(() => {
             this.scrollToBottom();
           }, 0);
+        });
+      }
+    },
+
+    isKeyboardOpen(newValue, oldValue) {
+      if (newValue !== oldValue && this.isVisible && this.logsVisible) {
+        this.$nextTick(() => {
+          this.scrollToBottom();
         });
       }
     }
@@ -210,11 +224,11 @@ export default {
     // Scroll to the bottom of the list
     scrollToBottom() {
       // Skip if not visible or no logs
-      if (!this.isVisible || !this.logs.length || !this.$refs.logsList) return;
+      if (!this.isVisible || !this.displayLogs.length || !this.$refs.logsList) return;
 
       try {
         // CollectionView has a convenient scrollToIndex method
-        const lastIndex = this.logs.length - 1;
+        const lastIndex = this.displayLogs.length - 1;
         this.$refs.logsList.scrollToIndex(lastIndex);
         this.isAtBottom = true;
       } catch (e) {
