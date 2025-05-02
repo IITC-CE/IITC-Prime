@@ -9,6 +9,14 @@ export const PANEL_CONSTANTS = {
 };
 
 export const panelGestureMixin = {
+  data() {
+    return {
+      // External gesture tracking
+      externalPanStarted: false,
+      externalStartDeltaY: 0
+    };
+  },
+
   methods: {
     /**
      * Calculates the final position of the panel with resistance effect
@@ -73,5 +81,63 @@ export const panelGestureMixin = {
           break;
       }
     },
+
+    /**
+     * Handles pan gestures coming from external components
+     * Correctly translates coordinates and adjusts panel position
+     * @param {Object} args - Pan gesture event arguments from external source
+     */
+    handleExternalPanGesture(args) {
+      if (!this.$refs.panel?.nativeView) {
+        return;
+      }
+
+      const panel = this.$refs.panel.nativeView;
+
+      // Cancel any ongoing animation
+      if (this.isAnimating) {
+        this.cancelAnimation();
+      }
+
+      switch (args.state) {
+        case 1: // Pan start
+          this.externalPanStarted = true;
+          this.startTop = panel.top;
+          this.panelCurrentTop = panel.top;
+          this.externalStartDeltaY = args.deltaY;
+          break;
+
+        case 2: // Pan in progress
+          if (!this.externalPanStarted) {
+            // If we somehow missed the start event
+            this.externalPanStarted = true;
+            this.startTop = panel.top;
+            this.externalStartDeltaY = args.deltaY;
+          }
+
+          // Calculate actual delta from the starting point
+          const adjustedDeltaY = args.deltaY - this.externalStartDeltaY;
+
+          // Apply the delta to the panel's starting position
+          const newTop = this.startTop + adjustedDeltaY;
+
+          // Apply resistance if needed
+          const finalTop = this.calculateResistancePosition(
+            newTop,
+            PanelPositions.TOP.value,
+            PanelPositions.BOTTOM.value
+          );
+
+          panel.top = finalTop;
+          this.panelCurrentTop = finalTop;
+          break;
+
+        case 3: // Pan end
+          this.externalPanStarted = false;
+          this.panelCurrentTop = panel.top;
+          this.snapPanel();
+          break;
+      }
+    }
   },
 };
