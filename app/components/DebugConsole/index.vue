@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <GridLayout rows="*, auto, auto" class="debug-console">
+  <GridLayout rows="*, auto" class="debug-console">
     <!-- Logs list -->
     <CollectionView
       ref="logsList"
@@ -28,30 +28,24 @@
     </CollectionView>
 
     <!-- Controls panel -->
-    <GridLayout row="1" columns="auto, *, auto, auto" class="controls-panel">
-      <Button col="0" class="control-button" text="Clear" @tap="clearLogs" />
-      <Label col="1" />
-      <Button col="2" class="control-button" text="↑" @tap="navigateHistoryUp" />
-      <Button col="3" class="control-button" text="↓" @tap="navigateHistoryDown" />
-    </GridLayout>
+    <ControlsPanel
+      row="1"
+      :command.sync="command"
+      :commandHistory="commandHistory"
+      :historyPosition="historyPosition"
+      @clear="clearLogs"
+      @command-executed="onCommandExecuted"
+      @history-navigate="handleHistoryNavigation"
+      @close="closeDebugConsole"
+      ref="controlsPanel"
+    />
 
-    <!-- Command input -->
-    <GridLayout row="2" columns="*, auto" class="command-input-container">
-      <TextView
-        ref="commandInput"
-        col="0"
-        class="command-input"
-        v-model="command"
-        @returnPress="executeCommand"
-        hint="Enter JavaScript command..."
-      />
-      <Button col="1" class="send-button" text="Send" @tap="executeCommand" />
-    </GridLayout>
-
-    <Button
+    <MDButton
       v-show="!isAtBottom && showControls"
-      class="scroll-bottom-button"
-      text="↓"
+      class="fa scroll-bottom-button"
+      :text="'fa-arrow-down' | fonticon"
+      variant="flat"
+      rippleColor="#ffffff"
       @tap="scrollToBottom"
     />
   </GridLayout>
@@ -62,8 +56,13 @@ import { mapState, mapActions } from 'vuex';
 import logFormattingMixin from './mixins/logFormatting';
 import touchInteractionMixin from './mixins/touchInteraction';
 import clipboardUtilsMixin from './mixins/clipboardUtils';
+import ControlsPanel from './ControlsPanel.vue';
 
 export default {
+  components: {
+    ControlsPanel
+  },
+
   mixins: [
     logFormattingMixin,
     touchInteractionMixin,
@@ -114,8 +113,8 @@ export default {
         this.logsVisible = false;
 
         this.$nextTick(() => {
-          if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
-            this.$refs.commandInput.nativeView.focus();
+          if (this.$refs.controlsPanel) {
+            this.$refs.controlsPanel.focusInput();
           }
         });
 
@@ -161,17 +160,9 @@ export default {
       'navigateHistory'
     ]),
 
-    // Execute JavaScript command in WebView
-    executeCommand() {
-      if (!this.command || this.command.trim() === '') return;
-
-      // Get the command as string
-      const cmdString = this.command;
-
-      // Clear the input first to prevent issues with history
-      this.command = '';
-
-      // Store command in history
+    // Handle executed command from ControlsPanel
+    onCommandExecuted(cmdString) {
+      // Add to command history
       this.addCommand(cmdString);
 
       // Emit event to parent component
@@ -179,6 +170,13 @@ export default {
 
       // Scroll to bottom
       this.scrollToBottom();
+    },
+
+    async handleHistoryNavigation(params) {
+      const result = await this.navigateHistory(params);
+      if (result !== undefined) {
+        this.command = result;
+      }
     },
 
     // Handle scroll events to detect if we're at the bottom
@@ -233,28 +231,11 @@ export default {
       }
     },
 
-    // Navigate up through command history
-    async navigateHistoryUp() {
-      const result = await this.$store.dispatch('debug/navigateHistory', {
-        direction: 1,
-        currentCommand: this.command
-      });
-      if (result !== undefined) {
-        this.command = result;
-      }
+    // Close debug console directly
+    closeDebugConsole() {
+      this.$store.dispatch('ui/toggleDebugMode');
     },
-
-    // Navigate down through command history
-    async navigateHistoryDown() {
-      const result = await this.$store.dispatch('debug/navigateHistory', {
-        direction: -1,
-        currentCommand: this.command
-      });
-      if (result !== undefined) {
-        this.command = result;
-      }
-    }
-  }
+  },
 }
 </script>
 
@@ -331,59 +312,17 @@ export default {
   color: #69f0ae;
 }
 
-.controls-panel {
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 4;
-}
-
-.control-button {
-  font-size: 14;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4;
-  margin: 0 2;
-  padding: 4 8;
-  height: 32;
-}
-
-.command-input-container {
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 8;
-}
-
-.command-input {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4;
-  padding: 8;
-  font-family: monospace;
-  font-size: 14;
-  height: auto;
-  min-height: 40;
-  max-height: 100;
-}
-
-.send-button {
-  background-color: $primary;
-  color: white;
-  border-radius: 4;
-  margin-left: 8;
-  font-size: 16;
-  height: 40;
-  width: 50;
-  text-align: center;
-}
-
 .scroll-bottom-button {
-  width: 40;
-  height: 40;
-  border-radius: 20;
+  width: 50;
+  height: 50;
+  border-radius: $radius-full;
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
   font-size: 18;
   vertical-align: bottom;
   horizontal-align: right;
-  margin: 16;
+  margin: $spacing-l $spacing-m;
   text-align: center;
+  padding-top: 15;
 }
 </style>
