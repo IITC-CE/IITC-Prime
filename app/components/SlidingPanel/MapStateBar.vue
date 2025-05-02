@@ -1,11 +1,10 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout
+  <MDRipple
     class="map-state-bar"
-    flexDirection="row"
-    justifyContent="space-between"
-    alignItems="center"
+    orientation="horizontal"
+    rippleColor="#ffffff"
     @tap="handleTap"
     @pan="handlePan"
     passthrough-events="true"
@@ -13,14 +12,16 @@
 
     <!-- Portal status component - left side -->
     <PortalStatusView
+      class="portalStatusView"
       width="68%"
       :portalStatus="portalStatus" />
 
     <!-- Map status component - right side -->
     <MapStatusView
+      class="mapStatusView"
       width="32%"
       :mapStatus="mapStatus" />
-  </FlexboxLayout>
+  </MDRipple>
 </template>
 
 <script>
@@ -78,6 +79,11 @@ export default {
         if (this.panelRef && this.panelRef.handleExternalPanGesture) {
           this.panelRef.handleExternalPanGesture(event);
         }
+
+        // Reset panning flag when gesture ends
+        if (event.state === 3) { // Pan end state
+          this.isPanning = false;
+        }
       }
     },
 
@@ -106,5 +112,10 @@ export default {
   height: 100%;
   background-color: $base;
   padding: 0 10 8;
+
+  .portalStatusView,
+  .mapStatusView {
+    vertical-align: center;
+  }
 }
 </style>

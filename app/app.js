@@ -9,6 +9,7 @@ import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import WebViewPlugin from '@nativescript-community/ui-webview/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue';
+import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
 
 import Main from '~/components/Main'
 import store from './store';
@@ -28,12 +29,10 @@ install();
 Vue.use(BottomSheetPlugin);
 
 Vue.use(CanvasSVG);
-
 Vue.use(ButtonPlugin);
-
 Vue.use(WebViewPlugin);
-
 Vue.use(CollectionView);
+Vue.use(RipplePlugin);
 
 Vue.registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').Label);
 Vue.registerElement(
