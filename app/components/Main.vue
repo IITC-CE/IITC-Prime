@@ -1,23 +1,41 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <Page actionBarHidden="true" @layoutChanged="handleLayoutChange">
-    <RootLayout height="100%" width="100%">
+  <Page actionBarHidden="true">
+    <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
       <AbsoluteLayout class="page">
 
+        <!-- Main content with WebView (hidden when debug is active) -->
         <FlexboxLayout
           flexDirection="column"
           class="main-content"
+          v-show="!isDebugActive"
         >
           <AppWebView
+            ref="appWebView"
             flexGrow="1"
             @show-popup="handlePopup"
+            @console-log="onConsoleLog"
           />
-          <label :height="layoutConfig.bottomPadding" />
+          <label
+            v-show="sliding.isVisible"
+            :height="layout.bottomPadding"
+          />
         </FlexboxLayout>
 
+        <DebugConsole
+          v-show="isDebugActive"
+          class="debug-console"
+          :is-visible="isDebugActive"
+          :is-keyboard-open="isKeyboardOpen"
+          @execute-command="executeDebugCommand"
+        />
+
         <ProgressBar class="progress-bar" />
-        <SlidingPanel class="sliding-panel" />
+        <SlidingPanel
+          v-show="sliding.isVisible && !isDebugActive"
+          class="sliding-panel"
+        />
 
         <PopupWebView
           v-if="popup.isVisible"
@@ -30,19 +48,17 @@
 </template>
 
 <script>
-import { Screen } from '@nativescript/core/platform';
 import { AndroidApplication, Application } from "@nativescript/core";
-import { getStatusBarHeight, getNavigationBarHeight } from '~/utils/platform';
+import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { Manager } from 'lib-iitc-manager';
 import storage from "~/utils/storage";
+import { layoutService } from '~/utils/layout-service';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 import PopupWebView from './PopupWebView.vue';
-
-const DEFAULT_PANEL_WIDTH = 500;
-const BOTTOM_PADDING = 100;
+import DebugConsole from './DebugConsole';
 
 export default {
   name: 'MainView',
@@ -51,15 +67,17 @@ export default {
     AppWebView,
     ProgressBar,
     SlidingPanel,
-    PopupWebView
+    PopupWebView,
+    DebugConsole
   },
 
   data() {
     return {
-      layoutConfig: {
-        statusBarHeight: 0,
-        navigationBarHeight: 0,
-        bottomPadding: BOTTOM_PADDING,
+      // Layout dimensions from the layout service
+      layout: {
+        bottomPadding: 0,
+        panelWidth: 0,
+        contentHeight: 0
       },
       popup: {
         isVisible: false,
@@ -68,34 +86,62 @@ export default {
           transport: null
         }
       },
-      unsubscribeStore: null
+      sliding: {
+        isVisible: true,
+      },
+      unsubscribeStore: null,
+      removeLayoutListener: null,
+      keyboard: null,
+      isKeyboardOpen: false,
+    }
+  },
+
+  computed: {
+    isDebugActive() {
+      return this.$store.state.ui.isDebugActive;
     }
   },
 
   methods: {
-    async handleLayoutChange() {
-      const { widthDIPs, heightDIPs } = Screen.mainScreen;
+    /**
+     * Called when RootLayout changes size
+     * This captures real available space including keyboard state
+     */
+    onRootLayoutChanged(args) {
+      if (!this.$refs.rootLayout || !this.$refs.rootLayout.nativeView) {
+        console.error("RootLayout reference not available");
+        return;
+      }
 
-      this.layoutConfig = {
-        statusBarHeight: getStatusBarHeight(),
-        navigationBarHeight: getNavigationBarHeight(),
-        bottomPadding: this.calculateBottomPadding(widthDIPs, heightDIPs)
+      // Measure the real available dimensions with our layout service
+      layoutService.measureLayout(this.$refs.rootLayout.nativeView);
+    },
+
+    /**
+     * Handle layout changes from the layout service
+     */
+    handleLayoutChanged(args) {
+      const { dimensions } = args;
+
+      // Update local layout state
+      this.layout = {
+        bottomPadding: dimensions.bottomPadding,
+        panelWidth: dimensions.panelWidth,
+        contentHeight: dimensions.contentHeight
       };
 
+      // Update Vuex store
+      this.updateStoreLayout(dimensions);
+    },
+
+    /**
+     * Update layout related values in the Vuex store
+     */
+    async updateStoreLayout(dimensions) {
       await Promise.all([
-        this.$store.dispatch('ui/setSlidingPanelWidth', this.calculatePanelWidth(widthDIPs, heightDIPs)),
-        this.$store.dispatch('ui/setScreenHeight', heightDIPs - this.layoutConfig.statusBarHeight)
+        this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth),
+        this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight)
       ]);
-    },
-
-    calculateBottomPadding(width, height) {
-      if (width <= height) return BOTTOM_PADDING;
-      return width > 600 ? 0 : BOTTOM_PADDING;
-    },
-
-    calculatePanelWidth(width, height) {
-      if (width <= height) return width;
-      return width > 600 ? DEFAULT_PANEL_WIDTH : width - this.layoutConfig.navigationBarHeight;
     },
 
     handlePopup({ url, transport }) {
@@ -110,6 +156,20 @@ export default {
         isVisible: false,
         props: { url: null, transport: null }
       };
+    },
+
+    // Handle console logs from AppWebView
+    onConsoleLog(logData) {
+      this.$store.dispatch('debug/addLog', logData);
+    },
+
+    // Execute debug command from Debug Console
+    executeDebugCommand(command) {
+      if (this.$refs.appWebView) {
+        this.$refs.appWebView.executeDebugCommand(command);
+      } else {
+        console.error("AppWebView reference not found");
+      }
     },
 
     setupManager() {
@@ -128,15 +188,52 @@ export default {
       if (!Application.android) return;
 
       Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
+        // If debug is active, exit debug mode instead of navigating back
+        if (this.isDebugActive) {
+          this.$store.dispatch('ui/toggleDebugMode');
+          args.cancel = true;
+          return;
+        }
+
         this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
+    },
+
+    onKeyboardOpened(args) {
+      this.sliding.isVisible = false;
+      this.isKeyboardOpen = true;
+    },
+    onKeyboardClosed() {
+      this.sliding.isVisible = true;
+      this.isKeyboardOpen = false;
     }
   },
 
   async created() {
     const manager = this.setupManager();
     this.setupAndroidBackHandler();
+
+    // Initialize layout service with default dimensions
+    layoutService.initWithDefaults();
+
+    // Set initial layout values
+    this.layout = {
+      bottomPadding: layoutService.dimensions.bottomPadding,
+      panelWidth: layoutService.dimensions.panelWidth,
+      contentHeight: layoutService.dimensions.contentHeight
+    };
+
+    // Update store with initial values
+    this.updateStoreLayout(layoutService.dimensions);
+
+    // Subscribe to layout changes
+    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
+
+    this.keyboard = keyboardOpening();
+
+    this.keyboard.on('opened', this.onKeyboardOpened);
+    this.keyboard.on('closed', this.onKeyboardClosed);
 
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
@@ -152,8 +249,18 @@ export default {
   },
 
   beforeDestroy() {
+    // Clean up all listeners
     if (this.unsubscribeStore) {
       this.unsubscribeStore();
+    }
+
+    if (this.removeLayoutListener) {
+      this.removeLayoutListener();
+    }
+
+    if (this.keyboard) {
+      this.keyboard.off('opened');
+      this.keyboard.off('closed');
     }
   }
 };
@@ -184,5 +291,13 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.debug-console {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
 }
 </style>

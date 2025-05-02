@@ -104,6 +104,18 @@ export default {
 
       applyWebViewSettings(this.webViewInstance);
       this.setupWebChromeClient();
+
+      // Setup console log event handlers
+      this.setupDebugEventHandlers();
+    },
+
+    // Setup event handlers for console bridge
+    setupDebugEventHandlers() {
+      if (!this.webViewInstance) return;
+
+      this.webViewInstance.on('console:log', (event) => {
+        this.$emit('console-log', event.data);
+      });
     },
 
     onLoadStarted(args) {
@@ -155,6 +167,14 @@ export default {
       this.$emit('bridge-message', args.data);
     },
 
+    // Execute JavaScript command in webview
+    executeCommand(command) {
+      if (!this.webViewInstance || !command || command.trim() === '') {
+        return;
+      }
+      this.webViewInstance.emitToWebView('console:execute', { command });
+    },
+
     executeJavaScript(code) {
       return this.webViewInstance?.executeJavaScript(code);
     },
@@ -179,7 +199,7 @@ export default {
             try {
               this.webViewInstance.removeEventListener(event);
             } catch (e) {
-              console.log(`Warning: Could not remove listener for ${event}`);
+              console.error(`Warning: Could not remove listener for ${event}`);
             }
           });
 

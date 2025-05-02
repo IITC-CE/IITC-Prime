@@ -5,6 +5,7 @@ html, body {
     min-width: initial;
 }
 
-#scrollwrapper, .leaflet-top, #chat {
-    top: 100px !important;
+#chatinput {
+    height: 40px;
+    padding-bottom: 10px;
 }

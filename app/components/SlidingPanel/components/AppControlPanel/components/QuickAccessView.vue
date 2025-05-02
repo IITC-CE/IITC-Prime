@@ -11,8 +11,19 @@
     >
       <QuickAccessBigButton col="0" icon="fa-tools" name="Settings" />
       <QuickAccessBigButton col="1" icon="fa-toolbox" name="Plugins" />
-      <QuickAccessBigButton col="2" icon="fa-terminal" name="Debug" />
-      <QuickAccessBigButton col="3" icon="fa-redo" name="Reload IITC" @tap="reloadWebView" />
+      <QuickAccessBigButton
+        col="2"
+        icon="fa-terminal"
+        name="Debug"
+        @tap="toggleDebugMode"
+        :active="isDebugActive"
+      />
+      <QuickAccessBigButton
+        col="3"
+        icon="fa-redo"
+        name="Reload IITC"
+        @tap="reloadWebView"
+      />
     </GridLayout>
 
     <GridLayout
@@ -45,6 +56,7 @@
     computed: {
       ...mapState({
         panes: state => state.navigation.panes,
+        isDebugActive: state => state.ui.isDebugActive
       }),
 
       filteredPanes() {
@@ -60,6 +72,9 @@
       },
       switchToPane(name) {
         this.$store.dispatch('navigation/setCurrentPane', name);
+      },
+      toggleDebugMode() {
+        this.$store.dispatch('ui/toggleDebugMode');
       }
     }
   };

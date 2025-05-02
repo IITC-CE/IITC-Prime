@@ -5,16 +5,18 @@ import Vuex from 'vuex';
 import { ui } from './modules/ui';
 import { navigation } from './modules/navigation';
 import { map } from './modules/map';
+import { debug } from './modules/debug';
 
 Vue.use(Vuex);
 
-const debug = process.env.NODE_ENV !== 'production';
+const debug_enabled = process.env.NODE_ENV !== 'production';
 
 export default new Vuex.Store({
   modules: {
     ui,
     navigation,
-    map
+    map,
+    debug
   },
-  strict: debug
+  strict: debug_enabled
 });

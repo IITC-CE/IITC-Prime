@@ -88,7 +88,7 @@ export default {
     },
 
     handleExternalUrl(url) {
-      console.log('External URL in popup:', url);
+      console.debug('External URL in popup:', url);
     },
 
     handleLoadError(error) {

@@ -12,6 +12,13 @@ export const getVersionName = () => {
 }
 
 /**
+ * Fires when IITC completes its initialization process
+ */
+export const bootFinished = async (name) => {
+  await store.dispatch('ui/iitcBootFinished');
+}
+
+/**
  * Switching the active panel, if required.
  * @param {string} name Panel ID
  */

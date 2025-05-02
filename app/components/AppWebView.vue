@@ -12,12 +12,14 @@
     @show-popup="handleShowPopup"
     @load-error="handleLoadError"
     @bridge-message="handleBridgeMessage"
+    @console-log="handleConsoleLog"
   />
 </template>
 
 <script>
 import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
+import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
 import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
@@ -62,7 +64,7 @@ export default {
 
     async onLoadFinished() {
       await injectBridgeIITC(this.webview);
-      await injectIITCPrimeResources(this.webview);
+      await injectDebugBridge(this.webview);
       await this.$store.dispatch('ui/setWebviewLoadStatus', true);
     },
 
@@ -73,6 +75,16 @@ export default {
     handleBridgeMessage(eventData) {
       router(eventData);
     },
+
+    handleConsoleLog(logData) {
+      this.$emit('console-log', logData);
+    },
+
+    // Public method to execute debug command
+    executeDebugCommand(command) {
+      if (!this.$refs.baseWebView || !command) return;
+      this.$refs.baseWebView.executeCommand(command);
+    }
   },
 
   created() {
@@ -84,6 +96,9 @@ export default {
         switch (action.type) {
           case "ui/reloadWebView":
             await this.$refs.baseWebView.reload();
+            break;
+          case "ui/iitcBootFinished":
+            await injectIITCPrimeResources(webview);
             break;
           case "map/setInjectPlugin":
             await webview.executeJavaScript(action.payload['code']);
