@@ -19,6 +19,7 @@
       width="100%"
       :height="mapStateBarHeight"
       class="map-state-bar"
+      :panel-ref="this"
     />
   </AbsoluteLayout>
 </template>

@@ -5,7 +5,11 @@
     class="map-state-bar"
     flexDirection="row"
     justifyContent="space-between"
-    alignItems="center">
+    alignItems="center"
+    @tap="handleTap"
+    @pan="handlePan"
+    passthrough-events="true"
+  >
 
     <!-- Portal status component - left side -->
     <PortalStatusView
@@ -20,7 +24,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 import PortalStatusView from './components/MapStateBar/PortalStatusView';
 import MapStatusView from './components/MapStateBar/MapStatusView';
 
@@ -30,11 +34,66 @@ export default {
     PortalStatusView,
     MapStatusView
   },
+  props: {
+    /**
+     * Reference to the parent sliding panel component
+     */
+    panelRef: {
+      type: Object,
+      required: true
+    }
+  },
+  data() {
+    return {
+      // Flag to track if we're panning
+      isPanning: false,
+      // Threshold to differentiate between tap and pan
+      panThreshold: 10
+    }
+  },
   computed: {
     ...mapState({
       mapStatus: state => state.map.mapStatus,
       portalStatus: state => state.map.portalStatus
     })
+  },
+  methods: {
+    ...mapActions({
+      setCurrentPane: 'navigation/setCurrentPane'
+    }),
+
+    /**
+     * Handle pan gesture on MapStateBar
+     * Uses the external pan handler from parent panel
+     */
+    handlePan(event) {
+      // Calculate total movement distance
+      const distance = Math.abs(event.deltaX) + Math.abs(event.deltaY);
+
+      // If movement exceeds threshold, consider it a pan gesture
+      if (distance > this.panThreshold) {
+        this.isPanning = true;
+
+        // Call the external pan handler method from mixins
+        if (this.panelRef && this.panelRef.handleExternalPanGesture) {
+          this.panelRef.handleExternalPanGesture(event);
+        }
+      }
+    },
+
+    /**
+     * Handle tap gesture to navigate to portal info
+     */
+    handleTap(event) {
+      // If we're currently panning, ignore tap
+      if (this.isPanning) {
+        this.isPanning = false;
+        return;
+      }
+
+      // Switch to info panel when tapped
+      this.setCurrentPane('info');
+    }
   }
 }
 </script>
