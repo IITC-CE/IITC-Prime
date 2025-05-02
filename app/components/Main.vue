@@ -58,7 +58,7 @@ import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 import PopupWebView from './PopupWebView.vue';
-import DebugConsole from './DebugConsole.vue';
+import DebugConsole from './DebugConsole';
 
 export default {
   name: 'MainView',

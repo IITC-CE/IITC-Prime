@@ -15,7 +15,7 @@
         <StackLayout
           class="log-item"
           :class="'log-' + item.type"
-          @touch="onTouch($event, item)"
+          @touch="onLogTouch($event)"
           @longPress="copyLogToClipboard(item)"
         >
           <!-- Header row with timestamp, log level and source -->
@@ -59,12 +59,17 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import * as Clipboard from 'nativescript-clipboard';
-import { Toasty } from "@triniwiz/nativescript-toasty";
-import { Animation } from "@nativescript/core";
-import { Color } from "@nativescript/core/color";
+import logFormattingMixin from './mixins/logFormatting';
+import touchInteractionMixin from './mixins/touchInteraction';
+import clipboardUtilsMixin from './mixins/clipboardUtils';
 
 export default {
+  mixins: [
+    logFormattingMixin,
+    touchInteractionMixin,
+    clipboardUtilsMixin
+  ],
+
   props: {
     isVisible: {
       type: Boolean,
@@ -83,13 +88,6 @@ export default {
       scrollTimeout: null,
       showControls: false, // Controls UI elements visibility
       logsVisible: false,  // Controls whether logs should be shown or not
-      activeAnimation: null, // Track current animation
-      restoreTimeout: null, // Timeout for auto-restoring highlight
-      touchedView: null, // Reference to currently touched view
-      isProcessingTouch: false, // Flag to prevent overlapping touch operations
-      // Define color constants
-      HIGHLIGHT_BG: new Color("rgba(255, 255, 255, 0.15)"),
-      TRANSPARENT_BG: new Color("transparent")
     }
   },
 
@@ -130,7 +128,7 @@ export default {
         this.logsVisible = false;
         this.showControls = false;
 
-        // Reset touch state when console is hidden
+        // Clean up any active highlights when console is hidden
         this.resetTouchState();
       }
     },
@@ -162,173 +160,6 @@ export default {
       'addCommand',
       'navigateHistory'
     ]),
-
-    // Reset touch state and cancel all animations
-    resetTouchState() {
-      // Cancel timeout if exists
-      if (this.restoreTimeout) {
-        clearTimeout(this.restoreTimeout);
-        this.restoreTimeout = null;
-      }
-
-      // Cancel animation if exists
-      if (this.activeAnimation) {
-        this.activeAnimation.cancel();
-        this.activeAnimation = null;
-      }
-
-      // Reset touched view directly
-      if (this.touchedView) {
-        this.touchedView.backgroundColor = this.TRANSPARENT_BG;
-        this.touchedView = null;
-      }
-
-      // Reset processing flag
-      this.isProcessingTouch = false;
-    },
-
-    // Handle touch events on log items
-    onTouch(args, item) {
-      const view = args.object;
-
-      switch (args.action) {
-        case 'down':
-          // Skip if already processing touch
-          if (this.isProcessingTouch) {
-            return;
-          }
-
-          // Set processing flag to prevent parallel operations
-          this.isProcessingTouch = true;
-
-          // Reset previous state
-          this.resetTouchState();
-
-          // Just re-set the processing flag since resetTouchState cleared it
-          this.isProcessingTouch = true;
-
-          // Apply highlight
-          this.touchedView = view;
-          view.backgroundColor = this.HIGHLIGHT_BG;
-
-          // Set timeout for auto-restore
-          this.restoreTimeout = setTimeout(() => {
-            this.restoreLogItem();
-          }, 1000);
-          break;
-
-        case 'up':
-        case 'cancel':
-          // Only restore if this is the current touched view
-          if (view === this.touchedView) {
-            this.restoreLogItem();
-          }
-          break;
-      }
-    },
-
-    // Restore log item to original appearance with animation
-    restoreLogItem() {
-      // Skip if no view is being touched
-      if (!this.touchedView) {
-        this.isProcessingTouch = false;
-        return;
-      }
-
-      // Cancel timeout if exists
-      if (this.restoreTimeout) {
-        clearTimeout(this.restoreTimeout);
-        this.restoreTimeout = null;
-      }
-
-      // Cancel animation if exists
-      if (this.activeAnimation) {
-        this.activeAnimation.cancel();
-        this.activeAnimation = null;
-      }
-
-      // Store references before clearing
-      const viewRef = this.touchedView;
-      this.touchedView = null;
-
-      // Create animation
-      const restoreAnimation = new Animation([
-        {
-          target: viewRef,
-          backgroundColor: this.TRANSPARENT_BG,
-          duration: 200
-        }
-      ]);
-
-      // Store animation reference
-      this.activeAnimation = restoreAnimation;
-
-      // Play animation and handle completion
-      restoreAnimation.play()
-        .then(() => {
-          this.activeAnimation = null;
-          this.isProcessingTouch = false;
-        })
-        .catch(e => {
-          // On error, reset directly
-          viewRef.backgroundColor = this.TRANSPARENT_BG;
-          this.activeAnimation = null;
-          this.isProcessingTouch = false;
-        });
-    },
-
-    // Format timestamp to display time with milliseconds
-    formatTimestamp(timestamp) {
-      if (!timestamp) return '';
-
-      const date = new Date(timestamp);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const seconds = date.getSeconds().toString().padStart(2, '0');
-
-      return `${hours}:${minutes}:${seconds}`;
-    },
-
-    // Format log header with timestamp, type and source
-    formatLogHeader(item) {
-      const timestamp = this.formatTimestamp(item.timestamp);
-      const type = item.type ? item.type.toUpperCase() : 'LOG';
-      const source = item.source ? item.source.toUpperCase() : 'UNKNOWN';
-      const category = item.category ? `[${item.category}]` : '';
-
-      return `${timestamp} ${type} ${source} ${category}`;
-    },
-
-    // Get full log text (header + message)
-    getFullLogText(item) {
-      const header = this.formatLogHeader(item);
-      const message = item.message || '';
-      return `${header}\n${message}`;
-    },
-
-    // Copy log text to clipboard on long press
-    copyLogToClipboard(item) {
-      // Reset touch state to clear any highlights
-      this.resetTouchState();
-
-      const fullText = this.getFullLogText(item);
-
-      // Copy to clipboard
-      Clipboard.setText(fullText)
-        .then(() => {
-          this.showToast("Log copied to clipboard");
-        })
-        .catch(error => {
-          console.error("Error copying to clipboard:", error);
-          this.showToast("Failed to copy log");
-        });
-    },
-
-    // Show toast notification
-    showToast(message) {
-      const toast = new Toasty({ text: message });
-      toast.show();
-    },
 
     // Execute JavaScript command in WebView
     executeCommand() {
@@ -423,11 +254,6 @@ export default {
         this.command = result;
       }
     }
-  },
-
-  // Cleanup when component is destroyed
-  beforeDestroy() {
-    this.resetTouchState();
   }
 }
 </script>
