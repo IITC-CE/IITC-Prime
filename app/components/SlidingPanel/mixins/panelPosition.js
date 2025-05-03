@@ -14,7 +14,9 @@ export const panelPositionMixin = {
         middleToBottom: 0,
         topToMiddle: 0
       },
-      stateMachine: new PanelStateMachine()
+      stateMachine: new PanelStateMachine(),
+      // Flag to control programmatic panel opening
+      isProgrammaticOpen: false
     };
   },
 
@@ -33,11 +35,14 @@ export const panelPositionMixin = {
       this.panelHeight = screenHeight - PanelPositions.TOP.value;
       this.lastTop = PanelPositions.BOTTOM.value;
       this.panelCurrentTop = PanelPositions.BOTTOM.value;
-
-      this.moveToPosition(this.position);
     },
 
     snapPanel() {
+      // Prevent user gestures from interrupting programmatic opening
+      if (this.isProgrammaticOpen) {
+        return;
+      }
+
       // Use state machine to determine next state
       const nextState = this.stateMachine.determineNextState(
         this.panelCurrentTop,
@@ -57,27 +62,65 @@ export const panelPositionMixin = {
         targetTop = this.lastTop || PanelPositions[this.position].value;
       }
 
+      // Animate panel to target position
       this.animatePanel(
         this.$refs.panel?.nativeView,
         this.panelCurrentTop,
         targetTop
-      );
+      ).then(newTop => {
+        this.panelCurrentTop = newTop;
+      }).catch(error => {
+        console.error('Error during panel snap:', error);
+      });
     },
 
+    /**
+     * Move panel to position with proper state update
+     */
     async moveToPosition(position) {
       const panel = this.$refs.panel?.nativeView;
       if (!panel) return;
 
-      // Check if transition is allowed
-      if (this.stateMachine.transition(position)) {
-        const targetTop = this.stateMachine.getCurrentPosition();
-        const newTop = await this.animatePanel(
-          panel,
-          panel.top,
-          targetTop
-        );
-        this.panelCurrentTop = newTop;
+      // In landscape mode, MIDDLE becomes TOP
+      if (this.isLandscapeOrientation && position === 'MIDDLE') {
+        position = 'TOP';
       }
-    },
+
+      // Check if transition is possible
+      if (!this.stateMachine.canTransition(position)) {
+        // If direct transition is not possible, try intermediate steps
+        if (this.position === 'TOP' && position === 'BOTTOM') {
+          // First to MIDDLE, then to BOTTOM
+          await this.moveToPosition('MIDDLE');
+          return this.moveToPosition('BOTTOM');
+        }
+
+        if (this.position === 'BOTTOM' && position === 'TOP') {
+          // First to MIDDLE, then to TOP
+          await this.moveToPosition('MIDDLE');
+          return this.moveToPosition('TOP');
+        }
+
+        return;
+      }
+
+      try {
+        // Update state machine
+        this.stateMachine.transition(position);
+        this.position = position;
+
+        // Get target position
+        const targetTop = PanelPositions[position].value;
+
+        // Animate panel
+        const newTop = await this.animatePanel(panel, panel.top, targetTop);
+
+        // Update state
+        this.panelCurrentTop = newTop;
+        this.lastTop = newTop;
+      } catch (error) {
+        console.error('Error during panel move:', error);
+      }
+    }
   }
 };

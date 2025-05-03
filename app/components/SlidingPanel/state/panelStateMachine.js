@@ -27,13 +27,21 @@ export class PanelStateMachine {
     return false;
   }
 
-  // Determine next state based on current position and movement
+  // Force state without checking transitions
+  forceState(targetState) {
+    if (PanelPositions[targetState]) {
+      this.currentState = targetState;
+      return true;
+    }
+    return false;
+  }
+
+  // Determine next state based on position and movement
   determineNextState(currentTop, lastTop, middleValue, snapThresholds) {
     const positions = PanelPositions;
 
-    // Start from previous position (lastTop)
+    // From TOP position
     if (lastTop === positions.TOP.value) {
-      // Moving from TOP position
       if (currentTop < middleValue) {
         return currentTop - positions.TOP.value >= snapThresholds.topToMiddle
           ? positions.MIDDLE.id
@@ -43,8 +51,8 @@ export class PanelStateMachine {
       }
     }
 
+    // From BOTTOM position
     if (lastTop === positions.BOTTOM.value) {
-      // Moving from BOTTOM position
       if (currentTop > middleValue) {
         return positions.BOTTOM.value - currentTop >= snapThresholds.middleToBottom
           ? positions.MIDDLE.id

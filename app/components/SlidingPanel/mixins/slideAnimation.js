@@ -13,15 +13,24 @@ export const slideAnimationMixin = {
 
   methods: {
     async animatePanel(element, fromTop, targetTop) {
-      if (!element || this.isAnimating) return fromTop;
+      if (!element) {
+        return Promise.resolve(fromTop);
+      }
+
+      // Skip if positions are the same
+      if (Math.abs(fromTop - targetTop) < 1) {
+        return Promise.resolve(targetTop);
+      }
 
       try {
         this.isAnimating = true;
         const translateY = targetTop - fromTop;
 
+        // Set initial position
         element.translateY = 0;
         element.top = fromTop;
 
+        // Create animation
         this.animationSet = new Animation([{
           target: element,
           translate: { x: 0, y: translateY },
@@ -29,7 +38,10 @@ export const slideAnimationMixin = {
           curve: CoreTypes.AnimationCurve.easeInOut,
         }]);
 
+        // Play animation and wait for completion
         await this.animationSet.play();
+
+        // Set final position
         element.translateY = 0;
         element.top = targetTop;
 
@@ -43,11 +55,14 @@ export const slideAnimationMixin = {
       }
     },
 
+    /**
+     * Cancel current animation
+     */
     cancelAnimation() {
       if (this.animationSet && this.isAnimating) {
-        this.isAnimating = false;
         this.animationSet.cancel();
         this.animationSet = undefined;
+        this.isAnimating = false;
       }
     }
   }

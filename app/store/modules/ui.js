@@ -7,8 +7,18 @@ export const ui = {
     slidingPanelWidth: 100,
     isWebviewLoadFinished: false,
     progress: 0,
-    isDebugActive: false
+    isDebugActive: false,
+
+    // Active panel in sliding panel (quick, search, layers)
+    activePanel: 'quick',
+
+    // Panel command
+    panelCommand: {
+      action: '',
+      timestamp: 0
+    }
   }),
+
   mutations: {
     SET_SCREEN_HEIGHT(state, height) {
       state.screenHeight = height;
@@ -24,8 +34,23 @@ export const ui = {
     },
     SET_DEBUG_MODE(state, isActive) {
       state.isDebugActive = isActive;
+    },
+
+    // Set active panel in sliding panel with validation
+    SET_ACTIVE_PANEL(state, panelName) {
+      const validPanels = ['quick', 'search', 'layers', null];
+      state.activePanel = validPanels.includes(panelName) ? panelName : 'quick';
+    },
+
+    // Send command to panel
+    SEND_PANEL_COMMAND(state, action) {
+      state.panelCommand = {
+        action,
+        timestamp: Date.now()
+      };
     }
   },
+
   actions: {
     setScreenHeight({ commit }, height) {
       commit('SET_SCREEN_HEIGHT', height);
@@ -43,6 +68,26 @@ export const ui = {
     iitcBootFinished() {},
     toggleDebugMode({ commit, state }) {
       commit('SET_DEBUG_MODE', !state.isDebugActive);
+    },
+
+    // Set active panel
+    setActivePanel({ commit }, panelName) {
+      commit('SET_ACTIVE_PANEL', panelName);
+    },
+
+    // Switch active panel and open if needed
+    switchPanel({ commit, dispatch, state }, panelName) {
+      // If same panel, just deactivate
+      if (state.activePanel === panelName) {
+        commit('SET_ACTIVE_PANEL', null);
+        return;
+      }
+
+      // Set active panel
+      commit('SET_ACTIVE_PANEL', panelName);
+
+      // Open panel
+      commit('SEND_PANEL_COMMAND', 'open');
     }
   }
 };

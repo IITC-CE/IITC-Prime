@@ -31,6 +31,8 @@ import { slideAnimationMixin } from "./mixins/slideAnimation";
 import { panelPositionMixin } from "./mixins/panelPosition";
 import { panelGestureMixin } from "./mixins/panelGesture";
 import { layoutService } from '~/utils/layout-service';
+import { PanelPositions } from './constants/panelPositions';
+import { mapState } from 'vuex';
 
 export default {
   name: 'SlidingPanel',
@@ -54,7 +56,62 @@ export default {
       panelVisibleHeight: 110,
       panelHeight: 0,
       panelWidth: this._getPanelWidth(),
+
+      // Track if screen is in landscape orientation
+      isLandscapeOrientation: false,
+
+      // Track last processed command
+      lastCommandTimestamp: 0,
+
+      // Animation lock flag
+      isAnimationLocked: false
     };
+  },
+
+  computed: {
+    appControlPanelMaxHeight() {
+      return this.panelHeight - this.mapStateBarHeight;
+    },
+
+    ...mapState({
+      activePanel: state => state.ui.activePanel,
+      panelCommand: state => state.ui.panelCommand
+    }),
+
+    // Check if panel is closed
+    isPanelClosed() {
+      const panel = this.$refs.panel?.nativeView;
+      if (!panel) return true;
+
+      const tolerance = 10;
+      const bottomValue = PanelPositions.BOTTOM.value;
+
+      return Math.abs(panel.top - bottomValue) < tolerance;
+    }
+  },
+
+  watch: {
+    // Watch for panel commands
+    panelCommand: {
+      handler(command) {
+        if (!command || !command.action || command.timestamp <= this.lastCommandTimestamp) {
+          return;
+        }
+
+        this.lastCommandTimestamp = command.timestamp;
+
+        switch (command.action) {
+          case 'open':
+            this.handleOpenCommand();
+            break;
+
+          case 'close':
+            this.handleCloseCommand();
+            break;
+        }
+      },
+      deep: true
+    }
   },
 
   methods: {
@@ -84,17 +141,153 @@ export default {
     handleLayoutChange(event) {
       const { dimensions } = event;
 
-      // Update with the measured height directly
       this.screenHeight = dimensions.availableHeight;
       this.panelWidth = dimensions.panelWidth;
 
+      const previousOrientation = this.isLandscapeOrientation;
+      this.isLandscapeOrientation = dimensions.isLandscape;
+
+      if (previousOrientation !== this.isLandscapeOrientation) {
+        this.updatePanelTransitions();
+
+        if (this.isLandscapeOrientation && this.position === 'MIDDLE') {
+          this.moveToPosition('TOP');
+        }
+      }
+
       this.updatePanelPositions();
     },
-  },
 
-  computed: {
-    appControlPanelMaxHeight() {
-      return this.panelHeight - this.mapStateBarHeight;
+    /**
+     * Update panel transitions based on screen orientation
+     */
+    updatePanelTransitions() {
+      if (this.isLandscapeOrientation) {
+        // In landscape mode, only allow transitions between TOP and BOTTOM
+        PanelPositions.TOP.allowedTransitions = ['BOTTOM'];
+        PanelPositions.BOTTOM.allowedTransitions = ['TOP'];
+        PanelPositions.MIDDLE.allowedTransitions = [];
+      } else {
+        // In portrait mode, allow all transitions
+        PanelPositions.TOP.allowedTransitions = ['MIDDLE', 'BOTTOM'];
+        PanelPositions.MIDDLE.allowedTransitions = ['TOP', 'BOTTOM'];
+        PanelPositions.BOTTOM.allowedTransitions = ['MIDDLE', 'TOP'];
+      }
+    },
+
+    /**
+     * Handle open panel command
+     */
+    async handleOpenCommand() {
+      const panel = this.$refs.panel?.nativeView;
+      if (!panel) return;
+
+      // Get exact panel position
+      const currentTop = panel.top;
+      const bottomValue = PanelPositions.BOTTOM.value;
+      const tolerance = 10;
+
+      // Check if panel is closed
+      const isPanelClosed = Math.abs(currentTop - bottomValue) < tolerance;
+
+      // Only open if panel is completely closed
+      if (!isPanelClosed) {
+        // Don't change panel position if it's already open
+        return;
+      }
+
+      // Prevent multiple animations
+      if (this.isAnimationLocked) {
+        return;
+      }
+
+      this.isAnimationLocked = true;
+
+      try {
+        // Target position depends on orientation
+        const targetPosition = this.isLandscapeOrientation ? 'TOP' : 'MIDDLE';
+
+        // Cancel any current animations
+        this.cancelAnimation();
+
+        // Get target top position
+        const targetTop = PanelPositions[targetPosition].value;
+
+        // Animate panel
+        const newTop = await this.animatePanel(panel, panel.top, targetTop);
+
+        // Update position
+        panel.top = targetTop;
+        this.panelCurrentTop = targetTop;
+
+        // Update state machine
+        this.stateMachine.forceState(targetPosition);
+        this.position = targetPosition;
+        this.lastTop = targetTop;
+      } catch (error) {
+        console.error('Error opening panel:', error);
+      } finally {
+        setTimeout(() => {
+          this.isAnimationLocked = false;
+        }, 50);
+      }
+    },
+
+    /**
+     * Handle close panel command
+     */
+    async handleCloseCommand() {
+      const panel = this.$refs.panel?.nativeView;
+      if (!panel) return;
+
+      // Skip if panel already closed
+      if (this.isPanelClosed) {
+        return;
+      }
+
+      // Prevent multiple animations
+      if (this.isAnimationLocked) {
+        return;
+      }
+
+      this.isAnimationLocked = true;
+
+      try {
+        // Cancel any current animations
+        this.cancelAnimation();
+
+        // Get target position
+        const targetTop = PanelPositions.BOTTOM.value;
+
+        // Animate panel
+        const newTop = await this.animatePanel(panel, panel.top, targetTop);
+
+        // Update position
+        panel.top = targetTop;
+        this.panelCurrentTop = targetTop;
+
+        // Update state machine
+        this.stateMachine.forceState('BOTTOM');
+        this.position = 'BOTTOM';
+        this.lastTop = targetTop;
+      } catch (error) {
+        console.error('Error closing panel:', error);
+      } finally {
+        setTimeout(() => {
+          this.isAnimationLocked = false;
+        }, 50);
+      }
+    },
+
+    /**
+     * Handle pan gesture on panel
+     */
+    handlePanGesture(args) {
+      if (this.isAnimationLocked) {
+        return;
+      }
+
+      this.$options.mixins[2].methods.handlePanGesture.call(this, args);
     }
   },
 
@@ -102,34 +295,17 @@ export default {
     // Initialize panel positions
     this.updatePanelPositions();
 
-    // Subscribe to layout changes
-    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
+    // Initialize orientation
+    this.isLandscapeOrientation = layoutService.dimensions.isLandscape;
 
-    // Keep store subscription for backward compatibility
-    this.store_unsubscribe = this.$store.subscribeAction({
-      after: async (action, state) => {
-        switch (action.type) {
-          case "ui/setScreenHeight":
-            if (!layoutService.isInitialized) {
-              this.screenHeight = action.payload;
-              this.updatePanelPositions();
-            }
-            break;
-          case "ui/setSlidingPanelWidth":
-            if (!layoutService.isInitialized) {
-              this.panelWidth = action.payload;
-            }
-            break;
-        }
-      }
-    });
+    // Set up panel transitions
+    this.updatePanelTransitions();
+
+    // Listen for layout changes
+    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
   },
 
   beforeDestroy() {
-    if (this.store_unsubscribe) {
-      this.store_unsubscribe();
-    }
-
     if (this.removeLayoutListener) {
       this.removeLayoutListener();
     }

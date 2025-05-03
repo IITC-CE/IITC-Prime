@@ -66,6 +66,7 @@ import QuickAccessView from "./components/QuickAccessView.vue";
 import LayersView from "./components/LayersView.vue";
 import SearchView from "./components/SearchView.vue";
 import userLocation from "@/utils/user-location";
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'AppControlPanel',
@@ -84,6 +85,12 @@ export default {
     }
   },
 
+  computed: {
+    ...mapState({
+      storedActivePanel: state => state.ui.activePanel
+    })
+  },
+
   data() {
     return {
       location: new userLocation(),
@@ -91,19 +98,38 @@ export default {
     }
   },
 
+  watch: {
+    storedActivePanel(newValue) {
+      this.activeButton = newValue;
+    }
+  },
+
   methods: {
+    ...mapActions({
+      setActivePanel: 'ui/setActivePanel',
+      switchPanel: 'ui/switchPanel'
+    }),
+
     setActiveButton(button) {
+      // Deactivate when clicking the same button again
       if (button === this.activeButton) {
-        this.activeButton = null;
-      } else {
-        this.activeButton = button;
+        this.setActivePanel(null);
+        return;
       }
+
+      // Use switchPanel action to change active panel and open if needed
+      this.$store.dispatch('ui/switchPanel', button);
     },
 
     onLocate() {
       this.location.locate();
     }
   },
+
+  created() {
+    // Initialize active button from store
+    this.activeButton = this.storedActivePanel || 'quick';
+  }
 }
 </script>
 
