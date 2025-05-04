@@ -27,17 +27,15 @@
 <script>
 import AppControlPanel from './components/AppControlPanel/AppControlPanel.vue';
 import MapStateBar from "./MapStateBar.vue";
-import { slideAnimationMixin } from "./mixins/slideAnimation";
-import { panelPositionMixin } from "./mixins/panelPosition";
-import { panelGestureMixin } from "./mixins/panelGesture";
+import { panelControllerMixin } from "./mixins/panelController";
 import { layoutService } from '~/utils/layout-service';
 import { PanelPositions } from './constants/panelPositions';
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapActions, mapGetters } from 'vuex';
 
 export default {
   name: 'SlidingPanel',
 
-  mixins: [slideAnimationMixin, panelPositionMixin, panelGestureMixin],
+  mixins: [panelControllerMixin],
 
   components: {
     AppControlPanel,
@@ -72,10 +70,7 @@ export default {
       isLandscapeOrientation: false,
 
       // Track last processed command
-      lastCommandTimestamp: 0,
-
-      // Animation lock flag
-      isAnimationLocked: false
+      lastCommandTimestamp: 0
     };
   },
 
@@ -87,11 +82,19 @@ export default {
     ...mapState({
       activePanel: state => state.ui.activePanel,
       panelCommand: state => state.ui.panelCommand,
-      isPanelOpen: state => state.ui.isPanelOpen
+      isPanelOpen: state => state.ui.isPanelOpen,
+      storePanelPosition: state => state.ui.panelPosition,
+      storePanelPositionValue: state => state.ui.panelPositionValue,
+      panelPositionValues: state => state.ui.panelPositionValues
+    }),
+
+    ...mapGetters({
+      isPanelClosed: 'ui/isPanelClosed',
+      getPanelPositionValue: 'ui/getPanelPositionValue'
     }),
 
     // Check if panel is closed
-    isPanelClosed() {
+    isPanelClosedLocal() {
       const panel = this.$refs.panel?.nativeView;
       if (!panel) return true;
 
@@ -144,13 +147,26 @@ export default {
             const targetTop = PanelPositions.BOTTOM.value;
             panel.top = targetTop;
             this.panelCurrentTop = targetTop;
+
+            // Update position in Vuex
+            this.setPanelPosition({
+              position: 'BOTTOM',
+              value: targetTop
+            });
           }
 
-          // Reset state machine to ensure correct gesture handling
-          this.stateMachine.forceState('BOTTOM');
+          // Reset position tracking
           this.position = 'BOTTOM';
           this.lastTop = PanelPositions.BOTTOM.value;
         });
+      }
+    },
+
+    // Sync store panel position with local state
+    storePanelPosition(newPosition) {
+      // Only update if different to avoid loops
+      if (this.position !== newPosition) {
+        this.position = newPosition;
       }
     }
   },
@@ -159,7 +175,10 @@ export default {
     ...mapActions({
       setActivePanel: 'ui/setActivePanel',
       setPanelOpenState: 'ui/setPanelOpenState',
-      closePanel: 'ui/closePanel'
+      closePanel: 'ui/closePanel',
+      setPanelPosition: 'ui/setPanelPosition',
+      setPanelPositionValues: 'ui/setPanelPositionValues',
+      setLandscapeOrientation: 'ui/setLandscapeOrientation'
     }),
 
     /**
@@ -188,24 +207,54 @@ export default {
     handleLayoutChange(event) {
       const { dimensions } = event;
 
+      // Update local dimensions
       this.screenHeight = dimensions.availableHeight;
       this.panelWidth = dimensions.panelWidth;
 
+      // Update store dimensions
+      this.$store.dispatch('ui/setScreenHeight', dimensions.availableHeight);
+      this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth);
+
+      // Handle orientation change
       const previousOrientation = this.isLandscapeOrientation;
       this.isLandscapeOrientation = dimensions.isLandscape;
+      this.setLandscapeOrientation(dimensions.isLandscape);
 
-      if (previousOrientation !== this.isLandscapeOrientation) {
+      if (previousOrientation !== dimensions.isLandscape) {
         this.updatePanelTransitions();
 
         // When changing orientation, close the panel
         this.closePanel();
 
-        if (this.isLandscapeOrientation && this.position === 'MIDDLE') {
+        if (dimensions.isLandscape && this.position === 'MIDDLE') {
           this.moveToPosition('TOP');
         }
       }
 
+      // Update panel dimensions and positions
       this.updatePanelPositions();
+      this.updateStorePositions();
+    },
+
+    /**
+     * Update panel position values in store
+     */
+    updateStorePositions() {
+      // Calculate position values based on screen size
+      const positionValues = {
+        TOP: PanelPositions.TOP.value,
+        MIDDLE: PanelPositions.MIDDLE.value,
+        BOTTOM: PanelPositions.BOTTOM.value
+      };
+
+      // Update store with current position values
+      this.setPanelPositionValues(positionValues);
+
+      // Also update current position value if needed
+      this.setPanelPosition({
+        position: this.position,
+        value: positionValues[this.position]
+      });
     },
 
     /**
@@ -226,68 +275,45 @@ export default {
     },
 
     /**
+     * Update panel positions based on screen dimensions
+     */
+    updatePanelPositions() {
+      const screenHeight = this.screenHeight;
+
+      // Update position values
+      PanelPositions.BOTTOM.value = screenHeight - this.panelVisibleHeight;
+      PanelPositions.MIDDLE.value = screenHeight / 2;
+
+      // Calculate snap thresholds
+      this.snapThresholds = {
+        middleToBottom: (PanelPositions.BOTTOM.value - PanelPositions.MIDDLE.value) / 5,
+        topToMiddle: (PanelPositions.MIDDLE.value - PanelPositions.TOP.value) / 5
+      };
+
+      // Update panel dimensions
+      this.panelHeight = screenHeight - PanelPositions.TOP.value;
+      this.lastTop = PanelPositions.BOTTOM.value;
+      this.panelCurrentTop = PanelPositions.BOTTOM.value;
+    },
+
+    /**
      * Handle open panel command
      */
     async handleOpenCommand() {
-      const panel = this.$refs.panel?.nativeView;
-      if (!panel) return;
-
-      // Get exact panel position
-      const currentTop = panel.top;
-      const bottomValue = PanelPositions.BOTTOM.value;
-      const tolerance = 10;
-
-      // Check if panel is closed
-      const isPanelClosed = Math.abs(currentTop - bottomValue) < tolerance;
-
-      // Only open if panel is completely closed
-      if (!isPanelClosed) {
-        // Don't change panel position if it's already open
+      // Skip if panel is already open or animation is in progress
+      if (!this.isPanelClosedLocal || this.isAnimationLocked) {
         return;
       }
 
-      // Prevent multiple animations
-      if (this.isAnimationLocked) {
-        return;
-      }
+      // Target position depends on orientation
+      const targetPosition = this.isLandscapeOrientation ? 'TOP' : 'MIDDLE';
 
-      this.isAnimationLocked = true;
+      // Use the unified moveToPosition method
+      await this.moveToPosition(targetPosition);
 
-      try {
-        // Target position depends on orientation
-        const targetPosition = this.isLandscapeOrientation ? 'TOP' : 'MIDDLE';
-
-        // Cancel any current animations
-        this.cancelAnimation();
-
-        // Get target top position
-        const targetTop = PanelPositions[targetPosition].value;
-
-        // Animate panel
-        const newTop = await this.animatePanel(panel, panel.top, targetTop);
-
-        // Update position
-        panel.top = targetTop;
-        this.panelCurrentTop = targetTop;
-
-        // Update state machine
-        this.stateMachine.forceState(targetPosition);
-        this.position = targetPosition;
-        this.lastTop = targetTop;
-
-        // Update panel open state
-        await this.setPanelOpenState(true);
-
-        // If active panel is not set, default to 'quick'
-        if (this.activePanel === null) {
-          await this.setActivePanel('quick');
-        }
-      } catch (error) {
-        console.error('Error opening panel:', error);
-      } finally {
-        setTimeout(() => {
-          this.isAnimationLocked = false;
-        }, 50);
+      // If active panel is not set, default to 'quick'
+      if (this.activePanel === null) {
+        await this.setActivePanel('quick');
       }
     },
 
@@ -295,70 +321,28 @@ export default {
      * Handle close panel command
      */
     async handleCloseCommand() {
-      const panel = this.$refs.panel?.nativeView;
-      if (!panel) return;
-
-      // Skip if panel already closed
-      if (this.isPanelClosed) {
+      // Skip if panel is already closed
+      if (this.isPanelClosedLocal || this.isAnimationLocked) {
         return;
       }
 
-      // Prevent multiple animations
-      if (this.isAnimationLocked) {
-        return;
-      }
+      // Use the unified moveToPosition method
+      await this.moveToPosition('BOTTOM');
 
-      this.isAnimationLocked = true;
-
-      try {
-        // Cancel any current animations
-        this.cancelAnimation();
-
-        // Get target position
-        const targetTop = PanelPositions.BOTTOM.value;
-
-        // Animate panel
-        const newTop = await this.animatePanel(panel, panel.top, targetTop);
-
-        // Update position
-        panel.top = targetTop;
-        this.panelCurrentTop = targetTop;
-
-        // Update state machine
-        this.stateMachine.forceState('BOTTOM');
-        this.position = 'BOTTOM';
-        this.lastTop = targetTop;
-
-        // Update panel open state and active panel
-        await this.setPanelOpenState(false);
-        await this.setActivePanel('quick');
-      } catch (error) {
-        console.error('Error closing panel:', error);
-      } finally {
-        setTimeout(() => {
-          this.isAnimationLocked = false;
-        }, 50);
-      }
-    },
-
-    /**
-     * Handle pan gesture on panel
-     */
-    handlePanGesture(args) {
-      if (this.isAnimationLocked) {
-        return;
-      }
-
-      this.$options.mixins[2].methods.handlePanGesture.call(this, args);
+      // Update panel open state and active panel
+      await this.setPanelOpenState(false);
+      await this.setActivePanel('quick');
     }
   },
 
   created() {
     // Initialize panel positions
     this.updatePanelPositions();
+    this.updateStorePositions();
 
     // Initialize orientation
     this.isLandscapeOrientation = layoutService.dimensions.isLandscape;
+    this.setLandscapeOrientation(layoutService.dimensions.isLandscape);
 
     // Set up panel transitions
     this.updatePanelTransitions();

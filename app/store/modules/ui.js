@@ -18,8 +18,21 @@ export const ui = {
       timestamp: 0
     },
 
-    // Track if panel is open
-    isPanelOpen: false
+    isPanelOpen: false,
+    panelPosition: 'BOTTOM', // Can be 'TOP', 'MIDDLE', 'BOTTOM'
+    panelPositionValue: 0,   // Actual numeric position value
+    panelPositionValues: {   // Position values for all states
+      TOP: 50,
+      MIDDLE: 0,
+      BOTTOM: 0
+    },
+    panelVisibleHeight: 110, // Panel height when in BOTTOM position
+    isLandscapeOrientation: false, // Screen orientation
+    panelSnapThresholds: {   // Thresholds for snapping
+      middleToBottom: 0,
+      topToMiddle: 0
+    },
+    panelHeight: 0,          // Total panel height
   }),
 
   mutations: {
@@ -56,6 +69,35 @@ export const ui = {
     // Set panel open state
     SET_PANEL_OPEN_STATE(state, isOpen) {
       state.isPanelOpen = isOpen;
+    },
+
+    // Panel position mutations
+    SET_PANEL_POSITION(state, position) {
+      state.panelPosition = position;
+    },
+
+    SET_PANEL_POSITION_VALUE(state, value) {
+      state.panelPositionValue = value;
+    },
+
+    SET_PANEL_POSITION_VALUES(state, values) {
+      state.panelPositionValues = { ...state.panelPositionValues, ...values };
+    },
+
+    SET_PANEL_VISIBLE_HEIGHT(state, height) {
+      state.panelVisibleHeight = height;
+    },
+
+    SET_LANDSCAPE_ORIENTATION(state, isLandscape) {
+      state.isLandscapeOrientation = isLandscape;
+    },
+
+    SET_PANEL_SNAP_THRESHOLDS(state, thresholds) {
+      state.panelSnapThresholds = { ...state.panelSnapThresholds, ...thresholds };
+    },
+
+    SET_PANEL_HEIGHT(state, height) {
+      state.panelHeight = height;
     }
   },
 
@@ -88,6 +130,65 @@ export const ui = {
       commit('SET_PANEL_OPEN_STATE', isOpen);
     },
 
+    // Panel position actions
+    setPanelPosition({ commit }, { position, value }) {
+      commit('SET_PANEL_POSITION', position);
+      if (value !== undefined) {
+        commit('SET_PANEL_POSITION_VALUE', value);
+      }
+    },
+
+    setPanelPositionValues({ commit }, values) {
+      commit('SET_PANEL_POSITION_VALUES', values);
+    },
+
+    setPanelVisibleHeight({ commit }, height) {
+      commit('SET_PANEL_VISIBLE_HEIGHT', height);
+    },
+
+    setLandscapeOrientation({ commit }, isLandscape) {
+      commit('SET_LANDSCAPE_ORIENTATION', isLandscape);
+    },
+
+    setPanelSnapThresholds({ commit }, thresholds) {
+      commit('SET_PANEL_SNAP_THRESHOLDS', thresholds);
+    },
+
+    setPanelHeight({ commit }, height) {
+      commit('SET_PANEL_HEIGHT', height);
+    },
+
+    // Update panel positions based on screen size
+    updatePanelPositions({ commit, state, dispatch }) {
+      const { screenHeight, panelVisibleHeight } = state;
+
+      // Calculate position values
+      const positionValues = {
+        BOTTOM: screenHeight - panelVisibleHeight,
+        MIDDLE: screenHeight / 2,
+        TOP: 50 // TOP position is fixed
+      };
+
+      // Calculate snap thresholds
+      const snapThresholds = {
+        middleToBottom: (positionValues.BOTTOM - positionValues.MIDDLE) / 5,
+        topToMiddle: (positionValues.MIDDLE - positionValues.TOP) / 5
+      };
+
+      // Update state
+      dispatch('setPanelPositionValues', positionValues);
+      dispatch('setPanelSnapThresholds', snapThresholds);
+      dispatch('setPanelHeight', screenHeight - positionValues.TOP);
+
+      // Keep panel position in sync
+      if (state.panelPosition === 'BOTTOM') {
+        dispatch('setPanelPosition', {
+          position: 'BOTTOM',
+          value: positionValues.BOTTOM
+        });
+      }
+    },
+
     // Switch active panel and open if needed
     switchPanel({ commit, dispatch, state }, panelName) {
       // If panel is closed, always open it with the specified panel
@@ -113,6 +214,26 @@ export const ui = {
       commit('SET_PANEL_OPEN_STATE', false);
       commit('SET_ACTIVE_PANEL', 'quick');
       commit('SEND_PANEL_COMMAND', 'close');
+    }
+  },
+
+  // Add getters for computed values
+  getters: {
+    // Get position value by position name
+    getPanelPositionValue: (state) => (positionName) => {
+      return state.panelPositionValues[positionName] || 0;
+    },
+
+    // Get current panel position value
+    currentPanelPositionValue: (state) => {
+      return state.panelPositionValue;
+    },
+
+    // Check if panel is closed (at bottom position)
+    isPanelClosed: (state) => {
+      const tolerance = 10;
+      const bottomValue = state.panelPositionValues.BOTTOM;
+      return Math.abs(state.panelPositionValue - bottomValue) < tolerance;
     }
   }
 };

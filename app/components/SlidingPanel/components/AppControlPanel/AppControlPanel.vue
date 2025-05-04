@@ -86,6 +86,18 @@ export default {
   },
 
   computed: {
+    /**
+     * Get activeButton from local state or Vuex
+     */
+    activeButton: {
+      get() {
+        return this.$data._activeButton || this.storedActivePanel;
+      },
+      set(value) {
+        this.$data._activeButton = value;
+      }
+    },
+
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
       isPanelOpen: state => state.ui.isPanelOpen
@@ -95,13 +107,13 @@ export default {
   data() {
     return {
       location: new userLocation(),
-      activeButton: null,
+      _activeButton: null, // Internal storage for local changes
     }
   },
 
   watch: {
     storedActivePanel(newValue) {
-      this.activeButton = newValue;
+      this._activeButton = newValue;
     }
   },
 
@@ -111,6 +123,9 @@ export default {
       switchPanel: 'ui/switchPanel'
     }),
 
+    /**
+     * Set active button and update panel state
+     */
     setActiveButton(button) {
       // If panel is closed, always open with the selected button
       if (!this.isPanelOpen) {
@@ -125,9 +140,12 @@ export default {
       }
 
       // Use switchPanel action to change active panel
-      this.$store.dispatch('ui/switchPanel', button);
+      this.switchPanel(button);
     },
 
+    /**
+     * Trigger user location updating
+     */
     onLocate() {
       this.location.locate();
     }
@@ -135,7 +153,7 @@ export default {
 
   created() {
     // Initialize active button from store
-    this.activeButton = this.storedActivePanel || 'quick';
+    this._activeButton = this.storedActivePanel || 'quick';
   }
 }
 </script>
