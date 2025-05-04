@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Get yarn cache
         id: yarn-cache
@@ -31,7 +31,10 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install six
-        run: python3 -m pip install six
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          python3 -m pip install six
 
       - name: Install NativeScript
         run: |
