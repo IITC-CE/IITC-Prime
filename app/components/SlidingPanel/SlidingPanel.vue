@@ -44,6 +44,17 @@ export default {
     MapStateBar
   },
 
+  props: {
+    /**
+     * Controls if the panel is currently visible in the UI
+     * Used to ensure state synchronization when visibility changes
+     */
+    isVisible: {
+      type: Boolean,
+      default: true
+    }
+  },
+
   data() {
     return {
       // Screen dimensions
@@ -112,6 +123,35 @@ export default {
         }
       },
       deep: true
+    },
+
+    /**
+     * Handle panel visibility changes
+     * Force panel to closed state when becoming visible after debug mode
+     * This ensures consistent behavior when exiting debug mode
+     */
+    isVisible(newValue, oldValue) {
+      // Only handle the case when panel becomes visible after being hidden
+      if (newValue && !oldValue) {
+        // Force panel to closed state when reappearing after debug mode
+        this.$nextTick(() => {
+          // Update store state
+          this.setPanelOpenState(false);
+
+          // Force correct DOM position
+          const panel = this.$refs.panel?.nativeView;
+          if (panel) {
+            const targetTop = PanelPositions.BOTTOM.value;
+            panel.top = targetTop;
+            this.panelCurrentTop = targetTop;
+          }
+
+          // Reset state machine to ensure correct gesture handling
+          this.stateMachine.forceState('BOTTOM');
+          this.position = 'BOTTOM';
+          this.lastTop = PanelPositions.BOTTOM.value;
+        });
+      }
     }
   },
 

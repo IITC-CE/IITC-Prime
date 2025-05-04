@@ -35,6 +35,7 @@
         <SlidingPanel
           v-show="sliding.isVisible && !isDebugActive"
           class="sliding-panel"
+          :is-visible="sliding.isVisible && !isDebugActive"
         />
 
         <PopupWebView
