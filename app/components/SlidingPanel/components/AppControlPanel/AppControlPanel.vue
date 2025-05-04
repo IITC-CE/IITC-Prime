@@ -17,7 +17,7 @@
     <FlexboxLayout class="panel-buttons">
       <AppControlButton
         icon="fa-bars"
-        :isActive="activeButton === 'quick'"
+        :isActive="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
         @activate="setActiveButton('quick')"
         @deactivate="setActiveButton(null)" />
       />
@@ -26,7 +26,7 @@
 
       <AppControlButton
         icon="fa-search"
-        :isActive="activeButton === 'search'"
+        :isActive="isPanelOpen && activeButton === 'search'"
         @activate="setActiveButton('search')"
         @deactivate="setActiveButton(null)" />
 
@@ -37,7 +37,7 @@
 
       <AppControlButton
         icon="fa-layer-group"
-        :isActive="activeButton === 'layers'"
+        :isActive="isPanelOpen && activeButton === 'layers'"
         @activate="setActiveButton('layers')"
         @deactivate="setActiveButton(null)" />
 
@@ -87,7 +87,8 @@ export default {
 
   computed: {
     ...mapState({
-      storedActivePanel: state => state.ui.activePanel
+      storedActivePanel: state => state.ui.activePanel,
+      isPanelOpen: state => state.ui.isPanelOpen
     })
   },
 
@@ -111,13 +112,19 @@ export default {
     }),
 
     setActiveButton(button) {
-      // Deactivate when clicking the same button again
+      // If panel is closed, always open with the selected button
+      if (!this.isPanelOpen) {
+        this.switchPanel(button);
+        return;
+      }
+
+      // If clicking the same button again, deactivate it
       if (button === this.activeButton) {
         this.setActivePanel(null);
         return;
       }
 
-      // Use switchPanel action to change active panel and open if needed
+      // Use switchPanel action to change active panel
       this.$store.dispatch('ui/switchPanel', button);
     },
 

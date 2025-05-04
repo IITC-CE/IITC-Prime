@@ -32,7 +32,7 @@ import { panelPositionMixin } from "./mixins/panelPosition";
 import { panelGestureMixin } from "./mixins/panelGesture";
 import { layoutService } from '~/utils/layout-service';
 import { PanelPositions } from './constants/panelPositions';
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'SlidingPanel',
@@ -75,7 +75,8 @@ export default {
 
     ...mapState({
       activePanel: state => state.ui.activePanel,
-      panelCommand: state => state.ui.panelCommand
+      panelCommand: state => state.ui.panelCommand,
+      isPanelOpen: state => state.ui.isPanelOpen
     }),
 
     // Check if panel is closed
@@ -115,6 +116,12 @@ export default {
   },
 
   methods: {
+    ...mapActions({
+      setActivePanel: 'ui/setActivePanel',
+      setPanelOpenState: 'ui/setPanelOpenState',
+      closePanel: 'ui/closePanel'
+    }),
+
     /**
      * Get screen height from best available source
      */
@@ -149,6 +156,9 @@ export default {
 
       if (previousOrientation !== this.isLandscapeOrientation) {
         this.updatePanelTransitions();
+
+        // When changing orientation, close the panel
+        this.closePanel();
 
         if (this.isLandscapeOrientation && this.position === 'MIDDLE') {
           this.moveToPosition('TOP');
@@ -224,6 +234,14 @@ export default {
         this.stateMachine.forceState(targetPosition);
         this.position = targetPosition;
         this.lastTop = targetTop;
+
+        // Update panel open state
+        await this.setPanelOpenState(true);
+
+        // If active panel is not set, default to 'quick'
+        if (this.activePanel === null) {
+          await this.setActivePanel('quick');
+        }
       } catch (error) {
         console.error('Error opening panel:', error);
       } finally {
@@ -270,6 +288,10 @@ export default {
         this.stateMachine.forceState('BOTTOM');
         this.position = 'BOTTOM';
         this.lastTop = targetTop;
+
+        // Update panel open state and active panel
+        await this.setPanelOpenState(false);
+        await this.setActivePanel('quick');
       } catch (error) {
         console.error('Error closing panel:', error);
       } finally {

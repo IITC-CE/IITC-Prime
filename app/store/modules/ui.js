@@ -16,7 +16,10 @@ export const ui = {
     panelCommand: {
       action: '',
       timestamp: 0
-    }
+    },
+
+    // Track if panel is open
+    isPanelOpen: false
   }),
 
   mutations: {
@@ -48,6 +51,11 @@ export const ui = {
         action,
         timestamp: Date.now()
       };
+    },
+
+    // Set panel open state
+    SET_PANEL_OPEN_STATE(state, isOpen) {
+      state.isPanelOpen = isOpen;
     }
   },
 
@@ -75,8 +83,21 @@ export const ui = {
       commit('SET_ACTIVE_PANEL', panelName);
     },
 
+    // Set panel open state
+    setPanelOpenState({ commit }, isOpen) {
+      commit('SET_PANEL_OPEN_STATE', isOpen);
+    },
+
     // Switch active panel and open if needed
     switchPanel({ commit, dispatch, state }, panelName) {
+      // If panel is closed, always open it with the specified panel
+      if (!state.isPanelOpen) {
+        commit('SET_PANEL_OPEN_STATE', true);
+        commit('SET_ACTIVE_PANEL', panelName || 'quick');
+        commit('SEND_PANEL_COMMAND', 'open');
+        return;
+      }
+
       // If same panel, just deactivate
       if (state.activePanel === panelName) {
         commit('SET_ACTIVE_PANEL', null);
@@ -85,9 +106,13 @@ export const ui = {
 
       // Set active panel
       commit('SET_ACTIVE_PANEL', panelName);
+    },
 
-      // Open panel
-      commit('SEND_PANEL_COMMAND', 'open');
+    // Close panel
+    closePanel({ commit }) {
+      commit('SET_PANEL_OPEN_STATE', false);
+      commit('SET_ACTIVE_PANEL', 'quick');
+      commit('SEND_PANEL_COMMAND', 'close');
     }
   }
 };

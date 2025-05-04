@@ -69,6 +69,18 @@ export const panelPositionMixin = {
         targetTop
       ).then(newTop => {
         this.panelCurrentTop = newTop;
+
+        // Determine if panel is open after snap
+        const isPanelOpen = nextState !== 'BOTTOM';
+        this.setPanelOpenState(isPanelOpen);
+
+        // If panel is closed, active panel is 'quick' (but all buttons inactive)
+        if (!isPanelOpen) {
+          this.setActivePanel('quick');
+        } else if (this.activePanel === null) {
+          // If panel is open but no active panel, set to 'quick'
+          this.setActivePanel('quick');
+        }
       }).catch(error => {
         console.error('Error during panel snap:', error);
       });
@@ -118,6 +130,15 @@ export const panelPositionMixin = {
         // Update state
         this.panelCurrentTop = newTop;
         this.lastTop = newTop;
+
+        // Update panel open state
+        const isPanelOpen = position !== 'BOTTOM';
+        this.setPanelOpenState(isPanelOpen);
+
+        // If panel is closed, active panel is 'quick' (but all buttons inactive)
+        if (!isPanelOpen) {
+          this.setActivePanel('quick');
+        }
       } catch (error) {
         console.error('Error during panel move:', error);
       }
