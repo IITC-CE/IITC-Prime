@@ -169,50 +169,69 @@ export const panelControllerMixin = {
 
     /**
      * Determine next state based on current position and movement
+     * Uses sensitivity thresholds to make transitions easier
      */
     determineNextState(currentTop, lastTop, middleValue) {
       const { topToMiddle, middleToBottom } = this.snapThresholds;
       const positions = PanelPositions;
 
-      // Remember the last position to keep context of movement
+      // If in landscape orientation, only consider TOP and BOTTOM
+      if (this.isLandscapeOrientation) {
+        // Use sensitivity threshold - only need to move 1/5 of the way
+        const sensitivity = (positions.BOTTOM.value - positions.TOP.value) / 5;
+
+        if (lastTop === positions.TOP.value) {
+          // Moving from TOP
+          return (currentTop - positions.TOP.value) > sensitivity ? 'BOTTOM' : 'TOP';
+        } else if (lastTop === positions.BOTTOM.value) {
+          // Moving from BOTTOM
+          return (positions.BOTTOM.value - currentTop) > sensitivity ? 'TOP' : 'BOTTOM';
+        } else {
+          // No context, use midpoint
+          return currentTop < (positions.TOP.value + positions.BOTTOM.value) / 2 ? 'TOP' : 'BOTTOM';
+        }
+      }
+
+      // For portrait mode with three positions (TOP, MIDDLE, BOTTOM)
+      // Use the last stable position to provide context for the movement
       if (lastTop === positions.TOP.value) {
         // Moving from TOP
         if (currentTop < middleValue) {
-          // Between TOP and MIDDLE
-          return currentTop - positions.TOP.value >= topToMiddle
-            ? 'MIDDLE'
-            : 'TOP';
+          // Between TOP and MIDDLE - only need to move 1/5 of the way to snap
+          return currentTop - positions.TOP.value > topToMiddle ? 'MIDDLE' : 'TOP';
         } else {
-          // Moving directly to BOTTOM
+          // Past MIDDLE heading toward BOTTOM
           return 'BOTTOM';
         }
-      }
-
-      if (lastTop === positions.BOTTOM.value) {
+      } else if (lastTop === positions.BOTTOM.value) {
         // Moving from BOTTOM
         if (currentTop > middleValue) {
-          // Between BOTTOM and MIDDLE
-          return positions.BOTTOM.value - currentTop >= middleToBottom
-            ? 'MIDDLE'
-            : 'BOTTOM';
+          // Between MIDDLE and BOTTOM - only need to move 1/5 of the way to snap
+          return positions.BOTTOM.value - currentTop > middleToBottom ? 'MIDDLE' : 'BOTTOM';
         } else {
-          // Moving directly to TOP
+          // Past MIDDLE heading toward TOP
           return 'TOP';
         }
-      }
-
-      // Default behavior when last position is not definitive
-      // (e.g. coming from MIDDLE or first movement)
-      if (currentTop >= middleValue) {
-        // Between MIDDLE and BOTTOM
-        return currentTop - middleValue >= middleToBottom
-          ? 'BOTTOM'
-          : 'MIDDLE';
+      } else if (lastTop === positions.MIDDLE.value) {
+        // Moving from MIDDLE
+        if (currentTop < positions.MIDDLE.value) {
+          // Moving toward TOP - need to move 1/5 of the way
+          return middleValue - currentTop > topToMiddle ? 'TOP' : 'MIDDLE';
+        } else {
+          // Moving toward BOTTOM - need to move 1/5 of the way
+          return currentTop - middleValue > middleToBottom ? 'BOTTOM' : 'MIDDLE';
+        }
       } else {
-        // Between MIDDLE and TOP
-        return middleValue - currentTop >= topToMiddle
-          ? 'TOP'
-          : 'MIDDLE';
+        // No last position context, use nearest point
+        const distToTop = Math.abs(currentTop - positions.TOP.value);
+        const distToMiddle = Math.abs(currentTop - positions.MIDDLE.value);
+        const distToBottom = Math.abs(currentTop - positions.BOTTOM.value);
+
+        const minDist = Math.min(distToTop, distToMiddle, distToBottom);
+
+        if (minDist === distToTop) return 'TOP';
+        if (minDist === distToMiddle) return 'MIDDLE';
+        return 'BOTTOM';
       }
     },
 
@@ -237,17 +256,6 @@ export const panelControllerMixin = {
           position = 'TOP';
         }
 
-        // Handle indirect transitions through MIDDLE position
-        if ((this.position === 'TOP' && position === 'BOTTOM') ||
-            (this.position === 'BOTTOM' && position === 'TOP')) {
-          if (!this.isLandscapeOrientation) {
-            // In portrait orientation, use MIDDLE as transition point
-            await this.moveToPosition('MIDDLE');
-            this.isAnimationLocked = false;
-            return this.moveToPosition(position);
-          }
-        }
-
         // Update state tracking
         this.position = position;
 
@@ -257,7 +265,7 @@ export const panelControllerMixin = {
         // Get actual current position from the DOM
         const actualPanelTop = panel.top;
 
-        // Animate panel - using actual DOM position, not tracked position
+        // Animate panel directly to the target
         const newTop = await this.animatePanel(panel, actualPanelTop, targetTop);
 
         // Update state after animation completes

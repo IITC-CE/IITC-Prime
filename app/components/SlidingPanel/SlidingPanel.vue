@@ -207,8 +207,6 @@ export default {
       this.setLandscapeOrientation(dimensions.isLandscape);
 
       if (previousOrientation !== dimensions.isLandscape) {
-        this.updatePanelTransitions();
-
         // When changing orientation, close the panel
         this.closePanel();
 
@@ -219,23 +217,6 @@ export default {
 
       // Update panel dimensions and positions
       this.updatePanelPositions();
-    },
-
-    /**
-     * Update panel transitions based on screen orientation
-     */
-    updatePanelTransitions() {
-      if (this.isLandscapeOrientation) {
-        // In landscape mode, only allow transitions between TOP and BOTTOM
-        PanelPositions.TOP.allowedTransitions = ['BOTTOM'];
-        PanelPositions.BOTTOM.allowedTransitions = ['TOP'];
-        PanelPositions.MIDDLE.allowedTransitions = [];
-      } else {
-        // In portrait mode, allow all transitions
-        PanelPositions.TOP.allowedTransitions = ['MIDDLE', 'BOTTOM'];
-        PanelPositions.MIDDLE.allowedTransitions = ['TOP', 'BOTTOM'];
-        PanelPositions.BOTTOM.allowedTransitions = ['MIDDLE', 'TOP'];
-      }
     },
 
     /**
@@ -342,9 +323,6 @@ export default {
 
     // Initialize orientation
     this.setLandscapeOrientation(layoutService.dimensions.isLandscape);
-
-    // Set up panel transitions
-    this.updatePanelTransitions();
 
     // Listen for layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
