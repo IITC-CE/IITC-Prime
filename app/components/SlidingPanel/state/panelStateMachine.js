@@ -1,68 +1,132 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import { PanelPositions, PanelPositionHelpers } from '../constants/panelPositions';
+import { PanelPositions } from '../constants/panelPositions';
 
-// State machine for managing panel positions and transitions
+/**
+ * PanelStateMachine
+ * Handles state transitions and decision logic for sliding panel
+ */
 export class PanelStateMachine {
   constructor() {
-    this.currentState = PanelPositions.BOTTOM.id;
+    this.currentState = 'BOTTOM';
+    this.lastPosition = null;
+    this.snapThresholds = {
+      middleToBottom: 0,
+      topToMiddle: 0
+    };
+    this.isLandscapeOrientation = false;
   }
 
-  // Get current position value
-  getCurrentPosition() {
-    return PanelPositionHelpers.getPositionValue(this.currentState);
+  /**
+   * Set current state without validation
+   */
+  setState(state) {
+    this.currentState = state;
+    this.lastPosition = PanelPositions[state].value;
   }
 
-  // Check if transition is allowed
-  canTransition(targetState) {
-    return PanelPositionHelpers.canTransition(this.currentState, targetState);
+  /**
+   * Set orientation mode
+   */
+  setOrientation(isLandscape) {
+    this.isLandscapeOrientation = isLandscape;
   }
 
-  // Perform state transition
-  transition(targetState) {
-    if (this.canTransition(targetState)) {
-      this.currentState = targetState;
-      return true;
-    }
-    return false;
+  /**
+   * Update snap thresholds for transition decisions
+   */
+  setSnapThresholds(thresholds) {
+    this.snapThresholds = {...thresholds};
   }
 
-  // Determine next state based on current position and movement
-  determineNextState(currentTop, lastTop, middleValue, snapThresholds) {
+  /**
+   * Get position value for current state
+   */
+  getCurrentPositionValue() {
+    return PanelPositions[this.currentState].value;
+  }
+
+  /**
+   * Determine if panel is currently closed
+   */
+  isPanelClosed() {
+    return this.currentState === 'BOTTOM';
+  }
+
+  /**
+   * Get target position for panel opening command
+   */
+  getOpenPosition() {
+    return this.isLandscapeOrientation ? 'TOP' : 'MIDDLE';
+  }
+
+  /**
+   * Determine next state based on current position and movement
+   * Uses sensitivity thresholds to make transitions easier
+   */
+  determineNextState(currentTop) {
+    const { topToMiddle, middleToBottom } = this.snapThresholds;
     const positions = PanelPositions;
 
-    // Start from previous position (lastTop)
-    if (lastTop === positions.TOP.value) {
-      // Moving from TOP position
+    // If in landscape orientation, only consider TOP and BOTTOM
+    if (this.isLandscapeOrientation) {
+      // Use sensitivity threshold - only need to move 1/5 of the way
+      const sensitivity = (positions.BOTTOM.value - positions.TOP.value) / 5;
+
+      if (this.lastPosition === positions.TOP.value) {
+        // Moving from TOP
+        return (currentTop - positions.TOP.value) > sensitivity ? 'BOTTOM' : 'TOP';
+      } else if (this.lastPosition === positions.BOTTOM.value) {
+        // Moving from BOTTOM
+        return (positions.BOTTOM.value - currentTop) > sensitivity ? 'TOP' : 'BOTTOM';
+      } else {
+        // No context, use midpoint
+        return currentTop < (positions.TOP.value + positions.BOTTOM.value) / 2 ? 'TOP' : 'BOTTOM';
+      }
+    }
+
+    // For portrait mode with three positions (TOP, MIDDLE, BOTTOM)
+    const middleValue = positions.MIDDLE.value;
+
+    // Use the last stable position to provide context for the movement
+    if (this.lastPosition === positions.TOP.value) {
+      // Moving from TOP
       if (currentTop < middleValue) {
-        return currentTop - positions.TOP.value >= snapThresholds.topToMiddle
-          ? positions.MIDDLE.id
-          : positions.TOP.id;
+        // Between TOP and MIDDLE - only need to move 1/5 of the way to snap
+        return currentTop - positions.TOP.value > topToMiddle ? 'MIDDLE' : 'TOP';
       } else {
-        return positions.BOTTOM.id;
+        // Past MIDDLE heading toward BOTTOM
+        return 'BOTTOM';
       }
-    }
-
-    if (lastTop === positions.BOTTOM.value) {
-      // Moving from BOTTOM position
+    } else if (this.lastPosition === positions.BOTTOM.value) {
+      // Moving from BOTTOM
       if (currentTop > middleValue) {
-        return positions.BOTTOM.value - currentTop >= snapThresholds.middleToBottom
-          ? positions.MIDDLE.id
-          : positions.BOTTOM.id;
+        // Between MIDDLE and BOTTOM - only need to move 1/5 of the way to snap
+        return positions.BOTTOM.value - currentTop > middleToBottom ? 'MIDDLE' : 'BOTTOM';
       } else {
-        return positions.TOP.id;
+        // Past MIDDLE heading toward TOP
+        return 'TOP';
       }
-    }
-
-    // Default behavior - snap to closest position
-    if (currentTop >= middleValue) {
-      return currentTop - middleValue >= snapThresholds.middleToBottom
-        ? positions.BOTTOM.id
-        : positions.MIDDLE.id;
+    } else if (this.lastPosition === positions.MIDDLE.value) {
+      // Moving from MIDDLE
+      if (currentTop < positions.MIDDLE.value) {
+        // Moving toward TOP - need to move 1/5 of the way
+        return middleValue - currentTop > topToMiddle ? 'TOP' : 'MIDDLE';
+      } else {
+        // Moving toward BOTTOM - need to move 1/5 of the way
+        return currentTop - middleValue > middleToBottom ? 'BOTTOM' : 'MIDDLE';
+      }
     } else {
-      return middleValue - currentTop >= snapThresholds.topToMiddle
-        ? positions.TOP.id
-        : positions.MIDDLE.id;
+      // No last position context, use nearest point
+      const distToTop = Math.abs(currentTop - positions.TOP.value);
+      const distToMiddle = Math.abs(currentTop - positions.MIDDLE.value);
+      const distToBottom = Math.abs(currentTop - positions.BOTTOM.value);
+
+      const minDist = Math.min(distToTop, distToMiddle, distToBottom);
+
+      if (minDist === distToTop) return 'TOP';
+      if (minDist === distToMiddle) return 'MIDDLE';
+      return 'BOTTOM';
     }
   }
 }

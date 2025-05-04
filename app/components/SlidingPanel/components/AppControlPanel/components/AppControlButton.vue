@@ -9,7 +9,6 @@
     :text="icon | fonticon"
     @tap="handleTap"
     @pan="handlePan"
-    passthrough-events="true"
   />
 </template>
 
@@ -32,35 +31,69 @@ export default {
 
   data() {
     return {
+      panThreshold: 15,
       isPanning: false,
-      panThreshold: 10
+      currentPanId: null
     }
   },
+
   methods: {
+    /**
+     * Handle pan gesture with improved detection
+     */
     handlePan(event) {
+      // Calculate total movement distance
       const distance = Math.abs(event.deltaX) + Math.abs(event.deltaY);
 
-      if (distance > this.panThreshold) {
-        this.isPanning = true;
+      // Handle different pan gesture states
+      switch (event.state) {
+        // Pan start
+        case 1:
+          this.currentPanId = Date.now();
+          this.isPanning = false;
+          break;
+
+        // Pan in progress
+        case 2:
+          // If distance exceeds threshold, consider it a pan gesture
+          if (distance > this.panThreshold && !this.isPanning) {
+            this.isPanning = true;
+          }
+          break;
+
+        // Pan end
+        case 3:
+          // Delay to prevent tap triggering after pan
+          setTimeout(() => {
+            this.isPanning = false;
+          }, 100);
+          break;
+      }
+
+      // Emit pan event only if it's a real pan gesture
+      if (this.isPanning && distance > this.panThreshold) {
+        event.panId = this.currentPanId;
         this.$emit('pan', event);
       }
     },
 
+    /**
+     * Handle tap gesture with conflict prevention
+     */
     handleTap(event) {
+      // Ignore taps during pan gesture
       if (this.isPanning) {
-        this.isPanning = false;
         return;
       }
 
+      // Emit tap event
       this.$emit('tap', event);
-      this.handleToggle();
-    },
 
-    handleToggle() {
-      if (!this.isToggleable) return;
-
-      const event = this.isActive ? 'deactivate' : 'activate';
-      this.$emit(event);
+      // For toggleable buttons, emit appropriate event
+      if (this.isToggleable) {
+        const action = this.isActive ? 'deactivate' : 'activate';
+        this.$emit(action);
+      }
     }
   }
 }
