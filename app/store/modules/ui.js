@@ -9,6 +9,11 @@ export const ui = {
     progress: 0,
     isDebugActive: false,
 
+    // Panel configuration
+    mapStateBarHeight: 46,
+    panelVisibleHeight: 110,
+    panelHeight: 0,
+
     // Active panel in sliding panel (quick, search, layers)
     activePanel: 'quick',
 
@@ -26,13 +31,11 @@ export const ui = {
       MIDDLE: 0,
       BOTTOM: 0
     },
-    panelVisibleHeight: 110, // Panel height when in BOTTOM position
     isLandscapeOrientation: false, // Screen orientation
     panelSnapThresholds: {   // Thresholds for snapping
       middleToBottom: 0,
       topToMiddle: 0
     },
-    panelHeight: 0,          // Total panel height
   }),
 
   mutations: {
@@ -98,6 +101,10 @@ export const ui = {
 
     SET_PANEL_HEIGHT(state, height) {
       state.panelHeight = height;
+    },
+
+    SET_MAP_STATE_BAR_HEIGHT(state, height) {
+      state.mapStateBarHeight = height;
     }
   },
 
@@ -156,6 +163,10 @@ export const ui = {
 
     setPanelHeight({ commit }, height) {
       commit('SET_PANEL_HEIGHT', height);
+    },
+
+    setMapStateBarHeight({ commit }, height) {
+      commit('SET_MAP_STATE_BAR_HEIGHT', height);
     },
 
     // Update panel positions based on screen size

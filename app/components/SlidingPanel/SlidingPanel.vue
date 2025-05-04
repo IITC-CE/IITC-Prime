@@ -55,22 +55,9 @@ export default {
 
   data() {
     return {
-      // Screen dimensions
       screenHeight: this._getScreenHeight(),
-
-      // Map state bar
-      mapStateBarHeight: 46,
-
-      // Panel configuration
-      panelVisibleHeight: 110,
-      panelHeight: 0,
-      panelWidth: this._getPanelWidth(),
-
-      // Track if screen is in landscape orientation
-      isLandscapeOrientation: false,
-
-      // Track last processed command
-      lastCommandTimestamp: 0
+      lastCommandTimestamp: 0,
+      panelCurrentTop: 0
     };
   },
 
@@ -84,8 +71,13 @@ export default {
       panelCommand: state => state.ui.panelCommand,
       isPanelOpen: state => state.ui.isPanelOpen,
       storePanelPosition: state => state.ui.panelPosition,
-      storePanelPositionValue: state => state.ui.panelPositionValue,
-      panelPositionValues: state => state.ui.panelPositionValues
+      panelPositionValue: state => state.ui.panelPositionValue,
+      panelPositionValues: state => state.ui.panelPositionValues,
+      mapStateBarHeight: state => state.ui.mapStateBarHeight,
+      panelHeight: state => state.ui.panelHeight,
+      panelWidth: state => state.ui.slidingPanelWidth,
+      panelVisibleHeight: state => state.ui.panelVisibleHeight,
+      isLandscapeOrientation: state => state.ui.isLandscapeOrientation
     }),
 
     ...mapGetters({
@@ -147,17 +139,16 @@ export default {
             const targetTop = PanelPositions.BOTTOM.value;
             panel.top = targetTop;
             this.panelCurrentTop = targetTop;
-
-            // Update position in Vuex
-            this.setPanelPosition({
-              position: 'BOTTOM',
-              value: targetTop
-            });
           }
 
           // Reset position tracking
           this.position = 'BOTTOM';
           this.lastTop = PanelPositions.BOTTOM.value;
+
+          this.setPanelPosition({
+            position: 'BOTTOM',
+            value: PanelPositions.BOTTOM.value
+          });
         });
       }
     },
@@ -178,7 +169,13 @@ export default {
       closePanel: 'ui/closePanel',
       setPanelPosition: 'ui/setPanelPosition',
       setPanelPositionValues: 'ui/setPanelPositionValues',
-      setLandscapeOrientation: 'ui/setLandscapeOrientation'
+      setLandscapeOrientation: 'ui/setLandscapeOrientation',
+      setMapStateBarHeight: 'ui/setMapStateBarHeight',
+      setPanelHeight: 'ui/setPanelHeight',
+      setScreenHeight: 'ui/setScreenHeight',
+      setSlidingPanelWidth: 'ui/setSlidingPanelWidth',
+      setPanelVisibleHeight: 'ui/setPanelVisibleHeight',
+      storeUpdatePanelPositions: 'ui/updatePanelPositions'
     }),
 
     /**
@@ -192,32 +189,21 @@ export default {
     },
 
     /**
-     * Get panel width from best available source
-     */
-    _getPanelWidth() {
-      if (layoutService.isInitialized) {
-        return layoutService.dimensions.panelWidth;
-      }
-      return this.$store.state.ui.slidingPanelWidth;
-    },
-
-    /**
      * Handle layout changes from layout service
      */
     handleLayoutChange(event) {
       const { dimensions } = event;
 
-      // Update local dimensions
+      // Update local screen height
       this.screenHeight = dimensions.availableHeight;
-      this.panelWidth = dimensions.panelWidth;
 
       // Update store dimensions
-      this.$store.dispatch('ui/setScreenHeight', dimensions.availableHeight);
-      this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth);
+      this.setScreenHeight(dimensions.availableHeight);
+      this.setSlidingPanelWidth(dimensions.panelWidth);
+      this.setMapStateBarHeight(46); // Fixed value
 
       // Handle orientation change
       const previousOrientation = this.isLandscapeOrientation;
-      this.isLandscapeOrientation = dimensions.isLandscape;
       this.setLandscapeOrientation(dimensions.isLandscape);
 
       if (previousOrientation !== dimensions.isLandscape) {
@@ -233,28 +219,6 @@ export default {
 
       // Update panel dimensions and positions
       this.updatePanelPositions();
-      this.updateStorePositions();
-    },
-
-    /**
-     * Update panel position values in store
-     */
-    updateStorePositions() {
-      // Calculate position values based on screen size
-      const positionValues = {
-        TOP: PanelPositions.TOP.value,
-        MIDDLE: PanelPositions.MIDDLE.value,
-        BOTTOM: PanelPositions.BOTTOM.value
-      };
-
-      // Update store with current position values
-      this.setPanelPositionValues(positionValues);
-
-      // Also update current position value if needed
-      this.setPanelPosition({
-        position: this.position,
-        value: positionValues[this.position]
-      });
     },
 
     /**
@@ -278,22 +242,52 @@ export default {
      * Update panel positions based on screen dimensions
      */
     updatePanelPositions() {
-      const screenHeight = this.screenHeight;
+      // Calculate positions
+      const bottomPosition = this.screenHeight - this.panelVisibleHeight;
+      const middlePosition = this.screenHeight / 2;
+      const topPosition = 50; // Fixed
 
-      // Update position values
-      PanelPositions.BOTTOM.value = screenHeight - this.panelVisibleHeight;
-      PanelPositions.MIDDLE.value = screenHeight / 2;
+      // Update position values locally first
+      PanelPositions.BOTTOM.value = bottomPosition;
+      PanelPositions.MIDDLE.value = middlePosition;
+      PanelPositions.TOP.value = topPosition;
 
-      // Calculate snap thresholds
+      // Update snap thresholds
       this.snapThresholds = {
-        middleToBottom: (PanelPositions.BOTTOM.value - PanelPositions.MIDDLE.value) / 5,
-        topToMiddle: (PanelPositions.MIDDLE.value - PanelPositions.TOP.value) / 5
+        middleToBottom: (bottomPosition - middlePosition) / 5,
+        topToMiddle: (middlePosition - topPosition) / 5
       };
 
-      // Update panel dimensions
-      this.panelHeight = screenHeight - PanelPositions.TOP.value;
-      this.lastTop = PanelPositions.BOTTOM.value;
-      this.panelCurrentTop = PanelPositions.BOTTOM.value;
+      // Update local position tracking
+      this.lastTop = bottomPosition;
+
+      // If panel is at bottom, update local current top
+      if (this.position === 'BOTTOM') {
+        this.panelCurrentTop = bottomPosition;
+
+        // Also update DOM directly if component is mounted
+        if (this.$refs.panel?.nativeView) {
+          this.$refs.panel.nativeView.top = bottomPosition;
+        }
+      }
+
+      // Update position values in store
+      this.setPanelPositionValues({
+        BOTTOM: bottomPosition,
+        MIDDLE: middlePosition,
+        TOP: topPosition
+      });
+
+      // Update panel dimensions in store
+      this.setPanelHeight(this.screenHeight - topPosition);
+
+      // Update panel position in store if needed
+      if (this.storePanelPosition === 'BOTTOM') {
+        this.setPanelPosition({
+          position: 'BOTTOM',
+          value: bottomPosition
+        });
+      }
     },
 
     /**
@@ -336,12 +330,17 @@ export default {
   },
 
   created() {
+    // Initialize store values
+    this.setMapStateBarHeight(46);
+    this.setPanelVisibleHeight(110);
+
     // Initialize panel positions
     this.updatePanelPositions();
-    this.updateStorePositions();
+
+    // Initialize local panel position from calculated bottom position
+    this.panelCurrentTop = PanelPositions.BOTTOM.value;
 
     // Initialize orientation
-    this.isLandscapeOrientation = layoutService.dimensions.isLandscape;
     this.setLandscapeOrientation(layoutService.dimensions.isLandscape);
 
     // Set up panel transitions
@@ -349,6 +348,16 @@ export default {
 
     // Listen for layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
+  },
+
+  mounted() {
+    // Ensure panel is at correct position when mounted
+    this.$nextTick(() => {
+      const panel = this.$refs.panel?.nativeView;
+      if (panel) {
+        panel.top = this.panelCurrentTop;
+      }
+    });
   },
 
   beforeDestroy() {

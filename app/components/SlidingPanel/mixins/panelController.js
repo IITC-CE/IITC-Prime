@@ -18,7 +18,6 @@ export const panelControllerMixin = {
     return {
       // Panel position state
       position: 'BOTTOM',       // Current panel position ID
-      panelCurrentTop: 0,       // Current panel top position in pixels
       lastTop: undefined,       // Last stable position (for transitions)
       startTop: 0,              // Starting position for gestures
 
@@ -58,12 +57,18 @@ export const panelControllerMixin = {
       }
 
       try {
+        // Lock animation to prevent interference
         this.isAnimating = true;
-        const translateY = targetTop - fromTop;
 
-        // Set initial position
+        // Force element into a consistent starting state
         element.translateY = 0;
         element.top = fromTop;
+
+        // Ensure our local tracking is consistent
+        this.panelCurrentTop = fromTop;
+
+        // Calculate amount to move
+        const translateY = targetTop - fromTop;
 
         // Create animation
         this.animationSet = new Animation([{
@@ -76,9 +81,18 @@ export const panelControllerMixin = {
         // Play animation and wait for completion
         await this.animationSet.play();
 
-        // Set final position
+        // Set final position with direct manipulation
         element.translateY = 0;
         element.top = targetTop;
+
+        // Ensure our tracking matches the final position
+        this.panelCurrentTop = targetTop;
+
+        // Sync position to store only after animation completes
+        this.setPanelPosition({
+          position: this.position,
+          value: targetTop
+        });
 
         return targetTop; // Return the end position to update the state
       } catch (error) {
@@ -110,9 +124,17 @@ export const panelControllerMixin = {
         return;
       }
 
+      // Get panel element
+      const panel = this.$refs.panel?.nativeView;
+      if (!panel) return;
+
+      // Make sure we're working with the actual current position
+      const actualPanelTop = panel.top;
+      this.panelCurrentTop = actualPanelTop;
+
       // Determine next state based on current position and thresholds
       const nextState = this.determineNextState(
-        this.panelCurrentTop,
+        actualPanelTop,
         this.lastTop,
         PanelPositions.MIDDLE.value
       );
@@ -124,20 +146,12 @@ export const panelControllerMixin = {
       this.position = nextState;
       this.lastTop = targetTop;
 
-      // Update position in Vuex
-      this.setPanelPosition({
-        position: nextState,
-        value: targetTop
-      });
-
       // Animate panel to target position
       this.animatePanel(
-        this.$refs.panel?.nativeView,
-        this.panelCurrentTop,
+        panel,
+        actualPanelTop,
         targetTop
-      ).then(newTop => {
-        this.panelCurrentTop = newTop;
-
+      ).then(() => {
         // Update panel open state
         const isPanelOpen = nextState !== 'BOTTOM';
         this.setPanelOpenState(isPanelOpen);
@@ -240,17 +254,13 @@ export const panelControllerMixin = {
         // Get target position
         const targetTop = PanelPositions[position].value;
 
-        // Update Vuex with new position
-        this.setPanelPosition({
-          position: position,
-          value: targetTop
-        });
+        // Get actual current position from the DOM
+        const actualPanelTop = panel.top;
 
-        // Animate panel
-        const newTop = await this.animatePanel(panel, panel.top, targetTop);
+        // Animate panel - using actual DOM position, not tracked position
+        const newTop = await this.animatePanel(panel, actualPanelTop, targetTop);
 
-        // Update state
-        this.panelCurrentTop = newTop;
+        // Update state after animation completes
         this.lastTop = newTop;
 
         // Update panel open state
@@ -324,12 +334,6 @@ export const panelControllerMixin = {
 
           panel.top = finalTop;
           this.panelCurrentTop = finalTop;
-
-          // Update Vuex store during pan
-          this.setPanelPosition({
-            position: this.position,
-            value: finalTop
-          });
           break;
 
         case 3: // Pan end
@@ -388,12 +392,6 @@ export const panelControllerMixin = {
           // Update panel position
           panel.top = finalTop;
           this.panelCurrentTop = finalTop;
-
-          // Update Vuex store during pan
-          this.setPanelPosition({
-            position: this.position,
-            value: finalTop
-          });
           break;
 
         case 3: // Pan end
