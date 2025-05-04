@@ -49,7 +49,9 @@ export default {
       // Flag to track if we're panning
       isPanning: false,
       // Threshold to differentiate between tap and pan
-      panThreshold: 10
+      panThreshold: 15,
+      // Track current pan gesture with unique ID
+      currentPanId: null
     }
   },
   computed: {
@@ -71,18 +73,36 @@ export default {
       // Calculate total movement distance
       const distance = Math.abs(event.deltaX) + Math.abs(event.deltaY);
 
-      // If movement exceeds threshold, consider it a pan gesture
-      if (distance > this.panThreshold) {
-        this.isPanning = true;
-
-        // Call the external pan handler method from mixins
-        if (this.panelRef && this.panelRef.handleExternalPanGesture) {
-          this.panelRef.handleExternalPanGesture(event);
-        }
-
-        // Reset panning flag when gesture ends
-        if (event.state === 3) { // Pan end state
+      // Handle different pan gesture states
+      switch (event.state) {
+        // Pan start
+        case 1:
+          this.currentPanId = Date.now();
           this.isPanning = false;
+          break;
+
+        // Pan in progress
+        case 2:
+          // If distance exceeds threshold, consider it a pan gesture
+          if (distance > this.panThreshold && !this.isPanning) {
+            this.isPanning = true;
+          }
+          break;
+
+        // Pan end
+        case 3:
+          // Delay to prevent tap triggering after pan
+          setTimeout(() => {
+            this.isPanning = false;
+          }, 100);
+          break;
+      }
+
+      // Call the external pan handler method only if it's a real pan gesture
+      if ((this.isPanning && distance > this.panThreshold) || event.state === 3) {
+        if (this.panelRef && this.panelRef.handleExternalPanGesture) {
+          event.panId = this.currentPanId;
+          this.panelRef.handleExternalPanGesture(event);
         }
       }
     },
@@ -93,7 +113,6 @@ export default {
     handleTap(event) {
       // If we're currently panning, ignore tap
       if (this.isPanning) {
-        this.isPanning = false;
         return;
       }
 
