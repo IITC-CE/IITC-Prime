@@ -17,25 +17,30 @@ export const ui = {
     // Active panel in sliding panel (quick, search, layers)
     activePanel: 'quick',
 
-    // Panel command
+    // Panel state
+    panelState: {
+      isOpen: false,
+      position: 'BOTTOM',      // Current position ID ('TOP', 'MIDDLE', 'BOTTOM')
+      positionValue: 0,        // Actual numeric position value
+      positions: {             // Position values for all states
+        TOP: 50,
+        MIDDLE: 0,
+        BOTTOM: 0
+      },
+      snapThresholds: {        // Thresholds for snapping
+        middleToBottom: 0,
+        topToMiddle: 0
+      }
+    },
+
+    // Panel command for programmatic control
     panelCommand: {
       action: '',
       timestamp: 0
     },
 
-    isPanelOpen: false,
-    panelPosition: 'BOTTOM', // Can be 'TOP', 'MIDDLE', 'BOTTOM'
-    panelPositionValue: 0,   // Actual numeric position value
-    panelPositionValues: {   // Position values for all states
-      TOP: 50,
-      MIDDLE: 0,
-      BOTTOM: 0
-    },
-    isLandscapeOrientation: false, // Screen orientation
-    panelSnapThresholds: {   // Thresholds for snapping
-      middleToBottom: 0,
-      topToMiddle: 0
-    },
+    // Device orientation
+    isLandscapeOrientation: false
   }),
 
   mutations: {
@@ -69,42 +74,33 @@ export const ui = {
       };
     },
 
-    // Set panel open state
-    SET_PANEL_OPEN_STATE(state, isOpen) {
-      state.isPanelOpen = isOpen;
+    // Update panel configuration
+    UPDATE_PANEL_CONFIG(state, { key, value }) {
+      if (key in state) {
+        state[key] = value;
+      }
     },
 
-    // Panel position mutations
-    SET_PANEL_POSITION(state, position) {
-      state.panelPosition = position;
+    // Update panel state - single property
+    UPDATE_PANEL_STATE(state, { key, value }) {
+      if (key in state.panelState) {
+        state.panelState[key] = value;
+      }
     },
 
-    SET_PANEL_POSITION_VALUE(state, value) {
-      state.panelPositionValue = value;
+    // Update panel state - positions object
+    UPDATE_PANEL_POSITIONS(state, positions) {
+      state.panelState.positions = { ...state.panelState.positions, ...positions };
     },
 
-    SET_PANEL_POSITION_VALUES(state, values) {
-      state.panelPositionValues = { ...state.panelPositionValues, ...values };
+    // Update panel state - thresholds object
+    UPDATE_PANEL_THRESHOLDS(state, thresholds) {
+      state.panelState.snapThresholds = { ...state.panelState.snapThresholds, ...thresholds };
     },
 
-    SET_PANEL_VISIBLE_HEIGHT(state, height) {
-      state.panelVisibleHeight = height;
-    },
-
+    // Set landscape orientation
     SET_LANDSCAPE_ORIENTATION(state, isLandscape) {
       state.isLandscapeOrientation = isLandscape;
-    },
-
-    SET_PANEL_SNAP_THRESHOLDS(state, thresholds) {
-      state.panelSnapThresholds = { ...state.panelSnapThresholds, ...thresholds };
-    },
-
-    SET_PANEL_HEIGHT(state, height) {
-      state.panelHeight = height;
-    },
-
-    SET_MAP_STATE_BAR_HEIGHT(state, height) {
-      state.mapStateBarHeight = height;
     }
   },
 
@@ -127,75 +123,83 @@ export const ui = {
       commit('SET_DEBUG_MODE', !state.isDebugActive);
     },
 
+    // Panel configuration actions
+    updatePanelConfig({ commit }, payload) {
+      commit('UPDATE_PANEL_CONFIG', payload);
+    },
+
     // Set active panel
     setActivePanel({ commit }, panelName) {
       commit('SET_ACTIVE_PANEL', panelName);
     },
 
-    // Set panel open state
-    setPanelOpenState({ commit }, isOpen) {
-      commit('SET_PANEL_OPEN_STATE', isOpen);
+    // Panel state actions
+    updatePanelState({ commit }, { key, value }) {
+      commit('UPDATE_PANEL_STATE', { key, value });
     },
 
-    // Panel position actions
+    // Set panel open state
+    setPanelOpenState({ commit }, isOpen) {
+      commit('UPDATE_PANEL_STATE', { key: 'isOpen', value: isOpen });
+    },
+
+    // Set panel position
     setPanelPosition({ commit }, { position, value }) {
-      commit('SET_PANEL_POSITION', position);
+      commit('UPDATE_PANEL_STATE', { key: 'position', value: position });
+
       if (value !== undefined) {
-        commit('SET_PANEL_POSITION_VALUE', value);
+        commit('UPDATE_PANEL_STATE', { key: 'positionValue', value });
       }
     },
 
-    setPanelPositionValues({ commit }, values) {
-      commit('SET_PANEL_POSITION_VALUES', values);
+    // Update all position values
+    updatePanelPositions({ commit }, positions) {
+      commit('UPDATE_PANEL_POSITIONS', positions);
     },
 
-    setPanelVisibleHeight({ commit }, height) {
-      commit('SET_PANEL_VISIBLE_HEIGHT', height);
+    // Update snap thresholds
+    updatePanelThresholds({ commit }, thresholds) {
+      commit('UPDATE_PANEL_THRESHOLDS', thresholds);
     },
 
+    // Set landscape orientation
     setLandscapeOrientation({ commit }, isLandscape) {
       commit('SET_LANDSCAPE_ORIENTATION', isLandscape);
     },
 
-    setPanelSnapThresholds({ commit }, thresholds) {
-      commit('SET_PANEL_SNAP_THRESHOLDS', thresholds);
-    },
-
-    setPanelHeight({ commit }, height) {
-      commit('SET_PANEL_HEIGHT', height);
-    },
-
-    setMapStateBarHeight({ commit }, height) {
-      commit('SET_MAP_STATE_BAR_HEIGHT', height);
-    },
-
-    // Update panel positions based on screen size
-    updatePanelPositions({ commit, state, dispatch }) {
+    // Recalculate all panel dimensions and positions based on screen size
+    recalculatePanelLayout({ commit, state, dispatch }) {
       const { screenHeight, panelVisibleHeight } = state;
 
+      // Set panel height
+      const topPosition = 50; // Fixed
+      commit('UPDATE_PANEL_CONFIG', {
+        key: 'panelHeight',
+        value: screenHeight - topPosition
+      });
+
       // Calculate position values
-      const positionValues = {
+      const positions = {
         BOTTOM: screenHeight - panelVisibleHeight,
         MIDDLE: screenHeight / 2,
-        TOP: 50 // TOP position is fixed
+        TOP: topPosition
       };
 
       // Calculate snap thresholds
       const snapThresholds = {
-        middleToBottom: (positionValues.BOTTOM - positionValues.MIDDLE) / 5,
-        topToMiddle: (positionValues.MIDDLE - positionValues.TOP) / 5
+        middleToBottom: (positions.BOTTOM - positions.MIDDLE) / 5,
+        topToMiddle: (positions.MIDDLE - positions.TOP) / 5
       };
 
       // Update state
-      dispatch('setPanelPositionValues', positionValues);
-      dispatch('setPanelSnapThresholds', snapThresholds);
-      dispatch('setPanelHeight', screenHeight - positionValues.TOP);
+      dispatch('updatePanelPositions', positions);
+      dispatch('updatePanelThresholds', snapThresholds);
 
-      // Keep panel position in sync
-      if (state.panelPosition === 'BOTTOM') {
+      // Keep panel position in sync if panel is at bottom
+      if (state.panelState.position === 'BOTTOM') {
         dispatch('setPanelPosition', {
           position: 'BOTTOM',
-          value: positionValues.BOTTOM
+          value: positions.BOTTOM
         });
       }
     },
@@ -203,8 +207,8 @@ export const ui = {
     // Switch active panel and open if needed
     switchPanel({ commit, dispatch, state }, panelName) {
       // If panel is closed, always open it with the specified panel
-      if (!state.isPanelOpen) {
-        commit('SET_PANEL_OPEN_STATE', true);
+      if (!state.panelState.isOpen) {
+        dispatch('setPanelOpenState', true);
         commit('SET_ACTIVE_PANEL', panelName || 'quick');
         commit('SEND_PANEL_COMMAND', 'open');
         return;
@@ -221,8 +225,8 @@ export const ui = {
     },
 
     // Close panel
-    closePanel({ commit }) {
-      commit('SET_PANEL_OPEN_STATE', false);
+    closePanel({ commit, dispatch }) {
+      dispatch('setPanelOpenState', false);
       commit('SET_ACTIVE_PANEL', 'quick');
       commit('SEND_PANEL_COMMAND', 'close');
     }
@@ -232,19 +236,19 @@ export const ui = {
   getters: {
     // Get position value by position name
     getPanelPositionValue: (state) => (positionName) => {
-      return state.panelPositionValues[positionName] || 0;
+      return state.panelState.positions[positionName] || 0;
     },
 
     // Get current panel position value
     currentPanelPositionValue: (state) => {
-      return state.panelPositionValue;
+      return state.panelState.positionValue;
     },
 
     // Check if panel is closed (at bottom position)
     isPanelClosed: (state) => {
       const tolerance = 10;
-      const bottomValue = state.panelPositionValues.BOTTOM;
-      return Math.abs(state.panelPositionValue - bottomValue) < tolerance;
+      const bottomValue = state.panelState.positions.BOTTOM;
+      return Math.abs(state.panelState.positionValue - bottomValue) < tolerance;
     }
   }
 };

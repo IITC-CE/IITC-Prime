@@ -57,7 +57,11 @@ export default {
     return {
       screenHeight: this._getScreenHeight(),
       lastCommandTimestamp: 0,
-      panelCurrentTop: 0
+      panelCurrentTop: 0,
+      snapThresholds: {
+        middleToBottom: 0,
+        topToMiddle: 0
+      }
     };
   },
 
@@ -69,15 +73,19 @@ export default {
     ...mapState({
       activePanel: state => state.ui.activePanel,
       panelCommand: state => state.ui.panelCommand,
-      isPanelOpen: state => state.ui.isPanelOpen,
-      storePanelPosition: state => state.ui.panelPosition,
-      panelPositionValue: state => state.ui.panelPositionValue,
-      panelPositionValues: state => state.ui.panelPositionValues,
-      mapStateBarHeight: state => state.ui.mapStateBarHeight,
       panelHeight: state => state.ui.panelHeight,
       panelWidth: state => state.ui.slidingPanelWidth,
+      mapStateBarHeight: state => state.ui.mapStateBarHeight,
       panelVisibleHeight: state => state.ui.panelVisibleHeight,
-      isLandscapeOrientation: state => state.ui.isLandscapeOrientation
+      isLandscapeOrientation: state => state.ui.isLandscapeOrientation,
+
+      // Panel state from centralized location
+      panelState: state => state.ui.panelState,
+      isPanelOpen: state => state.ui.panelState.isOpen,
+      storePanelPosition: state => state.ui.panelState.position,
+      panelPositionValue: state => state.ui.panelState.positionValue,
+      panelPositionValues: state => state.ui.panelState.positions,
+      storeSnapThresholds: state => state.ui.panelState.snapThresholds
     }),
 
     ...mapGetters({
@@ -87,7 +95,7 @@ export default {
 
     // Check if panel is closed
     isPanelClosedLocal() {
-      const panel = this.$refs.panel?.nativeView;
+      const panel = this.getPanelElement();
       if (!panel) return true;
 
       const tolerance = 10;
@@ -123,7 +131,6 @@ export default {
     /**
      * Handle panel visibility changes
      * Force panel to closed state when becoming visible after debug mode
-     * This ensures consistent behavior when exiting debug mode
      */
     isVisible(newValue, oldValue) {
       // Only handle the case when panel becomes visible after being hidden
@@ -134,7 +141,7 @@ export default {
           this.setPanelOpenState(false);
 
           // Force correct DOM position
-          const panel = this.$refs.panel?.nativeView;
+          const panel = this.getPanelElement();
           if (panel) {
             const targetTop = PanelPositions.BOTTOM.value;
             panel.top = targetTop;
@@ -159,23 +166,32 @@ export default {
       if (this.position !== newPosition) {
         this.position = newPosition;
       }
+    },
+
+    // Sync snap thresholds from store to local state
+    storeSnapThresholds: {
+      handler(newThresholds) {
+        this.snapThresholds = { ...newThresholds };
+        this.updateStateMachineSettings();
+      },
+      deep: true
     }
   },
 
   methods: {
     ...mapActions({
       setActivePanel: 'ui/setActivePanel',
-      setPanelOpenState: 'ui/setPanelOpenState',
       closePanel: 'ui/closePanel',
+
+      // Updated actions for new store structure
+      setPanelOpenState: 'ui/setPanelOpenState',
       setPanelPosition: 'ui/setPanelPosition',
-      setPanelPositionValues: 'ui/setPanelPositionValues',
+      updatePanelPositions: 'ui/updatePanelPositions',
+      updatePanelThresholds: 'ui/updatePanelThresholds',
+      updatePanelConfig: 'ui/updatePanelConfig',
+      updatePanelState: 'ui/updatePanelState',
       setLandscapeOrientation: 'ui/setLandscapeOrientation',
-      setMapStateBarHeight: 'ui/setMapStateBarHeight',
-      setPanelHeight: 'ui/setPanelHeight',
-      setScreenHeight: 'ui/setScreenHeight',
-      setSlidingPanelWidth: 'ui/setSlidingPanelWidth',
-      setPanelVisibleHeight: 'ui/setPanelVisibleHeight',
-      storeUpdatePanelPositions: 'ui/updatePanelPositions'
+      recalculatePanelLayout: 'ui/recalculatePanelLayout',
     }),
 
     /**
@@ -197,10 +213,10 @@ export default {
       // Update local screen height
       this.screenHeight = dimensions.availableHeight;
 
-      // Update store dimensions
-      this.setScreenHeight(dimensions.availableHeight);
-      this.setSlidingPanelWidth(dimensions.panelWidth);
-      this.setMapStateBarHeight(46); // Fixed value
+      // Update global screen dimensions
+      this.updatePanelConfig({ key: 'screenHeight', value: dimensions.availableHeight });
+      this.updatePanelConfig({ key: 'slidingPanelWidth', value: dimensions.panelWidth });
+      this.updatePanelConfig({ key: 'mapStateBarHeight', value: 46 }); // Fixed value
 
       // Handle orientation change
       const previousOrientation = this.isLandscapeOrientation;
@@ -215,7 +231,10 @@ export default {
         }
       }
 
-      // Update panel dimensions and positions
+      // Recalculate panel layout
+      this.recalculatePanelLayout();
+
+      // Update local positions
       this.updatePanelPositions();
     },
 
@@ -250,27 +269,10 @@ export default {
         this.panelCurrentTop = bottomPosition;
 
         // Also update DOM directly if component is mounted
-        if (this.$refs.panel?.nativeView) {
-          this.$refs.panel.nativeView.top = bottomPosition;
+        const panel = this.getPanelElement();
+        if (panel) {
+          panel.top = bottomPosition;
         }
-      }
-
-      // Update position values in store
-      this.setPanelPositionValues({
-        BOTTOM: bottomPosition,
-        MIDDLE: middlePosition,
-        TOP: topPosition
-      });
-
-      // Update panel dimensions in store
-      this.setPanelHeight(this.screenHeight - topPosition);
-
-      // Update panel position in store if needed
-      if (this.storePanelPosition === 'BOTTOM') {
-        this.setPanelPosition({
-          position: 'BOTTOM',
-          value: bottomPosition
-        });
       }
     },
 
@@ -306,19 +308,16 @@ export default {
 
       // Use the unified moveToPosition method
       await this.moveToPosition('BOTTOM');
-
-      // Update panel open state and active panel
-      await this.setPanelOpenState(false);
-      await this.setActivePanel('quick');
     }
   },
 
   created() {
     // Initialize store values
-    this.setMapStateBarHeight(46);
-    this.setPanelVisibleHeight(110);
+    this.updatePanelConfig({ key: 'mapStateBarHeight', value: 46 });
+    this.updatePanelConfig({ key: 'panelVisibleHeight', value: 110 });
 
     // Initialize panel positions
+    this.recalculatePanelLayout();
     this.updatePanelPositions();
 
     // Initialize local panel position from calculated bottom position
@@ -337,7 +336,7 @@ export default {
   mounted() {
     // Ensure panel is at correct position when mounted
     this.$nextTick(() => {
-      const panel = this.$refs.panel?.nativeView;
+      const panel = this.getPanelElement();
       if (panel) {
         panel.top = this.panelCurrentTop;
       }

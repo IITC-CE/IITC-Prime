@@ -4,10 +4,13 @@ import { CoreTypes, Animation } from "@nativescript/core";
 import { PanelPositions } from '../constants/panelPositions';
 import { PanelStateMachine } from '../state/panelStateMachine';
 
-// Configuration for pan gesture resistance
+// Configuration for panel behavior
 const PANEL_CONSTANTS = {
   RESISTANCE_FACTOR: 0.1, // Panel moves 10x slower when out of bounds
   MAX_OVERFLOW: 10,       // Maximum DIP beyond boundaries
+  ANIMATION_DURATION: 300,// Animation duration in milliseconds
+  ANIMATION_CURVE: CoreTypes.AnimationCurve.easeInOut, // Animation easing curve
+  LOCK_DELAY: 50         // Delay before unlocking animations (ms)
 };
 
 /**
@@ -58,16 +61,24 @@ export const panelControllerMixin = {
 
   methods: {
     /**
+     * Get panel DOM element
+     */
+    getPanelElement() {
+      return this.$refs.panel?.nativeView;
+    },
+
+    /**
      * Animate panel to a new position
-     * @param {Object} element - The panel DOM element
-     * @param {number} fromTop - Starting top position
      * @param {number} targetTop - Target top position
      * @returns {Promise<number>} Final top position
      */
-    async animatePanel(element, fromTop, targetTop) {
-      if (!element) {
-        return Promise.resolve(fromTop);
+    async animateToPosition(targetTop) {
+      const panel = this.getPanelElement();
+      if (!panel) {
+        return Promise.resolve(this.panelCurrentTop);
       }
+
+      const fromTop = panel.top;
 
       // Skip if positions are the same
       if (Math.abs(fromTop - targetTop) < 1) {
@@ -79,8 +90,8 @@ export const panelControllerMixin = {
         this.isAnimating = true;
 
         // Force element into a consistent starting state
-        element.translateY = 0;
-        element.top = fromTop;
+        panel.translateY = 0;
+        panel.top = fromTop;
 
         // Ensure our local tracking is consistent
         this.panelCurrentTop = fromTop;
@@ -90,32 +101,29 @@ export const panelControllerMixin = {
 
         // Create animation
         this.animationSet = new Animation([{
-          target: element,
+          target: panel,
           translate: { x: 0, y: translateY },
-          duration: 300,
-          curve: CoreTypes.AnimationCurve.easeInOut,
+          duration: PANEL_CONSTANTS.ANIMATION_DURATION,
+          curve: PANEL_CONSTANTS.ANIMATION_CURVE,
         }]);
 
         // Play animation and wait for completion
         await this.animationSet.play();
 
         // Set final position with direct manipulation
-        element.translateY = 0;
-        element.top = targetTop;
+        panel.translateY = 0;
+        panel.top = targetTop;
 
         // Ensure our tracking matches the final position
         this.panelCurrentTop = targetTop;
 
-        // Sync position to store only after animation completes
-        this.setPanelPosition({
-          position: this.position,
-          value: targetTop
-        });
+        // Sync to state and store
+        this.syncPositionToState(targetTop);
 
-        return targetTop; // Return the end position to update the state
+        return targetTop;
       } catch (error) {
         console.error('Animation error:', error);
-        return fromTop; // Return the initial position in case of an error
+        return fromTop;
       } finally {
         this.isAnimating = false;
         this.animationSet = undefined;
@@ -134,6 +142,28 @@ export const panelControllerMixin = {
     },
 
     /**
+     * Sync position to state and store after animation or drag
+     */
+    syncPositionToState(topPosition) {
+      // Update position in Vuex
+      this.setPanelPosition({
+        position: this.position,
+        value: topPosition
+      });
+
+      // Update panel open state
+      const isPanelOpen = this.position !== 'BOTTOM';
+      this.setPanelOpenState(isPanelOpen);
+
+      // If panel is closed, active panel is 'quick'
+      if (!isPanelOpen) {
+        this.setActivePanel('quick');
+      } else if (this.activePanel === null) {
+        this.setActivePanel('quick');
+      }
+    },
+
+    /**
      * Snap panel to the nearest position after a gesture
      */
     snapPanel() {
@@ -142,11 +172,10 @@ export const panelControllerMixin = {
         return;
       }
 
-      // Get panel element
-      const panel = this.$refs.panel?.nativeView;
+      const panel = this.getPanelElement();
       if (!panel) return;
 
-      // Make sure we're working with the actual current position
+      // Get current position
       const actualPanelTop = panel.top;
       this.panelCurrentTop = actualPanelTop;
 
@@ -161,22 +190,7 @@ export const panelControllerMixin = {
       this.lastTop = targetTop;
 
       // Animate panel to target position
-      this.animatePanel(
-        panel,
-        actualPanelTop,
-        targetTop
-      ).then(() => {
-        // Update panel open state
-        const isPanelOpen = nextState !== 'BOTTOM';
-        this.setPanelOpenState(isPanelOpen);
-
-        // Update active panel
-        if (!isPanelOpen) {
-          this.setActivePanel('quick');
-        } else if (this.activePanel === null) {
-          this.setActivePanel('quick');
-        }
-      }).catch(error => {
+      this.animateToPosition(targetTop).catch(error => {
         console.error('Error during panel snap:', error);
       });
     },
@@ -186,11 +200,7 @@ export const panelControllerMixin = {
      * @param {string} position - Target position ID ('TOP', 'MIDDLE', 'BOTTOM')
      */
     async moveToPosition(position) {
-      const panel = this.$refs.panel?.nativeView;
-      if (!panel) return;
-
-      // Skip if animation is locked
-      if (this.isAnimationLocked) {
+      if (!this.getPanelElement() || this.isAnimationLocked) {
         return;
       }
 
@@ -208,29 +218,17 @@ export const panelControllerMixin = {
         // Get target position
         const targetTop = PanelPositions[position].value;
 
-        // Get actual current position from the DOM
-        const actualPanelTop = panel.top;
-
         // Animate panel directly to the target
-        const newTop = await this.animatePanel(panel, actualPanelTop, targetTop);
+        await this.animateToPosition(targetTop);
 
         // Update state after animation completes
-        this.lastTop = newTop;
-
-        // Update panel open state
-        const isPanelOpen = position !== 'BOTTOM';
-        this.setPanelOpenState(isPanelOpen);
-
-        // If panel is closed, active panel is 'quick'
-        if (!isPanelOpen) {
-          this.setActivePanel('quick');
-        }
+        this.lastTop = targetTop;
       } catch (error) {
         console.error('Error during panel move:', error);
       } finally {
         setTimeout(() => {
           this.isAnimationLocked = false;
-        }, 50);
+        }, PANEL_CONSTANTS.LOCK_DELAY);
       }
     },
 
@@ -257,11 +255,10 @@ export const panelControllerMixin = {
      * Handle pan gesture on panel
      */
     handlePanGesture(args) {
-      if (!this.$refs.panel?.nativeView || this.isAnimationLocked) {
+      const panel = this.getPanelElement();
+      if (!panel || this.isAnimationLocked) {
         return;
       }
-
-      const panel = this.$refs.panel.nativeView;
 
       // Cancel any ongoing animation
       if (this.isAnimating) {
@@ -301,11 +298,10 @@ export const panelControllerMixin = {
      * Handle pan gestures from MapStateBar
      */
     handleExternalPanGesture(args) {
-      if (!this.$refs.panel?.nativeView || this.isAnimationLocked) {
+      const panel = this.getPanelElement();
+      if (!panel || this.isAnimationLocked) {
         return;
       }
-
-      const panel = this.$refs.panel.nativeView;
 
       // Cancel any ongoing animation
       if (this.isAnimating) {
@@ -326,7 +322,7 @@ export const panelControllerMixin = {
 
         case 2: // Pan in progress
           if (!this.externalPanStarted) {
-            // If we somehow missed the start event
+            // If we somehow missed the start event, initialize
             this.externalPanStarted = true;
             this.startTop = panel.top;
             this.externalStartDeltaY = args.deltaY;
@@ -368,13 +364,6 @@ export const panelControllerMixin = {
   watch: {
     isLandscapeOrientation() {
       this.updateStateMachineSettings();
-    },
-
-    snapThresholds: {
-      handler() {
-        this.updateStateMachineSettings();
-      },
-      deep: true
     }
   }
 };

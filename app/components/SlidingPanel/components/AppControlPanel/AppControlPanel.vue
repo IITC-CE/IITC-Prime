@@ -100,7 +100,7 @@ export default {
 
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
-      isPanelOpen: state => state.ui.isPanelOpen
+      isPanelOpen: state => state.ui.panelState.isOpen
     })
   },
 
