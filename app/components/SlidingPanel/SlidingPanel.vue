@@ -239,6 +239,9 @@ export default {
         topToMiddle: (middlePosition - topPosition) / 5
       };
 
+      // Update state machine
+      this.updateStateMachineSettings();
+
       // Update local position tracking
       this.lastTop = bottomPosition;
 
@@ -280,8 +283,8 @@ export default {
         return;
       }
 
-      // Target position depends on orientation
-      const targetPosition = this.isLandscapeOrientation ? 'TOP' : 'MIDDLE';
+      // Get target position from state machine based on orientation
+      const targetPosition = this.stateMachine.getOpenPosition();
 
       // Use the unified moveToPosition method
       await this.moveToPosition(targetPosition);
@@ -320,6 +323,9 @@ export default {
 
     // Initialize local panel position from calculated bottom position
     this.panelCurrentTop = PanelPositions.BOTTOM.value;
+
+    // Initialize state machine with current state
+    this.position = 'BOTTOM';
 
     // Initialize orientation
     this.setLandscapeOrientation(layoutService.dimensions.isLandscape);

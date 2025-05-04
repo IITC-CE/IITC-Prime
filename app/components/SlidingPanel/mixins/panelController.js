@@ -2,6 +2,7 @@
 
 import { CoreTypes, Animation } from "@nativescript/core";
 import { PanelPositions } from '../constants/panelPositions';
+import { PanelStateMachine } from '../state/panelStateMachine';
 
 // Configuration for pan gesture resistance
 const PANEL_CONSTANTS = {
@@ -16,16 +17,11 @@ const PANEL_CONSTANTS = {
 export const panelControllerMixin = {
   data() {
     return {
-      // Panel position state
-      position: 'BOTTOM',       // Current panel position ID
-      lastTop: undefined,       // Last stable position (for transitions)
-      startTop: 0,              // Starting position for gestures
+      // Panel state machine
+      stateMachine: new PanelStateMachine(),
 
-      // Thresholds for snapping decisions
-      snapThresholds: {
-        middleToBottom: 0,
-        topToMiddle: 0
-      },
+      // Gesture handling
+      startTop: 0,              // Starting position for gestures
 
       // Animation state
       isAnimating: false,       // Flag to track ongoing animation
@@ -36,6 +32,28 @@ export const panelControllerMixin = {
       externalPanStarted: false,
       externalStartDeltaY: 0
     };
+  },
+
+  computed: {
+    // Get current position ID
+    position: {
+      get() {
+        return this.stateMachine.currentState;
+      },
+      set(newPosition) {
+        this.stateMachine.setState(newPosition);
+      }
+    },
+
+    // Get last stable position for transitions
+    lastTop: {
+      get() {
+        return this.stateMachine.lastPosition;
+      },
+      set(newPosition) {
+        this.stateMachine.lastPosition = newPosition;
+      }
+    }
   },
 
   methods: {
@@ -132,12 +150,8 @@ export const panelControllerMixin = {
       const actualPanelTop = panel.top;
       this.panelCurrentTop = actualPanelTop;
 
-      // Determine next state based on current position and thresholds
-      const nextState = this.determineNextState(
-        actualPanelTop,
-        this.lastTop,
-        PanelPositions.MIDDLE.value
-      );
+      // Use state machine to determine next state
+      const nextState = this.stateMachine.determineNextState(actualPanelTop);
 
       // Get target position
       const targetTop = PanelPositions[nextState].value;
@@ -165,74 +179,6 @@ export const panelControllerMixin = {
       }).catch(error => {
         console.error('Error during panel snap:', error);
       });
-    },
-
-    /**
-     * Determine next state based on current position and movement
-     * Uses sensitivity thresholds to make transitions easier
-     */
-    determineNextState(currentTop, lastTop, middleValue) {
-      const { topToMiddle, middleToBottom } = this.snapThresholds;
-      const positions = PanelPositions;
-
-      // If in landscape orientation, only consider TOP and BOTTOM
-      if (this.isLandscapeOrientation) {
-        // Use sensitivity threshold - only need to move 1/5 of the way
-        const sensitivity = (positions.BOTTOM.value - positions.TOP.value) / 5;
-
-        if (lastTop === positions.TOP.value) {
-          // Moving from TOP
-          return (currentTop - positions.TOP.value) > sensitivity ? 'BOTTOM' : 'TOP';
-        } else if (lastTop === positions.BOTTOM.value) {
-          // Moving from BOTTOM
-          return (positions.BOTTOM.value - currentTop) > sensitivity ? 'TOP' : 'BOTTOM';
-        } else {
-          // No context, use midpoint
-          return currentTop < (positions.TOP.value + positions.BOTTOM.value) / 2 ? 'TOP' : 'BOTTOM';
-        }
-      }
-
-      // For portrait mode with three positions (TOP, MIDDLE, BOTTOM)
-      // Use the last stable position to provide context for the movement
-      if (lastTop === positions.TOP.value) {
-        // Moving from TOP
-        if (currentTop < middleValue) {
-          // Between TOP and MIDDLE - only need to move 1/5 of the way to snap
-          return currentTop - positions.TOP.value > topToMiddle ? 'MIDDLE' : 'TOP';
-        } else {
-          // Past MIDDLE heading toward BOTTOM
-          return 'BOTTOM';
-        }
-      } else if (lastTop === positions.BOTTOM.value) {
-        // Moving from BOTTOM
-        if (currentTop > middleValue) {
-          // Between MIDDLE and BOTTOM - only need to move 1/5 of the way to snap
-          return positions.BOTTOM.value - currentTop > middleToBottom ? 'MIDDLE' : 'BOTTOM';
-        } else {
-          // Past MIDDLE heading toward TOP
-          return 'TOP';
-        }
-      } else if (lastTop === positions.MIDDLE.value) {
-        // Moving from MIDDLE
-        if (currentTop < positions.MIDDLE.value) {
-          // Moving toward TOP - need to move 1/5 of the way
-          return middleValue - currentTop > topToMiddle ? 'TOP' : 'MIDDLE';
-        } else {
-          // Moving toward BOTTOM - need to move 1/5 of the way
-          return currentTop - middleValue > middleToBottom ? 'BOTTOM' : 'MIDDLE';
-        }
-      } else {
-        // No last position context, use nearest point
-        const distToTop = Math.abs(currentTop - positions.TOP.value);
-        const distToMiddle = Math.abs(currentTop - positions.MIDDLE.value);
-        const distToBottom = Math.abs(currentTop - positions.BOTTOM.value);
-
-        const minDist = Math.min(distToTop, distToMiddle, distToBottom);
-
-        if (minDist === distToTop) return 'TOP';
-        if (minDist === distToMiddle) return 'MIDDLE';
-        return 'BOTTOM';
-      }
     },
 
     /**
@@ -408,6 +354,27 @@ export const panelControllerMixin = {
           this.snapPanel();
           break;
       }
+    },
+
+    /**
+     * Update state machine when orientation changes
+     */
+    updateStateMachineSettings() {
+      this.stateMachine.setOrientation(this.isLandscapeOrientation);
+      this.stateMachine.setSnapThresholds(this.snapThresholds);
+    }
+  },
+
+  watch: {
+    isLandscapeOrientation() {
+      this.updateStateMachineSettings();
+    },
+
+    snapThresholds: {
+      handler() {
+        this.updateStateMachineSettings();
+      },
+      deep: true
     }
   }
 };
