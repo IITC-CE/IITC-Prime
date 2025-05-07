@@ -1,6 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 import {
+  sharePosition,
   switchToPane,
   bootFinished,
   getVersionName,
@@ -18,6 +19,16 @@ export const router = async (event) => {
   const [eventName, eventData] = event;
 
   switch (eventName) {
+    case "intentPosLink":
+      sharePosition(
+        eventData.lat,
+        eventData.lng,
+        eventData.zoom,
+        eventData.title,
+        eventData.isPortal,
+        eventData.guid || null
+      );
+      break;
     case "switchToPane":
       await switchToPane(eventData.id);
       break;
@@ -60,7 +71,7 @@ export const router = async (event) => {
 export const injectBridgeIITC = async (webview) => {
   let bridge = "window.app = window.nsWebViewBridge;";
   const events = {
-    intentPosLink: ["lat", "lng", "zoom", "title", "isPortal"],
+    intentPosLink: ["lat", "lng", "zoom", "title", "isPortal", "guid"],
     shareString: ["str"],
     spinnerEnabled: ["en"],
     copy: ["s"],

@@ -1,6 +1,22 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 import store from "@/store";
+import { shareGeoPosition } from "./platform";
+
+
+/**
+ * Handles request to share geographic position
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @param {number} zoom - Map zoom level
+ * @param {string} title - Location title
+ * @param {boolean} isPortal - Whether this is a portal location
+ * @param {string} guid - Portal's globally unique identifier
+ * @returns {boolean} Success status
+ */
+export const sharePosition = (lat, lng, zoom, title, isPortal, guid) => {
+  return shareGeoPosition(lat, lng, title, isPortal, guid);
+}
 
 /**
  * Returns the versionName of mobile app
