@@ -20,7 +20,7 @@ export const router = async (event) => {
 
   switch (eventName) {
     case "intentPosLink":
-      sharePosition(
+      await sharePosition(
         eventData.lat,
         eventData.lng,
         eventData.zoom,
