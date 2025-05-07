@@ -4,6 +4,47 @@ import { action } from "@nativescript-community/ui-material-dialogs";
 import { shareContent } from "~/utils/platform";
 
 /**
+ * Creates a link to open a specific portal in Ingress Prime.
+ * Uses Firebase's Dynamic Links feature.
+ * https://firebase.google.com/docs/dynamic-links/create-manually
+ *
+ * Based on approach from:
+ * https://github.com/IITC-CE/ingress-intel-total-conversion/pull/817
+ *
+ * @param {string} guid - Portal's globally unique identifier
+ * @param {number} lat - Latitude of the portal
+ * @param {number} lng - Longitude of the portal
+ * @returns {string} URL that opens Ingress Prime with portal details
+ */
+const makePrimeLink = (guid, lat, lng) => {
+  const base = 'https://link.ingress.com/';
+
+  // Define URL components
+  const link = {
+    'link': `https://intel.ingress.com/portal/${guid || ''}`
+  };
+  const android = {
+    'apn': 'com.nianticproject.ingress'
+  };
+  const ios = {
+    'isi': '576505181',
+    'ibi': 'com.google.ingress',
+    'ifl': 'https://apps.apple.com/app/ingress/id576505181'
+  };
+  const other = {
+    'ofl': `https://intel.ingress.com/intel?pll=${lat},${lng}`
+  };
+
+  // Construct URL with all parameters
+  const url = new URL(base);
+  for (const [key, value] of Object.entries({...link, ...android, ...ios, ...other})) {
+    url.searchParams.set(key, value);
+  }
+
+  return url.toString();
+};
+
+/**
  * Shows a dialog with location sharing options
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
@@ -49,7 +90,7 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
 
         case 3: // Open in Ingress Prime (if available)
           if (options.actions.length > 3) {
-            const primeUrl = `https://link.ingress.com/?link=https%3A%2F%2Fintel.ingress.com%2Fportal%2F${guid || ''}&apn=com.nianticproject.ingress&isi=576505181&ibi=com.google.ingress&ifl=https%3A%2F%2Fapps.apple.com%2Fapp%2Fingress%2Fid576505181&ofl=https%3A%2F%2Fintel.ingress.com%2Fintel%3Fpll%3D${lat}%2C${lng}`;
+            const primeUrl = makePrimeLink(guid, lat, lng);
             return shareContent(primeUrl, "prime");
           }
           return false;
