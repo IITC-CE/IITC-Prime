@@ -1,6 +1,6 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import { Dialogs } from "@nativescript/core";
+import { action } from "@nativescript-community/ui-material-dialogs";
 import { shareContent } from "~/utils/platform";
 
 /**
@@ -28,7 +28,7 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
     }
 
     // Show dialog with options
-    return Dialogs.action(options).then(result => {
+    return action(options).then(result => {
       // User cancelled if result is undefined or equals cancelButtonText
       if (!result || result === options.cancelButtonText) return false;
 
