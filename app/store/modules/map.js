@@ -1,5 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
+import { INITIAL_INTERNAL_HOSTNAMES } from "@/utils/url-config";
+
 export const map = {
   namespaced: true,
   state: () => ({
@@ -39,6 +41,7 @@ export const map = {
         hasFailed: false
       }
     },
+    internalHostnames: [...INITIAL_INTERNAL_HOSTNAMES]
   }),
   mutations: {
     SET_BASE_LAYER_SELECTED(state, index) {
@@ -90,6 +93,11 @@ export const map = {
         state.mapStatus = { ...data };
       }
     },
+    ADD_INTERNAL_HOSTNAME(state, domain) {
+      if (!state.internalHostnames.includes(domain)) {
+        state.internalHostnames.push(domain);
+      }
+    },
   },
   actions: {
     setBaseLayers({ commit }, baseLayers) {
@@ -136,6 +144,11 @@ export const map = {
     },
     setMapStatus({ commit }, data) {
       commit('SET_MAP_STATUS', data);
+    },
+    addInternalHostname({ commit }, domain) {
+      if (domain && typeof domain === 'string' && domain.trim() !== '') {
+        commit('ADD_INTERNAL_HOSTNAME', domain.trim());
+      }
     },
   }
 };

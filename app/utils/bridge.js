@@ -10,7 +10,8 @@ import {
   setMapStatus,
   setProgress,
   addPortalHighlighter,
-  setActiveHighlighter
+  setActiveHighlighter,
+  addInternalHostname
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -44,6 +45,9 @@ export const router = async (event) => {
     case "setProgress":
       await setProgress(eventData.progress);
       break;
+    case "addInternalHostname":
+      await addInternalHostname(eventData.domain);
+      break;
     case "console:log":
       // This event is handled by direct listeners in BaseWebView
       break;
@@ -54,7 +58,7 @@ export const router = async (event) => {
 }
 
 export const injectBridgeIITC = async (webview) => {
-  let bridge = "window.android = window.nsWebViewBridge;";
+  let bridge = "window.app = window.nsWebViewBridge;";
   const events = {
     intentPosLink: ["lat", "lng", "zoom", "title", "isPortal"],
     shareString: ["str"],
@@ -73,6 +77,7 @@ export const injectBridgeIITC = async (webview) => {
     setMapStatus: ["portalLevels", "mapStatus", "requests"],
     setProgress: ["progress"],
     setPermalink: ["href"],
+    addInternalHostname: ["domain"],
     saveFile: ["filename", "type", "content"],
     reloadIITC: ["clearCache"]
   }

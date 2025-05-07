@@ -4,7 +4,7 @@
   <BaseWebView
     ref="baseWebView"
     :src="intelMapUrl"
-    :allowedDomains="allowedDomains"
+    :checkUrls="true"
     @webview-loaded="onWebViewLoaded"
     @load-started="onLoadStarted"
     @load-finished="onLoadFinished"
@@ -21,7 +21,7 @@ import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
-import { INGRESS_INTEL_MAP, WEBVIEW_ALLOWED_DOMAINS } from "@/utils/url-config";
+import { INGRESS_INTEL_MAP } from "@/utils/url-config";
 import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
 
 export default {
@@ -34,8 +34,7 @@ export default {
   data() {
     return {
       store_unsubscribe: () => {},
-      intelMapUrl: INGRESS_INTEL_MAP,
-      allowedDomains: WEBVIEW_ALLOWED_DOMAINS
+      intelMapUrl: INGRESS_INTEL_MAP
     }
   },
 

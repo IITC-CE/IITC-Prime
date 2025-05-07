@@ -20,6 +20,7 @@ import WebViewExt from '@nota/nativescript-webview-ext/vue'
 import { isAndroid } from "@nativescript/core";
 import { applyWebViewSettings } from "@/utils/webview/webview-settings";
 import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
+import { mapState } from 'vuex';
 
 export default {
   name: 'BaseWebView',
@@ -37,9 +38,9 @@ export default {
       type: Boolean,
       default: true
     },
-    allowedDomains: {
-      type: Array,
-      default: () => []
+    checkUrls: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -54,6 +55,10 @@ export default {
   },
 
   computed: {
+    ...mapState({
+      internalHostnames: state => state.map.internalHostnames
+    }),
+
     webview() {
       return this.webViewInstance;
     }
@@ -143,7 +148,8 @@ export default {
 
     // URL Navigation Control
     onShouldOverrideUrlLoading(args) {
-      if (!this.isUrlAllowed(args.url)) {
+      // Only check URLs if checkUrls is true
+      if (this.checkUrls && !this.isUrlAllowed(args.url)) {
         args.cancel = true;
         this.$emit('external-url', args.url);
       }
@@ -151,12 +157,24 @@ export default {
       return args;
     },
 
+    /**
+     * Check if URL should be handled by the main WebView
+     * URLs not allowed here will be opened in a popup WebView instead
+     */
     isUrlAllowed(url) {
-      if (!this.allowedDomains.length) return true;
+      if (!this.internalHostnames.length) return true;
 
       try {
         const uri = new URL(url);
-        return this.allowedDomains.includes(uri.hostname);
+        const hostname = uri.hostname;
+
+        // Check each allowed domain
+        for (const domain of this.internalHostnames) {
+          if (hostname === domain) return true;
+          if (hostname.endsWith('.' + domain)) return true;
+        }
+
+        return false;
       } catch (e) {
         console.error('Invalid URL:', url);
         return false;

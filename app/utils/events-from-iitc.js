@@ -117,3 +117,11 @@ export const setProgress = async (progress) => {
     await store.dispatch('ui/setProgress', 0);
   }
 }
+
+/**
+ * Adds a new domain to the allowed domains list
+ * @param {string} domain Domain name to add
+ */
+export const addInternalHostname = async (domain) => {
+  await store.dispatch('map/addInternalHostname', domain);
+}
