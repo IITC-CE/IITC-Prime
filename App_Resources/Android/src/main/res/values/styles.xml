@@ -2,7 +2,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- theme to use FOR launch screen-->
-    <style name="LaunchScreenThemeBase" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="LaunchScreenThemeBase" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="toolbarStyle">@style/NativeScriptToolbarStyle</item>
 
         <item name="colorPrimary">@color/ns_primary</item>
@@ -26,9 +26,33 @@
         <item name="colorPrimary">@color/ns_primary</item>
         <item name="colorPrimaryDark">@color/ns_primaryDark</item>
         <item name="colorAccent">@color/ns_accent</item>
+
+        <!-- Добавляем настройки для элементов диалогов -->
+        <item name="materialButtonStyle">@style/AppButtonStyle</item>
+        <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>
+        <item name="materialAlertDialogTheme">@style/AppAlertDialogTheme</item>
     </style>
 
     <style name="AppTheme" parent="AppThemeBase">
+    </style>
+
+    <!-- Custom button style -->
+    <style name="AppButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/ns_accent</item>
+        <item name="android:textColor">@color/ns_text</item>
+    </style>
+
+    <!-- Custom dialog style -->
+    <style name="AppAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorPrimary">@color/ns_accent</item>
+        <item name="colorAccent">@color/ns_primary_light</item>
+        <item name="buttonBarPositiveButtonStyle">@style/AppDialogButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/AppDialogButtonStyle</item>
+        <item name="buttonBarNeutralButtonStyle">@style/AppDialogButtonStyle</item>
+    </style>
+
+    <style name="AppDialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/ns_primary_light</item>
     </style>
 
     <!-- theme for action-bar -->

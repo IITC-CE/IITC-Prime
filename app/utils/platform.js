@@ -1,4 +1,6 @@
-import {Application, Utils} from "@nativescript/core";
+//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+
+import {Application, Utils, isAndroid, isIOS, Dialogs} from "@nativescript/core";
 
 export const getStatusBarHeight = () => {
   let result = 0;
@@ -25,3 +27,100 @@ export const getNavigationBarHeight = () => {
   }
   return result;
 }
+
+/**
+ * Universal sharing function for different content types
+ * @param {any} content - Content to share (object for geo, string for text/url)
+ * @param {string} contentType - Type of content ('geo', 'text', 'url', 'prime')
+ * @param {string} title - Optional title or description
+ * @returns {boolean} Success status
+ */
+export const shareContent = (content, contentType, title = '') => {
+  try {
+    if (isAndroid) {
+      const activity = Application.android.foregroundActivity || Application.android.startActivity;
+      if (!activity) return false;
+
+      const intent = new android.content.Intent();
+
+      if (contentType === "geo") {
+        // Share as geo-coordinates
+        const lat = content.lat;
+        const lng = content.lng;
+        const geoUri = `geo:${lat},${lng}?q=${lat},${lng}${title ? `(${encodeURIComponent(title)})` : ''}`;
+
+        intent.setAction(android.content.Intent.ACTION_VIEW);
+        intent.setData(android.net.Uri.parse(geoUri));
+      }
+      else if (contentType === "url" || contentType === "text") {
+        // Share as text or URL
+        intent.setAction(android.content.Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(android.content.Intent.EXTRA_TEXT, content);
+        if (title) {
+          intent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
+        }
+      }
+      else if (contentType === "prime") {
+        // Open in Ingress Prime
+        intent.setAction(android.content.Intent.ACTION_VIEW);
+        intent.setData(android.net.Uri.parse(content));
+      }
+
+      // Show app chooser dialog
+      const chooserTitle = {
+        geo: "Open in maps",
+        url: "Open URL",
+        text: "Share text",
+        prime: "Open in Ingress Prime"
+      }[contentType] || "Share via";
+
+      const chooser = android.content.Intent.createChooser(intent, chooserTitle);
+      activity.startActivity(chooser);
+
+      return true;
+    }
+    else if (isIOS) {
+      const shareItems = [];
+
+      if (contentType === "geo") {
+        // Share as geo location with URL schemes
+        const lat = content.lat;
+        const lng = content.lng;
+        const locationTitle = title || `${lat},${lng}`;
+
+        // Add text and multiple URL schemes for map apps
+        shareItems.push(`${locationTitle}\nCoordinates: ${lat},${lng}`);
+        shareItems.push(`maps://?ll=${lat},${lng}&q=${encodeURIComponent(locationTitle)}`);
+        shareItems.push(`comgooglemaps://?q=${lat},${lng}`);
+        shareItems.push(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+      }
+      else if (contentType === "url" || contentType === "text") {
+        // Share as text or URL
+        shareItems.push(content);
+      }
+      else if (contentType === "prime") {
+        // Open directly in Ingress Prime
+        const url = NSURL.URLWithString(content);
+        UIApplication.sharedApplication.openURL(url);
+        return true;
+      }
+
+      // Create and show UIActivityViewController
+      const controller = UIActivityViewController.alloc().initWithActivityItemsApplicationActivities(
+        shareItems, null
+      );
+
+      const rootController = UIApplication.sharedApplication.keyWindow.rootViewController;
+      rootController.presentViewControllerAnimatedCompletion(controller, true, null);
+
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error sharing content:", error);
+    return false;
+  }
+};
+
