@@ -9,8 +9,17 @@
       columns="*, *, *, *"
       class="block"
     >
-      <QuickAccessBigButton col="0" icon="fa-tools" name="Settings" />
-      <QuickAccessBigButton col="1" icon="fa-toolbox" name="Plugins" />
+      <QuickAccessBigButton
+        col="0"
+        icon="fa-tools"
+        name="Settings"
+        @tap="openSettings"
+      />
+      <QuickAccessBigButton
+        col="1"
+        icon="fa-toolbox"
+        name="Plugins"
+      />
       <QuickAccessBigButton
         col="2"
         icon="fa-terminal"
@@ -42,12 +51,14 @@
 </template>
 
 <script>
-  import QuickAccessBigButton from './QuickAccessBigButton.vue';
   import { mapState } from 'vuex';
+  import QuickAccessBigButton from './QuickAccessBigButton.vue';
+  import SettingsView from '@/components/Settings/SettingsView';
 
   export default {
     data() {
       return {
+        settingsScreen: SettingsView
       }
     },
 
@@ -67,6 +78,15 @@
     },
 
     methods: {
+      openSettings() {
+        this.$navigateTo(this.settingsScreen, {
+          animated: true,
+          transition: {
+            name: 'slideLeft',
+            duration: 300
+          }
+        });
+      },
       reloadWebView() {
         this.$store.dispatch('ui/reloadWebView');
       },
