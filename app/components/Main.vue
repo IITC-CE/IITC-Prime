@@ -173,16 +173,8 @@ export default {
       }
     },
 
-    setupManager() {
-      const manager = new Manager({
-        storage,
-        message: (message, args) => console.log(`Message: ${message}, args: ${args}`),
-        progressbar: is_show => console.log(`Progress bar: ${is_show ? 'show' : 'hide'}`),
-        inject_plugin: (p) => this.$store.dispatch('map/setInjectPlugin', p)
-      });
-
-      manager.run();
-      return manager;
+    async setupManager() {
+      await this.$store.dispatch('manager/run');
     },
 
     setupAndroidBackHandler() {
@@ -212,7 +204,7 @@ export default {
   },
 
   async created() {
-    const manager = this.setupManager();
+    this.setupManager().then();
     this.setupAndroidBackHandler();
 
     // Initialize layout service with default dimensions
@@ -241,7 +233,7 @@ export default {
         switch (action.type) {
           case "ui/setWebviewLoadStatus":
             if (action.payload) {
-              await manager.inject();
+              await this.$store.dispatch('manager/inject');
             }
             break;
         }
