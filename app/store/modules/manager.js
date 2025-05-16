@@ -82,9 +82,11 @@ export const manager = {
         await manager.checkUpdates(true);
 
         commit('SET_PROGRESS', false);
+        return true;
       } catch (error) {
         console.error('Force update failed:', error);
         commit('SET_PROGRESS', false);
+        return false;
       }
     },
 
@@ -202,6 +204,35 @@ export const manager = {
       return Object.fromEntries(
         Object.entries(plugins).filter(([_, plugin]) => plugin.status === 'on')
       );
+    },
+
+    /**
+     * Check if custom channel URL is valid
+     */
+    async checkCustomChannelUrl(_, url) {
+      if (!url) return false;
+
+      try {
+        // Ensure URL has http/https prefix
+        let fullUrl = url;
+        if (!/^https?:\/\//i.test(fullUrl)) {
+          fullUrl = 'http://' + fullUrl;
+        }
+
+        // Test if meta.json is accessible
+        const metaUrl = fullUrl.endsWith('/') ?
+          `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
+
+        const response = await fetch(metaUrl, {
+          method: 'HEAD',
+          timeout: 2000
+        });
+
+        return response.ok;
+      } catch (error) {
+        console.error('Error checking custom URL:', error);
+        return false;
+      }
     },
   },
 
