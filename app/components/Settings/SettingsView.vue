@@ -19,15 +19,16 @@
 
     <!-- Map settings section -->
     <SettingsSection title="Map Settings">
-      <SettingsNavItem
-        title="Location Settings"
-        description="Configure GPS accuracy and tracking"
-        :targetScreen="locationSettingsScreen"
+      <SettingsSwitch
+        title="Display user location on map"
+        description="Show position marker and track location"
+        :value="showLocation"
+        @change="updateShowLocation"
       />
 
       <SettingsSwitch
-        title="Persistent Zoom Level"
-        description="Remember zoom level between sessions"
+        title="Persistent zoom level"
+        description="Don't change zoom level when locate button is pressed"
         :value="persistentZoom"
         @change="updatePersistentZoom"
       />
@@ -70,7 +71,6 @@ import SettingsSwitch from './components/SettingsSwitch';
 
 import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
-import LocationSettingsView from './LocationSettingsView';
 import AboutView from './AboutView';
 
 export default {
@@ -87,7 +87,6 @@ export default {
     return {
       pluginsScreen: PluginsView,
       updateChannelScreen: UpdateChannelView,
-      locationSettingsScreen: LocationSettingsView,
       aboutScreen: AboutView,
       currentUpdateChannel: 'release',
       enabledPluginsCount: 0
@@ -98,7 +97,8 @@ export default {
     ...mapGetters('settings', [
       'isDesktopMode',
       'isFakeUserAgent',
-      'isPersistentZoom'
+      'isPersistentZoom',
+      'isShowLocation'
     ]),
 
     desktopMode() {
@@ -111,6 +111,10 @@ export default {
 
     persistentZoom() {
       return this.isPersistentZoom;
+    },
+
+    showLocation() {
+      return this.isShowLocation;
     },
 
     pluginsDescription() {
@@ -136,6 +140,10 @@ export default {
 
     async updatePersistentZoom(value) {
       await this.setSetting({ key: 'persistentZoom', value });
+    },
+
+    async updateShowLocation(value) {
+      await this.setSetting({ key: 'showLocation', value });
     },
 
     async loadChannelInfo() {

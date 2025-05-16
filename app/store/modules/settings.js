@@ -9,36 +9,23 @@ export const settings = {
     // UI settings
     desktopMode: false,
     fakeUserAgent: false,
-    persistentZoom: false,
 
     // Location settings
-    location: {
-      accuracy: 'high', // 'high', 'medium', 'low'
-      updateInterval: 1000, // milliseconds
-      followMode: false
-    }
+    persistentZoom: false,
+    showLocation: false,
+    followMode: false,
   }),
 
   mutations: {
     SET_SETTING(state, { key, value }) {
-      // Handle nested properties like 'location.accuracy'
-      if (key.includes('.')) {
-        const [parent, child] = key.split('.');
-        state[parent][child] = value;
-      } else {
-        state[key] = value;
-      }
+      state[key] = value;
     },
 
     LOAD_SETTINGS(state, settings) {
       // Apply saved settings to state
       Object.keys(settings).forEach(key => {
         if (key in state) {
-          if (typeof state[key] === 'object' && typeof settings[key] === 'object') {
-            state[key] = { ...state[key], ...settings[key] };
-          } else {
-            state[key] = settings[key];
-          }
+          state[key] = settings[key];
         }
       });
     }
@@ -100,11 +87,6 @@ export const settings = {
       if (changedKeys.length === 0 || changedKeys.includes('persistentZoom')) {
         await dispatch('map/setPersistentZoom', state.persistentZoom, { root: true });
       }
-
-      // Location settings changed
-      if (changedKeys.length === 0 || changedKeys.some(key => key.startsWith('location.'))) {
-        await dispatch('map/updateLocationSettings', state.location, { root: true });
-      }
     },
 
     /**
@@ -115,11 +97,8 @@ export const settings = {
         desktopMode: false,
         fakeUserAgent: false,
         persistentZoom: false,
-        location: {
-          accuracy: 'high',
-          updateInterval: 1000,
-          followMode: false
-        }
+        showLocation: false,
+        followMode: false,
       };
 
       commit('LOAD_SETTINGS', defaultSettings);
@@ -133,11 +112,7 @@ export const settings = {
     isDesktopMode: state => state.desktopMode,
     isFakeUserAgent: state => state.fakeUserAgent,
     isPersistentZoom: state => state.persistentZoom,
-    locationSettings: state => state.location,
-
-    // Specific location settings
-    locationAccuracy: state => state.location.accuracy,
-    locationUpdateInterval: state => state.location.updateInterval,
-    isFollowMode: state => state.location.followMode
+    isShowLocation: state => state.showLocation,
+    isFollowMode: state => state.followMode,
   }
 };
