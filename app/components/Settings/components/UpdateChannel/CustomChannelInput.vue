@@ -2,36 +2,36 @@
 
 <template>
   <StackLayout class="custom-url-container">
-    <StackLayout class="url-wrapper">
-      <GridLayout columns="*, auto" rows="auto" class="url-input-container">
-        <TextField
-          col="0"
-          class="url-input"
-          :text="url"
-          hint="Enter custom channel URL"
-          @textChange="onTextChange"
-          returnKeyType="done"
-        />
-        <Label
-          col="1"
-          class="fa url-status-icon"
-          :class="urlStatusClass"
-          :text="urlStatusIcon"
-        />
-      </GridLayout>
-    </StackLayout>
+    <GridLayout columns="*, auto" rows="auto" class="url-input-container">
+      <TextField
+        col="0"
+        class="url-input"
+        :text="url"
+        hint="Enter custom channel URL"
+        @textChange="onTextChange"
+        returnKeyType="done"
+      />
+      <Label
+        col="1"
+        class="fa url-status-icon"
+        :class="urlStatusClass"
+        :text="urlStatusIcon"
+      />
+    </GridLayout>
 
-    <Label text="Examples:" class="examples-label" />
+    <Label text="Examples:" class="examples-label" once="true" />
     <WrapLayout class="examples-container">
       <MDButton
         text="localhost:8000"
         class="example-button"
         @tap="setExampleUrl('http://localhost:8000')"
+        once="true"
       />
       <MDButton
         text="iitc.app/build/artifact/PR"
         class="example-button"
         @tap="setExampleUrl('https://iitc.app/build/artifact/PR')"
+        once="true"
       />
     </WrapLayout>
   </StackLayout>
@@ -157,16 +157,13 @@ export default {
   margin: 8 16;
 }
 
-.url-wrapper {
-  margin-bottom: 12;
-}
-
 .url-input-container {
   border-width: 1;
   border-color: $surface-variant;
   border-radius: 4;
   padding: 0 8;
   background-color: $surface-bright;
+  margin-bottom: 12;
 }
 
 .url-input {

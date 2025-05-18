@@ -1,58 +1,47 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <SettingsBase title="Plugins">
-    <!-- Search bar -->
-    <GridLayout rows="auto" columns="*" class="search-container">
-      <TextField
-        hint="Search plugins..."
-        v-model="searchQuery"
-        @textChange="onSearchChange"
+  <SettingsBase
+    title="Plugins"
+    use-scroll="false"
+    @navigatedTo="onNavigatedTo"
+  >
+    <GridLayout rows="auto, auto, auto, *" class="main-container">
+      <!-- Search field -->
+      <GridLayout row="0" columns="*" class="search-container">
+        <TextField
+          hint="Search plugins..."
+          v-model="searchQuery"
+          @textChange="onSearchChange"
+        />
+      </GridLayout>
+
+      <!-- Categories list component -->
+      <CategoriesList
+        row="1"
+        :categories="categoriesWithPlugins"
+        :activeCategory="activeCategory"
+        @categorySelected="setActiveCategory"
       />
+
+      <!-- Loading indicator -->
+      <ActivityIndicator
+        row="2"
+        v-if="!isPluginsVisible"
+        busy="true"
+        class="loading-indicator"
+      />
+
+      <!-- Plugins container -->
+      <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
+        <PluginsList
+          :plugins="displayData.plugins"
+          :showEnabledFirst="activeCategory === 'All'"
+          :emptyMessage="getEmptyMessage()"
+          @toggle="togglePlugin"
+        />
+      </GridLayout>
     </GridLayout>
-
-    <!-- Category tags -->
-    <FlexboxLayout flexWrap="wrap" class="categories">
-      <CategoryTag
-        v-for="(category, key) in categoriesWithPlugins"
-        :key="key"
-        :name="category.name"
-        :isActive="activeCategory === category.name"
-        :hasNew="category.hasNew"
-        @tap="setActiveCategory(category.name)"
-      />
-    </FlexboxLayout>
-
-    <!-- Plugins list -->
-    <StackLayout>
-      <!-- Enabled plugins section -->
-      <Label class="section-title" text="Enabled Plugins" />
-      <PluginItem
-        v-for="plugin in enabledPlugins"
-        :key="plugin.uid"
-        :plugin="plugin"
-        @toggle="togglePlugin"
-      />
-      <Label
-        v-if="enabledPlugins.length === 0"
-        class="no-plugins"
-        text="No enabled plugins"
-      />
-
-      <!-- Disabled plugins section -->
-      <Label class="section-title" text="Disabled Plugins" />
-      <PluginItem
-        v-for="plugin in disabledPlugins"
-        :key="plugin.uid"
-        :plugin="plugin"
-        @toggle="togglePlugin"
-      />
-      <Label
-        v-if="disabledPlugins.length === 0"
-        class="no-plugins"
-        text="No disabled plugins"
-      />
-    </StackLayout>
   </SettingsBase>
 </template>
 
@@ -60,16 +49,16 @@
 import { mapActions } from 'vuex';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import SettingsBase from './SettingsBase';
-import CategoryTag from './components/plugins/CategoryTag';
-import PluginItem from './components/plugins/PluginItem';
+import CategoriesList from './components/plugins/CategoriesList';
+import PluginsList from './components/plugins/PluginsList';
 
 export default {
   name: 'PluginsView',
 
   components: {
     SettingsBase,
-    CategoryTag,
-    PluginItem
+    CategoriesList,
+    PluginsList
   },
 
   data() {
@@ -78,17 +67,31 @@ export default {
       activeCategory: 'All',
       allPlugins: {},
       categories: {},
-      searchTimeout: null
+      searchTimeout: null,
+      isPluginsVisible: false,
+      displayData: {
+        plugins: []
+      }
     };
   },
 
   computed: {
+    // Check if data is available
+    hasData() {
+      return Object.keys(this.allPlugins).length > 0;
+    },
+
     categoriesWithPlugins() {
       const result = {
         all: { name: 'All', hasNew: false }
       };
 
-      // Check which categories have plugins and mark new ones
+      // If data not loaded yet, return just "All" category
+      if (!this.hasData) {
+        return result;
+      }
+
+      // Collect categories from plugins and mark new ones
       Object.entries(this.allPlugins).forEach(([uid, plugin]) => {
         const category = plugin.category || 'Misc';
 
@@ -112,34 +115,22 @@ export default {
         .sort(([, a], [, b]) => a.name.localeCompare(b.name));
 
       return { all: result.all, ...Object.fromEntries(sorted) };
+    }
+  },
+
+  watch: {
+    // Update display data when filters change
+    activeCategory() {
+      this.updateDisplayData();
     },
-
-    filteredPlugins() {
-      let plugins = Object.values(this.allPlugins);
-
-      // Filter by category
-      if (this.activeCategory !== 'All') {
-        plugins = plugins.filter(p => p.category === this.activeCategory);
-      }
-
-      // Filter by search query
-      if (this.searchQuery.trim()) {
-        plugins = this.searchPlugins(this.searchQuery, plugins);
-      }
-
-      return plugins;
+    searchQuery() {
+      this.updateDisplayData();
     },
-
-    enabledPlugins() {
-      return this.filteredPlugins
-        .filter(p => p.status === 'on')
-        .sort((a, b) => this.getPluginName(a).localeCompare(this.getPluginName(b)));
-    },
-
-    disabledPlugins() {
-      return this.filteredPlugins
-        .filter(p => p.status !== 'on')
-        .sort((a, b) => this.getPluginName(a).localeCompare(this.getPluginName(b)));
+    allPlugins: {
+      handler() {
+        this.updateDisplayData();
+      },
+      deep: true
     }
   },
 
@@ -150,13 +141,55 @@ export default {
       'managePlugin'
     ]),
 
+    onNavigatedTo() {
+      // Show plugins after navigation is complete
+      this.isPluginsVisible = true;
+    },
+
     getPluginName(plugin) {
       const lang = 'en';
       return plugin[`name:${lang}`] || plugin.name || 'Unknown Plugin';
     },
 
+    getEmptyMessage() {
+      if (this.activeCategory === 'All') {
+        return 'No plugins';
+      }
+      return `No plugins in ${this.activeCategory} category`;
+    },
+
+    // Filter plugins by category first, then by search query
+    filterPlugins() {
+      if (!this.hasData) {
+        return [];
+      }
+
+      let plugins = Object.values(this.allPlugins);
+
+      // Step 1: Filter by category (only for non-All categories)
+      if (this.activeCategory !== 'All') {
+        plugins = plugins.filter(p => p.category === this.activeCategory);
+      }
+
+      // Step 2: Filter by search query if present
+      if (this.searchQuery.trim()) {
+        plugins = this.searchPlugins(this.searchQuery, plugins);
+      }
+
+      return plugins;
+    },
+
+    // Update cached display data
+    updateDisplayData() {
+      this.displayData = {
+        plugins: this.filterPlugins()
+      };
+    },
+
     searchPlugins(query, plugins) {
       const lang = 'en';
+
+      // Score each plugin based on how well it matches the search query
       const scored = plugins.map(plugin => {
         const score = Math.max(
           fuzzysearch(query, plugin.name || ''),
@@ -168,6 +201,7 @@ export default {
         return { plugin, score };
       });
 
+      // Filter and sort by score
       return scored
         .filter(item => item.score > 0)
         .sort((a, b) => b.score - a.score)
@@ -175,41 +209,67 @@ export default {
     },
 
     onSearchChange() {
-      // Debounce search
+      // Debounce search to prevent excessive updates
       clearTimeout(this.searchTimeout);
       this.searchTimeout = setTimeout(() => {
-        // Search is handled by computed property
+        this.updateDisplayData();
       }, 300);
     },
 
+    // Change active category
     setActiveCategory(category) {
+      if (this.activeCategory === category) return;
       this.activeCategory = category;
     },
 
+    // Toggle plugin status
     async togglePlugin(plugin) {
       const newStatus = plugin.status === 'on' ? 'off' : 'on';
-      await this.managePlugin({
-        uid: plugin.uid,
-        action: newStatus
-      });
 
-      // Update local state
-      this.$set(this.allPlugins[plugin.uid], 'status', newStatus);
+      try {
+        // Call API to update plugin status
+        await this.managePlugin({
+          uid: plugin.uid,
+          action: newStatus
+        });
+
+        // Reload plugins data to get updated state
+        const plugins = await this.getPlugins();
+        this.allPlugins = plugins;
+      } catch (error) {
+        console.error('Failed to toggle plugin:', error);
+        // On error, reload data to ensure UI reflects actual state
+        const plugins = await this.getPlugins();
+        this.allPlugins = plugins;
+      }
     },
 
     async loadData() {
+      if (this.hasData) return;
+
       try {
-        this.allPlugins = await this.getPlugins();
-        console.log('this.allPlugins', this.allPlugins);
-        this.categories = await this.getCategories();
+        // Load plugins data
+        const plugins = await this.getPlugins();
+        this.allPlugins = plugins;
+
+        // Load categories data
+        const categories = await this.getCategories();
+        this.categories = categories;
+
+        // Update display data after loading
+        this.updateDisplayData();
       } catch (error) {
         console.error('Failed to load plugins:', error);
       }
     }
   },
 
-  async mounted() {
-    await this.loadData();
+  mounted() {
+    // Load data immediately, but don't show plugins yet
+    this.loadData();
+
+    // Plugins will be shown in onNavigatedTo event
+    this.isPluginsVisible = false;
   }
 };
 </script>
@@ -217,28 +277,23 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
+.main-container {
+  width: 100%;
+  height: 100%;
+}
+
 .search-container {
   margin: 8 12;
 }
 
-.categories {
-  padding: 4 4;
-  align-items: flex-start;
+.loading-indicator {
+  color: $primary;
+  width: 40;
+  height: 40;
+  margin: 10 0;
 }
 
-.section-title {
-  padding: 8 16;
-  color: $primary-light;
-  font-size: $font-size-small;
-  font-weight: bold;
-  text-transform: uppercase;
-  background-color: $surface;
-}
-
-.no-plugins {
-  padding: 16;
-  text-align: center;
-  color: $surface-variant;
-  font-style: italic;
+.plugins-container {
+  flex-grow: 1;
 }
 </style>

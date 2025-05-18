@@ -1,7 +1,10 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <Page actionBarHidden="true">
+  <Page
+    actionBarHidden="true"
+    @navigatedTo="onNavigatedTo"
+  >
     <GridLayout rows="auto, *">
       <!-- Header -->
       <GridLayout
@@ -17,22 +20,29 @@
           @tap="goBack"
           variant="flat"
           rippleColor="#ffffff"
+          once="true"
         />
-        <Label col="1" :text="title" class="settings-header-title" />
+        <Label col="1" :text="title" class="settings-header-title" once="true" />
         <slot name="headerRight" col="2"></slot>
       </GridLayout>
 
       <!-- Content -->
-      <ScrollView row="1" orientation="vertical" class="settings-content">
+      <ScrollView v-if="useScroll === 'true'" row="1" orientation="vertical" class="settings-content">
         <StackLayout>
           <slot></slot>
         </StackLayout>
       </ScrollView>
+
+      <StackLayout v-else row="1" class="settings-content">
+        <slot></slot>
+      </StackLayout>
     </GridLayout>
   </Page>
 </template>
 
 <script>
+import { AndroidApplication, Application, Frame, isAndroid } from "@nativescript/core";
+
 export default {
   name: 'SettingsBase',
 
@@ -40,20 +50,36 @@ export default {
     title: {
       type: String,
       required: true
+    },
+    useScroll: {
+      type: String,
+      required: false,
+      default: "true",
     }
   },
 
   methods: {
     goBack() {
-      this.$navigateBack({
-        animated: true,
-        transition: {
-          name: 'slideRight',
-          duration: 300
-        }
-      });
+      Frame.topmost().goBack();
+    },
+
+    // Forward navigation event to parent component
+    onNavigatedTo(event) {
+      this.$emit('navigatedTo', event);
     }
-  }
+  },
+
+  mounted() {
+    if (isAndroid) {
+      Application.android.on(
+        AndroidApplication.activityBackPressedEvent,
+        (args) => {
+          args.cancel = true;
+          this.goBack();
+        }
+      );
+    }
+  },
 };
 </script>
 

@@ -3,69 +3,65 @@
 <template>
   <SettingsBase title="Settings">
     <!-- Plugins section -->
-    <SettingsSection title="IITC Management">
-      <SettingsNavItem
-        title="Plugins"
-        :description="pluginsDescription"
-        :targetScreen="pluginsScreen"
-      />
+    <SectionHeader title="IITC Management" once="true" />
+    <SettingsNavItem
+      title="Plugins"
+      :description="pluginsDescription"
+      :targetScreen="pluginsScreen"
+    />
 
-      <SettingsNavItem
-        title="Update Channel"
-        :description="updateChannelDescription"
-        :targetScreen="updateChannelScreen"
-      />
-    </SettingsSection>
+    <SettingsNavItem
+      title="Update Channel"
+      :description="updateChannelDescription"
+      :targetScreen="updateChannelScreen"
+    />
 
     <!-- Map settings section -->
-    <SettingsSection title="Map Settings">
-      <SettingsSwitch
-        title="Display user location on map"
-        description="Show position marker and track location"
-        :value="showLocation"
-        @change="updateShowLocation"
-      />
+    <SectionHeader title="Map Settings" once="true" />
+    <SettingsSwitch
+      title="Display user location on map"
+      description="Show position marker and track location"
+      :value="showLocation"
+      @change="updateShowLocation"
+    />
 
-      <SettingsSwitch
-        title="Persistent zoom level"
-        description="Don't change zoom level when locate button is pressed"
-        :value="persistentZoom"
-        @change="updatePersistentZoom"
-      />
-    </SettingsSection>
+    <SettingsSwitch
+      title="Persistent zoom level"
+      description="Don't change zoom level when locate button is pressed"
+      :value="persistentZoom"
+      @change="updatePersistentZoom"
+    />
 
     <!-- UI settings section -->
-    <SettingsSection title="Interface">
-      <SettingsSwitch
-        title="Desktop Mode"
-        description="Force desktop view in WebView"
-        :value="desktopMode"
-        @change="updateDesktopMode"
-      />
+    <SectionHeader title="Interface" once="true" />
+    <SettingsSwitch
+      title="Desktop Mode"
+      description="Force desktop view in WebView"
+      :value="desktopMode"
+      @change="updateDesktopMode"
+    />
 
-      <SettingsSwitch
-        title="Fake User Agent"
-        description="Hide app identity from websites"
-        :value="fakeUserAgent"
-        @change="updateFakeUserAgent"
-      />
-    </SettingsSection>
+    <SettingsSwitch
+      title="Fake User Agent"
+      description="Hide app identity from websites"
+      :value="fakeUserAgent"
+      @change="updateFakeUserAgent"
+    />
 
     <!-- About section -->
-    <SettingsSection title="Information">
-      <SettingsNavItem
-        title="About IITC Prime"
-        description="Version and app information"
-        :targetScreen="aboutScreen"
-      />
-    </SettingsSection>
+    <SectionHeader title="Information" once="true" />
+    <SettingsNavItem
+      title="About IITC Prime"
+      description="Version and app information"
+      :targetScreen="aboutScreen"
+    />
   </SettingsBase>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import SettingsBase from './SettingsBase';
-import SettingsSection from './components/SettingsSection';
+import SectionHeader from './components/SectionHeader';
 import SettingsNavItem from './components/SettingsNavItem';
 import SettingsSwitch from './components/SettingsSwitch';
 
@@ -78,7 +74,7 @@ export default {
 
   components: {
     SettingsBase,
-    SettingsSection,
+    SectionHeader,
     SettingsNavItem,
     SettingsSwitch
   },

@@ -2,35 +2,33 @@
 
 <template>
   <SettingsBase title="Update Channel">
-    <!-- Channel selection -->
-    <SettingsSection title="Channel">
-      <UpdateChannelSelector
-        :currentChannel="currentChannel"
-        @channelSelected="selectChannel"
-      />
+    <!-- Channel selection - Using SectionHeader instead of SettingsSection -->
+    <SectionHeader title="Channel" once="true" />
+    <UpdateChannelSelector
+      :currentChannel="currentChannel"
+      @channelSelected="selectChannel"
+    />
 
-      <!-- Custom Channel URL -->
-      <CustomChannelInput
-        v-if="currentChannel === 'custom'"
-        :customUrl="customUrl"
-        @urlChanged="updateCustomUrl"
-      />
-    </SettingsSection>
+    <!-- Custom Channel URL -->
+    <CustomChannelInput
+      v-if="currentChannel === 'custom'"
+      :customUrl="customUrl"
+      @urlChanged="updateCustomUrl"
+    />
 
     <!-- Update frequency -->
-    <SettingsSection title="Update Frequency">
-      <UpdateIntervalSelector
-        :currentChannel="currentChannel"
-        :selectedInterval="selectedIntervalValue"
-        @intervalSelected="updateInterval"
-      />
+    <SectionHeader title="Update Frequency" once="true" />
+    <UpdateIntervalSelector
+      :currentChannel="currentChannel"
+      :selectedInterval="selectedIntervalValue"
+      @intervalSelected="updateInterval"
+    />
 
-      <!-- External plugins update frequency -->
-      <ExternalPluginsIntervalSelector
-        :selectedInterval="externalIntervalValue"
-        @intervalSelected="updateExternalInterval"
-      />
-    </SettingsSection>
+    <!-- External plugins update frequency -->
+    <ExternalPluginsIntervalSelector
+      :selectedInterval="externalIntervalValue"
+      @intervalSelected="updateExternalInterval"
+    />
 
     <!-- Force update button -->
     <UpdateButton
@@ -44,7 +42,7 @@
 <script>
 import { mapActions } from 'vuex';
 import SettingsBase from './SettingsBase';
-import SettingsSection from './components/SettingsSection';
+import SectionHeader from './components/SectionHeader';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
 import CustomChannelInput from './components/UpdateChannel/CustomChannelInput';
 import UpdateIntervalSelector from './components/UpdateChannel/UpdateIntervalSelector';
@@ -56,7 +54,7 @@ export default {
 
   components: {
     SettingsBase,
-    SettingsSection,
+    SectionHeader,
     UpdateChannelSelector,
     CustomChannelInput,
     UpdateIntervalSelector,
