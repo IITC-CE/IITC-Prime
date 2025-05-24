@@ -33,11 +33,15 @@
           rows="auto"
         >
           <!-- Plugin icon -->
-          <Image
+          <ImageCacheIt
             col="0"
             :src="getPluginIcon(item)"
+            :placeHolder="placeholderImageSource"
+            :errorHolder="placeholderImageSource"
             class="plugin-icon"
             stretch="aspectFit"
+            loadMode="async"
+            transition="fade"
             once="true"
           />
 
@@ -135,6 +139,15 @@ export default {
       })));
 
       return items;
+    },
+
+    placeholderImageSource() {
+      try {
+        const ImageSource = require('@nativescript/core').ImageSource;
+        return ImageSource.fromFileSync('~/assets/icons/userscript-no-icon.png');
+      } catch (error) {
+        console.error('Failed to load placeholder icon:', error);
+      }
     }
   },
 
@@ -150,7 +163,9 @@ export default {
     },
 
     getPluginIcon(plugin) {
-      return '~/assets/icons/userscript-no-icon.png';
+      return plugin.icon64 ||
+             plugin.icon ||
+             this.placeholderImageSource;
     },
 
     // Handle item tap to toggle plugin status

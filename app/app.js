@@ -10,6 +10,7 @@ import WebViewPlugin from '@nativescript-community/ui-webview/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue';
 import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
+import { ImageCacheIt } from '@triniwiz/nativescript-image-cache-it';
 
 import Main from '~/components/Main'
 import store from './store';
@@ -17,6 +18,7 @@ import { initializeTracing } from './app-trace';
 
 // Initialize app logging
 initializeTracing();
+ImageCacheIt.enableAutoMM();
 
 FontIcon.paths = {
   'fa': './assets/css/Font-Awesome.css',
@@ -35,6 +37,7 @@ Vue.use(CollectionView);
 Vue.use(RipplePlugin);
 
 Vue.registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').Label);
+Vue.registerElement('ImageCacheIt', () => require('@triniwiz/nativescript-image-cache-it').ImageCacheIt);
 Vue.registerElement(
   'CheckBox',
   () => CheckBox,
