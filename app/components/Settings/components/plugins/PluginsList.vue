@@ -158,8 +158,7 @@ export default {
     },
 
     getPluginName(plugin) {
-      const lang = 'en';
-      return plugin[`name:${lang}`] || plugin.name || 'Unknown Plugin';
+      return plugin.name || 'Unknown Plugin';
     },
 
     getPluginIcon(plugin) {

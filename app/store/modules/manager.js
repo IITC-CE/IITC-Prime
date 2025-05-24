@@ -186,17 +186,6 @@ export const manager = {
     },
 
     /**
-     * Get plugin categories from storage
-     */
-    async getCategories({ dispatch }) {
-      const channel = await dispatch('getUpdateChannel');
-      const key = `${channel}_categories`;
-
-      const data = await storage.get(key);
-      return data[key] || {};
-    },
-
-    /**
      * Get only enabled plugins
      */
     async getEnabledPlugins({ dispatch }) {

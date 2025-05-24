@@ -12,7 +12,6 @@
         <TextField
           hint="Search plugins..."
           v-model="searchQuery"
-          @textChange="onSearchChange"
         />
       </GridLayout>
 
@@ -35,7 +34,7 @@
       <!-- Plugins container -->
       <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
         <PluginsList
-          :plugins="displayData.plugins"
+          :plugins="filteredPlugins"
           :showEnabledFirst="activeCategory === 'All'"
           :emptyMessage="getEmptyMessage()"
           @toggle="togglePlugin"
@@ -66,12 +65,7 @@ export default {
       searchQuery: '',
       activeCategory: 'All',
       allPlugins: {},
-      categories: {},
-      searchTimeout: null,
-      isPluginsVisible: false,
-      displayData: {
-        plugins: []
-      }
+      isPluginsVisible: false
     };
   },
 
@@ -79,6 +73,26 @@ export default {
     // Check if data is available
     hasData() {
       return Object.keys(this.allPlugins).length > 0;
+    },
+
+    filteredPlugins() {
+      if (!this.hasData) {
+        return [];
+      }
+
+      let plugins = Object.values(this.allPlugins);
+
+      // Step 1: Filter by category (only for non-All categories)
+      if (this.activeCategory !== 'All') {
+        plugins = plugins.filter(p => p.category === this.activeCategory);
+      }
+
+      // Step 2: Filter by search query if present
+      if (this.searchQuery.trim()) {
+        plugins = this.searchPlugins(this.searchQuery, plugins);
+      }
+
+      return plugins;
     },
 
     categoriesWithPlugins() {
@@ -118,37 +132,15 @@ export default {
     }
   },
 
-  watch: {
-    // Update display data when filters change
-    activeCategory() {
-      this.updateDisplayData();
-    },
-    searchQuery() {
-      this.updateDisplayData();
-    },
-    allPlugins: {
-      handler() {
-        this.updateDisplayData();
-      },
-      deep: true
-    }
-  },
-
   methods: {
     ...mapActions('manager', [
       'getPlugins',
-      'getCategories',
       'managePlugin'
     ]),
 
     onNavigatedTo() {
       // Show plugins after navigation is complete
       this.isPluginsVisible = true;
-    },
-
-    getPluginName(plugin) {
-      const lang = 'en';
-      return plugin[`name:${lang}`] || plugin.name || 'Unknown Plugin';
     },
 
     getEmptyMessage() {
@@ -158,62 +150,34 @@ export default {
       return `No plugins in ${this.activeCategory} category`;
     },
 
-    // Filter plugins by category first, then by search query
-    filterPlugins() {
-      if (!this.hasData) {
-        return [];
-      }
-
-      let plugins = Object.values(this.allPlugins);
-
-      // Step 1: Filter by category (only for non-All categories)
-      if (this.activeCategory !== 'All') {
-        plugins = plugins.filter(p => p.category === this.activeCategory);
-      }
-
-      // Step 2: Filter by search query if present
-      if (this.searchQuery.trim()) {
-        plugins = this.searchPlugins(this.searchQuery, plugins);
-      }
-
-      return plugins;
-    },
-
-    // Update cached display data
-    updateDisplayData() {
-      this.displayData = {
-        plugins: this.filterPlugins()
-      };
-    },
-
     searchPlugins(query, plugins) {
-      const lang = 'en';
+      const results = [];
 
-      // Score each plugin based on how well it matches the search query
-      const scored = plugins.map(plugin => {
+      // Single pass: calculate score and collect matching plugins
+      for (let i = 0; i < plugins.length; i++) {
+        const plugin = plugins[i];
         const score = Math.max(
           fuzzysearch(query, plugin.name || ''),
-          fuzzysearch(query, plugin[`name:${lang}`] || ''),
           fuzzysearch(query, plugin.description || ''),
-          fuzzysearch(query, plugin[`description:${lang}`] || ''),
           fuzzysearch(query, plugin.category || '')
         );
-        return { plugin, score };
-      });
 
-      // Filter and sort by score
-      return scored
-        .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(item => item.plugin);
-    },
+        if (score > 0) {
+          // Store both plugin and score for sorting
+          results.push([plugin, score]);
+        }
+      }
 
-    onSearchChange() {
-      // Debounce search to prevent excessive updates
-      clearTimeout(this.searchTimeout);
-      this.searchTimeout = setTimeout(() => {
-        this.updateDisplayData();
-      }, 300);
+      // Sort by score descending
+      results.sort((a, b) => b[1] - a[1]);
+
+      // Extract only plugins from sorted results
+      const sortedPlugins = new Array(results.length);
+      for (let i = 0; i < results.length; i++) {
+        sortedPlugins[i] = results[i][0];
+      }
+
+      return sortedPlugins;
     },
 
     // Change active category
@@ -251,13 +215,6 @@ export default {
         // Load plugins data
         const plugins = await this.getPlugins();
         this.allPlugins = plugins;
-
-        // Load categories data
-        const categories = await this.getCategories();
-        this.categories = categories;
-
-        // Update display data after loading
-        this.updateDisplayData();
       } catch (error) {
         console.error('Failed to load plugins:', error);
       }
@@ -270,7 +227,7 @@ export default {
 
     // Plugins will be shown in onNavigatedTo event
     this.isPluginsVisible = false;
-  }
+  },
 };
 </script>
 
