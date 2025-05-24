@@ -4,6 +4,7 @@
   <Page
     actionBarHidden="true"
     @navigatedTo="onNavigatedTo"
+    @navigatedFrom="onNavigatedFrom"
   >
     <GridLayout rows="auto, *">
       <!-- Header -->
@@ -41,7 +42,8 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, Frame, isAndroid } from "@nativescript/core";
+import { Frame } from "@nativescript/core";
+import { attachBackHandler, detachBackHandler } from '@/utils/platform';
 
 export default {
   name: 'SettingsBase',
@@ -58,6 +60,10 @@ export default {
     }
   },
 
+  data() {
+    return {};
+  },
+
   methods: {
     goBack() {
       Frame.topmost().goBack();
@@ -65,21 +71,22 @@ export default {
 
     // Forward navigation event to parent component
     onNavigatedTo(event) {
+      // Attach back press handler when navigating TO this page
+      attachBackHandler(this.goBack);
       this.$emit('navigatedTo', event);
+    },
+
+    // Handle navigation away from this page
+    onNavigatedFrom(event) {
+      // Detach back press handler when navigating FROM this page
+      detachBackHandler();
+      this.$emit('navigatedFrom', event);
     }
   },
 
-  mounted() {
-    if (isAndroid) {
-      Application.android.on(
-        AndroidApplication.activityBackPressedEvent,
-        (args) => {
-          args.cancel = true;
-          this.goBack();
-        }
-      );
-    }
-  },
+  beforeDestroy() {
+    detachBackHandler();
+  }
 };
 </script>
 

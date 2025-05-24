@@ -2,6 +2,9 @@
 
 import {Application, Utils, isAndroid, isIOS, Dialogs} from "@nativescript/core";
 
+// Back button handler management
+let currentBackHandler = null;
+
 export const getStatusBarHeight = () => {
   let result = 0;
   if (Application.android) {
@@ -124,3 +127,43 @@ export const shareContent = (content, contentType, title = '') => {
   }
 };
 
+/**
+ * Attach back button handler (Android only)
+ * @param {Function} callback - Function to call when back button is pressed
+ * @returns {boolean} Success status
+ */
+export const attachBackHandler = (callback) => {
+  if (!isAndroid) return false;
+
+  // Remove existing handler first to prevent accumulation
+  detachBackHandler();
+
+  // Create and store new handler
+  currentBackHandler = (args) => {
+    args.cancel = true;
+    callback();
+  };
+
+  Application.android.on(
+    Application.android.activityBackPressedEvent,
+    currentBackHandler
+  );
+
+  return true;
+};
+
+/**
+ * Detach current back button handler
+ * @returns {boolean} Success status
+ */
+export const detachBackHandler = () => {
+  if (!isAndroid || !currentBackHandler) return false;
+
+  Application.android.off(
+    Application.android.activityBackPressedEvent,
+    currentBackHandler
+  );
+
+  currentBackHandler = null;
+  return true;
+};
