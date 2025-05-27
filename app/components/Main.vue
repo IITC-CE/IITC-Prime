@@ -51,8 +51,6 @@
 <script>
 import { AndroidApplication, Application } from "@nativescript/core";
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
-import { Manager } from 'lib-iitc-manager';
-import storage from "~/utils/storage";
 import { layoutService } from '~/utils/layout-service';
 
 import AppWebView from './AppWebView';

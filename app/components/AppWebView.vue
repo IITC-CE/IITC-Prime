@@ -21,7 +21,7 @@ import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
-import { INGRESS_INTEL_MAP } from "@/utils/url-config";
+import { INGRESS_INTEL_MAP, addViewportParam } from "@/utils/url-config";
 import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
 
 export default {
@@ -33,12 +33,15 @@ export default {
 
   data() {
     return {
-      store_unsubscribe: () => {},
-      intelMapUrl: INGRESS_INTEL_MAP
+      store_unsubscribe: () => {}
     }
   },
 
   computed: {
+    intelMapUrl() {
+      return addViewportParam(INGRESS_INTEL_MAP);
+    },
+
     webview() {
       return this.$refs.baseWebView?.webview;
     }

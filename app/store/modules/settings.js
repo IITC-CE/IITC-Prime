@@ -73,11 +73,6 @@ export const settings = {
      * Apply settings that require immediate action
      */
     async applySettings({ state, dispatch }, changedKeys = []) {
-      // Desktop mode changed
-      if (changedKeys.length === 0 || changedKeys.includes('desktopMode')) {
-        await dispatch('ui/setDesktopMode', state.desktopMode, { root: true });
-      }
-
       // Fake user agent changed
       if (changedKeys.length === 0 || changedKeys.includes('fakeUserAgent')) {
         await dispatch('ui/setFakeUserAgent', state.fakeUserAgent, { root: true });
