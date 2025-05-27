@@ -3,29 +3,33 @@
 <template>
   <SettingsBase title="Settings">
     <!-- Plugins section -->
-    <SectionHeader title="IITC Management" once="true" />
-    <SettingsNavItem
+    <SettingsSection title="IITC Management" />
+    <SettingsItem
+      type="nav"
       title="Plugins"
       :description="pluginsDescription"
       :targetScreen="pluginsScreen"
     />
 
-    <SettingsNavItem
+    <SettingsItem
+      type="nav"
       title="Update Channel"
       :description="updateChannelDescription"
       :targetScreen="updateChannelScreen"
     />
 
     <!-- Map settings section -->
-    <SectionHeader title="Map Settings" once="true" />
-    <SettingsSwitch
+    <SettingsSection title="Map Settings" />
+    <SettingsItem
+      type="switch"
       title="Display user location on map"
       description="Show position marker and track location"
       :value="showLocation"
       @change="updateShowLocation"
     />
 
-    <SettingsSwitch
+    <SettingsItem
+      type="switch"
       title="Persistent zoom level"
       description="Don't change zoom level when locate button is pressed"
       :value="persistentZoom"
@@ -33,15 +37,17 @@
     />
 
     <!-- UI settings section -->
-    <SectionHeader title="Interface" once="true" />
-    <SettingsSwitch
+    <SettingsSection title="Interface" />
+    <SettingsItem
+      type="switch"
       title="Desktop Mode"
       description="Force desktop view in WebView"
       :value="desktopMode"
       @change="updateDesktopMode"
     />
 
-    <SettingsSwitch
+    <SettingsItem
+      type="switch"
       title="Fake User Agent"
       description="Hide app identity from websites"
       :value="fakeUserAgent"
@@ -49,8 +55,9 @@
     />
 
     <!-- About section -->
-    <SectionHeader title="Information" once="true" />
-    <SettingsNavItem
+    <SettingsSection title="Information" />
+    <SettingsItem
+      type="nav"
       title="About IITC Prime"
       description="Version and app information"
       :targetScreen="aboutScreen"
@@ -61,9 +68,8 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import SettingsBase from './SettingsBase';
-import SectionHeader from './components/SectionHeader';
-import SettingsNavItem from './components/SettingsNavItem';
-import SettingsSwitch from './components/SettingsSwitch';
+import SettingsSection from './components/SettingsSection';
+import SettingsItem from './components/SettingsItem';
 
 import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
@@ -74,9 +80,8 @@ export default {
 
   components: {
     SettingsBase,
-    SectionHeader,
-    SettingsNavItem,
-    SettingsSwitch
+    SettingsSection,
+    SettingsItem,
   },
 
   data() {

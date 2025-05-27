@@ -2,8 +2,8 @@
 
 <template>
   <SettingsBase title="Update Channel">
-    <!-- Channel selection - Using SectionHeader instead of SettingsSection -->
-    <SectionHeader title="Channel" once="true" />
+    <!-- Channel selection -->
+    <SettingsSection title="Channel" />
     <UpdateChannelSelector
       :currentChannel="currentChannel"
       @channelSelected="selectChannel"
@@ -17,7 +17,7 @@
     />
 
     <!-- Update frequency -->
-    <SectionHeader title="Update Frequency" once="true" />
+    <SettingsSection title="Update Frequency" />
     <UpdateIntervalSelector
       :currentChannel="currentChannel"
       :selectedInterval="selectedIntervalValue"
@@ -42,7 +42,7 @@
 <script>
 import { mapActions } from 'vuex';
 import SettingsBase from './SettingsBase';
-import SectionHeader from './components/SectionHeader';
+import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
 import CustomChannelInput from './components/UpdateChannel/CustomChannelInput';
 import UpdateIntervalSelector from './components/UpdateChannel/UpdateIntervalSelector';
@@ -54,7 +54,7 @@ export default {
 
   components: {
     SettingsBase,
-    SectionHeader,
+    SettingsSection,
     UpdateChannelSelector,
     CustomChannelInput,
     UpdateIntervalSelector,
