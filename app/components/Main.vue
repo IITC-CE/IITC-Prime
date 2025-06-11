@@ -52,6 +52,7 @@
 import { AndroidApplication, Application } from "@nativescript/core";
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
+import UserLocation from "@/utils/user-location";
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -92,6 +93,7 @@ export default {
       removeLayoutListener: null,
       keyboard: null,
       isKeyboardOpen: false,
+      userLocation: null,
     }
   },
 
@@ -218,6 +220,8 @@ export default {
     // Update store with initial values
     this.updateStoreLayout(layoutService.dimensions);
 
+    this.userLocation = new UserLocation();
+
     // Subscribe to layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
 
@@ -232,6 +236,11 @@ export default {
           case "ui/setWebviewLoadStatus":
             if (action.payload) {
               await this.$store.dispatch('manager/inject');
+            }
+            break;
+          case "map/triggerUserLocate":
+            if (this.userLocation) {
+              await this.userLocation.locate();
             }
             break;
         }
@@ -252,6 +261,10 @@ export default {
     if (this.keyboard) {
       this.keyboard.off('opened');
       this.keyboard.off('closed');
+    }
+
+    if (this.userLocation) {
+      this.userLocation.stopTracking();
     }
   }
 };

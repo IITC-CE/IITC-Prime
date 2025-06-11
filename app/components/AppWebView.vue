@@ -22,7 +22,15 @@ import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
 import { INGRESS_INTEL_MAP, addViewportParam } from "@/utils/url-config";
-import {changePortalHighlights, showLayer, switchToPane} from "@/utils/events-to-iitc";
+import {
+  changePortalHighlights,
+  showLayer,
+  switchToPane,
+  setView,
+  userLocationLocate,
+  userLocationUpdate,
+  userLocationOrientation,
+} from "@/utils/events-to-iitc";
 
 export default {
   name: 'AppWebView',
@@ -117,6 +125,19 @@ export default {
             break;
           case "navigation/setCurrentPane":
             await webview.executeJavaScript(switchToPane(action.payload));
+            break;
+          case "map/locateMapOnce":
+            await webview.executeJavaScript(setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom));
+            break;
+          case "map/userLocationLocate":
+            const { lat, lng, accuracy, persistentZoom } = action.payload;
+            await webview.executeJavaScript(userLocationLocate(lat, lng, accuracy, persistentZoom));
+            break;
+          case "map/setLocation":
+            await webview.executeJavaScript(userLocationUpdate(action.payload.lat, action.payload.lng));
+            break;
+          case "map/userLocationOrientation":
+            await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
             break;
         }
       }

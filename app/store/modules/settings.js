@@ -13,7 +13,6 @@ export const settings = {
     // Location settings
     persistentZoom: false,
     showLocation: false,
-    followMode: false,
   }),
 
   mutations: {
@@ -78,9 +77,9 @@ export const settings = {
         await dispatch('ui/setFakeUserAgent', state.fakeUserAgent, { root: true });
       }
 
-      // Persistent zoom changed
-      if (changedKeys.length === 0 || changedKeys.includes('persistentZoom')) {
-        await dispatch('map/setPersistentZoom', state.persistentZoom, { root: true });
+      // Location display changed
+      if (changedKeys.length === 0 || changedKeys.includes('showLocation')) {
+        await dispatch('map/setLocationTracking', state.showLocation, { root: true });
       }
     },
 
@@ -93,7 +92,6 @@ export const settings = {
         fakeUserAgent: false,
         persistentZoom: false,
         showLocation: false,
-        followMode: false,
       };
 
       commit('LOAD_SETTINGS', defaultSettings);
@@ -108,6 +106,5 @@ export const settings = {
     isFakeUserAgent: state => state.fakeUserAgent,
     isPersistentZoom: state => state.persistentZoom,
     isShowLocation: state => state.showLocation,
-    isFollowMode: state => state.followMode,
   }
 };

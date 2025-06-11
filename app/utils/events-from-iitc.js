@@ -141,3 +141,11 @@ export const setProgress = async (progress) => {
 export const addInternalHostname = async (domain) => {
   await store.dispatch('map/addInternalHostname', domain);
 }
+
+/**
+ * Handles follow mode state changes from IITC user location plugin
+ * @param {boolean} follow - Whether follow mode is active
+ */
+export const setFollowMode = async (follow) => {
+  await store.dispatch('map/setFollowingUser', follow);
+}
