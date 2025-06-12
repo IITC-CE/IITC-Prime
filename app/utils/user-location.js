@@ -2,6 +2,7 @@
 
 import store from "@/store";
 import { GPS } from '@nativescript-community/gps';
+import { startCompass, stopCompass, isCompassAvailable } from './platform';
 
 const gps = new GPS();
 
@@ -9,8 +10,14 @@ export default class UserLocation {
   constructor() {
     this.watchId = undefined;
     this.lastLocation = null;
-    this.lastOrientation = null;
     this.persistentZoom = false;
+    this.compassEnabled = false;
+
+    // Compass filtering properties
+    this.filteredHeading = null;
+    this.filterStrength = 0.85; // Higher value = more smoothing (0.0 - 1.0)
+    this.lastCompassUpdate = 0;
+    this.compassThrottleInterval = 100; // Minimum time between updates in ms
 
     this.locationOptions = {
       timeout: 6000,
@@ -180,24 +187,90 @@ export default class UserLocation {
   }
 
   /**
-   * Update orientation in plugin via Vuex
+   * Apply low-pass filter to compass heading for smoother movement
+   * Handles 0°/360° boundary correctly
    */
-  async userLocationOrientation(direction) {
-    await store.dispatch('map/userLocationOrientation', { direction });
+  filterCompassHeading(rawHeading) {
+    // Initialize filter with first reading
+    if (this.filteredHeading === null) {
+      this.filteredHeading = rawHeading;
+      return rawHeading;
+    }
+
+    // Calculate shortest angular distance between readings
+    let delta = rawHeading - this.filteredHeading;
+
+    // Handle 360°/0° boundary crossing
+    if (delta > 180) {
+      delta -= 360;
+    } else if (delta < -180) {
+      delta += 360;
+    }
+
+    // Apply exponential smoothing filter
+    this.filteredHeading += delta * (1 - this.filterStrength);
+
+    // Normalize to 0-360 range
+    if (this.filteredHeading < 0) {
+      this.filteredHeading += 360;
+    } else if (this.filteredHeading >= 360) {
+      this.filteredHeading -= 360;
+    }
+
+    return this.filteredHeading;
+  }
+
+  /**
+   * Handle compass heading updates with filtering and throttling
+   */
+  handleCompassUpdate(heading) {
+    const currentTime = Date.now();
+
+    // Throttle updates to prevent too frequent calls
+    if (currentTime - this.lastCompassUpdate < this.compassThrottleInterval) {
+      return;
+    }
+
+    this.lastCompassUpdate = currentTime;
+
+    // Apply smoothing filter to reduce jitter
+    const smoothedHeading = this.filterCompassHeading(heading);
+    store.dispatch('map/userLocationOrientation', { smoothedHeading }).then();
   }
 
   /**
    * Start orientation/compass tracking
    */
   startOrientationTracking() {
-    // TODO: Implement compass tracking
+    if (!isCompassAvailable()) {
+      console.log('Compass not available on this device - orientation tracking disabled');
+      return;
+    }
+
+    const compassStarted = startCompass(
+      (heading) => this.handleCompassUpdate(heading),
+      200
+    );
+
+    if (compassStarted) {
+      this.compassEnabled = true;
+    } else {
+      console.error('Failed to start compass tracking');
+    }
   }
 
   /**
    * Stop orientation tracking
    */
   stopOrientationTracking() {
-    // TODO: Stop compass tracking
+    if (this.compassEnabled) {
+      const compassStopped = stopCompass();
+      if (compassStopped) {
+        this.compassEnabled = false;
+        this.filteredHeading = null;
+        this.lastCompassUpdate = 0;
+      }
+    }
   }
 
   /**
