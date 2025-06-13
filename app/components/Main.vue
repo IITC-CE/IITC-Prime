@@ -204,6 +204,9 @@ export default {
   },
 
   async created() {
+    // Initialize app settings
+    await this.$store.dispatch('settings/initSettings');
+
     this.setupManager().then();
     this.setupAndroidBackHandler();
 
