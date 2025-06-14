@@ -12,7 +12,8 @@ import {
   setProgress,
   addPortalHighlighter,
   setActiveHighlighter,
-  addInternalHostname
+  addInternalHostname,
+  setFollowMode,
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -58,6 +59,9 @@ export const router = async (event) => {
       break;
     case "addInternalHostname":
       await addInternalHostname(eventData.domain);
+      break;
+    case "setFollowMode":
+      await setFollowMode(eventData.follow);
       break;
     case "console:log":
       // This event is handled by direct listeners in BaseWebView

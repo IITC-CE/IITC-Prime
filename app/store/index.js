@@ -6,6 +6,8 @@ import { ui } from './modules/ui';
 import { navigation } from './modules/navigation';
 import { map } from './modules/map';
 import { debug } from './modules/debug';
+import { manager } from './modules/manager';
+import { settings } from './modules/settings';
 
 Vue.use(Vuex);
 
@@ -16,7 +18,9 @@ export default new Vuex.Store({
     ui,
     navigation,
     map,
-    debug
+    debug,
+    manager,
+    settings,
   },
   strict: debug_enabled
 });

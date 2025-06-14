@@ -51,9 +51,8 @@
 <script>
 import { AndroidApplication, Application } from "@nativescript/core";
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
-import { Manager } from 'lib-iitc-manager';
-import storage from "~/utils/storage";
 import { layoutService } from '~/utils/layout-service';
+import UserLocation from "@/utils/user-location";
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -94,6 +93,7 @@ export default {
       removeLayoutListener: null,
       keyboard: null,
       isKeyboardOpen: false,
+      userLocation: null,
     }
   },
 
@@ -173,16 +173,8 @@ export default {
       }
     },
 
-    setupManager() {
-      const manager = new Manager({
-        storage,
-        message: (message, args) => console.log(`Message: ${message}, args: ${args}`),
-        progressbar: is_show => console.log(`Progress bar: ${is_show ? 'show' : 'hide'}`),
-        inject_plugin: (p) => this.$store.dispatch('map/setInjectPlugin', p)
-      });
-
-      manager.run();
-      return manager;
+    async setupManager() {
+      await this.$store.dispatch('manager/run');
     },
 
     setupAndroidBackHandler() {
@@ -212,7 +204,10 @@ export default {
   },
 
   async created() {
-    const manager = this.setupManager();
+    // Initialize app settings
+    await this.$store.dispatch('settings/initSettings');
+
+    this.setupManager().then();
     this.setupAndroidBackHandler();
 
     // Initialize layout service with default dimensions
@@ -228,6 +223,8 @@ export default {
     // Update store with initial values
     this.updateStoreLayout(layoutService.dimensions);
 
+    this.userLocation = new UserLocation();
+
     // Subscribe to layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
 
@@ -241,7 +238,12 @@ export default {
         switch (action.type) {
           case "ui/setWebviewLoadStatus":
             if (action.payload) {
-              await manager.inject();
+              await this.$store.dispatch('manager/inject');
+            }
+            break;
+          case "map/triggerUserLocate":
+            if (this.userLocation) {
+              await this.userLocation.locate();
             }
             break;
         }
@@ -262,6 +264,10 @@ export default {
     if (this.keyboard) {
       this.keyboard.off('opened');
       this.keyboard.off('closed');
+    }
+
+    if (this.userLocation) {
+      this.userLocation.stopTracking();
     }
   }
 };

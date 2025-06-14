@@ -31,7 +31,7 @@
         @deactivate="setActiveButton(null)" />
 
       <AppControlButton
-        icon="fa-location-arrow"
+        :icon="locationButtonIcon"
         :isToggleable="false"
         @tap="onLocate" />
 
@@ -65,8 +65,7 @@ import AppControlButton from "./components/AppControlButton.vue";
 import QuickAccessView from "./components/QuickAccessView.vue";
 import LayersView from "./components/LayersView.vue";
 import SearchView from "./components/SearchView.vue";
-import userLocation from "@/utils/user-location";
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapActions, mapGetters } from 'vuex';
 
 export default {
   name: 'AppControlPanel',
@@ -98,15 +97,25 @@ export default {
       }
     },
 
+    /**
+     * Determine location button icon based on follow mode
+     */
+    locationButtonIcon() {
+      return this.isFollowingUser
+        ? 'fa-crosshairs'        // Following mode icon
+        : 'fa-location-arrow';   // Regular locate icon
+    },
+
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
       isPanelOpen: state => state.ui.panelState.isOpen
-    })
+    }),
+
+    ...mapGetters('map', ['isFollowingUser'])
   },
 
   data() {
     return {
-      location: new userLocation(),
       _activeButton: null, // Internal storage for local changes
     }
   },
@@ -144,17 +153,17 @@ export default {
     },
 
     /**
-     * Trigger user location updating
+     * Handle location button tap
      */
-    onLocate() {
-      this.location.locate();
+    async onLocate() {
+      await this.$store.dispatch('map/triggerUserLocate');
     }
   },
 
   created() {
     // Initialize active button from store
     this._activeButton = this.storedActivePanel || 'quick';
-  }
+  },
 }
 </script>
 

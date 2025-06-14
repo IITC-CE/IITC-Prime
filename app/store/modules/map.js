@@ -10,7 +10,8 @@ export const map = {
     overlayLayers: [],
     highlightersList: ["No Highlights"],
     highlighterSelected: "No Highlights",
-    location: { lat: 0, lng: 0, accuracy: 0, isTarget: false },
+    location: { lat: 0, lng: 0, accuracy: 0 },
+    isFollowingUser: false,
     injectPlugin: {},
     portalStatus: {
       guid: null,
@@ -58,6 +59,9 @@ export const map = {
     },
     SET_LOCATION(state, location) {
       state.location = location;
+    },
+    SET_FOLLOWING_USER(state, following) {
+      state.isFollowingUser = following;
     },
     SET_INJECT_PLUGIN(state, plugin) {
       state.injectPlugin = plugin;
@@ -130,6 +134,9 @@ export const map = {
     setLocation({ commit }, location) {
       commit('SET_LOCATION', location);
     },
+    setFollowingUser({ commit }, following) {
+      commit('SET_FOLLOWING_USER', following);
+    },
     setInjectPlugin({ commit }, plugin) {
       commit('SET_INJECT_PLUGIN', plugin);
     },
@@ -150,5 +157,45 @@ export const map = {
         commit('ADD_INTERNAL_HOSTNAME', domain.trim());
       }
     },
+    /**
+     * Handle location tracking enable/disable
+     */
+    async setLocationTracking({ dispatch }, enabled) {
+      if (enabled) {
+        // Start continuous GPS tracking
+        await dispatch('startLocationTracking');
+      } else {
+        // Stop GPS tracking and reset follow mode
+        await dispatch('stopLocationTracking');
+        await dispatch('setFollowingUser', false);
+      }
+    },
+    /**
+     * Start continuous location tracking
+     */
+    async startLocationTracking({ rootState }) {},
+    /**
+     * Stop location tracking
+     */
+    async stopLocationTracking({ rootState }) {},
+    /**
+     * Trigger locate from GPS instance
+     */
+    async triggerUserLocate({ rootState }) {},
+    /**
+     * Use built-in map locate function
+     */
+    async locateMapOnce({ commit }, { lat, lng, persistentZoom }) {},
+    /**
+     * Trigger locate action in `user-location` plugin
+     */
+    async userLocationLocate({ commit }, { lat, lng, accuracy, persistentZoom }) {},
+    /**
+     * Update user orientation in `user-location` plugin
+     */
+    async userLocationOrientation({ commit }, { direction }) {}
+  },
+  getters: {
+    isFollowingUser: state => state.isFollowingUser,
   }
 };
