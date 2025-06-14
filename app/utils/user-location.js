@@ -41,10 +41,12 @@ export default class UserLocation {
     // Watcher for showLocation
     store.watch(
       (state) => state.settings.showLocation,
-      (enabled) => {
+      async (enabled) => {
         if (enabled) {
+          await this.toggleUserLocationPlugin(true);
           this.startContinuousTracking().then();
         } else {
+          await this.toggleUserLocationPlugin(false);
           this.stopTracking();
         }
       }
@@ -270,6 +272,30 @@ export default class UserLocation {
         this.filteredHeading = null;
         this.lastCompassUpdate = 0;
       }
+    }
+  }
+
+  /**
+   * Toggle user-location plugin
+   */
+  async toggleUserLocationPlugin(enable) {
+    try {
+      const plugins = await store.dispatch('manager/getPlugins');
+      const userLocationPlugin = Object.values(plugins).find(plugin =>
+        plugin.uid && plugin.uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion"
+      );
+
+      const targetStatus = enable ? 'on' : 'off';
+      const action = enable ? 'on' : 'off';
+
+      if (userLocationPlugin && userLocationPlugin.status !== targetStatus) {
+        await store.dispatch('manager/managePlugin', {
+          uid: userLocationPlugin.uid,
+          action
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to ${enable ? 'enable' : 'disable'} user-location plugin:`, error);
     }
   }
 

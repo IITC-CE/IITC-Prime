@@ -97,6 +97,19 @@ export const settings = {
       commit('LOAD_SETTINGS', defaultSettings);
       await dispatch('saveSettings');
       await dispatch('applySettings');
+    },
+
+    /**
+     * Update showLocation setting from manager plugin toggle
+     */
+    async updateShowLocationFromManager({ state, dispatch }, isEnabled) {
+      try {
+        if (state.showLocation !== isEnabled) {
+          await dispatch('setSetting', { key: 'showLocation', value: isEnabled });
+        }
+      } catch (error) {
+        console.error('Failed to update showLocation setting from plugin:', error);
+      }
     }
   },
 

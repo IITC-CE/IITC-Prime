@@ -52,6 +52,10 @@ export const manager = {
         inject_plugin: plugin => {
           dispatch('map/setInjectPlugin', plugin, { root: true });
         },
+        // Handle plugin state changes
+        plugin_event: (event) => {
+          dispatch('handlePluginStateChange', event);
+        },
         is_daemon: true
       });
 
@@ -146,6 +150,24 @@ export const manager = {
       const data = await storage.get('network_host');
       return (data.network_host && data.network_host.custom) ?
         data.network_host.custom : '';
+    },
+
+    /**
+     * Handle plugin state changes from manager
+     */
+    async handlePluginStateChange({ dispatch }, event) {
+      try {
+        // Handle user-location plugin changes
+        for (const [uid, plugin] of Object.entries(event.plugins)) {
+          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion") {
+            const isEnabled = event.event === 'add';
+            await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to handle plugin state change:', error);
+      }
     },
 
     /**
