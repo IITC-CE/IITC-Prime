@@ -19,6 +19,7 @@
         col="1"
         icon="fa-toolbox"
         name="Plugins"
+        @tap="openPlugins"
       />
       <QuickAccessBigButton
         col="2"
@@ -54,11 +55,13 @@
   import { mapState } from 'vuex';
   import QuickAccessBigButton from './QuickAccessBigButton.vue';
   import SettingsView from '@/components/Settings/SettingsView';
+  import PluginsView from '@/components/Settings/PluginsView';
 
   export default {
     data() {
       return {
-        settingsScreen: SettingsView
+        settingsScreen: SettingsView,
+        pluginsScreen: PluginsView,
       }
     },
 
@@ -95,6 +98,15 @@
       },
       toggleDebugMode() {
         this.$store.dispatch('ui/toggleDebugMode');
+      },
+      openPlugins() {
+        this.$navigateTo(this.pluginsScreen, {
+          animated: true,
+          transition: {
+            name: 'slideLeft',
+            duration: 300
+          }
+        });
       }
     }
   };
