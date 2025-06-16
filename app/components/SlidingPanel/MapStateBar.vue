@@ -48,12 +48,23 @@ export default {
     return {
       // Flag to track if we're panning
       isPanning: false,
+      _weakPanelRef: null,
+      _timers: new Set(),
       // Threshold to differentiate between tap and pan
       panThreshold: 15,
       // Track current pan gesture with unique ID
       currentPanId: null
     }
   },
+
+  created() {
+    this._weakPanelRef = new WeakRef(this.panelRef);
+  },
+
+  beforeDestroy() {
+    this.cleanup();
+  },
+
   computed: {
     ...mapState({
       mapStatus: state => state.map.mapStatus,
@@ -92,19 +103,39 @@ export default {
         // Pan end
         case 3:
           // Delay to prevent tap triggering after pan
-          setTimeout(() => {
-            this.isPanning = false;
+          const timerId = setTimeout(() => {
+            if (this.isPanning !== undefined) {
+              this.isPanning = false;
+            }
           }, 100);
+          if (this._timers) {
+            this._timers.add(timerId);
+          }
           break;
       }
 
       // Call the external pan handler method only if it's a real pan gesture
       if ((this.isPanning && distance > this.panThreshold) || event.state === 3) {
-        if (this.panelRef && this.panelRef.handleExternalPanGesture) {
+        const panelRef = this._weakPanelRef?.deref();
+        if (panelRef && panelRef.handleExternalPanGesture) {
           event.panId = this.currentPanId;
-          this.panelRef.handleExternalPanGesture(event);
+          panelRef.handleExternalPanGesture(event);
         }
       }
+    },
+
+    /**
+     * Cleanup function to prevent memory leaks
+     */
+    cleanup() {
+      if (this._timers) {
+        this._timers.forEach(timerId => {
+          clearTimeout(timerId);
+        });
+        this._timers.clear();
+      }
+
+      this._weakPanelRef = null;
     },
 
     /**

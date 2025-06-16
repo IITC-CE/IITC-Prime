@@ -47,6 +47,7 @@
 <script>
 import { mapActions } from 'vuex';
 import { fuzzysearch } from 'scored-fuzzysearch';
+import { performanceOptimizationMixin, createDebouncer, Cache } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
 import CategoriesList from './components/plugins/CategoriesList';
 import PluginsList from './components/plugins/PluginsList';
@@ -60,12 +61,19 @@ export default {
     PluginsList
   },
 
+  mixins: [performanceOptimizationMixin],
+
   data() {
     return {
       searchQuery: '',
       activeCategory: 'All',
       allPlugins: {},
-      isPluginsVisible: false
+      isPluginsVisible: false,
+
+      _searchDebouncer: createDebouncer(300),
+      _searchCache: new Cache(50, 300000), // 5 minutes cache
+      _filteredPluginsCache: null,
+      _lastFilterKey: null
     };
   },
 
@@ -80,6 +88,14 @@ export default {
         return [];
       }
 
+      // Create cache key for filtering
+      const filterKey = `${this.activeCategory}-${this.searchQuery.trim()}`;
+
+      // Return cached result if available
+      if (this._lastFilterKey === filterKey && this._filteredPluginsCache) {
+        return this._filteredPluginsCache;
+      }
+
       let plugins = Object.values(this.allPlugins);
 
       // Step 1: Filter by category (only for non-All categories)
@@ -91,6 +107,10 @@ export default {
       if (this.searchQuery.trim()) {
         plugins = this.searchPlugins(this.searchQuery, plugins);
       }
+
+      // Cache the result
+      this._filteredPluginsCache = plugins;
+      this._lastFilterKey = filterKey;
 
       return plugins;
     },
@@ -151,20 +171,34 @@ export default {
     },
 
     searchPlugins(query, plugins) {
+      const cacheKey = `${query}-${plugins.length}`;
+      const cached = this._searchCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const results = [];
+      const normalizedQuery = query.toLowerCase();
 
       // Single pass: calculate score and collect matching plugins
       for (let i = 0; i < plugins.length; i++) {
         const plugin = plugins[i];
-        const score = Math.max(
-          fuzzysearch(query, plugin.name || ''),
-          fuzzysearch(query, plugin.description || ''),
-          fuzzysearch(query, plugin.category || '')
-        );
 
-        if (score > 0) {
-          // Store both plugin and score for sorting
-          results.push([plugin, score]);
+        // Quick pre-filter for exact matches (faster than fuzzy search)
+        const name = (plugin.name || '').toLowerCase();
+        const description = (plugin.description || '').toLowerCase();
+        const category = (plugin.category || '').toLowerCase();
+
+        if (name.includes(normalizedQuery) || description.includes(normalizedQuery) || category.includes(normalizedQuery)) {
+          const score = Math.max(
+            fuzzysearch(query, plugin.name || ''),
+            fuzzysearch(query, plugin.description || ''),
+            fuzzysearch(query, plugin.category || '')
+          );
+
+          if (score > 0) {
+            results.push([plugin, score]);
+          }
         }
       }
 
@@ -176,6 +210,8 @@ export default {
       for (let i = 0; i < results.length; i++) {
         sortedPlugins[i] = results[i][0];
       }
+
+      this._searchCache.set(cacheKey, sortedPlugins);
 
       return sortedPlugins;
     },
@@ -227,6 +263,20 @@ export default {
 
     // Plugins will be shown in onNavigatedTo event
     this.isPluginsVisible = false;
+  },
+
+  watch: {
+    searchQuery(newQuery) {
+      // Invalidate cache when search changes
+      this._lastFilterKey = null;
+      this._filteredPluginsCache = null;
+    },
+
+    activeCategory() {
+      // Invalidate cache when category changes
+      this._lastFilterKey = null;
+      this._filteredPluginsCache = null;
+    }
   },
 };
 </script>

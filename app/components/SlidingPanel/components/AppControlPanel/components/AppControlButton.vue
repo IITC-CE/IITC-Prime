@@ -33,8 +33,13 @@ export default {
     return {
       panThreshold: 15,
       isPanning: false,
-      currentPanId: null
+      currentPanId: null,
+      _timers: new Set()
     }
+  },
+
+  beforeDestroy() {
+    this.cleanup();
   },
 
   methods: {
@@ -64,9 +69,14 @@ export default {
         // Pan end
         case 3:
           // Delay to prevent tap triggering after pan
-          setTimeout(() => {
-            this.isPanning = false;
+          const timerId = setTimeout(() => {
+            if (this.isPanning !== undefined) {
+              this.isPanning = false;
+            }
           }, 100);
+          if (this._timers) {
+            this._timers.add(timerId);
+          }
           break;
       }
 
@@ -74,6 +84,18 @@ export default {
       if (this.isPanning && distance > this.panThreshold) {
         event.panId = this.currentPanId;
         this.$emit('pan', event);
+      }
+    },
+
+    /**
+     * Cleanup function to prevent memory leaks
+     */
+    cleanup() {
+      if (this._timers) {
+        this._timers.forEach(timerId => {
+          clearTimeout(timerId);
+        });
+        this._timers.clear();
       }
     },
 
