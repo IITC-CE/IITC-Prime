@@ -44,19 +44,21 @@
     </FlexboxLayout>
 
     <!-- content -->
-    <StackLayout class="panel-body" flexGrow="1">
-      <QuickAccessView
-        v-show="activeButton === 'quick' || activeButton === null"
-      />
+    <ScrollView flexGrow="1">
+      <StackLayout class="panel-body">
+        <QuickAccessView
+          v-show="activeButton === 'quick' || activeButton === null"
+        />
 
-      <LayersView
-        v-show="activeButton === 'layers'"
-      />
+        <LayersView
+          v-show="activeButton === 'layers'"
+        />
 
-      <SearchView
-        v-show="activeButton === 'search'"
-      />
-    </StackLayout>
+        <SearchView
+          v-show="activeButton === 'search'"
+        />
+      </StackLayout>
+    </ScrollView>
   </FlexboxLayout>
 </template>
 
