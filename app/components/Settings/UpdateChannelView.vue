@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
@@ -64,8 +64,6 @@ export default {
 
   data() {
     return {
-      currentChannel: 'release',
-      customUrl: '',
       selectedIntervalValue: '86400',
       externalIntervalValue: '86400',
       isUpdating: false,
@@ -73,13 +71,21 @@ export default {
     };
   },
 
+  computed: {
+    ...mapGetters('manager', ['currentChannel', 'customChannelUrl']),
+
+    customUrl() {
+      return this.customChannelUrl;
+    }
+  },
+
   methods: {
     ...mapActions('manager', [
-      'getUpdateChannel',
+      'loadUpdateChannel',
       'setUpdateChannel',
       'getUpdateInterval',
       'setUpdateInterval',
-      'getCustomChannelUrl',
+      'loadCustomChannelUrl',
       'setCustomChannelUrl',
       'forceUpdate'
     ]),
@@ -90,10 +96,6 @@ export default {
     async selectChannel(channel) {
       if (this.currentChannel === channel) return;
 
-      // Update UI
-      this.currentChannel = channel;
-
-      // Save to storage
       await this.setUpdateChannel(channel);
 
       // Load interval for this channel
@@ -148,14 +150,13 @@ export default {
      * Load custom channel URL
      */
     async loadCustomUrl() {
-      this.customUrl = await this.getCustomChannelUrl();
+      await this.loadCustomChannelUrl();
     },
 
     /**
      * Update custom URL
      */
     async updateCustomUrl(url) {
-      this.customUrl = url;
       await this.setCustomChannelUrl(url);
     },
 
@@ -178,7 +179,7 @@ export default {
 
   async mounted() {
     // Load current channel
-    this.currentChannel = await this.getUpdateChannel();
+    await this.loadUpdateChannel();
 
     // Load interval for current channel
     await this.loadChannelInterval();

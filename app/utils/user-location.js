@@ -280,7 +280,12 @@ export default class UserLocation {
    */
   async toggleUserLocationPlugin(enable) {
     try {
-      const plugins = await store.dispatch('manager/getPlugins');
+      let plugins = store.getters['manager/plugins'];
+      if (!plugins || Object.keys(plugins).length === 0) {
+        await store.dispatch('manager/loadPlugins');
+        plugins = store.getters['manager/plugins'];
+      }
+
       const userLocationPlugin = Object.values(plugins).find(plugin =>
         plugin.uid && plugin.uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion"
       );

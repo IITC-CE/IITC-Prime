@@ -41,7 +41,8 @@ export default {
 
   data() {
     return {
-      store_unsubscribe: () => {}
+      store_unsubscribe: () => {},
+      started: false,
     }
   },
 
@@ -68,14 +69,23 @@ export default {
       console.error('WebView load error:', error);
     },
 
-    onLoadStarted() {
-      this.$store.dispatch('ui/setWebviewLoadStatus', false);
+    async onLoadStarted() {
+      this.started = true;
+      await this.$store.dispatch('ui/setWebviewLoadStatus', false);
     },
 
-    async onLoadFinished() {
-      await injectBridgeIITC(this.webview);
-      await injectDebugBridge(this.webview);
-      await this.$store.dispatch('ui/setWebviewLoadStatus', true);
+    async onLoadFinished(arg) {
+      // Only process Intel pages that have a corresponding onLoadStarted
+      if (this.started && arg.url && arg.url.includes('intel.ingress.com')) {
+        this.started = false;
+
+        // Inject bridges first
+        await injectBridgeIITC(this.webview);
+        await injectDebugBridge(this.webview);
+
+        // Then trigger plugin injection
+        await this.$store.dispatch('ui/setWebviewLoadStatus', true);
+      }
     },
 
     async onWebViewLoaded({ webview }) {
@@ -94,7 +104,26 @@ export default {
     executeDebugCommand(command) {
       if (!this.$refs.baseWebView || !command) return;
       this.$refs.baseWebView.executeCommand(command);
+    },
+
+    async injectPlugin(plugin) {
+      if (!this.webview || !plugin?.code) return;
+
+      try {
+        await this.webview.executeJavaScript(`
+          try {
+            ${plugin.code}
+          } catch (e) {
+            window.lastError = e.toString();
+            console.error('injection error:', e);
+            throw e;
+          }
+        `);
+      } catch (error) {
+        console.error('Plugin injection failed:', error);
+      }
     }
+
   },
 
   created() {
@@ -111,7 +140,7 @@ export default {
             await injectIITCPrimeResources(webview);
             break;
           case "map/setInjectPlugin":
-            await webview.executeJavaScript(action.payload['code']);
+            await this.injectPlugin(action.payload);
             break;
           case "map/setActiveBaseLayer":
             await webview.executeJavaScript(showLayer(action.payload, true));

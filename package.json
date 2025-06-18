@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "android": "ns run android",
-    "clean": "ns clean"
+    "clean": "ns clean",
+    "build": "ns build android --release",
+    "lint": "ns build android --no-copy && echo 'Syntax check passed'"
   },
   "dependencies": {
     "@bezlepkin/nativescript-keyboard-opening": "^1.0.1",

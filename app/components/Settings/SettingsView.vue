@@ -88,9 +88,7 @@ export default {
     return {
       pluginsScreen: PluginsView,
       updateChannelScreen: UpdateChannelView,
-      aboutScreen: AboutView,
-      currentUpdateChannel: 'release',
-      enabledPluginsCount: 0
+      aboutScreen: AboutView
     };
   },
 
@@ -100,6 +98,10 @@ export default {
       'isFakeUserAgent',
       'isPersistentZoom',
       'isShowLocation'
+    ]),
+    ...mapGetters('manager', [
+      'currentChannel',
+      'enabledPlugins'
     ]),
 
     desktopMode() {
@@ -119,17 +121,18 @@ export default {
     },
 
     pluginsDescription() {
-      return `${this.enabledPluginsCount} plugins enabled`;
+      const count = Object.keys(this.enabledPlugins).length;
+      return `${count} plugins enabled`;
     },
 
     updateChannelDescription() {
-      return `Current: ${this.currentUpdateChannel}`;
+      return `Current: ${this.currentChannel}`;
     }
   },
 
   methods: {
     ...mapActions('settings', ['setSetting']),
-    ...mapActions('manager', ['getUpdateChannel', 'getEnabledPlugins']),
+    ...mapActions('manager', ['loadUpdateChannel', 'loadPlugins']),
 
     async updateDesktopMode(value) {
       await this.setSetting({ key: 'desktopMode', value });
@@ -148,12 +151,11 @@ export default {
     },
 
     async loadChannelInfo() {
-      this.currentUpdateChannel = await this.getUpdateChannel();
+      await this.loadUpdateChannel();
     },
 
     async loadPluginsInfo() {
-      const enabledPlugins = await this.getEnabledPlugins();
-      this.enabledPluginsCount = Object.keys(enabledPlugins).length;
+      await this.loadPlugins();
     }
   },
 

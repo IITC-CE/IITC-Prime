@@ -1,10 +1,6 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import { Manager } from 'lib-iitc-manager';
-import storage from '@/utils/storage';
-
-// Private singleton instance
-let managerInstance = null;
+import { managerService } from '@/utils/manager-service';
 
 export const manager = {
   namespaced: true,
@@ -13,6 +9,10 @@ export const manager = {
     isInitialized: false,
     isRunning: false,
     inProgress: false,
+    plugins: {},
+    lastPluginUpdate: null,
+    currentChannel: 'release',
+    customChannelUrl: '',
   }),
 
   mutations: {
@@ -25,224 +25,184 @@ export const manager = {
     SET_PROGRESS(state, value) {
       state.inProgress = value;
     },
+    SET_PLUGINS(state, plugins) {
+      state.plugins = plugins;
+      state.lastPluginUpdate = Date.now();
+    },
+    UPDATE_PLUGIN_STATUS(state, { uid, status }) {
+      if (state.plugins[uid]) {
+        state.plugins[uid].status = status;
+        state.lastPluginUpdate = Date.now();
+      }
+    },
+    SET_CURRENT_CHANNEL(state, channel) {
+      state.currentChannel = channel;
+    },
+    SET_CUSTOM_CHANNEL_URL(state, url) {
+      state.customChannelUrl = url;
+    },
   },
 
   actions: {
     /**
-     * Initialize the Manager instance
-     * Creates a singleton instance if it doesn't exist
-     */
-    async initialize({ commit, dispatch }) {
-      if (managerInstance) {
-        return managerInstance;
-      }
-
-      managerInstance = new Manager({
-        storage,
-        // Handle messages from Manager
-        message: (message, args) => {
-          console.log(`Manager message: ${message}`, args);
-          dispatch('ui/showMessage', message, { root: true });
-        },
-        // Control progress bar visibility
-        progressbar: isShow => {
-          commit('SET_PROGRESS', isShow);
-        },
-        // Handle plugin injection
-        inject_plugin: plugin => {
-          dispatch('map/setInjectPlugin', plugin, { root: true });
-        },
-        // Handle plugin state changes
-        plugin_event: (event) => {
-          dispatch('handlePluginStateChange', event);
-        },
-        is_daemon: true
-      });
-
-      commit('SET_INITIALIZED', true);
-      return managerInstance;
-    },
-
-    /**
-     * Start Manager operation
-     * Must be called after initialization
+     * Initialize manager and setup event listeners
      */
     async run({ commit, dispatch }) {
-      const manager = await dispatch('initialize');
-      await manager.run();
-      commit('SET_RUNNING', true);
+      // Set callbacks for handling Manager events
+      managerService.setCallbacks({
+        onMessage: (message, args) => {
+          dispatch('ui/showMessage', message, { root: true });
+        },
+        onProgress: (isShow) => {
+          commit('SET_PROGRESS', isShow);
+        },
+        onInjectPlugin: (plugin) => {
+          dispatch('map/setInjectPlugin', plugin, { root: true });
+        },
+        onPluginEvent: (event) => {
+          dispatch('handlePluginEvent', event);
+        }
+      });
 
-      return manager;
-    },
-
-    /**
-     * Force update check (user-initiated)
-     */
-    async forceUpdate({ commit, dispatch }) {
       commit('SET_PROGRESS', true);
 
       try {
-        const manager = await dispatch('initialize');
-        await manager.checkUpdates(true);
+        const data = await managerService.startup();
 
+        commit('SET_RUNNING', data.isRunning);
+        commit('SET_CURRENT_CHANNEL', data.currentChannel);
+        commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
+        commit('SET_PLUGINS', data.plugins);
+        commit('SET_INITIALIZED', true);
+
+        return data;
+      } finally {
         commit('SET_PROGRESS', false);
-        return true;
-      } catch (error) {
-        console.error('Force update failed:', error);
-        commit('SET_PROGRESS', false);
-        return false;
       }
     },
 
     /**
-     * Inject plugins into WebView
+     * Force update check
      */
-    async inject({ dispatch }) {
-      const manager = await dispatch('initialize');
-      await manager.inject();
+    async forceUpdate({ commit }) {
+      commit('SET_PROGRESS', true);
+
+      try {
+        return await managerService.checkUpdates(true);
+      } finally {
+        commit('SET_PROGRESS', false);
+      }
     },
 
     /**
-     * Get current update channel
+     * Inject plugins
      */
-    async getUpdateChannel() {
-      const data = await storage.get('channel');
-      return data.channel || 'release';
+    async inject() {
+      return await managerService.inject();
+    },
+
+    /**
+     * Load update channel into state
+     */
+    async loadUpdateChannel({ commit }) {
+      const channel = await managerService.getUpdateChannel();
+      commit('SET_CURRENT_CHANNEL', channel);
+      return channel;
     },
 
     /**
      * Set update channel
      */
-    async setUpdateChannel({ dispatch }, channel) {
-      const manager = await dispatch('initialize');
-      await manager.setChannel(channel);
+    async setUpdateChannel({ commit }, channel) {
+      const data = await managerService.setUpdateChannel(channel);
+      commit('SET_CURRENT_CHANNEL', data.currentChannel);
+      commit('SET_PLUGINS', data.plugins);
+      return data;
     },
 
     /**
      * Get update check interval for specified channel
      */
-    async getUpdateInterval({ dispatch }, channel) {
-      if (!channel) {
-        channel = await dispatch('getUpdateChannel');
-      }
-
-      const key = `${channel}_update_check_interval`;
-      const data = await storage.get(key);
-      return data[key] || 86400;
+    async getUpdateInterval(_, channel) {
+      return await managerService.getUpdateInterval(channel);
     },
 
     /**
      * Set update check interval for a channel
      */
-    async setUpdateInterval({ dispatch }, { interval, channel }) {
-      if (!channel) {
-        channel = await dispatch('getUpdateChannel');
-      }
-
-      const manager = await dispatch('initialize');
-      await manager.setUpdateCheckInterval(interval, channel);
+    async setUpdateInterval(_, { interval, channel }) {
+      return await managerService.setUpdateInterval(interval, channel);
     },
 
     /**
-     * Get custom channel URL
+     * Load custom channel URL into state
      */
-    async getCustomChannelUrl() {
-      const data = await storage.get('network_host');
-      return (data.network_host && data.network_host.custom) ?
-        data.network_host.custom : '';
-    },
-
-    /**
-     * Handle plugin state changes from manager
-     */
-    async handlePluginStateChange({ dispatch }, event) {
-      try {
-        // Handle user-location plugin changes
-        for (const [uid, plugin] of Object.entries(event.plugins)) {
-          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion") {
-            const isEnabled = event.event === 'add';
-            await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
-            break;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to handle plugin state change:', error);
-      }
+    async loadCustomChannelUrl({ commit }) {
+      const url = await managerService.getCustomChannelUrl();
+      commit('SET_CUSTOM_CHANNEL_URL', url);
+      return url;
     },
 
     /**
      * Set custom channel URL
      */
-    async setCustomChannelUrl({ dispatch }, url) {
-      const manager = await dispatch('initialize');
-      await manager.setCustomChannelUrl(url);
+    async setCustomChannelUrl({ commit }, url) {
+      const data = await managerService.setCustomChannelUrl(url);
+      commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
+      return data;
     },
 
     /**
-     * Activate or deactivate a plugin
+     * Load plugins into state
      */
-    async managePlugin({ dispatch }, { uid, action }) {
-      const manager = await dispatch('initialize');
-      await manager.managePlugin(uid, action);
+    async loadPlugins({ commit }) {
+      const plugins = await managerService.getPlugins();
+      commit('SET_PLUGINS', plugins);
+      return plugins;
     },
 
     /**
-     * Add user scripts (plugins)
+     * Enable/disable/delete plugin
      */
-    async addUserScripts({ dispatch }, scripts) {
-      const manager = await dispatch('initialize');
-      const result = await manager.addUserScripts(scripts);
+    async managePlugin({ commit }, { uid, action }) {
+      const data = await managerService.managePlugin(uid, action);
 
-      return result;
+      // Optimistic UI update
+      commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
+
+      // Update full plugins list
+      commit('SET_PLUGINS', data.plugins);
+
+      return data;
     },
 
     /**
-     * Get all plugins from storage
-     */
-    async getPlugins({ dispatch }) {
-      const channel = await dispatch('getUpdateChannel');
-      const key = `${channel}_plugins_flat`;
-
-      const data = await storage.get(key);
-      return data[key] || {};
-    },
-
-    /**
-     * Get only enabled plugins
-     */
-    async getEnabledPlugins({ dispatch }) {
-      const plugins = await dispatch('getPlugins');
-      return Object.fromEntries(
-        Object.entries(plugins).filter(([_, plugin]) => plugin.status === 'on')
-      );
-    },
-
-    /**
-     * Check if custom channel URL is valid
+     * Validate custom channel URL
      */
     async checkCustomChannelUrl(_, url) {
-      if (!url) return false;
+      return await managerService.validateCustomChannelUrl(url);
+    },
 
+    /**
+     * Handle plugin state changes from manager
+     */
+    async handlePluginEvent({ commit, dispatch }, event) {
       try {
-        // Ensure URL has http/https prefix
-        let fullUrl = url;
-        if (!/^https?:\/\//i.test(fullUrl)) {
-          fullUrl = 'http://' + fullUrl;
+        for (const [uid, plugin] of Object.entries(event.plugins)) {
+          const status = event.event === 'add' ? 'on' : 'off';
+          commit('UPDATE_PLUGIN_STATUS', { uid, status });
+
+          // Handle user-location plugin changes
+          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion") {
+            const isEnabled = event.event === 'add';
+            await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
+          }
         }
 
-        // Test if meta.json is accessible
-        const metaUrl = fullUrl.endsWith('/') ?
-          `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
-
-        const response = await fetch(metaUrl, {
-          method: 'HEAD',
-          timeout: 2000
-        });
-
-        return response.ok;
+        // Reload full plugins list
+        await dispatch('loadPlugins');
       } catch (error) {
-        console.error('Error checking custom URL:', error);
-        return false;
+        console.error('Failed to handle plugin state change:', error);
       }
     },
   },
@@ -262,5 +222,34 @@ export const manager = {
      * Check if Manager in progress
      */
     inProgress: state => state.inProgress,
+
+    /**
+     * Get all plugins from Vuex state
+     */
+    plugins: state => state.plugins,
+
+    /**
+     * Timestamp of last plugins update
+     */
+    lastPluginUpdate: state => state.lastPluginUpdate,
+
+    /**
+     * Only enabled plugins
+     */
+    enabledPlugins: state => {
+      return Object.fromEntries(
+        Object.entries(state.plugins).filter(([_, plugin]) => plugin.status === 'on')
+      );
+    },
+
+    /**
+     * Current update channel
+     */
+    currentChannel: state => state.currentChannel,
+
+    /**
+     * Custom channel URL
+     */
+    customChannelUrl: state => state.customChannelUrl,
   }
 };

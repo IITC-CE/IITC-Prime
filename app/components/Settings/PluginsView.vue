@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer, Cache } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
@@ -67,7 +67,6 @@ export default {
     return {
       searchQuery: '',
       activeCategory: 'All',
-      allPlugins: {},
       isPluginsVisible: false,
 
       _searchDebouncer: createDebouncer(300),
@@ -78,6 +77,12 @@ export default {
   },
 
   computed: {
+    ...mapGetters('manager', ['plugins', 'lastPluginUpdate']),
+
+    allPlugins() {
+      return this.plugins;
+    },
+
     // Check if data is available
     hasData() {
       return Object.keys(this.allPlugins).length > 0;
@@ -154,7 +159,7 @@ export default {
 
   methods: {
     ...mapActions('manager', [
-      'getPlugins',
+      'loadPlugins',
       'managePlugin'
     ]),
 
@@ -232,15 +237,10 @@ export default {
           uid: plugin.uid,
           action: newStatus
         });
-
-        // Reload plugins data to get updated state
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
       } catch (error) {
         console.error('Failed to toggle plugin:', error);
         // On error, reload data to ensure UI reflects actual state
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
+        await this.loadPlugins();
       }
     },
 
@@ -249,8 +249,7 @@ export default {
 
       try {
         // Load plugins data
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
+        await this.loadPlugins();
       } catch (error) {
         console.error('Failed to load plugins:', error);
       }
@@ -276,6 +275,15 @@ export default {
       // Invalidate cache when category changes
       this._lastFilterKey = null;
       this._filteredPluginsCache = null;
+    },
+
+    lastPluginUpdate() {
+      // Invalidate cache when plugins are updated from worker
+      this._lastFilterKey = null;
+      this._filteredPluginsCache = null;
+      if (this._searchCache && typeof this._searchCache.clear === 'function') {
+        this._searchCache.clear();
+      }
     }
   },
 };

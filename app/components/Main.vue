@@ -236,11 +236,6 @@ export default {
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
         switch (action.type) {
-          case "ui/setWebviewLoadStatus":
-            if (action.payload) {
-              await this.$store.dispatch('manager/inject');
-            }
-            break;
           case "map/triggerUserLocate":
             if (this.userLocation) {
               await this.userLocation.locate();
