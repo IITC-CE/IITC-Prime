@@ -47,7 +47,7 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { fuzzysearch } from 'scored-fuzzysearch';
-import { performanceOptimizationMixin, createDebouncer, Cache } from '~/utils/performance-optimization';
+import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
 import CategoriesList from './components/plugins/CategoriesList';
 import PluginsList from './components/plugins/PluginsList';
@@ -69,10 +69,7 @@ export default {
       activeCategory: 'All',
       isPluginsVisible: false,
 
-      _searchDebouncer: createDebouncer(300),
-      _searchCache: new Cache(50, 300000), // 5 minutes cache
-      _filteredPluginsCache: null,
-      _lastFilterKey: null
+      _searchDebouncer: createDebouncer(300)
     };
   },
 
@@ -93,14 +90,6 @@ export default {
         return [];
       }
 
-      // Create cache key for filtering
-      const filterKey = `${this.activeCategory}-${this.searchQuery.trim()}`;
-
-      // Return cached result if available
-      if (this._lastFilterKey === filterKey && this._filteredPluginsCache) {
-        return this._filteredPluginsCache;
-      }
-
       let plugins = Object.values(this.allPlugins);
 
       // Step 1: Filter by category (only for non-All categories)
@@ -112,10 +101,6 @@ export default {
       if (this.searchQuery.trim()) {
         plugins = this.searchPlugins(this.searchQuery, plugins);
       }
-
-      // Cache the result
-      this._filteredPluginsCache = plugins;
-      this._lastFilterKey = filterKey;
 
       return plugins;
     },
@@ -176,12 +161,6 @@ export default {
     },
 
     searchPlugins(query, plugins) {
-      const cacheKey = `${query}-${plugins.length}`;
-      const cached = this._searchCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-
       const results = [];
       const normalizedQuery = query.toLowerCase();
 
@@ -215,8 +194,6 @@ export default {
       for (let i = 0; i < results.length; i++) {
         sortedPlugins[i] = results[i][0];
       }
-
-      this._searchCache.set(cacheKey, sortedPlugins);
 
       return sortedPlugins;
     },
@@ -264,28 +241,6 @@ export default {
     this.isPluginsVisible = false;
   },
 
-  watch: {
-    searchQuery(newQuery) {
-      // Invalidate cache when search changes
-      this._lastFilterKey = null;
-      this._filteredPluginsCache = null;
-    },
-
-    activeCategory() {
-      // Invalidate cache when category changes
-      this._lastFilterKey = null;
-      this._filteredPluginsCache = null;
-    },
-
-    lastPluginUpdate() {
-      // Invalidate cache when plugins are updated from worker
-      this._lastFilterKey = null;
-      this._filteredPluginsCache = null;
-      if (this._searchCache && typeof this._searchCache.clear === 'function') {
-        this._searchCache.clear();
-      }
-    }
-  },
 };
 </script>
 
