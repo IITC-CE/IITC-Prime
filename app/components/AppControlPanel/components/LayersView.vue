@@ -78,15 +78,14 @@
             <Label
               class="overlay-item-label"
               :text="item.name"
-              @tap="onOverlayToggle(item.index, true)"
+              @tap="onOverlayToggle(item.index, 'label')"
               col="0"
               row="0"
             />
             <Switch
               class="switch"
-              :ref="'overlaySwitch' + item.index"
               :checked="item.active"
-              @checkedChange="onOverlayToggle(item.index)"
+              @checkedChange="args => onOverlayToggle(item.index, args.value)"
               col="1"
               row="0"
             />
@@ -104,15 +103,14 @@
         <Label
           class="overlay-item-label"
           :text="layer.name"
-          @tap="onOverlayToggle(layer.index, true)"
+          @tap="onOverlayToggle(layer.index, 'label')"
           col="0"
           row="0"
         />
         <Switch
           class="switch"
-          :ref="'overlaySwitch' + layer.index"
           :checked="layer.active"
-          @checkedChange="onOverlayToggle(layer.index)"
+          @checkedChange="args => onOverlayToggle(layer.index, args.value)"
           col="1"
           row="0"
         />
@@ -178,21 +176,16 @@
         this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
       },
 
-      onOverlayToggle(index, isLabelTap = false) {
-        const switchRef = this.$refs['overlaySwitch' + index];
-
-        if (!switchRef || !switchRef.length) {
-          return;
-        }
-
-        if (isLabelTap) {
-          // Toggle switch state when label is tapped
-          const switchEl = switchRef[0].nativeView;
-          switchEl.checked = !switchEl.checked;
+      onOverlayToggle(index, value) {
+        if (typeof value === 'boolean') {
+          // Direct value from switch event
+          this.$store.dispatch('map/setOverlayLayerProperty', {index, active: value});
         } else {
-          // Update store based on switch state
-          const active = switchRef[0].nativeView.checked;
-          this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
+          // Label tap - toggle current state
+          const currentLayer = this.overlayLayers[index];
+          if (currentLayer) {
+            this.$store.dispatch('map/setOverlayLayerProperty', {index, active: !currentLayer.active});
+          }
         }
       },
 
