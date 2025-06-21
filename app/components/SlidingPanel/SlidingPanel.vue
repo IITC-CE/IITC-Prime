@@ -2,18 +2,23 @@
 
 <template>
   <AbsoluteLayout :width="panelWidth">
-    <FlexboxLayout
+    <GridLayout
       ref="panel"
       class="sliding-panel"
       :top="panelCurrentTop"
       :height="panelHeight"
+      rows="*"
+      columns="*"
       @pan="handlePanGesture">
 
       <AppControlPanel
         :max-height="appControlPanelMaxHeight"
+        verticalAlignment="top"
+        row="0"
+        col="0"
       />
 
-    </FlexboxLayout>
+    </GridLayout>
     <MapStateBar
       :top="screenHeight - mapStateBarHeight"
       width="100%"
@@ -68,7 +73,8 @@ export default {
 
   computed: {
     appControlPanelMaxHeight() {
-      return this.panelHeight - this.mapStateBarHeight;
+      const currentPanelHeight = this.screenHeight - this.panelCurrentTop;
+      return currentPanelHeight - this.mapStateBarHeight;
     },
 
     ...mapState(optimizeMapState({

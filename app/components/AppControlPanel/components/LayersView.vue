@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout flexDirection="column">
+  <StackLayout>
 
     <StackLayout orientation="horizontal" class="block">
 
@@ -59,7 +59,7 @@
         />
     </GridLayout>
 
-    <FlexboxLayout flexDirection="column" class="block">
+    <StackLayout class="block">
       <StackLayout
         orientation="horizontal"
         v-for="(row, rowIndex) in pairedItemRows"
@@ -117,8 +117,8 @@
           row="0"
         />
       </GridLayout>
-    </FlexboxLayout>
-  </FlexboxLayout>
+    </StackLayout>
+  </StackLayout>
 </template>
 
 <script>

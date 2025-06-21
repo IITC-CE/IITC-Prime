@@ -3,12 +3,10 @@
 <template>
   <StackLayout class="controls-container">
     <!-- Controls panel -->
-    <FlexboxLayout
+    <GridLayout
       row="0"
       class="controls-panel"
-      flexDirection="row"
-      justifyContent="space-between"
-      alignItems="center">
+      columns="auto, *, auto, auto, auto">
 
       <MDButton
         col="0"
@@ -18,8 +16,8 @@
         rippleColor="#ffffff"
         @tap="handleClose"
       />
-      <Label flexGrow="1" />
       <MDButton
+        col="2"
         class="fa control-button trash"
         :text="'fa-trash' | fonticon"
         variant="flat"
@@ -27,6 +25,7 @@
         @tap="$emit('clear')"
       />
       <MDButton
+        col="3"
         class="fa control-button"
         :text="'fa-arrow-up' | fonticon"
         variant="flat"
@@ -34,13 +33,14 @@
         @tap="navigateHistoryUp"
       />
       <MDButton
+        col="4"
         class="fa control-button"
         :text="'fa-arrow-down' | fonticon"
         variant="flat"
         rippleColor="#ffffff"
         @tap="navigateHistoryDown"
       />
-    </FlexboxLayout>
+    </GridLayout>
 
     <!-- Command input -->
     <GridLayout row="1" columns="*, auto" class="command-input-container">

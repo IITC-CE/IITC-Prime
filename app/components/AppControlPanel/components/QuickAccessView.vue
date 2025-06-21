@@ -1,77 +1,74 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout
-    flexDirection="column"
+  <GridLayout
+    rows="auto, *"
+    columns="*"
   >
 
     <GridLayout
+      row="0"
+      col="0"
       columns="*, *, *, *"
       class="block"
     >
       <!-- Settings Button -->
-      <FlexboxLayout
+      <StackLayout
         col="0"
-        flexDirection="column"
-        alignItems="center"
         class="btn"
         @tap="openSettings"
       >
-        <Label class="fa icon" :text="'fa-tools' | fonticon" />
-        <Label class="text" text="Settings" />
-      </FlexboxLayout>
+        <Label class="fa icon" :text="'fa-tools' | fonticon" horizontalAlignment="center" />
+        <Label class="text" text="Settings" horizontalAlignment="center" />
+      </StackLayout>
 
       <!-- Plugins Button -->
-      <FlexboxLayout
+      <StackLayout
         col="1"
-        flexDirection="column"
-        alignItems="center"
         class="btn"
         @tap="openPlugins"
       >
-        <Label class="fa icon" :text="'fa-toolbox' | fonticon" />
-        <Label class="text" text="Plugins" />
-      </FlexboxLayout>
+        <Label class="fa icon" :text="'fa-toolbox' | fonticon" horizontalAlignment="center" />
+        <Label class="text" text="Plugins" horizontalAlignment="center" />
+      </StackLayout>
 
       <!-- Debug Button -->
-      <FlexboxLayout
+      <StackLayout
         col="2"
-        flexDirection="column"
-        alignItems="center"
         class="btn"
         :class="{ 'active': isDebugActive }"
         @tap="toggleDebugMode"
       >
-        <Label class="fa icon" :class="{ 'active-icon': isDebugActive }" :text="'fa-terminal' | fonticon" />
-        <Label class="text" :class="{ 'active-text': isDebugActive }" text="Debug" />
-      </FlexboxLayout>
+        <Label class="fa icon" :class="{ 'active-icon': isDebugActive }" :text="'fa-terminal' | fonticon" horizontalAlignment="center" />
+        <Label class="text" :class="{ 'active-text': isDebugActive }" text="Debug" horizontalAlignment="center" />
+      </StackLayout>
 
       <!-- Reload Button -->
-      <FlexboxLayout
+      <StackLayout
         col="3"
-        flexDirection="column"
-        alignItems="center"
         class="btn"
         @tap="reloadWebView"
       >
-        <Label class="fa icon" :text="'fa-redo' | fonticon" />
-        <Label class="text" text="Reload IITC" />
-      </FlexboxLayout>
+        <Label class="fa icon" :text="'fa-redo' | fonticon" horizontalAlignment="center" />
+        <Label class="text" text="Reload IITC" horizontalAlignment="center" />
+      </StackLayout>
     </GridLayout>
 
-    <GridLayout
-      v-for="(pane, index) in filteredPanes"
-      :key="pane.name"
-      class="list-item"
-      columns="auto, *"
-      rows="50"
-      @tap="switchToPane(pane.name)"
-    >
-      <Label class="fa icon" :text="pane.icon | fonticon" col="0" :row="index" />
-      <Label class="pane-item-label" :text="pane.label" col="1" :row="index" />
-    </GridLayout>
+    <StackLayout row="1" col="0">
+      <GridLayout
+        v-for="(pane, index) in filteredPanes"
+        :key="pane.name"
+        class="list-item"
+        columns="auto, *"
+        rows="50"
+        @tap="switchToPane(pane.name)"
+      >
+        <Label class="fa icon" :text="pane.icon | fonticon" col="0" row="0" />
+        <Label class="pane-item-label" :text="pane.label" col="1" row="0" />
+      </GridLayout>
+    </StackLayout>
 
-  </FlexboxLayout>
+  </GridLayout>
 </template>
 
 <script>

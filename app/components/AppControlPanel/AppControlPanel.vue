@@ -1,22 +1,24 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout
+  <GridLayout
     class="app-control-panel"
     width="100%"
-    :height="maxHeight"
-    flexDirection="column">
+    height="100%"
+    rows="auto, auto, *"
+    columns="*">
 
-    <StackLayout class="panel-header">
+    <StackLayout class="panel-header" row="0" col="0" verticalAlignment="top">
       <Label
         class="panel-header-line"
       />
     </StackLayout>
 
     <!-- buttons -->
-    <FlexboxLayout class="panel-buttons">
+    <GridLayout class="panel-buttons" row="1" col="0" columns="auto, *, auto, auto, auto" verticalAlignment="top">
       <!-- Quick Access Button -->
       <MDButton
+        col="0"
         variant="flat"
         rippleColor="#ffffff"
         class="fa app-control-button"
@@ -26,10 +28,9 @@
         @pan="handleControlButtonPan('quick', $event)"
       />
 
-      <FlexboxLayout class="expander" />
-
       <!-- Search Button -->
       <MDButton
+        col="2"
         variant="flat"
         rippleColor="#ffffff"
         class="fa app-control-button"
@@ -41,6 +42,7 @@
 
       <!-- Location Button -->
       <MDButton
+        col="3"
         variant="flat"
         rippleColor="#ffffff"
         class="fa app-control-button"
@@ -50,6 +52,7 @@
 
       <!-- Layers Button -->
       <MDButton
+        col="4"
         variant="flat"
         rippleColor="#ffffff"
         class="fa app-control-button"
@@ -59,10 +62,10 @@
         @pan="handleControlButtonPan('layers', $event)"
       />
 
-    </FlexboxLayout>
+    </GridLayout>
 
     <!-- content -->
-    <ScrollView flexGrow="1">
+    <ScrollView row="2" col="0" :height="maxHeight - 64" verticalAlignment="top">
       <StackLayout class="panel-body">
         <QuickAccessView
           v-show="activeButton === 'quick' || activeButton === null"
@@ -77,7 +80,7 @@
         />
       </StackLayout>
     </ScrollView>
-  </FlexboxLayout>
+  </GridLayout>
 </template>
 
 <script>
@@ -243,7 +246,6 @@ export default {
   height: 42; // 110 - 46 - 14 - 8
   min-height: 42;
   margin: 0 10 8 10;
-  justify-content: space-around;
 }
 
 .app-control-button {
@@ -268,7 +270,4 @@ export default {
   margin: 10;
 }
 
-.expander {
-  width: 100%;
-}
 </style>

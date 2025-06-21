@@ -3,19 +3,21 @@
 <template>
   <AbsoluteLayout class="popup-overlay">
     <StackLayout class="popup-content" width="90%" height="80%">
-      <FlexboxLayout class="popup-inner" flexDirection="column">
-        <FlexboxLayout class="popup-header">
-          <Label :text="pageTitle" class="popup-title"/>
+      <GridLayout class="popup-inner" rows="auto, *" columns="*">
+        <GridLayout class="popup-header" row="0" col="0" columns="*, auto">
+          <Label :text="pageTitle" class="popup-title" col="0" row="0"/>
           <MDButton
             @tap="closePopup"
             class="close-button"
             text="✕"
             variant="text"
             rippleColor="#000000"
+            col="1"
+            row="0"
           />
-        </FlexboxLayout>
+        </GridLayout>
 
-        <AbsoluteLayout class="webview-wrapper">
+        <AbsoluteLayout class="webview-wrapper" row="1" col="0">
           <BaseWebView
             ref="baseWebView"
             class="webview-container"
@@ -36,7 +38,7 @@
           />
         </AbsoluteLayout>
 
-      </FlexboxLayout>
+      </GridLayout>
     </StackLayout>
   </AbsoluteLayout>
 </template>
@@ -138,8 +140,6 @@ export default {
   border-bottom-color: #e0e0e0;
   border-top-left-radius: 10;
   border-top-right-radius: 10;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .popup-title {
