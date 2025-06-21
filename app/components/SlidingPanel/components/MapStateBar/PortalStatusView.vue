@@ -37,27 +37,26 @@
       <!-- Resonators grid -->
       <GridLayout class="resonators-grid"
                  rows="auto"
-                 columns="1*, 1*, 1*, 1*, 1*, 1*, 1*, 1*">
-        <Resonator v-for="(resonator, index) in resonatorsArray"
-                  :key="index"
-                  :col="index"
-                  :level="resonator.level"
-                  :healthPct="resonator.healthPct"
-                  :color="resonator.levelColor"
-                  :isEmpty="resonator.energy <= 0" />
+                 columns="1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*">
+        <GridLayout v-for="(resonator, index) in resonatorsArray"
+                   :key="index"
+                   :col="index * 2"
+                   class="resonator"
+                   :class="{ empty: resonator.energy <= 0 }">
+          <StackLayout
+            v-if="resonator.energy > 0"
+            class="resonator-fill"
+            horizontalAlignment="left"
+            :style="{ backgroundColor: resonator.levelColor, width: resonator.healthPct + '%' }" />
+        </GridLayout>
       </GridLayout>
     </StackLayout>
   </StackLayout>
 </template>
 
 <script>
-import Resonator from './Resonator';
-
 export default {
   name: 'PortalStatusView',
-  components: {
-    Resonator
-  },
   props: {
     portalStatus: {
       type: Object,
@@ -106,6 +105,23 @@ export default {
 
 .resonators-grid {
   margin-top: 2;
+}
+
+.resonator {
+  height: 10;
+  width: 100%;
+  border-width: 1;
+  border-color: $primary-dark;
+  border-radius: 2;
+  overflow: hidden;
+}
+
+.resonator.empty {
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.resonator-fill {
+  height: 100%;
 }
 
 .portal-info {
