@@ -15,31 +15,49 @@
 
     <!-- buttons -->
     <FlexboxLayout class="panel-buttons">
-      <AppControlButton
-        icon="fa-bars"
-        :isActive="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
-        @activate="setActiveButton('quick')"
-        @deactivate="setActiveButton(null)" />
+      <!-- Quick Access Button -->
+      <MDButton
+        variant="flat"
+        rippleColor="#ffffff"
+        class="fa app-control-button"
+        :class="{ 'app-control-button--active': isPanelOpen && (activeButton === 'quick' || activeButton === null) }"
+        :text="'fa-bars' | fonticon"
+        @tap="handleControlButtonTap('quick', $event)"
+        @pan="handleControlButtonPan('quick', $event)"
       />
 
       <FlexboxLayout class="expander" />
 
-      <AppControlButton
-        icon="fa-search"
-        :isActive="isPanelOpen && activeButton === 'search'"
-        @activate="setActiveButton('search')"
-        @deactivate="setActiveButton(null)" />
+      <!-- Search Button -->
+      <MDButton
+        variant="flat"
+        rippleColor="#ffffff"
+        class="fa app-control-button"
+        :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'search' }"
+        :text="'fa-search' | fonticon"
+        @tap="handleControlButtonTap('search', $event)"
+        @pan="handleControlButtonPan('search', $event)"
+      />
 
-      <AppControlButton
-        :icon="locationButtonIcon"
-        :isToggleable="false"
-        @tap="onLocate" />
+      <!-- Location Button -->
+      <MDButton
+        variant="flat"
+        rippleColor="#ffffff"
+        class="fa app-control-button"
+        :text="locationButtonIcon | fonticon"
+        @tap="onLocate"
+      />
 
-      <AppControlButton
-        icon="fa-layer-group"
-        :isActive="isPanelOpen && activeButton === 'layers'"
-        @activate="setActiveButton('layers')"
-        @deactivate="setActiveButton(null)" />
+      <!-- Layers Button -->
+      <MDButton
+        variant="flat"
+        rippleColor="#ffffff"
+        class="fa app-control-button"
+        :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
+        :text="'fa-layer-group' | fonticon"
+        @tap="handleControlButtonTap('layers', $event)"
+        @pan="handleControlButtonPan('layers', $event)"
+      />
 
     </FlexboxLayout>
 
@@ -63,17 +81,18 @@
 </template>
 
 <script>
-import AppControlButton from "./components/AppControlButton.vue";
 import QuickAccessView from "./components/QuickAccessView.vue";
 import LayersView from "./components/LayersView.vue";
 import SearchView from "./components/SearchView.vue";
 import { mapState, mapActions, mapGetters } from 'vuex';
+import { buttonGestureHandlerMixin } from './button-gesture-handler';
 
 export default {
   name: 'AppControlPanel',
 
+  mixins: [buttonGestureHandlerMixin],
+
   components: {
-    AppControlButton,
     QuickAccessView,
     LayersView,
     SearchView,
@@ -155,6 +174,32 @@ export default {
     },
 
     /**
+     * Handle control button tap with gesture handling
+     */
+    handleControlButtonTap(buttonName, event) {
+      this.handleButtonTap(event);
+
+      if (this.isCurrentlyPanning()) {
+        return;
+      }
+
+      const isActive = this.isPanelOpen &&
+        (buttonName === 'quick' ?
+          (this.activeButton === 'quick' || this.activeButton === null) :
+          this.activeButton === buttonName);
+
+      const action = isActive ? null : buttonName;
+      this.setActiveButton(action);
+    },
+
+    /**
+     * Handle control button pan gesture
+     */
+    handleControlButtonPan(buttonName, event) {
+      this.handleButtonPan(event);
+    },
+
+    /**
      * Handle location button tap
      */
     async onLocate() {
@@ -199,6 +244,24 @@ export default {
   min-height: 42;
   margin: 0 10 8 10;
   justify-content: space-around;
+}
+
+.app-control-button {
+  width: 42;
+  min-width: 42;
+  max-width: 42;
+  height: 42;
+  margin: 0 5;
+  padding-top: 11;
+  font-size: 18;
+  border-radius: 10;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0);
+  text-align: center;
+
+  &--active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 .panel-body {

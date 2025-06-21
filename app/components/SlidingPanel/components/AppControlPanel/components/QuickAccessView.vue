@@ -9,31 +9,54 @@
       columns="*, *, *, *"
       class="block"
     >
-      <QuickAccessBigButton
+      <!-- Settings Button -->
+      <FlexboxLayout
         col="0"
-        icon="fa-tools"
-        name="Settings"
+        flexDirection="column"
+        alignItems="center"
+        class="btn"
         @tap="openSettings"
-      />
-      <QuickAccessBigButton
+      >
+        <Label class="fa icon" :text="'fa-tools' | fonticon" />
+        <Label class="text" text="Settings" />
+      </FlexboxLayout>
+
+      <!-- Plugins Button -->
+      <FlexboxLayout
         col="1"
-        icon="fa-toolbox"
-        name="Plugins"
+        flexDirection="column"
+        alignItems="center"
+        class="btn"
         @tap="openPlugins"
-      />
-      <QuickAccessBigButton
+      >
+        <Label class="fa icon" :text="'fa-toolbox' | fonticon" />
+        <Label class="text" text="Plugins" />
+      </FlexboxLayout>
+
+      <!-- Debug Button -->
+      <FlexboxLayout
         col="2"
-        icon="fa-terminal"
-        name="Debug"
+        flexDirection="column"
+        alignItems="center"
+        class="btn"
+        :class="{ 'active': isDebugActive }"
         @tap="toggleDebugMode"
-        :active="isDebugActive"
-      />
-      <QuickAccessBigButton
+      >
+        <Label class="fa icon" :class="{ 'active-icon': isDebugActive }" :text="'fa-terminal' | fonticon" />
+        <Label class="text" :class="{ 'active-text': isDebugActive }" text="Debug" />
+      </FlexboxLayout>
+
+      <!-- Reload Button -->
+      <FlexboxLayout
         col="3"
-        icon="fa-redo"
-        name="Reload IITC"
+        flexDirection="column"
+        alignItems="center"
+        class="btn"
         @tap="reloadWebView"
-      />
+      >
+        <Label class="fa icon" :text="'fa-redo' | fonticon" />
+        <Label class="text" text="Reload IITC" />
+      </FlexboxLayout>
     </GridLayout>
 
     <GridLayout
@@ -53,7 +76,6 @@
 
 <script>
   import { mapState } from 'vuex';
-  import QuickAccessBigButton from './QuickAccessBigButton.vue';
   import SettingsView from '@/components/Settings/SettingsView';
   import PluginsView from '@/components/Settings/PluginsView';
 
@@ -64,8 +86,6 @@
         pluginsScreen: PluginsView,
       }
     },
-
-    components: { QuickAccessBigButton },
 
     computed: {
       ...mapState({
@@ -118,6 +138,39 @@
   .block {
     height: 80;
     margin-bottom: $spacing-m;
+  }
+
+  .btn {
+    font-size: $font-size;
+    text-align: center;
+    padding: 0 $spacing-s;
+
+    &.active {
+      opacity: 0.9;
+    }
+  }
+
+  .btn .icon {
+    margin: 0 0 $spacing-xs 0;
+    width: 54;
+    height: 54;
+    font-size: $font-size-headline;
+    border-radius: $radius-large;
+    color: $on-primary;
+    background-color: $surface-bright;
+    box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
+
+    &.active-icon {
+      background-color: $primary;
+      color: $on-primary;
+    }
+  }
+
+  .btn .text {
+    &.active-text {
+      color: $primary;
+      font-weight: bold;
+    }
   }
 
   .icon {
