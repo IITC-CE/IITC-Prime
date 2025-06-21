@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import AppControlPanel from './components/AppControlPanel/AppControlPanel.vue';
+import AppControlPanel from '@/components/AppControlPanel/AppControlPanel.vue';
 import MapStateBar from "./MapStateBar.vue";
 import { panelControllerMixin } from "./mixins/panelController";
 import { performanceOptimizationMixin, optimizeMapState } from '~/utils/performance-optimization';

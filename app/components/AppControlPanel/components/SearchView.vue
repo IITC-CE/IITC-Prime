@@ -6,7 +6,7 @@
 
 <script>
 export default {
-  name: 'AppControlPanel',
+  name: 'SearchView',
 }
 </script>
 
