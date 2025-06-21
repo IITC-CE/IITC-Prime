@@ -92,19 +92,6 @@ $radius-full: 9999;  // For circular elements
   width: 50%;
 }
 
-.column-stack {
-  padding-right: $spacing-s;
-  padding-left: $spacing-s;
-
-  &--first {
-    padding-left: 0;
-  }
-
-  &--last {
-    padding-right: 0;
-  }
-}
-
 // Elevated surfaces (dialogs, dropdowns, etc.)
 .elevated-surface {
   background-color: $surface-bright;
