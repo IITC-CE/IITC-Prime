@@ -114,10 +114,20 @@ export const manager = {
      * Set update channel
      */
     async setUpdateChannel({ commit }, channel) {
-      const data = await managerService.setUpdateChannel(channel);
-      commit('SET_CURRENT_CHANNEL', data.currentChannel);
-      commit('SET_PLUGINS', data.plugins);
-      return data;
+      // Optimistic UI update
+      commit('SET_CURRENT_CHANNEL', channel);
+
+      try {
+        const data = await managerService.setUpdateChannel(channel);
+        commit('SET_CURRENT_CHANNEL', data.currentChannel);
+        commit('SET_PLUGINS', data.plugins);
+        return data;
+      } catch (error) {
+        // Revert on error
+        const currentData = await managerService.getUpdateChannel();
+        commit('SET_CURRENT_CHANNEL', currentData);
+        throw error;
+      }
     },
 
     /**
@@ -164,16 +174,25 @@ export const manager = {
     /**
      * Enable/disable/delete plugin
      */
-    async managePlugin({ commit }, { uid, action }) {
-      const data = await managerService.managePlugin(uid, action);
-
+    async managePlugin({ commit, state }, { uid, action }) {
       // Optimistic UI update
+      const previousStatus = state.plugins[uid]?.status;
       commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
 
-      // Update full plugins list
-      commit('SET_PLUGINS', data.plugins);
+      try {
+        const data = await managerService.managePlugin(uid, action);
 
-      return data;
+        // Update full plugins list
+        commit('SET_PLUGINS', data.plugins);
+
+        return data;
+      } catch (error) {
+        // Revert on error
+        if (previousStatus) {
+          commit('UPDATE_PLUGIN_STATUS', { uid, status: previousStatus });
+        }
+        throw error;
+      }
     },
 
     /**
