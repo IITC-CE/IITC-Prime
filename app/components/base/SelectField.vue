@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import SelectDialog from '@/components/base/SelectDialog';
+import { RadioDialog } from 'nativescript-radio-dialog';
 
 export default {
   props: {
@@ -71,29 +71,23 @@ export default {
      */
     async showSelectDialog() {
       try {
-        // Create modal options with callback for selection change
-        const options = {
-          props: {
-            items: this.items,
-            title: this.title,
-            initialSelectedIndex: this.currentSelectedIndex,
-            idField: this.idField,
-            textField: this.textField,
-            onSelectionChange: this.onSelectionChanged
-          },
-          fullscreen: false,
-          animated: true,
-          stretched: false,
-          android: {
-            cancelable: true
-          },
-          ios: {
-            presentationStyle: 2 // UIModalPresentationStyle.OverFullScreen
-          }
-        };
+        // Convert items to string array for radio dialog
+        const dialogItems = this.items.map(item => this.getItemText(item));
+        
+        const result = await RadioDialog.show({
+          title: this.title,
+          items: dialogItems,
+          selectedIndex: this.currentSelectedIndex >= 0 ? this.currentSelectedIndex : undefined,
+          cancelButtonText: 'Cancel'
+        });
 
-        // Show modal dialog (no need to wait for result)
-        this.$showModal(SelectDialog, options);
+        if (!result.cancelled) {
+          this.onSelectionChanged({
+            selectedIndex: result.selectedIndex,
+            selectedId: this.getItemId(this.items[result.selectedIndex]),
+            item: this.items[result.selectedIndex]
+          });
+        }
       } catch (error) {
         console.error("Error showing dialog:", error);
       }
@@ -124,6 +118,16 @@ export default {
         return item[this.textField] || 'Undefined';
       }
       return String(item);
+    },
+
+    /**
+     * Gets the ID for an item based on idField prop
+     */
+    getItemId(item) {
+      if (this.idField && typeof item === 'object') {
+        return item[this.idField];
+      }
+      return item;
     }
   }
 }
