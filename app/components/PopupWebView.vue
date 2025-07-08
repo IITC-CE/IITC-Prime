@@ -106,7 +106,14 @@ export default {
       if (this.transport) {
         const transport = this.transport.obj;
         transport?.setWebView(webview.android);
-        this.transport.sendToTarget();
+
+        try {
+          if (transport && transport.getWebView()) {
+            this.transport.sendToTarget();
+          }
+        } catch (error) {
+          console.error('Error sending transport message:', error);
+        }
       }
     }
   }

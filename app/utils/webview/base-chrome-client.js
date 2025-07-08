@@ -1,7 +1,9 @@
+import { isAndroid } from "@nativescript/core";
+
 /**
  * WebView chrome client implementation
  */
-export const BaseWebChromeClient = android.webkit.WebChromeClient.extend({
+export const BaseWebChromeClient = isAndroid ? android.webkit.WebChromeClient.extend({
   init: function () {},
 
   initWithComponent: function(component) {
@@ -50,4 +52,14 @@ export const BaseWebChromeClient = android.webkit.WebChromeClient.extend({
   cleanup: function() {
     this.component = null;
   }
-});
+}) : class BaseWebChromeClient {
+  init() {}
+  
+  initWithComponent(component) {
+    this.component = component;
+  }
+  
+  cleanup() {
+    this.component = null;
+  }
+};

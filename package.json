@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@nativescript/android": "^8.8.5",
+    "@nativescript/ios": "8.9.2",
     "@nativescript/webpack": "~5.0.22",
     "@triniwiz/nativescript-socketio": "^4.0.1",
     "nativescript-vue-template-compiler": "^2.9.3",
