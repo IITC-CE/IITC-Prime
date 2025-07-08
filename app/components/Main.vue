@@ -6,22 +6,26 @@
       <AbsoluteLayout class="page">
 
         <!-- Main content with WebView (hidden when debug is active) -->
-        <FlexboxLayout
-          flexDirection="column"
+        <GridLayout
+          rows="*, auto"
+          columns="*"
           class="main-content"
           v-show="!isDebugActive"
         >
           <AppWebView
             ref="appWebView"
-            flexGrow="1"
+            row="0"
+            col="0"
             @show-popup="handlePopup"
             @console-log="onConsoleLog"
           />
           <label
+            row="1"
+            col="0"
             v-show="sliding.isVisible"
             :height="layout.bottomPadding"
           />
-        </FlexboxLayout>
+        </GridLayout>
 
         <DebugConsole
           v-show="isDebugActive"
@@ -236,11 +240,6 @@ export default {
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
         switch (action.type) {
-          case "ui/setWebviewLoadStatus":
-            if (action.payload) {
-              await this.$store.dispatch('manager/inject');
-            }
-            break;
           case "map/triggerUserLocate":
             if (this.userLocation) {
               await this.userLocation.locate();

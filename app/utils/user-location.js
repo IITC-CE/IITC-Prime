@@ -2,7 +2,7 @@
 
 import store from "@/store";
 import { GPS } from '@nativescript-community/gps';
-import { startCompass, stopCompass, isCompassAvailable } from './platform';
+import { Compass } from 'nativescript-compass';
 
 const gps = new GPS();
 
@@ -12,12 +12,6 @@ export default class UserLocation {
     this.lastLocation = null;
     this.persistentZoom = false;
     this.compassEnabled = false;
-
-    // Compass filtering properties
-    this.filteredHeading = null;
-    this.filterStrength = 0.85; // Higher value = more smoothing (0.0 - 1.0)
-    this.lastCompassUpdate = 0;
-    this.compassThrottleInterval = 100; // Minimum time between updates in ms
 
     this.locationOptions = {
       timeout: 6000,
@@ -189,75 +183,37 @@ export default class UserLocation {
   }
 
   /**
-   * Apply low-pass filter to compass heading for smoother movement
-   * Handles 0°/360° boundary correctly
+   * Handle compass heading updates from plugin
    */
-  filterCompassHeading(rawHeading) {
-    // Initialize filter with first reading
-    if (this.filteredHeading === null) {
-      this.filteredHeading = rawHeading;
-      return rawHeading;
-    }
-
-    // Calculate shortest angular distance between readings
-    let delta = rawHeading - this.filteredHeading;
-
-    // Handle 360°/0° boundary crossing
-    if (delta > 180) {
-      delta -= 360;
-    } else if (delta < -180) {
-      delta += 360;
-    }
-
-    // Apply exponential smoothing filter
-    this.filteredHeading += delta * (1 - this.filterStrength);
-
-    // Normalize to 0-360 range
-    if (this.filteredHeading < 0) {
-      this.filteredHeading += 360;
-    } else if (this.filteredHeading >= 360) {
-      this.filteredHeading -= 360;
-    }
-
-    return this.filteredHeading;
-  }
-
-  /**
-   * Handle compass heading updates with filtering and throttling
-   */
-  handleCompassUpdate(heading) {
-    const currentTime = Date.now();
-
-    // Throttle updates to prevent too frequent calls
-    if (currentTime - this.lastCompassUpdate < this.compassThrottleInterval) {
-      return;
-    }
-
-    this.lastCompassUpdate = currentTime;
-
-    // Apply smoothing filter to reduce jitter
-    const smoothedHeading = this.filterCompassHeading(heading);
-    store.dispatch('map/userLocationOrientation', { smoothedHeading }).then();
+  handleCompassUpdate(reading) {
+    store.dispatch('map/userLocationOrientation', { direction: reading.heading }).then();
   }
 
   /**
    * Start orientation/compass tracking
    */
-  startOrientationTracking() {
-    if (!isCompassAvailable()) {
-      console.log('Compass not available on this device - orientation tracking disabled');
+  async startOrientationTracking() {
+    if (!Compass.isAvailable()) {
+      console.log('UserLocation: Compass not available on this device - orientation tracking disabled');
       return;
     }
 
-    const compassStarted = startCompass(
-      (heading) => this.handleCompassUpdate(heading),
-      200
-    );
+    try {
+      const compassStarted = await Compass.startUpdating(
+        {},
+        (reading) => this.handleCompassUpdate(reading),
+        (error) => {
+          console.error('UserLocation: Compass error:', error);
+        }
+      );
 
-    if (compassStarted) {
-      this.compassEnabled = true;
-    } else {
-      console.error('Failed to start compass tracking');
+      if (compassStarted) {
+        this.compassEnabled = true;
+      } else {
+        console.error('UserLocation: Failed to start compass tracking');
+      }
+    } catch (error) {
+      console.error('UserLocation: Error starting compass:', error);
     }
   }
 
@@ -266,11 +222,13 @@ export default class UserLocation {
    */
   stopOrientationTracking() {
     if (this.compassEnabled) {
-      const compassStopped = stopCompass();
-      if (compassStopped) {
-        this.compassEnabled = false;
-        this.filteredHeading = null;
-        this.lastCompassUpdate = 0;
+      try {
+        const compassStopped = Compass.stopUpdating();
+        if (compassStopped) {
+          this.compassEnabled = false;
+        }
+      } catch (error) {
+        console.error('UserLocation: Error stopping compass:', error);
       }
     }
   }
@@ -280,7 +238,12 @@ export default class UserLocation {
    */
   async toggleUserLocationPlugin(enable) {
     try {
-      const plugins = await store.dispatch('manager/getPlugins');
+      let plugins = store.getters['manager/plugins'];
+      if (!plugins || Object.keys(plugins).length === 0) {
+        await store.dispatch('manager/loadPlugins');
+        plugins = store.getters['manager/plugins'];
+      }
+
       const userLocationPlugin = Object.values(plugins).find(plugin =>
         plugin.uid && plugin.uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion"
       );

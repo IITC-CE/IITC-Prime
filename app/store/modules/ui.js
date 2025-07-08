@@ -111,8 +111,11 @@ export const ui = {
     setSlidingPanelWidth({ commit }, width) {
       commit('SET_SLIDING_PANEL_WIDTH', width);
     },
-    setWebviewLoadStatus({ commit }, status) {
+    async setWebviewLoadStatus({ commit, dispatch }, status) {
       commit('SET_WEBVIEW_LOAD_STATUS', status);
+      if (status) {
+        await dispatch('manager/inject', null, { root: true });
+      }
     },
     setProgress({ commit }, progress) {
       commit('SET_PROGRESS', progress);

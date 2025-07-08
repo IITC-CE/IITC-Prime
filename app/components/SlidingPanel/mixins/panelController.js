@@ -1,6 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 import { CoreTypes, Animation } from "@nativescript/core";
+import { AnimationPool, globalRAFBatcher } from '~/utils/performance-optimization';
 import { PanelPositions } from '../constants/panelPositions';
 import { PanelStateMachine } from '../state/panelStateMachine';
 
@@ -11,6 +12,24 @@ const PANEL_CONSTANTS = {
   ANIMATION_DURATION: 300,// Animation duration in milliseconds
   ANIMATION_CURVE: CoreTypes.AnimationCurve.easeInOut, // Animation easing curve
   LOCK_DELAY: 50         // Delay before unlocking animations (ms)
+};
+
+// Cache boundary calculations
+const BOUNDARY_CACHE = {
+  _cache: null,
+  _lastOrientation: null,
+
+  getBoundaries(isLandscape) {
+    if (!this._cache || this._lastOrientation !== isLandscape) {
+      this._cache = {
+        top: PanelPositions.TOP.value,
+        bottom: PanelPositions.BOTTOM.value,
+        middle: PanelPositions.MIDDLE?.value
+      };
+      this._lastOrientation = isLandscape;
+    }
+    return this._cache;
+  }
 };
 
 /**
@@ -33,7 +52,7 @@ export const panelControllerMixin = {
 
       // External gesture tracking
       externalPanStarted: false,
-      externalStartDeltaY: 0
+      externalStartDeltaY: 0,
     };
   },
 
@@ -99,13 +118,13 @@ export const panelControllerMixin = {
         // Calculate amount to move
         const translateY = targetTop - fromTop;
 
-        // Create animation
-        this.animationSet = new Animation([{
-          target: panel,
-          translate: { x: 0, y: translateY },
-          duration: PANEL_CONSTANTS.ANIMATION_DURATION,
-          curve: PANEL_CONSTANTS.ANIMATION_CURVE,
-        }]);
+        // Create animation using global object pool
+        const animConfig = AnimationPool.get();
+        animConfig[0].target = panel;
+        animConfig[0].translate.y = translateY;
+        animConfig[0].duration = PANEL_CONSTANTS.ANIMATION_DURATION;
+        animConfig[0].curve = PANEL_CONSTANTS.ANIMATION_CURVE;
+        this.animationSet = new Animation(animConfig);
 
         // Play animation and wait for completion
         await this.animationSet.play();
@@ -126,6 +145,10 @@ export const panelControllerMixin = {
         return fromTop;
       } finally {
         this.isAnimating = false;
+        // Return animation config to global pool and clear reference
+        if (this.animationSet && this.animationSet._animations) {
+          AnimationPool.return(this.animationSet._animations);
+        }
         this.animationSet = undefined;
       }
     },
@@ -136,9 +159,27 @@ export const panelControllerMixin = {
     cancelAnimation() {
       if (this.animationSet && this.isAnimating) {
         this.animationSet.cancel();
+        // Return animation config to global pool
+        if (this.animationSet._animations) {
+          AnimationPool.return(this.animationSet._animations);
+        }
         this.animationSet = undefined;
         this.isAnimating = false;
       }
+    },
+
+    /**
+     * Batch DOM updates using requestAnimationFrame
+     */
+    updatePanelPosition(newTop) {
+      const updateKey = `panel-${this.$options._uid || 'default'}`;
+      globalRAFBatcher.schedule(updateKey, () => {
+        const panel = this.getPanelElement();
+        if (panel) {
+          panel.top = newTop;
+          this.panelCurrentTop = newTop;
+        }
+      });
     },
 
     /**
@@ -226,9 +267,13 @@ export const panelControllerMixin = {
       } catch (error) {
         console.error('Error during panel move:', error);
       } finally {
-        setTimeout(() => {
-          this.isAnimationLocked = false;
-        }, PANEL_CONSTANTS.LOCK_DELAY);
+        if (this.createTimeout) {
+          this.createTimeout(() => {
+            if (this.isAnimationLocked !== undefined) {
+              this.isAnimationLocked = false;
+            }
+          }, PANEL_CONSTANTS.LOCK_DELAY);
+        }
       }
     },
 
@@ -265,9 +310,10 @@ export const panelControllerMixin = {
         this.cancelAnimation();
       }
 
-      // Get boundaries from current position values
-      const topBoundary = PanelPositions.TOP.value;
-      const bottomBoundary = PanelPositions.BOTTOM.value;
+      // Get cached boundaries to reduce object creation
+      const boundaries = BOUNDARY_CACHE.getBoundaries(this.isLandscapeOrientation);
+      const topBoundary = boundaries.top;
+      const bottomBoundary = boundaries.bottom;
 
       switch (args.state) {
         case 1: // Pan start
@@ -283,8 +329,8 @@ export const panelControllerMixin = {
             bottomBoundary
           );
 
-          panel.top = finalTop;
-          this.panelCurrentTop = finalTop;
+          // Use batched updates for smooth performance
+          this.updatePanelPosition(finalTop);
           break;
 
         case 3: // Pan end
@@ -308,9 +354,10 @@ export const panelControllerMixin = {
         this.cancelAnimation();
       }
 
-      // Get boundaries from current position values
-      const topBoundary = PanelPositions.TOP.value;
-      const bottomBoundary = PanelPositions.BOTTOM.value;
+      // Get cached boundaries to reduce object creation
+      const boundaries = BOUNDARY_CACHE.getBoundaries(this.isLandscapeOrientation);
+      const topBoundary = boundaries.top;
+      const bottomBoundary = boundaries.bottom;
 
       switch (args.state) {
         case 1: // Pan start
@@ -340,8 +387,8 @@ export const panelControllerMixin = {
           );
 
           // Update panel position
-          panel.top = finalTop;
-          this.panelCurrentTop = finalTop;
+          // Use batched updates for smooth performance
+          this.updatePanelPosition(finalTop);
           break;
 
         case 3: // Pan end
@@ -358,6 +405,20 @@ export const panelControllerMixin = {
     updateStateMachineSettings() {
       this.stateMachine.setOrientation(this.isLandscapeOrientation);
       this.stateMachine.setSnapThresholds(this.snapThresholds);
+    },
+
+    /**
+     * Cleanup function to prevent memory leaks
+     */
+    panelControllerCleanup() {
+      this.cancelAnimation();
+
+      // Cancel pending RAF updates using global batcher
+      const updateKey = `panel-${this.$options._uid || 'default'}`;
+      globalRAFBatcher.cancel(updateKey);
+
+      this.stateMachine = null;
+      this.animationSet = null;
     }
   },
 

@@ -20,10 +20,13 @@ import WebViewExt from '@nota/nativescript-webview-ext/vue'
 import { isAndroid } from "@nativescript/core";
 import { applyWebViewSettings } from "@/utils/webview/webview-settings";
 import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
+import { performanceOptimizationMixin } from '~/utils/performance-optimization';
 import { mapState } from 'vuex';
 
 export default {
   name: 'BaseWebView',
+
+  mixins: [performanceOptimizationMixin],
 
   props: {
     src: {
@@ -48,6 +51,7 @@ export default {
     return {
       webViewInstance: null,
       chromeClient: null,
+      _webViewRef: null,
       isLoading: false,
       hasError: false,
       errorDetails: null
@@ -96,6 +100,13 @@ export default {
     // WebView State Management
     onWebViewLoaded(args) {
       this.webViewInstance = args.object;
+
+      try {
+        this._webViewRef = new WeakRef(this.webViewInstance);
+      } catch (error) {
+        console.error('Failed to create WeakRef for WebView:', error);
+      }
+
       this.setupWebView();
 
       this.$emit('webview-loaded', {
@@ -204,15 +215,15 @@ export default {
 
     // Cleanup
     cleanupWebView() {
-      if (this.webViewInstance && isAndroid) {
+      if (this.webViewInstance) {
         try {
-          if (this.chromeClient) {
+          if (this.chromeClient && isAndroid) {
             this.chromeClient.cleanup();
             this.webViewInstance.android?.setWebChromeClient(null);
             this.chromeClient = null;
           }
 
-          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading'];
+          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading', 'console:log'];
           events.forEach(event => {
             try {
               this.webViewInstance.removeEventListener(event);
@@ -221,28 +232,52 @@ export default {
             }
           });
 
-          const androidWebView = this.webViewInstance.android;
-          if (androidWebView) {
-            androidWebView.stopLoading(); // Stop any ongoing loads
-            androidWebView.clearHistory(); // Clear navigation history
-            androidWebView.clearCache(true); // Clear cache
-            androidWebView.loadUrl("about:blank"); // Clear all content
-            androidWebView.destroy(); // Destroy the WebView
+          if (isAndroid) {
+            const androidWebView = this.webViewInstance.android;
+            if (androidWebView) {
+              androidWebView.stopLoading(); // Stop any ongoing loads
+              androidWebView.clearHistory(); // Clear navigation history
+              androidWebView.clearCache(true); // Clear cache
+              androidWebView.clearFormData(); // Clear form data
+              androidWebView.clearMatches(); // Clear search matches
+              androidWebView.loadUrl("about:blank"); // Clear all content
+
+              try {
+                androidWebView.setWebViewClient(null);
+                androidWebView.setWebChromeClient(null);
+                androidWebView.destroy(); // Destroy the WebView
+              } catch (destroyError) {
+                console.error("Error during WebView destroy:", destroyError);
+              }
+            }
           }
 
+          // Clear instance reference
           this.webViewInstance = null;
           this.isLoading = false;
           this.hasError = false;
           this.errorDetails = null;
+
         } catch (e) {
-          console.error("Error during cleanup:", e);
+          console.error("Error during WebView cleanup:", e);
         }
       }
     }
   },
 
   beforeDestroy() {
-    this.cleanupWebView();
+    try {
+      this.cleanupWebView();
+
+      if (this.performanceCleanup) {
+        this.performanceCleanup();
+      }
+
+      this._webViewRef = null;
+      this.chromeClient = null;
+    } catch (error) {
+      console.error('Error during BaseWebView cleanup:', error);
+    }
   }
 }
 </script>

@@ -2,18 +2,23 @@
 
 <template>
   <AbsoluteLayout :width="panelWidth">
-    <FlexboxLayout
+    <GridLayout
       ref="panel"
       class="sliding-panel"
       :top="panelCurrentTop"
       :height="panelHeight"
+      rows="*"
+      columns="*"
       @pan="handlePanGesture">
 
       <AppControlPanel
         :max-height="appControlPanelMaxHeight"
+        verticalAlignment="top"
+        row="0"
+        col="0"
       />
 
-    </FlexboxLayout>
+    </GridLayout>
     <MapStateBar
       :top="screenHeight - mapStateBarHeight"
       width="100%"
@@ -25,9 +30,10 @@
 </template>
 
 <script>
-import AppControlPanel from './components/AppControlPanel/AppControlPanel.vue';
+import AppControlPanel from '@/components/AppControlPanel/AppControlPanel.vue';
 import MapStateBar from "./MapStateBar.vue";
 import { panelControllerMixin } from "./mixins/panelController";
+import { performanceOptimizationMixin, optimizeMapState } from '~/utils/performance-optimization';
 import { layoutService } from '~/utils/layout-service';
 import { PanelPositions } from './constants/panelPositions';
 import { mapState, mapActions, mapGetters } from 'vuex';
@@ -35,7 +41,7 @@ import { mapState, mapActions, mapGetters } from 'vuex';
 export default {
   name: 'SlidingPanel',
 
-  mixins: [panelControllerMixin],
+  mixins: [performanceOptimizationMixin, panelControllerMixin],
 
   components: {
     AppControlPanel,
@@ -67,26 +73,22 @@ export default {
 
   computed: {
     appControlPanelMaxHeight() {
-      return this.panelHeight - this.mapStateBarHeight;
+      const currentPanelHeight = this.screenHeight - this.panelCurrentTop;
+      return currentPanelHeight - this.mapStateBarHeight;
     },
 
-    ...mapState({
-      activePanel: state => state.ui.activePanel,
-      panelCommand: state => state.ui.panelCommand,
-      panelHeight: state => state.ui.panelHeight,
-      panelWidth: state => state.ui.slidingPanelWidth,
-      mapStateBarHeight: state => state.ui.mapStateBarHeight,
-      panelVisibleHeight: state => state.ui.panelVisibleHeight,
-      isLandscapeOrientation: state => state.ui.isLandscapeOrientation,
-
-      // Panel state from centralized location
-      panelState: state => state.ui.panelState,
-      isPanelOpen: state => state.ui.panelState.isOpen,
-      storePanelPosition: state => state.ui.panelState.position,
-      panelPositionValue: state => state.ui.panelState.positionValue,
-      panelPositionValues: state => state.ui.panelState.positions,
-      storeSnapThresholds: state => state.ui.panelState.snapThresholds
-    }),
+    ...mapState(optimizeMapState({
+      activePanel: 'ui.activePanel',
+      panelCommand: 'ui.panelCommand',
+      panelHeight: 'ui.panelHeight',
+      panelWidth: 'ui.slidingPanelWidth',
+      mapStateBarHeight: 'ui.mapStateBarHeight',
+      panelVisibleHeight: 'ui.panelVisibleHeight',
+      isLandscapeOrientation: 'ui.isLandscapeOrientation',
+      isPanelOpen: 'ui.panelState.isOpen',
+      storePanelPosition: 'ui.panelState.position',
+      storeSnapThresholds: 'ui.panelState.snapThresholds'
+    })),
 
     ...mapGetters({
       isPanelClosed: 'ui/isPanelClosed',
@@ -344,8 +346,18 @@ export default {
   },
 
   beforeDestroy() {
-    if (this.removeLayoutListener) {
-      this.removeLayoutListener();
+    try {
+      if (this.removeLayoutListener) {
+        this.removeLayoutListener();
+      }
+
+      if (this.panelControllerCleanup) {
+        this.panelControllerCleanup();
+      }
+
+      this.performanceCleanup();
+    } catch (error) {
+      console.error('Error during SlidingPanel cleanup:', error);
     }
   }
 };

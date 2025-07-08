@@ -1,45 +1,52 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <FlexboxLayout flexDirection="column">
+  <StackLayout>
 
-    <StackLayout orientation="horizontal" class="block">
-
-      <StackLayout
-        class="column-stack column-stack--first half"
+    <GridLayout
+      columns="*, 8, *"
+      rows="auto, auto"
+      class="block"
+      v-if="(highlightersList && highlightersList.length > 0) || (baseLayersList && baseLayersList.length > 0)"
+    >
+      <!-- Highlighter column -->
+      <Label
+        col="0"
+        row="0"
+        class="select-label"
+        text="Highlighter"
         v-if="highlightersList && highlightersList.length > 0"
-      >
-        <Label class="select-label" text="Highlighter" />
-        <SelectField
-          col="0"
-          row="0"
-          colSpan="2"
-          :items="highlightersList"
-          :selectedIndex="highlightersList.indexOf(highlighterSelected)"
-          title="Select Highlighter"
-          @change="onHighlighterSelected"
-        />
-      </StackLayout>
+      />
+      <SelectField
+        col="0"
+        row="1"
+        :items="highlightersList"
+        :selectedIndex="highlightersList.indexOf(highlighterSelected)"
+        title="Select Highlighter"
+        @change="onHighlighterSelected"
+        v-if="highlightersList && highlightersList.length > 0"
+      />
 
-      <StackLayout
-        class="column-stack column-stack--last half"
+      <!-- Base layer column -->
+      <Label
+        col="2"
+        row="0"
+        class="select-label"
+        text="Base layer"
         v-if="baseLayersList && baseLayersList.length > 0"
-      >
-        <Label class="select-label" text="Base layer" />
-        <SelectField
-          col="0"
-          row="0"
-          colSpan="2"
-          :items="baseLayersList"
-          :selectedIndex="baseLayerSelected"
-          idField="layerId"
-          textField="name"
-          title="Select Base Layer"
-          @change="onBaseLayerSelected"
-        />
-      </StackLayout>
-
-    </StackLayout>
+      />
+      <SelectField
+        col="2"
+        row="1"
+        :items="baseLayersList"
+        :selectedIndex="baseLayerSelected"
+        idField="layerId"
+        textField="name"
+        title="Select Base Layer"
+        @change="onBaseLayerSelected"
+        v-if="baseLayersList && baseLayersList.length > 0"
+      />
+    </GridLayout>
 
     <GridLayout
       columns="*, *, *, *, *, *, *, *, *"
@@ -59,40 +66,38 @@
         />
     </GridLayout>
 
-    <FlexboxLayout flexDirection="column" class="block">
-      <StackLayout
-        orientation="horizontal"
+    <StackLayout class="block">
+      <GridLayout
         v-for="(row, rowIndex) in pairedItemRows"
         :key="'row-' + rowIndex"
+        columns="*, 8, *"
+        rows="auto"
+        class="paired-row"
       >
-        <StackLayout
+        <GridLayout
           v-for="(item, colIndex) in row"
           :key="item.layerId"
-          :class="['column-stack half', colIndex === 0 ? 'column-stack--first' : 'column-stack--last']"
+          :col="colIndex * 2"
+          class="btn-primary"
+          columns="*, 50"
+          rows="50"
         >
-          <GridLayout
-            class="btn-primary"
-            columns="*, 50"
-            rows="50"
-          >
-            <Label
-              class="overlay-item-label"
-              :text="item.name"
-              @tap="onOverlayToggle(item.index, true)"
-              col="0"
-              row="0"
-            />
-            <Switch
-              class="switch"
-              :ref="'overlaySwitch' + item.index"
-              :checked="item.active"
-              @checkedChange="onOverlayToggle(item.index)"
-              col="1"
-              row="0"
-            />
-          </GridLayout>
-        </StackLayout>
-      </StackLayout>
+          <Label
+            class="overlay-item-label"
+            :text="item.name"
+            @tap="onOverlayToggle(item.index, 'label')"
+            col="0"
+            row="0"
+          />
+          <Switch
+            class="switch"
+            :checked="item.active"
+            @checkedChange="args => onOverlayToggle(item.index, args.value)"
+            col="1"
+            row="0"
+          />
+        </GridLayout>
+      </GridLayout>
 
       <GridLayout
         v-for="layer in singleItems"
@@ -104,21 +109,20 @@
         <Label
           class="overlay-item-label"
           :text="layer.name"
-          @tap="onOverlayToggle(layer.index, true)"
+          @tap="onOverlayToggle(layer.index, 'label')"
           col="0"
           row="0"
         />
         <Switch
           class="switch"
-          :ref="'overlaySwitch' + layer.index"
           :checked="layer.active"
-          @checkedChange="onOverlayToggle(layer.index)"
+          @checkedChange="args => onOverlayToggle(layer.index, args.value)"
           col="1"
           row="0"
         />
       </GridLayout>
-    </FlexboxLayout>
-  </FlexboxLayout>
+    </StackLayout>
+  </StackLayout>
 </template>
 
 <script>
@@ -178,21 +182,16 @@
         this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
       },
 
-      onOverlayToggle(index, isLabelTap = false) {
-        const switchRef = this.$refs['overlaySwitch' + index];
-
-        if (!switchRef || !switchRef.length) {
-          return;
-        }
-
-        if (isLabelTap) {
-          // Toggle switch state when label is tapped
-          const switchEl = switchRef[0].nativeView;
-          switchEl.checked = !switchEl.checked;
+      onOverlayToggle(index, value) {
+        if (typeof value === 'boolean') {
+          // Direct value from switch event
+          this.$store.dispatch('map/setOverlayLayerProperty', {index, active: value});
         } else {
-          // Update store based on switch state
-          const active = switchRef[0].nativeView.checked;
-          this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
+          // Label tap - toggle current state
+          const currentLayer = this.overlayLayers[index];
+          if (currentLayer) {
+            this.$store.dispatch('map/setOverlayLayerProperty', {index, active: !currentLayer.active});
+          }
         }
       },
 

@@ -45,8 +45,9 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import { fuzzysearch } from 'scored-fuzzysearch';
+import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
 import CategoriesList from './components/plugins/CategoriesList';
 import PluginsList from './components/plugins/PluginsList';
@@ -60,16 +61,25 @@ export default {
     PluginsList
   },
 
+  mixins: [performanceOptimizationMixin],
+
   data() {
     return {
       searchQuery: '',
       activeCategory: 'All',
-      allPlugins: {},
-      isPluginsVisible: false
+      isPluginsVisible: false,
+
+      _searchDebouncer: createDebouncer(300)
     };
   },
 
   computed: {
+    ...mapGetters('manager', ['plugins', 'lastPluginUpdate']),
+
+    allPlugins() {
+      return this.plugins;
+    },
+
     // Check if data is available
     hasData() {
       return Object.keys(this.allPlugins).length > 0;
@@ -134,7 +144,7 @@ export default {
 
   methods: {
     ...mapActions('manager', [
-      'getPlugins',
+      'loadPlugins',
       'managePlugin'
     ]),
 
@@ -152,19 +162,27 @@ export default {
 
     searchPlugins(query, plugins) {
       const results = [];
+      const normalizedQuery = query.toLowerCase();
 
       // Single pass: calculate score and collect matching plugins
       for (let i = 0; i < plugins.length; i++) {
         const plugin = plugins[i];
-        const score = Math.max(
-          fuzzysearch(query, plugin.name || ''),
-          fuzzysearch(query, plugin.description || ''),
-          fuzzysearch(query, plugin.category || '')
-        );
 
-        if (score > 0) {
-          // Store both plugin and score for sorting
-          results.push([plugin, score]);
+        // Quick pre-filter for exact matches (faster than fuzzy search)
+        const name = (plugin.name || '').toLowerCase();
+        const description = (plugin.description || '').toLowerCase();
+        const category = (plugin.category || '').toLowerCase();
+
+        if (name.includes(normalizedQuery) || description.includes(normalizedQuery) || category.includes(normalizedQuery)) {
+          const score = Math.max(
+            fuzzysearch(query, plugin.name || ''),
+            fuzzysearch(query, plugin.description || ''),
+            fuzzysearch(query, plugin.category || '')
+          );
+
+          if (score > 0) {
+            results.push([plugin, score]);
+          }
         }
       }
 
@@ -196,15 +214,10 @@ export default {
           uid: plugin.uid,
           action: newStatus
         });
-
-        // Reload plugins data to get updated state
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
       } catch (error) {
         console.error('Failed to toggle plugin:', error);
         // On error, reload data to ensure UI reflects actual state
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
+        await this.loadPlugins();
       }
     },
 
@@ -213,8 +226,7 @@ export default {
 
       try {
         // Load plugins data
-        const plugins = await this.getPlugins();
-        this.allPlugins = plugins;
+        await this.loadPlugins();
       } catch (error) {
         console.error('Failed to load plugins:', error);
       }
@@ -228,6 +240,7 @@ export default {
     // Plugins will be shown in onNavigatedTo event
     this.isPluginsVisible = false;
   },
+
 };
 </script>
 

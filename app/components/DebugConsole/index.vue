@@ -53,6 +53,7 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
 import touchInteractionMixin from './mixins/touchInteraction';
 import clipboardUtilsMixin from './mixins/clipboardUtils';
@@ -64,6 +65,7 @@ export default {
   },
 
   mixins: [
+    performanceOptimizationMixin,
     logFormattingMixin,
     touchInteractionMixin,
     clipboardUtilsMixin
@@ -84,25 +86,41 @@ export default {
     return {
       command: '',
       isAtBottom: true,
-      scrollTimeout: null,
       showControls: false, // Controls UI elements visibility
       logsVisible: false,  // Controls whether logs should be shown or not
+
+      _logFormattingCache: new Cache(200, 600000), // Cache formatted logs for 10 minutes
+      _displayLogsCache: null,
+      _lastLogsHash: null
     }
   },
 
   computed: {
-    ...mapState({
-      logs: state => state.debug.logs,
-      commandHistory: state => state.debug.commandHistory,
-      historyPosition: state => state.debug.historyPosition
-    }),
+    ...mapState(optimizeMapState({
+      logs: 'debug.logs',
+      commandHistory: 'debug.commandHistory',
+      historyPosition: 'debug.historyPosition'
+    })),
 
     // Display logs only when both component is visible and logs should be shown
     displayLogs() {
-      if (this.isVisible && this.logsVisible) {
-        return this.logs.map((log, index) => ({ ...log, index }));
+      if (!this.isVisible || !this.logsVisible) {
+        return [];
       }
-      return [];
+
+      // Create hash of logs for cache invalidation
+      const logsHash = this.logs.length + '-' + (this.logs[0]?.timestamp || 0) + '-' + (this.logs[this.logs.length - 1]?.timestamp || 0);
+
+      // Return cached result if logs haven't changed
+      if (this._lastLogsHash === logsHash && this._displayLogsCache) {
+        return this._displayLogsCache;
+      }
+
+      // Compute new display logs
+      this._displayLogsCache = this.logs.map((log, index) => ({ ...log, index }));
+      this._lastLogsHash = logsHash;
+
+      return this._displayLogsCache;
     }
   },
 
@@ -119,7 +137,7 @@ export default {
         });
 
         // Add logs with delay to prevent UI freezing
-        setTimeout(() => {
+        this.createTimeout(() => {
           this.logsVisible = true;
         }, 10);
       } else {
@@ -135,11 +153,9 @@ export default {
     // When logs change and console is visible, update and scroll
     displayLogs(newLogs) {
       if (this.isVisible && this.isAtBottom) {
-        // Schedule scroll to bottom for next UI update
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 0);
+        // Use RAF batching for smooth scrolling
+        this.scheduleUpdate(() => {
+          this.scrollToBottom();
         });
       }
     },
@@ -183,15 +199,10 @@ export default {
     handleScroll(args) {
       if (!this.isVisible) return;
 
-      // Clear previous timeout if it exists
-      if (this.scrollTimeout) {
-        clearTimeout(this.scrollTimeout);
-      }
-
-      // Set a timeout to check if we're at the bottom after scrolling stops
-      this.scrollTimeout = setTimeout(() => {
+      // Use RAF batching with debouncing for scroll position checks
+      this.scheduleUpdate(() => {
         this.checkScrollPosition();
-      }, 200);
+      });
     },
 
     // Additional handler for scrollEnd event
