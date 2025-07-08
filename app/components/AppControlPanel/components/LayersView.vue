@@ -53,17 +53,17 @@
       rows="50"
       class="block"
     >
+      <template v-for="(layer, index) in overlayLayers" :key="layer.layerId">
         <SVGView
+          v-if="index <= 8"
           class="overlay-portal"
           :class="{ 'overlay-portal--active': layer.active === true }"
           :col="index"
-          v-for="(layer, index) in overlayLayers"
-          v-bind:key="layer.layerId"
-          v-if="index <= 8"
           @tap="onOverlayPortalToggle($event, index)"
           :src="'~/assets/icons/portals/portal_L'+index+'_'+String(layer.active)+'.svg'"
           stretch="aspectFit"
         />
+      </template>
     </GridLayout>
 
     <StackLayout class="block">

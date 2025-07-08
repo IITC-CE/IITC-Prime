@@ -116,7 +116,7 @@ export const buttonGestureHandlerMixin = {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this._buttonGestureHandler) {
       this._buttonGestureHandler.cleanup();
     }

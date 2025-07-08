@@ -11,7 +11,7 @@
       <MDButton
         col="0"
         class="fa control-button"
-        :text="'fa-arrow-left' | fonticon"
+        :text="$filters.fonticon('fa-arrow-left')"
         variant="flat"
         rippleColor="#ffffff"
         @tap="handleClose"
@@ -19,7 +19,7 @@
       <MDButton
         col="2"
         class="fa control-button trash"
-        :text="'fa-trash' | fonticon"
+        :text="$filters.fonticon('fa-trash')"
         variant="flat"
         rippleColor="#ffffff"
         @tap="$emit('clear')"
@@ -27,7 +27,7 @@
       <MDButton
         col="3"
         class="fa control-button"
-        :text="'fa-arrow-up' | fonticon"
+        :text="$filters.fonticon('fa-arrow-up')"
         variant="flat"
         rippleColor="#ffffff"
         @tap="navigateHistoryUp"
@@ -35,7 +35,7 @@
       <MDButton
         col="4"
         class="fa control-button"
-        :text="'fa-arrow-down' | fonticon"
+        :text="$filters.fonticon('fa-arrow-down')"
         variant="flat"
         rippleColor="#ffffff"
         @tap="navigateHistoryDown"
@@ -59,7 +59,7 @@
       <MDButton
         col="1"
         class="fa btn-primary send-button"
-        :text="'fa-paper-plane' | fonticon"
+        :text="$filters.fonticon('fa-paper-plane')"
         variant="flat"
         rippleColor="#ffffff"
         @tap="executeCommand"

@@ -1,7 +1,8 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <Page actionBarHidden="true">
+  <Frame>
+    <Page actionBarHidden="true">
     <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
       <AbsoluteLayout class="page">
 
@@ -49,7 +50,8 @@
         />
       </AbsoluteLayout>
     </RootLayout>
-  </Page>
+    </Page>
+  </Frame>
 </template>
 
 <script>
@@ -250,7 +252,7 @@ export default {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // Clean up all listeners
     if (this.unsubscribeStore) {
       this.unsubscribeStore();

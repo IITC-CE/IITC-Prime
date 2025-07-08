@@ -18,7 +18,7 @@
         class="btn"
         @tap="openSettings"
       >
-        <Label class="fa icon" :text="'fa-tools' | fonticon" horizontalAlignment="center" />
+        <Label class="fa icon" :text="$filters.fonticon('fa-tools')" horizontalAlignment="center" />
         <Label class="text" text="Settings" horizontalAlignment="center" />
       </StackLayout>
 
@@ -28,7 +28,7 @@
         class="btn"
         @tap="openPlugins"
       >
-        <Label class="fa icon" :text="'fa-toolbox' | fonticon" horizontalAlignment="center" />
+        <Label class="fa icon" :text="$filters.fonticon('fa-toolbox')" horizontalAlignment="center" />
         <Label class="text" text="Plugins" horizontalAlignment="center" />
       </StackLayout>
 
@@ -39,7 +39,7 @@
         :class="{ 'active': isDebugActive }"
         @tap="toggleDebugMode"
       >
-        <Label class="fa icon" :class="{ 'active-icon': isDebugActive }" :text="'fa-terminal' | fonticon" horizontalAlignment="center" />
+        <Label class="fa icon" :class="{ 'active-icon': isDebugActive }" :text="$filters.fonticon('fa-terminal')" horizontalAlignment="center" />
         <Label class="text" :class="{ 'active-text': isDebugActive }" text="Debug" horizontalAlignment="center" />
       </StackLayout>
 
@@ -49,7 +49,7 @@
         class="btn"
         @tap="reloadWebView"
       >
-        <Label class="fa icon" :text="'fa-redo' | fonticon" horizontalAlignment="center" />
+        <Label class="fa icon" :text="$filters.fonticon('fa-redo')" horizontalAlignment="center" />
         <Label class="text" text="Reload IITC" horizontalAlignment="center" />
       </StackLayout>
     </GridLayout>
@@ -63,7 +63,7 @@
         rows="50"
         @tap="switchToPane(pane.name)"
       >
-        <Label class="fa icon" :text="pane.icon | fonticon" col="0" row="0" />
+        <Label class="fa icon" :text="$filters.fonticon(pane.icon)" col="0" row="0" />
         <Label class="pane-item-label" :text="pane.label" col="1" row="0" />
       </GridLayout>
     </StackLayout>
@@ -73,6 +73,7 @@
 
 <script>
   import { mapState } from 'vuex';
+  import { $navigateTo } from 'nativescript-vue';
   import SettingsView from '@/components/Settings/SettingsView';
   import PluginsView from '@/components/Settings/PluginsView';
 
@@ -99,7 +100,7 @@
 
     methods: {
       openSettings() {
-        this.$navigateTo(this.settingsScreen, {
+        $navigateTo(this.settingsScreen, {
           animated: true,
           transition: {
             name: 'slideLeft',
@@ -117,7 +118,7 @@
         this.$store.dispatch('ui/toggleDebugMode');
       },
       openPlugins() {
-        this.$navigateTo(this.pluginsScreen, {
+        $navigateTo(this.pluginsScreen, {
           animated: true,
           transition: {
             name: 'slideLeft',

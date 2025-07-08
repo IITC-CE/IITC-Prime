@@ -23,7 +23,7 @@
         rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && (activeButton === 'quick' || activeButton === null) }"
-        :text="'fa-bars' | fonticon"
+        :text="$filters.fonticon('fa-bars')"
         @tap="handleControlButtonTap('quick', $event)"
         @pan="handleControlButtonPan('quick', $event)"
       />
@@ -35,7 +35,7 @@
         rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'search' }"
-        :text="'fa-search' | fonticon"
+        :text="$filters.fonticon('fa-search')"
         @tap="handleControlButtonTap('search', $event)"
         @pan="handleControlButtonPan('search', $event)"
       />
@@ -46,7 +46,7 @@
         variant="flat"
         rippleColor="#ffffff"
         class="fa app-control-button"
-        :text="locationButtonIcon | fonticon"
+        :text="$filters.fonticon(locationButtonIcon)"
         @tap="onLocate"
       />
 
@@ -57,7 +57,7 @@
         rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
-        :text="'fa-layer-group' | fonticon"
+        :text="$filters.fonticon('fa-layer-group')"
         @tap="handleControlButtonTap('layers', $event)"
         @pan="handleControlButtonPan('layers', $event)"
       />

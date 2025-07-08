@@ -24,7 +24,7 @@
       <Label
         v-if="type === 'nav'"
         class="fa settings-nav-icon"
-        :text="'fa-chevron-right' | fonticon"
+        :text="$filters.fonticon('fa-chevron-right')"
         once="true"
       />
 
@@ -47,6 +47,8 @@
 </template>
 
 <script>
+import { $navigateTo } from 'nativescript-vue';
+
 export default {
   name: 'SettingsItem',
 
@@ -94,7 +96,7 @@ export default {
     onTap() {
       if (this.type === 'nav' && this.targetScreen) {
         // Handle navigation
-        this.$navigateTo(this.targetScreen, {
+        $navigateTo(this.targetScreen, {
           props: this.navProps,
           animated: true,
           transition: {

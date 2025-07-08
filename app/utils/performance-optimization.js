@@ -304,7 +304,7 @@ export const performanceOptimizationMixin = {
     this._rafUpdateKey = `${this.$options.name || 'component'}-${Date.now()}-${Math.random()}`;
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.performanceCleanup();
   },
 

@@ -14,19 +14,22 @@
     <!-- Plugins collection -->
     <CollectionView
       row="1"
-      :items="combinedItems"
-      @itemTap="onItemTap"
-      itemLoadingCachingStrategy="queue"
-      :itemTemplateSelector="selectItemTemplate"
       class="plugins-list"
+      :items="combinedItems"
+      :itemTemplateSelector="templateSelector"
+      @itemTap="onItemTap"
     >
       <!-- Template for section headers -->
-      <v-template name="section-header">
-        <Label :text="item.title" class="section-header" once="true" />
-      </v-template>
+      <template #section-header="{ item }">
+        <Label
+          :text="item.title"
+          class="section-header"
+          once="true"
+        />
+      </template>
 
       <!-- Template for plugin items -->
-      <v-template name="plugin">
+      <template #plugin="{ item }">
         <GridLayout
           class="plugin-item"
           columns="auto, *, auto"
@@ -58,7 +61,7 @@
             isUserInteractionEnabled="false"
           />
         </GridLayout>
-      </v-template>
+      </template>
     </CollectionView>
 
     <!-- Empty list message -->
@@ -153,7 +156,7 @@ export default {
 
   methods: {
     // Template selector function - determines which template to use
-    selectItemTemplate(item, index, items) {
+    templateSelector(item, index, items) {
       return item.type === 'section-header' ? 'section-header' : 'plugin';
     },
 
