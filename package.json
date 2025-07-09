@@ -7,7 +7,8 @@
     "android": "ns run android",
     "clean": "ns clean",
     "build": "ns build android --release",
-    "lint": "ns build android --no-copy && echo 'Syntax check passed'"
+    "lint": "ns build android --no-copy && echo 'Syntax check passed'",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@bezlepkin/nativescript-keyboard-opening": "^1.0.1",
@@ -44,6 +45,8 @@
     "@nativescript/ios": "8.9.2",
     "@nativescript/webpack": "~5.0.22",
     "@triniwiz/nativescript-socketio": "^4.0.1",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "typescript": "^5.6.3",
     "util": "^0.12.5"
   }
