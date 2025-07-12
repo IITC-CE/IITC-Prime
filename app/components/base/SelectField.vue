@@ -73,7 +73,7 @@ export default {
       try {
         // Convert items to string array for radio dialog
         const dialogItems = this.items.map(item => this.getItemText(item));
-        
+
         const result = await RadioDialog.show({
           title: this.title,
           items: dialogItems,
@@ -151,7 +151,7 @@ export default {
 }
 
 .select-icon {
-  width: 18;
+  width: 24;
   font-size: 14;
   text-align: center;
   color: $primary-light;

@@ -1,7 +1,6 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
-import { CoreTypes, Animation } from "@nativescript/core";
-import { AnimationPool, globalRAFBatcher } from '~/utils/performance-optimization';
+import { CoreTypes } from "@nativescript/core";
 import { PanelPositions } from '../constants/panelPositions';
 import { PanelStateMachine } from '../state/panelStateMachine';
 
@@ -108,28 +107,19 @@ export const panelControllerMixin = {
         // Lock animation to prevent interference
         this.isAnimating = true;
 
-        // Force element into a consistent starting state
-        panel.translateY = 0;
-        panel.top = fromTop;
-
         // Ensure our local tracking is consistent
         this.panelCurrentTop = fromTop;
 
         // Calculate amount to move
         const translateY = targetTop - fromTop;
 
-        // Create animation using global object pool
-        const animConfig = AnimationPool.get();
-        animConfig[0].target = panel;
-        animConfig[0].translate.y = translateY;
-        animConfig[0].duration = PANEL_CONSTANTS.ANIMATION_DURATION;
-        animConfig[0].curve = PANEL_CONSTANTS.ANIMATION_CURVE;
-        this.animationSet = new Animation(animConfig);
+        await panel.animate({
+          translate: { x: 0, y: translateY },
+          duration: PANEL_CONSTANTS.ANIMATION_DURATION,
+          curve: PANEL_CONSTANTS.ANIMATION_CURVE
+        });
 
-        // Play animation and wait for completion
-        await this.animationSet.play();
-
-        // Set final position with direct manipulation
+        // Set final position after animation
         panel.translateY = 0;
         panel.top = targetTop;
 
@@ -145,11 +135,6 @@ export const panelControllerMixin = {
         return fromTop;
       } finally {
         this.isAnimating = false;
-        // Return animation config to global pool and clear reference
-        if (this.animationSet && this.animationSet._animations) {
-          AnimationPool.return(this.animationSet._animations);
-        }
-        this.animationSet = undefined;
       }
     },
 
@@ -157,29 +142,25 @@ export const panelControllerMixin = {
      * Cancel current animation
      */
     cancelAnimation() {
-      if (this.animationSet && this.isAnimating) {
-        this.animationSet.cancel();
-        // Return animation config to global pool
-        if (this.animationSet._animations) {
-          AnimationPool.return(this.animationSet._animations);
+      if (this.isAnimating) {
+        // Cancel animation on the panel element
+        const panel = this.getPanelElement();
+        if (panel && panel.cancelAnimation) {
+          panel.cancelAnimation();
         }
-        this.animationSet = undefined;
         this.isAnimating = false;
       }
     },
 
     /**
-     * Batch DOM updates using requestAnimationFrame
+     * Update panel position immediately during gestures
      */
     updatePanelPosition(newTop) {
-      const updateKey = `panel-${this.$options._uid || 'default'}`;
-      globalRAFBatcher.schedule(updateKey, () => {
-        const panel = this.getPanelElement();
-        if (panel) {
-          panel.top = newTop;
-          this.panelCurrentTop = newTop;
-        }
-      });
+      const panel = this.getPanelElement();
+      if (panel) {
+        panel.top = newTop;
+        this.panelCurrentTop = newTop;
+      }
     },
 
     /**
@@ -329,7 +310,7 @@ export const panelControllerMixin = {
             bottomBoundary
           );
 
-          // Use batched updates for smooth performance
+          // Update position immediately for responsive gesture
           this.updatePanelPosition(finalTop);
           break;
 
@@ -387,7 +368,7 @@ export const panelControllerMixin = {
           );
 
           // Update panel position
-          // Use batched updates for smooth performance
+          // Update position immediately for responsive gesture
           this.updatePanelPosition(finalTop);
           break;
 
@@ -412,13 +393,7 @@ export const panelControllerMixin = {
      */
     panelControllerCleanup() {
       this.cancelAnimation();
-
-      // Cancel pending RAF updates using global batcher
-      const updateKey = `panel-${this.$options._uid || 'default'}`;
-      globalRAFBatcher.cancel(updateKey);
-
       this.stateMachine = null;
-      this.animationSet = null;
     }
   },
 

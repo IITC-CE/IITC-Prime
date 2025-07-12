@@ -5,6 +5,7 @@
     class="app-control-panel"
     width="100%"
     height="100%"
+    :minHeight="screenHeight / 2"
     rows="auto, auto, *"
     columns="*">
 
@@ -65,28 +66,19 @@
     </GridLayout>
 
     <!-- content -->
-    <ScrollView row="2" col="0" :height="maxHeight - 64" verticalAlignment="top">
-      <StackLayout class="panel-body">
-        <QuickAccessView
-          v-show="activeButton === 'quick' || activeButton === null"
-        />
-
-        <LayersView
-          v-show="activeButton === 'layers'"
-        />
-
-        <SearchView
-          v-show="activeButton === 'search'"
-        />
-      </StackLayout>
-    </ScrollView>
+    <AppControlListView
+      row="2"
+      col="0"
+      verticalAlignment="top"
+      :height="maxHeight - 64"
+      :listItems="currentListItems"
+    />
   </GridLayout>
 </template>
 
 <script>
-import QuickAccessView from "./components/QuickAccessView.vue";
-import LayersView from "./components/LayersView.vue";
-import SearchView from "./components/SearchView.vue";
+import AppControlListView from "./AppControlListView.vue";
+import { ControlPanelDataService } from "./services/controlPanelDataService.js";
 import { mapState, mapActions, mapGetters } from 'vuex';
 import { buttonGestureHandlerMixin } from './button-gesture-handler';
 
@@ -96,9 +88,7 @@ export default {
   mixins: [buttonGestureHandlerMixin],
 
   components: {
-    QuickAccessView,
-    LayersView,
-    SearchView,
+    AppControlListView,
   },
 
   props: {
@@ -132,10 +122,18 @@ export default {
 
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
-      isPanelOpen: state => state.ui.panelState.isOpen
+      isPanelOpen: state => state.ui.panelState.isOpen,
+      screenHeight: state => state.ui.screenHeight
     }),
 
-    ...mapGetters('map', ['isFollowingUser'])
+    ...mapGetters('map', ['isFollowingUser']),
+
+    /**
+     * Generate list items for current active button
+     */
+    currentListItems() {
+      return ControlPanelDataService.generateListData(this.activeButton, this.$store);
+    }
   },
 
   data() {
