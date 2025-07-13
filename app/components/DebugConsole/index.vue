@@ -10,8 +10,9 @@
       :items="displayLogs"
       @scroll="handleScroll"
       @scrollEnd="handleScrollEnd"
+      @loaded="onCollectionViewLoaded"
     >
-      <v-template>
+      <template #default="{ item }">
         <StackLayout
           class="log-item"
           :class="'log-' + item.type"
@@ -24,13 +25,13 @@
           <!-- Message content -->
           <Label :text="item.message" textWrap="true" class="log-message" once="true" />
         </StackLayout>
-      </v-template>
+      </template>
     </CollectionView>
 
     <!-- Controls panel -->
     <ControlsPanel
       row="1"
-      :command.sync="command"
+      v-model:command="command"
       :commandHistory="commandHistory"
       :historyPosition="historyPosition"
       @clear="clearLogs"
@@ -43,7 +44,7 @@
     <MDButton
       v-show="!isAtBottom && showControls"
       class="fa scroll-bottom-button"
-      :text="'fa-arrow-down' | fonticon"
+      :text="$filters.fonticon('fa-arrow-down')"
       variant="flat"
       rippleColor="#ffffff"
       @tap="scrollToBottom"
@@ -91,7 +92,8 @@ export default {
 
       _logFormattingCache: new Cache(200, 600000), // Cache formatted logs for 10 minutes
       _displayLogsCache: null,
-      _lastLogsHash: null
+      _lastLogsHash: null,
+      _collectionView: null
     }
   },
 
@@ -213,14 +215,17 @@ export default {
 
     // Check if the scroll position is at the bottom
     checkScrollPosition() {
-      if (!this.$refs.logsList || !this.displayLogs.length) return;
+      if (!this._collectionView || !this.displayLogs.length) return;
 
       try {
-        const nativeCollectionView = this.$refs.logsList.nativeView;
+        const lastIndex = this.displayLogs.length - 1;
+        const secondToLastIndex = Math.max(0, lastIndex - 1);
 
-        const lastVisibleIndex = nativeCollectionView.findLastVisibleItemIndex();
+        // Check if the last or second-to-last item is visible
+        const isLastVisible = this._collectionView.isItemAtIndexVisible(lastIndex);
+        const isSecondToLastVisible = this._collectionView.isItemAtIndexVisible(secondToLastIndex);
 
-        this.isAtBottom = lastVisibleIndex >= (this.logs.length - 2);
+        this.isAtBottom = isLastVisible || isSecondToLastVisible;
       } catch (e) {
         console.error("Error checking scroll position:", e);
         this.isAtBottom = true;
@@ -230,12 +235,13 @@ export default {
     // Scroll to the bottom of the list
     scrollToBottom() {
       // Skip if not visible or no logs
-      if (!this.isVisible || !this.displayLogs.length || !this.$refs.logsList) return;
+      if (!this.isVisible || !this.displayLogs.length || !this._collectionView) return;
 
       try {
-        // CollectionView has a convenient scrollToIndex method
         const lastIndex = this.displayLogs.length - 1;
-        this.$refs.logsList.scrollToIndex(lastIndex);
+
+        // scrollToIndex(index, animated)
+        this._collectionView.scrollToIndex(lastIndex, true);
         this.isAtBottom = true;
       } catch (e) {
         console.error("Error scrolling to bottom:", e);
@@ -245,6 +251,10 @@ export default {
     // Close debug console directly
     closeDebugConsole() {
       this.$store.dispatch('ui/toggleDebugMode');
+    },
+
+    onCollectionViewLoaded(args) {
+      this._collectionView = args.object;
     },
   },
 }

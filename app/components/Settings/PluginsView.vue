@@ -46,6 +46,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
@@ -56,9 +57,9 @@ export default {
   name: 'PluginsView',
 
   components: {
-    SettingsBase,
-    CategoriesList,
-    PluginsList
+    SettingsBase: markRaw(SettingsBase),
+    CategoriesList: markRaw(CategoriesList),
+    PluginsList: markRaw(PluginsList)
   },
 
   mixins: [performanceOptimizationMixin],

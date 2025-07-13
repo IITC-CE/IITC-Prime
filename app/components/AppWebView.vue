@@ -173,7 +173,7 @@ export default {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.store_unsubscribe();
   }
 };

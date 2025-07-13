@@ -61,7 +61,7 @@ export default {
     this._weakPanelRef = new WeakRef(this.panelRef);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.cleanup();
   },
 

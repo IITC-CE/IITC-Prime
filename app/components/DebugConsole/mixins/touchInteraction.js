@@ -130,7 +130,7 @@ export default {
   },
 
   // Cleanup when component is destroyed
-  beforeDestroy() {
+  beforeUnmount() {
     this.resetTouchState();
   }
 };

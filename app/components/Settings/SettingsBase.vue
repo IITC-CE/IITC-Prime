@@ -17,7 +17,7 @@
         <MDButton
           col="0"
           class="fa back-button"
-          :text="'fa-arrow-left' | fonticon"
+          :text="$filters.fonticon('fa-arrow-left')"
           @tap="goBack"
           variant="flat"
           rippleColor="#ffffff"
@@ -84,7 +84,7 @@ export default {
     }
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     detachBackHandler();
   }
 };

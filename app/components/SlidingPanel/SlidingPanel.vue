@@ -345,7 +345,7 @@ export default {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     try {
       if (this.removeLayoutListener) {
         this.removeLayoutListener();

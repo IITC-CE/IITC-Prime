@@ -41,30 +41,6 @@ export class ObjectPool {
 }
 
 /**
- * Global animation configuration pool
- */
-export const AnimationPool = new ObjectPool(
-  () => [{
-    target: null,
-    translate: { x: 0, y: 0 },
-    opacity: 1,
-    scale: { x: 1, y: 1 },
-    duration: 300,
-    curve: 'easeInOut'
-  }],
-  (config) => {
-    config[0].target = null;
-    config[0].translate.x = 0;
-    config[0].translate.y = 0;
-    config[0].opacity = 1;
-    config[0].scale.x = 1;
-    config[0].scale.y = 1;
-    config[0].duration = 300;
-    config[0].curve = 'easeInOut';
-  }
-);
-
-/**
  * Global RAF batching manager
  * Batches DOM updates to reduce layout thrashing
  */
@@ -304,7 +280,7 @@ export const performanceOptimizationMixin = {
     this._rafUpdateKey = `${this.$options.name || 'component'}-${Date.now()}-${Math.random()}`;
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.performanceCleanup();
   },
 

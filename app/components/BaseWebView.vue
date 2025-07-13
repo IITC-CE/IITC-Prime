@@ -1,7 +1,7 @@
 //@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
 
 <template>
-  <WebViewExt
+  <AWebView
     ref="webview"
     :src="src"
     :viewPortSize="viewPortSize"
@@ -11,12 +11,11 @@
     @loadFinished="onLoadFinished"
     @loadError="onLoadError"
     @shouldOverrideUrlLoading="onShouldOverrideUrlLoading"
-    @JSBridge="onJSBridge"
   />
 </template>
 
 <script>
-import WebViewExt from '@nota/nativescript-webview-ext/vue'
+import { AWebView } from '@nativescript-community/ui-webview';
 import { isAndroid } from "@nativescript/core";
 import { applyWebViewSettings } from "@/utils/webview/webview-settings";
 import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
@@ -123,6 +122,11 @@ export default {
 
       // Setup console log event handlers
       this.setupDebugEventHandlers();
+
+      // Setup JSBridge event handler
+      this.webViewInstance.on('JSBridge', (msg) => {
+        this.$emit('bridge-message', msg.data);
+      });
     },
 
     // Setup event handlers for console bridge
@@ -192,9 +196,6 @@ export default {
       }
     },
 
-    onJSBridge(args) {
-      this.$emit('bridge-message', args.data);
-    },
 
     // Execute JavaScript command in webview
     executeCommand(command) {
@@ -223,7 +224,7 @@ export default {
             this.chromeClient = null;
           }
 
-          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading', 'console:log'];
+          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading', 'console:log', 'JSBridge'];
           events.forEach(event => {
             try {
               this.webViewInstance.removeEventListener(event);
@@ -265,7 +266,7 @@ export default {
     }
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     try {
       this.cleanupWebView();
 
