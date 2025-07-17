@@ -2,6 +2,7 @@
 
 <template>
   <ListView
+    class="list-view"
     :items="listItems"
     :itemTemplateSelector="templateSelector"
     @itemTap="onItemTap"
@@ -14,39 +15,41 @@
     <template #action-buttons-group="{ item }">
       <GridLayout
         columns="*, *, *, *"
-        rows="90"
-        class="action-buttons-block"
+        rows="104"
+        class="block action-buttons-block"
       >
         <StackLayout
           v-for="(button, index) in item.buttons"
           :key="button.id"
           :col="index"
-          class="btn"
+          class="btn-quick"
           @tap="onActionButtonTap(button.id)"
         >
-          <Label class="fa icon" :text="$filters.fonticon(button.icon)" horizontalAlignment="center" />
-          <Label class="text" :text="button.text" horizontalAlignment="center" />
+          <MDRipple class="btn-quick-btn-icon">
+            <Label class="fa btn-quick-icon" :text="$filters.fonticon(button.icon)" horizontalAlignment="center" />
+          </MDRipple>
+          <Label class="btn-quick-text" :text="button.text" horizontalAlignment="center" textWrap="true" />
         </StackLayout>
       </GridLayout>
     </template>
 
     <template #navigation-item="{ item }">
-      <GridLayout
-        class="navigation-item"
-        columns="42, *"
-        rows="42"
+      <MDRipple
+        class="list-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        orientation="horizontal"
         @tap="onNavigationItemTap(item.id)"
       >
         <Label class="fa icon" :text="$filters.fonticon(item.icon)" col="0" row="0" />
         <Label class="navigation-item-label" :text="item.text" col="1" row="0" />
-      </GridLayout>
+      </MDRipple>
     </template>
 
     <template #select-fields-group="{ item }">
       <GridLayout
-        columns="*, 8, *"
-        rows="28, 52"
-        class="select-fields-block"
+        columns="*, 2, *"
+        rows="28, 56"
+        class="block"
       >
         <!-- Highlighter column -->
         <Label
@@ -63,6 +66,7 @@
           :items="item.fields[0].items"
           :selectedIndex="item.fields[0].items.indexOf(item.fields[0].selectedValue)"
           title="Select Highlighter"
+          class="list-item--top-left list-item--bottom-left"
           @change="onHighlighterSelected"
         />
 
@@ -83,6 +87,7 @@
           idField="layerId"
           textField="name"
           title="Select Base Layer"
+          class="list-item--top-right list-item--bottom-right"
           @change="onBaseLayerSelected"
         />
       </GridLayout>
@@ -91,8 +96,8 @@
     <template #portal-icons-group="{ item }">
       <GridLayout
         columns="*, *, *, *, *, *, *, *, *"
-        rows="52"
-        class="portal-icons-block"
+        rows="42"
+        class="block"
       >
         <template v-for="(portal, index) in item.portals" :key="portal.layerId">
           <SVGView
@@ -110,22 +115,29 @@
 
     <template #switch-pair="{ item }">
       <GridLayout
-        columns="*, 8, *"
-        rows="62"
+        columns="*, 2, *"
+        rows="56"
         class="switch-pair-block"
+        :class="{ 'switch-pair-block--first': item.isFirst, 'switch-pair-block--last': item.isLast }"
       >
         <GridLayout
           v-for="(switchItem, colIndex) in item.items"
           :key="switchItem.layerId"
           :col="colIndex * 2"
-          class="btn-primary"
+          class="list-item"
+          :class="{
+            'list-item--top-left': switchItem.isTopLeft,
+            'list-item--top-right': switchItem.isTopRight,
+            'list-item--bottom-left': switchItem.isBottomLeft,
+            'list-item--bottom-right': switchItem.isBottomRight
+          }"
           columns="*, 50"
           rows="50"
+          @tap="onOverlayToggle(switchItem.index, 'label')"
         >
           <Label
             class="overlay-item-label"
             :text="switchItem.name"
-            @tap="onOverlayToggle(switchItem.index, 'label')"
             col="0"
             row="0"
           />
@@ -142,14 +154,16 @@
 
     <template #switch-single="{ item }">
       <GridLayout
-        class="switch-single-block"
+        class="list-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         columns="*, 50"
         rows="50"
+        orientation="horizontal"
+        @tap="onOverlayToggle(item.item.index, 'label')"
       >
         <Label
           class="overlay-item-label"
           :text="item.item.name"
-          @tap="onOverlayToggle(item.item.index, 'label')"
           col="0"
           row="0"
         />
@@ -311,33 +325,46 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.action-buttons-block {
-  margin-bottom: $spacing-m;
+.list-view {
+  margin-left: $spacing-m;
+  margin-right: $spacing-m;
 }
 
-.btn {
+.block {
+  padding: 0;
+  padding-bottom: $spacing-m;
+  background-color: $surface;
+}
+
+.action-buttons-block {
+  padding-top: $spacing-xs;
+  padding-bottom: $spacing-xs;
+}
+
+.btn-quick {
   font-size: $font-size;
   text-align: center;
   padding: 0 $spacing-s;
 }
 
-.btn .icon {
+.btn-quick .btn-quick-btn-icon {
   margin: 0 0 $spacing-xs 0;
   width: 54;
   height: 54;
-  font-size: $font-size-headline;
   border-radius: $radius-large;
-  color: $on-primary;
   background-color: $surface-bright;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
+  ripple-color: $ripple;
+  vertical-alignment: center;
 }
 
-.btn .text {
+.btn-quick .btn-quick-icon {
+  font-size: $font-size-headline;
+  color: $on-primary;
+}
+
+.btn-quick .btn-quick-text {
   color: $text;
-}
-
-.navigation-item {
-  margin-bottom: $spacing-xs;
 }
 
 .icon {
@@ -352,20 +379,11 @@ export default {
   padding-left: 15;
 }
 
-.select-fields-block {
-  margin-bottom: $spacing-m;
-}
-
 .select-label {
   font-size: $font-small-size;
 }
 
-.portal-icons-block {
-  margin-bottom: $spacing-m;
-}
-
 .overlay-portal {
-  margin: $spacing-xs;
   border-radius: $radius-large;
   horizontal-align: center;
 
@@ -376,11 +394,11 @@ export default {
 }
 
 .switch-pair-block {
-  margin-bottom: $spacing-xs;
-}
+  padding: 0;
 
-.switch-single-block {
-  margin-bottom: $spacing-xs;
+  &--last {
+    padding-bottom: $spacing-m;
+  }
 }
 
 .overlay-item-label {
