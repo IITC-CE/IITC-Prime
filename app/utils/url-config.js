@@ -1,3 +1,5 @@
+// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+
 import store from '@/store';
 
 export const INGRESS_INTEL_MAP = 'https://intel.ingress.com/';

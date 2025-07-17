@@ -1,3 +1,5 @@
+// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+
 import { isAndroid } from "@nativescript/core";
 
 /**
@@ -54,11 +56,11 @@ export const BaseWebChromeClient = isAndroid ? android.webkit.WebChromeClient.ex
   }
 }) : class BaseWebChromeClient {
   init() {}
-  
+
   initWithComponent(component) {
     this.component = component;
   }
-  
+
   cleanup() {
     this.component = null;
   }
