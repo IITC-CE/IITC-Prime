@@ -1,20 +1,20 @@
-//@license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3
+// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 export class ControlPanelDataService {
   static generateListData(activeButton, store) {
     switch(activeButton) {
-      case 'quick': 
-      case null: 
+      case 'quick':
+      case null:
         return this.getQuickAccessData(store);
-      case 'layers': 
+      case 'layers':
         return this.getLayersData(store);
-      case 'search': 
+      case 'search':
         return this.getSearchData(store);
-      default: 
+      default:
         return this.getQuickAccessData(store);
     }
   }
-  
+
   static getQuickAccessData(store) {
     const data = [
       {
@@ -42,29 +42,29 @@ export class ControlPanelDataService {
 
     return data;
   }
-  
+
   static getLayersData(store) {
     const data = [];
 
     // Add select fields group if there are highlighters or base layers
     const highlightersList = store.state.map.highlightersList;
     const baseLayersList = store.state.map.baseLayersList;
-    
+
     if ((highlightersList && highlightersList.length > 0) || (baseLayersList && baseLayersList.length > 0)) {
       data.push({
         type: 'select-fields-group',
         id: 'select-fields',
         fields: [
-          { 
-            type: 'highlighter', 
-            label: 'Highlighter', 
+          {
+            type: 'highlighter',
+            label: 'Highlighter',
             items: highlightersList,
             selectedValue: store.state.map.highlighterSelected,
             visible: highlightersList && highlightersList.length > 0
           },
-          { 
-            type: 'base-layer', 
-            label: 'Base layer', 
+          {
+            type: 'base-layer',
+            label: 'Base layer',
             items: baseLayersList,
             selectedIndex: store.state.map.baseLayerSelected,
             visible: baseLayersList && baseLayersList.length > 0
@@ -92,7 +92,7 @@ export class ControlPanelDataService {
 
     return data;
   }
-  
+
   static getSearchData(store) {
     // Search view is currently empty
     return [];
@@ -104,7 +104,7 @@ export class ControlPanelDataService {
       .filter(layer => layer.index > 8);
 
     const items = [];
-    
+
     // First 4 items as pairs (2 per row)
     const pairedItems = filteredLayers.slice(0, 4);
     for (let i = 0; i < pairedItems.length; i += 2) {
