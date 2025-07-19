@@ -192,8 +192,17 @@ export default class UserLocation {
   /**
    * Start orientation/compass tracking
    */
-  async startOrientationTracking() {
+  async startOrientationTracking(retryCount = 0) {
     if (!Compass.isAvailable()) {
+      // On startup, compass might not be ready yet - try again with delay
+      if (retryCount < 3) {
+        console.log(`UserLocation: Compass not available yet, retrying in ${1000 * (retryCount + 1)}ms... (attempt ${retryCount + 1}/3)`);
+        setTimeout(() => {
+          this.startOrientationTracking(retryCount + 1);
+        }, 1000 * (retryCount + 1));
+        return;
+      }
+      
       console.log('UserLocation: Compass not available on this device - orientation tracking disabled');
       return;
     }
@@ -209,6 +218,7 @@ export default class UserLocation {
 
       if (compassStarted) {
         this.compassEnabled = true;
+        console.log('UserLocation: Compass tracking started successfully');
       } else {
         console.error('UserLocation: Failed to start compass tracking');
       }
