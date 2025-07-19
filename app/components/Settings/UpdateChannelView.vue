@@ -2,6 +2,16 @@
 
 <template>
   <SettingsBase title="Update Channel">
+    <template #headerRight>
+      <ActionItem
+        text="Update now"
+        @tap="runForceUpdate"
+        :isEnabled="!isUpdating"
+        color="white"
+        class="update-action-item"
+      />
+    </template>
+
     <!-- Channel selection -->
     <SettingsSection title="Channel" />
     <UpdateChannelSelector
@@ -10,14 +20,15 @@
     />
 
     <!-- Custom Channel URL -->
+    <SettingsSection title="Custom URL" v-show="currentChannel === 'custom'" />
     <CustomChannelInput
-      v-if="currentChannel === 'custom'"
+      v-show="currentChannel === 'custom'"
       :customUrl="customUrl"
       @urlChanged="updateCustomUrl"
     />
 
     <!-- Update frequency -->
-    <SettingsSection title="Update Frequency" />
+    <SettingsSection title="Update frequency" />
     <UpdateIntervalSelector
       :currentChannel="currentChannel"
       :selectedInterval="selectedIntervalValue"
@@ -30,36 +41,38 @@
       @intervalSelected="updateExternalInterval"
     />
 
-    <!-- Force update button -->
-    <UpdateButton
-      :isUpdating="isUpdating"
-      :lastCheckTime="lastCheckTime"
-      @update="runForceUpdate"
-    />
+    <!-- Update Status -->
+    <StackLayout class="update-status">
+      <Label
+        v-if="formattedLastCheckTime"
+        :text="`Last check: ${formattedLastCheckTime}`"
+        class="last-check-label"
+      />
+      <ActivityIndicator v-if="isUpdating" busy="true" class="update-indicator" />
+    </StackLayout>
   </SettingsBase>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import {markRaw} from "vue";
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
 import CustomChannelInput from './components/UpdateChannel/CustomChannelInput';
 import UpdateIntervalSelector from './components/UpdateChannel/UpdateIntervalSelector';
 import ExternalPluginsIntervalSelector from './components/UpdateChannel/ExternalPluginsIntervalSelector';
-import UpdateButton from './components/UpdateChannel/UpdateButton';
 
 export default {
   name: 'UpdateChannelView',
 
   components: {
-    SettingsBase,
-    SettingsSection,
-    UpdateChannelSelector,
-    CustomChannelInput,
-    UpdateIntervalSelector,
-    ExternalPluginsIntervalSelector,
-    UpdateButton
+    SettingsBase: markRaw(SettingsBase),
+    SettingsSection: markRaw(SettingsSection),
+    UpdateChannelSelector: markRaw(UpdateChannelSelector),
+    CustomChannelInput: markRaw(CustomChannelInput),
+    UpdateIntervalSelector: markRaw(UpdateIntervalSelector),
+    ExternalPluginsIntervalSelector: markRaw(ExternalPluginsIntervalSelector),
   },
 
   data() {
@@ -76,6 +89,14 @@ export default {
 
     customUrl() {
       return this.customChannelUrl;
+    },
+
+    // Formatted last check date
+    formattedLastCheckTime() {
+      if (!this.lastCheckTime) return '';
+
+      const date = new Date(this.lastCheckTime);
+      return date.toLocaleString();
     }
   },
 
@@ -164,6 +185,7 @@ export default {
      * Run force update
      */
     async runForceUpdate() {
+      console.log("runForceUpdate called in UpdateChannelView");
       this.isUpdating = true;
 
       try {
@@ -194,3 +216,29 @@ export default {
   }
 };
 </script>
+
+<style scoped lang="scss">
+@import '@/app';
+
+.update-status {
+  padding: 16;
+  text-align: center;
+}
+
+.last-check-label {
+  font-size: 14;
+  color: $on-surface-dark;
+  margin-bottom: 8;
+}
+
+.update-indicator {
+  color: $primary;
+  width: 24;
+  height: 24;
+  horizontal-align: center;
+}
+
+.update-action-item {
+  color: white;
+}
+</style>

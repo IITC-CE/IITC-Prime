@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Main colors from your design system -->
-    <color name="ns_primary">#0e3d4e</color>
+    <color name="ns_primary">#0b2d3a</color>
     <color name="ns_primaryDark">#0b303e</color>
-    <color name="ns_accent">#4a9299</color>
+    <color name="ns_accent">#2e6772</color>
 
     <!-- Additional colors -->
     <color name="ns_surface_bright">#275160</color>
     <color name="ns_primary_light">#56b0b9</color>
     <color name="ns_text">#ffffff</color>
+
+    <!-- Switch colors -->
+    <color name="switch_thumb_on">#56b0b9</color>
+    <color name="switch_thumb_off">#bbbbbb</color>
+    <color name="switch_track_on">#275160</color>
+    <color name="switch_track_off">#0b303e</color>
 </resources>

@@ -1,7 +1,7 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout columns="*, auto" class="btn-primary select-field" @tap="showSelectDialog">
+  <GridLayout columns="*, auto" class="list-item select-field" @tap="showSelectDialog">
     <Label col="0" :text="selectedText" class="select-text" verticalAlignment="center" />
     <Label col="1" text="▼" class="select-icon" verticalAlignment="center" />
   </GridLayout>

@@ -13,10 +13,9 @@
       @loaded="onCollectionViewLoaded"
     >
       <template #default="{ item }">
-        <StackLayout
+        <MDRipple
           class="log-item"
           :class="'log-' + item.type"
-          @touch="onLogTouch($event)"
           @longPress="copyLogToClipboard(item)"
         >
           <!-- Header row with timestamp, log level and source -->
@@ -24,7 +23,7 @@
 
           <!-- Message content -->
           <Label :text="item.message" textWrap="true" class="log-message" once="true" />
-        </StackLayout>
+        </MDRipple>
       </template>
     </CollectionView>
 
@@ -56,7 +55,6 @@
 import { mapState, mapActions } from 'vuex';
 import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
-import touchInteractionMixin from './mixins/touchInteraction';
 import clipboardUtilsMixin from './mixins/clipboardUtils';
 import ControlsPanel from './ControlsPanel.vue';
 
@@ -68,7 +66,6 @@ export default {
   mixins: [
     performanceOptimizationMixin,
     logFormattingMixin,
-    touchInteractionMixin,
     clipboardUtilsMixin
   ],
 
@@ -146,9 +143,6 @@ export default {
         // Console being hidden
         this.logsVisible = false;
         this.showControls = false;
-
-        // Clean up any active highlights when console is hidden
-        this.resetTouchState();
       }
     },
 
@@ -277,6 +271,7 @@ export default {
   padding: 4 8;
   border-bottom-width: 1;
   border-bottom-color: rgba(255, 255, 255, 0.1);
+  ripple-color: $ripple;
 }
 
 .log-header {

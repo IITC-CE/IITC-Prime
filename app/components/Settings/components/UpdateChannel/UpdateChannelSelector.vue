@@ -2,27 +2,30 @@
 
 <template>
   <GridLayout rows="auto" columns="*, *, *" class="channel-selector">
-    <MDButton
+    <MDRipple
       col="0"
-      class="channel-button"
+      class="list-item list-item--top-left list-item--bottom-left channel-button"
       :class="{ active: currentChannel === 'release' }"
-      text="Release"
       @tap="$emit('channelSelected', 'release')"
-    />
-    <MDButton
+    >
+      <Label text="Release" once="true" class="channel-button-text" />
+    </MDRipple>
+    <MDRipple
       col="1"
-      class="channel-button"
+      class="list-item channel-button"
       :class="{ active: currentChannel === 'beta' }"
-      text="Beta"
       @tap="$emit('channelSelected', 'beta')"
-    />
-    <MDButton
+    >
+      <Label text="Beta" once="true" class="channel-button-text" />
+    </MDRipple>
+    <MDRipple
       col="2"
-      class="channel-button"
+      class="list-item list-item--top-right list-item--bottom-right channel-button"
       :class="{ active: currentChannel === 'custom' }"
-      text="Custom"
       @tap="$emit('channelSelected', 'custom')"
-    />
+    >
+      <Label text="Custom" once="true" class="channel-button-text" />
+    </MDRipple>
   </GridLayout>
 </template>
 
@@ -49,19 +52,24 @@ export default {
 @import '@/app';
 
 .channel-selector {
-  margin: 8 16;
+  padding-bottom: $spacing-m;
 }
 
 .channel-button {
-  margin: 0 4;
-  background-color: $surface-variant;
+  margin: 0;
+  background-color: $elevation-level1;
   color: $on-surface;
-  border-radius: 4;
-  font-size: 14;
+  vertical-align: center;
+  text-align: center;
 
   &.active {
     background-color: $primary;
     color: $on-primary;
   }
+}
+
+.channel-button-text {
+  text-transform: uppercase;
+  padding-bottom: 4;
 }
 </style>

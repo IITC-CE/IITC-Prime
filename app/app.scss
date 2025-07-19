@@ -20,17 +20,19 @@
 //-----------------------------------------------
 
 // Original colors
-$surface: #0e3d4e;         // Base background color (dark blue)
+$surface: #0b2d3a;         // Base background color (dark blue)
 $surface-variant: #0b303e; // Slightly darker variant (was $accent)
-$primary: #4a9299;         // Main accent color (teal)
+$primary: #2e6772;         // Main accent color (teal)
 $on-surface: #ffffff;      // Text color on dark surfaces
+$on-surface-dark: #bbbbbb; // Text color on dark surfaces
+$ripple: rgba(255, 255, 255, 0.1);
 
 // Extended palette (hybrid approach)
-$primary-light: #56b0b9;     // Lighter version of primary
-$primary-dark: #3a7f85;      // Darker version of primary
+$primary-light: #437680;     // Lighter version of primary
+$primary-dark: #295c66;      // Darker version of primary
 $on-primary: #ffffff;        // Text on primary color
 
-$surface-bright: #275160;    // Brighter version of surface
+$surface-bright: #143542;    // Brighter version of surface
 $surface-dim: #0c2d3a;       // Dimmer version of surface
 $surface-container: #11394a; // Container on surface
 
@@ -77,6 +79,9 @@ $spacing-m: 16;
 $spacing-l: 24;
 $spacing-xl: 32;
 $spacing-xxl: 48;
+$spacing-panel: 10;
+$spacing-item: 56;
+$spacing-item-big: 82;
 
 // Border radius
 $radius-small: 4;
@@ -105,6 +110,7 @@ $radius-full: 9999;  // For circular elements
   margin: $spacing-xs 0;
   color: $on-primary;
   font-size: $font-size;
+  ripple-color: $ripple;
   padding: $spacing-xxs $spacing-l;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
 }
@@ -118,11 +124,32 @@ $radius-full: 9999;  // For circular elements
 
 // Lists
 .list-item {
+  background-color: $surface-bright;
   color: $on-primary;
+  height: $spacing-item;
+  ripple-color: $ripple;
   font-size: $font-size;
-  padding: $spacing-xxs $spacing-l;
-  border-bottom-width: 1;
-  border-bottom-color: $surface-dim;
+  padding: 0 $spacing-l;
+  border-bottom-width: $spacing-xxs;
+  border-bottom-color: $surface;
+  border-top-left-radius: 0;
+
+  &--big {
+    height: $spacing-item-big;
+  }
+
+  &--top-left, &--first {
+    border-top-left-radius: $radius-large;
+  }
+  &--top-right, &--first {
+    border-top-right-radius: $radius-large;
+  }
+  &--bottom-left, &--last {
+    border-bottom-left-radius: $radius-large;
+  }
+  &--bottom-right, &--last {
+    border-bottom-right-radius: $radius-large;
+  }
 }
 
 // Dialog styles
@@ -148,6 +175,13 @@ $radius-full: 9999;  // For circular elements
   margin-bottom: $spacing-xs;
 }
 
+.section-header {
+  padding: 12 16 8 0;
+  color: $primary-light;
+  font-size: $font-size;
+  font-weight: bold;
+}
+
 //-----------------------------------------------
 // LEGACY VARIABLES (for backward compatibility)
 //-----------------------------------------------
@@ -158,9 +192,7 @@ $on-bottom-sheet: #222222;       // Dark text for bottom sheets
 
 $base: $surface;
 $accent: $surface-variant;
-$complementary: $primary;
 $text: $on-surface;
 
-$complementary-bottom-sheet: $bottom-sheet-surface;
 $text-bottom-sheet: $on-bottom-sheet;
 $font-small-size: $font-size-small;

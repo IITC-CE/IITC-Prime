@@ -21,7 +21,6 @@
       <MDButton
         col="0"
         variant="flat"
-        rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && (activeButton === 'quick' || activeButton === null) }"
         :text="$filters.fonticon('fa-bars')"
@@ -33,7 +32,6 @@
       <MDButton
         col="2"
         variant="flat"
-        rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'search' }"
         :text="$filters.fonticon('fa-search')"
@@ -45,7 +43,6 @@
       <MDButton
         col="3"
         variant="flat"
-        rippleColor="#ffffff"
         class="fa app-control-button"
         :text="$filters.fonticon(locationButtonIcon)"
         @tap="onLocate"
@@ -55,7 +52,6 @@
       <MDButton
         col="4"
         variant="flat"
-        rippleColor="#ffffff"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
         :text="$filters.fonticon('fa-layer-group')"
@@ -221,8 +217,8 @@ export default {
 .app-control-panel {
   background-color: $base;
   color: $text;
-  border-radius: 10 10 0 0;
-  border-color: $complementary;
+  border-radius: $radius-medium $radius-medium 0 0;
+  border-color: $primary;
   border-top-width: 1;
 }
 
@@ -232,18 +228,20 @@ export default {
 }
 
 .panel-header-line {
-  background-color: $complementary;
-  width: 32;
-  height: 4;
+  background-color: $primary;
+  width: $spacing-xl;
+  height: $spacing-xs;
   margin: 5 0;
-  border-radius: 4;
+  border-radius: $radius-small;
   horizontal-alignment: center;
 }
 
 .panel-buttons {
   height: 42; // 110 - 46 - 14 - 8
   min-height: 42;
-  margin: 0 10 8 10;
+  margin: $spacing-panel;
+  margin-top: 0;
+  margin-bottom: 8;
 }
 
 .app-control-button {
@@ -256,16 +254,12 @@ export default {
   font-size: 18;
   border-radius: 10;
   color: rgba(255, 255, 255, 0.7);
-  background-color: rgba(255, 255, 255, 0);
+  background-color: transparent;
   text-align: center;
+  ripple-color: $ripple;
 
   &--active {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: $surface-bright;
   }
 }
-
-.panel-body {
-  margin: 10;
-}
-
 </style>

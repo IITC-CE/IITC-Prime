@@ -31,12 +31,14 @@ export class ControlPanelDataService {
 
     // Add navigation items from store
     const filteredPanes = this.getFilteredPanes(store.state.navigation.panes);
-    filteredPanes.forEach(pane => {
+    filteredPanes.forEach((pane, index) => {
       data.push({
         type: 'navigation-item',
         id: pane.name,
         icon: pane.icon,
-        text: pane.label
+        text: pane.label,
+        isFirst: index === 0,
+        isLast: index === filteredPanes.length - 1
       });
     });
 
@@ -107,13 +109,25 @@ export class ControlPanelDataService {
 
     // First 4 items as pairs (2 per row)
     const pairedItems = filteredLayers.slice(0, 4);
+    const totalPairs = Math.ceil(pairedItems.length / 2);
+    
     for (let i = 0; i < pairedItems.length; i += 2) {
       const pair = pairedItems.slice(i, i + 2);
+      const pairIndex = i / 2;
+      
       if (pair.length === 2) {
         items.push({
           type: 'switch-pair',
-          id: `switch-pair-${i/2}`,
-          items: pair
+          id: `switch-pair-${pairIndex}`,
+          items: pair.map((item, idx) => ({
+            ...item,
+            isTopLeft: pairIndex === 0 && idx === 0,
+            isTopRight: pairIndex === 0 && idx === 1,
+            isBottomLeft: pairIndex === totalPairs - 1 && idx === 0,
+            isBottomRight: pairIndex === totalPairs - 1 && idx === 1
+          })),
+          isFirst: pairIndex === 0,
+          isLast: pairIndex === totalPairs - 1
         });
       } else if (pair.length === 1) {
         items.push({
@@ -126,11 +140,13 @@ export class ControlPanelDataService {
 
     // Remaining items as single switches
     const singleItems = filteredLayers.slice(4);
-    singleItems.forEach(item => {
+    singleItems.forEach((item, index) => {
       items.push({
         type: 'switch-single',
         id: `switch-single-${item.index}`,
-        item
+        item,
+        isFirst: index === 0,
+        isLast: index === singleItems.length - 1
       });
     });
 

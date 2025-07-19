@@ -8,12 +8,12 @@
   >
     <GridLayout rows="auto, auto, auto, *" class="main-container">
       <!-- Search field -->
-      <GridLayout row="0" columns="*" class="search-container">
-        <TextField
-          hint="Search plugins..."
-          v-model="searchQuery"
-        />
-      </GridLayout>
+      <TextField
+        row="0"
+        class="search-field"
+        hint="Search plugins..."
+        v-model="searchQuery"
+      />
 
       <!-- Categories list component -->
       <CategoriesList
@@ -34,10 +34,16 @@
       <!-- Plugins container -->
       <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
         <PluginsList
+          v-if="filteredPlugins.length > 0"
           :plugins="filteredPlugins"
           :showEnabledFirst="activeCategory === 'All'"
-          :emptyMessage="getEmptyMessage()"
           @toggle="togglePlugin"
+        />
+        <Label
+          v-if="filteredPlugins.length === 0"
+          :text="getEmptyMessage()"
+          class="no-plugins"
+          once="true"
         />
       </GridLayout>
     </GridLayout>
@@ -253,8 +259,16 @@ export default {
   height: 100%;
 }
 
-.search-container {
-  margin: 8 12;
+.search-field {
+  margin: $spacing-m 0 $spacing-s 0;
+  padding: $spacing-s;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: $radius-small;
+  font-size: 14;
+  height: 40;
+  color: #ffffff;
+  placeholder-color: #aaaaaa;
 }
 
 .loading-indicator {
@@ -266,5 +280,12 @@ export default {
 
 .plugins-container {
   flex-grow: 1;
+}
+
+.no-plugins {
+  padding: 16;
+  text-align: center;
+  color: $on-surface;
+  font-style: italic;
 }
 </style>

@@ -2,7 +2,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- theme to use FOR launch screen-->
-    <style name="LaunchScreenThemeBase" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="LaunchScreenThemeBase" parent="Theme.Material3.Light.NoActionBar">
         <item name="toolbarStyle">@style/NativeScriptToolbarStyle</item>
 
         <item name="colorPrimary">@color/ns_primary</item>
@@ -20,12 +20,19 @@
     </style>
 
     <!-- theme to use AFTER launch screen is loaded-->
-    <style name="AppThemeBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="AppThemeBase" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="toolbarStyle">@style/NativeScriptToolbarStyle</item>
 
         <item name="colorPrimary">@color/ns_primary</item>
         <item name="colorPrimaryDark">@color/ns_primaryDark</item>
         <item name="colorAccent">@color/ns_accent</item>
+
+        <!-- ActionBar text colors -->
+        <item name="android:textColorPrimary">@color/ns_text</item>
+        <item name="actionMenuTextColor">@color/ns_text</item>
+
+        <!-- Material Switch style -->
+        <item name="materialSwitchStyle">@style/AppMaterialSwitchStyle</item>
 
         <!-- Добавляем настройки для элементов диалогов -->
         <item name="materialButtonStyle">@style/AppButtonStyle</item>
@@ -42,6 +49,19 @@
         <item name="android:textColor">@color/ns_text</item>
     </style>
 
+    <!-- Custom Material Switch style -->
+    <style name="AppMaterialSwitchStyle" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.Switch</item>
+    </style>
+
+    <!-- Switch theme overlay -->
+    <style name="ThemeOverlay.App.Switch" parent="">
+        <item name="colorPrimary">@color/switch_thumb_on</item>
+        <item name="colorOnPrimary">@color/switch_track_on</item>
+        <item name="colorSurfaceContainerHighest">@color/switch_track_off</item>
+        <item name="colorOnSurface">@color/switch_thumb_off</item>
+    </style>
+
     <!-- Custom dialog style -->
     <style name="AppAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="colorPrimary">@color/ns_accent</item>
@@ -56,10 +76,10 @@
     </style>
 
     <!-- theme for action-bar -->
-    <style name="NativeScriptToolbarStyleBase" parent="Widget.AppCompat.Toolbar">
+    <style name="NativeScriptToolbarStyleBase" parent="Widget.Material3.Toolbar">
         <item name="android:background">@color/ns_primary</item>
-        <item name="theme">@style/ThemeOverlay.AppCompat.ActionBar</item>
-        <item name="popupTheme">@style/ThemeOverlay.AppCompat</item>
+        <item name="theme">@style/ThemeOverlay.MaterialComponents.ActionBar</item>
+        <item name="popupTheme">@style/ThemeOverlay.MaterialComponents</item>
     </style>
 
     <style name="NativeScriptToolbarStyle" parent="NativeScriptToolbarStyleBase">

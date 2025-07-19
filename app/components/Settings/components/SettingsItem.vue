@@ -2,12 +2,13 @@
 
 <template>
   <GridLayout
-    class="settings-item"
-    columns="*, auto"
+    class="list-item list-item--big"
+    :class="{ 'list-item--first': isFirst, 'list-item--last': isLast }"
+    columns="*, 56"
     rows="auto"
     @tap="onTap"
   >
-    <StackLayout col="0" verticalAlignment="center">
+    <StackLayout class="stack" col="0" verticalAlignment="center">
       <Label :text="title" class="settings-item-title" once="true" />
       <Label
         v-if="description"
@@ -29,18 +30,10 @@
       />
 
       <!-- Switch toggle -->
-      <Switch
+      <MDSwitch
         v-else-if="type === 'switch'"
         :checked="value"
         @checkedChange="onSwitchChange"
-      />
-
-      <!-- Custom value display -->
-      <Label
-        v-else-if="type === 'value' && displayValue"
-        :text="displayValue"
-        class="settings-value-text"
-        once="true"
       />
     </StackLayout>
   </GridLayout>
@@ -85,10 +78,14 @@ export default {
       default: () => ({})
     },
 
-    // Value display
-    displayValue: {
-      type: String,
-      default: null
+    // Position props
+    isFirst: {
+      type: Boolean,
+      default: false
+    },
+    isLast: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -120,11 +117,8 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.settings-item {
-  padding: 12 16;
-  background-color: $surface-bright;
-  border-bottom-width: 1;
-  border-bottom-color: $surface-variant;
+.stack {
+  height: $spacing-item-big;
 }
 
 .settings-item-title {
@@ -134,20 +128,21 @@ export default {
 }
 
 .settings-item-description {
-  color: $surface-variant;
+  color: $on-surface-dark;
   font-size: $font-size-small;
   margin-top: 4;
 }
 
 .settings-nav-icon {
-  color: $surface-variant;
+  color: $on-surface-dark;
   font-size: 16;
   margin-right: 4;
+  text-align: right;
   vertical-alignment: center;
 }
 
 .settings-value-text {
-  color: $surface-variant;
+  color: $on-surface-dark;
   font-size: $font-size-small;
   margin-right: 4;
   vertical-alignment: center;
