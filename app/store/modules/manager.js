@@ -211,8 +211,9 @@ export const manager = {
           const status = event.event === 'add' ? 'on' : 'off';
           commit('UPDATE_PLUGIN_STATUS', { uid, status });
 
-          // Handle user-location plugin changes
-          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion") {
+          // Handle user-location plugin changes - only for add/remove, not update
+          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion" &&
+              event.event !== 'update') {
             const isEnabled = event.event === 'add';
             await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
           }
