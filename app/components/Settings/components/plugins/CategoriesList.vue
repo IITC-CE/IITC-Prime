@@ -46,16 +46,14 @@ export default {
 @import '@/app';
 
 .categories {
-  padding: 4 4;
+  padding: $spacing-s 0;
 }
 
 .category-tag {
-  margin: 2;
+  margin: $spacing-xxs;
   padding: 6 12;
-  border-radius: 16;
-  background-color: $surface-variant;
-  border-width: 1;
-  border-color: $surface-variant;
+  border-radius: $radius-large;
+  background-color: $surface-bright;
   color: $on-surface;
   font-size: $font-size-small;
   text-align: center;
@@ -63,7 +61,6 @@ export default {
 
 .category-tag.active {
   background-color: $primary-light;
-  border-color: $primary;
   color: $on-primary;
   font-weight: bold;
 }

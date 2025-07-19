@@ -119,5 +119,7 @@ export default {
 
 .settings-content {
   background-color: $surface;
+  padding-left: $spacing-m;
+  padding-right: $spacing-m;
 }
 </style>

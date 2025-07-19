@@ -1,78 +1,58 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout rows="auto, *" class="plugins-container">
-    <!-- Section header -->
-    <Label
-      v-if="title"
-      row="0"
-      :text="title"
-      class="section-title"
-      once="true"
-    />
+  <CollectionView
+    row="1"
+    class="plugins-list"
+    :items="combinedItems"
+    :itemTemplateSelector="templateSelector"
+    @itemTap="onItemTap"
+  >
+    <!-- Template for section headers -->
+    <template #section-header="{ item }">
+      <Label
+        :text="item.title"
+        class="section-header"
+        once="true"
+      />
+    </template>
 
-    <!-- Plugins collection -->
-    <CollectionView
-      row="1"
-      class="plugins-list"
-      :items="combinedItems"
-      :itemTemplateSelector="templateSelector"
-      @itemTap="onItemTap"
-    >
-      <!-- Template for section headers -->
-      <template #section-header="{ item }">
-        <Label
-          :text="item.title"
-          class="section-header"
+    <!-- Template for plugin items -->
+    <template #plugin="{ item }">
+      <GridLayout
+        class="list-item plugin-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        columns="auto, *, auto"
+        rows="auto"
+      >
+        <!-- Plugin icon -->
+        <ImageCacheIt
+          col="0"
+          :src="getPluginIcon(item)"
+          :placeHolder="placeholderImageSource"
+          :errorHolder="placeholderImageSource"
+          class="plugin-icon"
+          stretch="aspectFit"
+          loadMode="async"
+          transition="fade"
           once="true"
         />
-      </template>
 
-      <!-- Template for plugin items -->
-      <template #plugin="{ item }">
-        <GridLayout
-          class="plugin-item"
-          columns="auto, *, auto"
-          rows="auto"
-        >
-          <!-- Plugin icon -->
-          <ImageCacheIt
-            col="0"
-            :src="getPluginIcon(item)"
-            :placeHolder="placeholderImageSource"
-            :errorHolder="placeholderImageSource"
-            class="plugin-icon"
-            stretch="aspectFit"
-            loadMode="async"
-            transition="fade"
-            once="true"
-          />
+        <!-- Plugin info -->
+        <StackLayout col="1" class="plugin-info">
+          <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+          <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+        </StackLayout>
 
-          <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info">
-            <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-            <Label :text="item.category || 'Misc'" class="plugin-category" once="true" />
-          </StackLayout>
-
-          <!-- Toggle switch -->
-          <Switch
-            col="2"
-            :checked="item.status === 'on'"
-            isUserInteractionEnabled="false"
-          />
-        </GridLayout>
-      </template>
-    </CollectionView>
-
-    <!-- Empty list message -->
-    <Label
-      v-if="plugins.length === 0"
-      row="1"
-      :text="emptyMessage"
-      class="no-plugins"
-      once="true"
-    />
-  </GridLayout>
+        <!-- Toggle switch -->
+        <Switch
+          col="2"
+          :checked="item.status === 'on'"
+          isUserInteractionEnabled="false"
+        />
+      </GridLayout>
+    </template>
+  </CollectionView>
 </template>
 
 <script>
@@ -95,11 +75,6 @@ export default {
       type: String,
       default: null
     },
-    // Message to display when list is empty
-    emptyMessage: {
-      type: String,
-      default: 'No plugins'
-    }
   },
 
   computed: {
@@ -119,9 +94,11 @@ export default {
             type: 'section-header',
             title: 'Enabled'
           });
-          items.push(...enabledPlugins.map(plugin => ({
+          items.push(...enabledPlugins.map((plugin, index) => ({
             ...plugin,
-            type: 'plugin'
+            type: 'plugin',
+            isFirst: index === 0,
+            isLast: index === enabledPlugins.length - 1
           })));
         }
 
@@ -136,9 +113,11 @@ export default {
       const sortedPlugins = this.plugins
         .sort((a, b) => this.getPluginName(a).localeCompare(this.getPluginName(b)));
 
-      items.push(...sortedPlugins.map(plugin => ({
+      items.push(...sortedPlugins.map((plugin, index) => ({
         ...plugin,
-        type: 'plugin'
+        type: 'plugin',
+        isFirst: index === 0,
+        isLast: index === sortedPlugins.length - 1
       })));
 
       return items;
@@ -162,6 +141,10 @@ export default {
 
     getPluginName(plugin) {
       return plugin.name || 'Unknown Plugin';
+    },
+
+    getPluginDescription(plugin) {
+      return plugin.description || '';
     },
 
     getPluginIcon(plugin) {
@@ -195,44 +178,21 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.plugins-container {
-  width: 100%;
-}
-
 .plugins-list {
   width: 100%;
 }
 
-.section-title {
-  padding: 8 16;
+.section-header {
+  padding: 12 16 8 16;
   color: $primary-light;
   font-size: $font-size-small;
   font-weight: bold;
   text-transform: uppercase;
-  background-color: $surface;
-}
-
-.section-header {
-  padding: 12 16 8 16;
-  color: $primary;
-  font-size: $font-size-small;
-  font-weight: 600;
-  text-transform: uppercase;
-  background-color: $surface-bright;
-}
-
-.no-plugins {
-  padding: 16;
-  text-align: center;
-  color: $surface-variant;
-  font-style: italic;
 }
 
 .plugin-item {
-  padding: 12 16;
-  background-color: $surface-bright;
-  border-bottom-width: 1;
-  border-bottom-color: $surface-variant;
+  height: 82;
+  padding: 12 $spacing-m;
 }
 
 .plugin-icon {
@@ -251,9 +211,10 @@ export default {
   font-weight: 500;
 }
 
-.plugin-category {
-  color: $surface-variant;
+.plugin-description {
+  color: $on-surface;
   font-size: $font-size-small;
-  margin-top: 2;
+  margin-top: $spacing-xxs;
+  height: 20;
 }
 </style>
