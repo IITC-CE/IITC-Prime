@@ -7,9 +7,6 @@ export default {
   methods: {
     // Copy log text to clipboard on long press
     copyLogToClipboard(item) {
-      // Reset touch state to clear any highlights
-      this.resetTouchState();
-
       const fullText = this.getFullLogText(item);
 
       // Copy to clipboard

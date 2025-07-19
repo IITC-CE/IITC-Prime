@@ -13,7 +13,6 @@
         class="fa control-button"
         :text="$filters.fonticon('fa-arrow-left')"
         variant="flat"
-        rippleColor="#ffffff"
         @tap="handleClose"
       />
       <MDButton
@@ -21,7 +20,6 @@
         class="fa control-button trash"
         :text="$filters.fonticon('fa-trash')"
         variant="flat"
-        rippleColor="#ffffff"
         @tap="$emit('clear')"
       />
       <MDButton
@@ -29,7 +27,6 @@
         class="fa control-button"
         :text="$filters.fonticon('fa-arrow-up')"
         variant="flat"
-        rippleColor="#ffffff"
         @tap="navigateHistoryUp"
       />
       <MDButton
@@ -37,7 +34,6 @@
         class="fa control-button"
         :text="$filters.fonticon('fa-arrow-down')"
         variant="flat"
-        rippleColor="#ffffff"
         @tap="navigateHistoryDown"
       />
     </GridLayout>
@@ -52,8 +48,6 @@
         @returnPress="executeCommand"
         hint="Enter JavaScript command..."
         autocorrect="false"
-        color="#ffffff"
-        hintColor="#aaaaaa"
         maxLines="10"
       />
       <MDButton
@@ -61,7 +55,6 @@
         class="fa btn-primary send-button"
         :text="$filters.fonticon('fa-paper-plane')"
         variant="flat"
-        rippleColor="#ffffff"
         @tap="executeCommand"
       />
     </GridLayout>
@@ -164,10 +157,12 @@ export default {
   min-width: 40;
   width: 40;
   text-align: center;
+  ripple-color: $ripple;
 }
 
 .control-button.trash {
   margin-right: $spacing-l;
+  ripple-color: rgba(255, 0, 0, 0.3);
 }
 
 .command-input-container {
@@ -185,6 +180,8 @@ export default {
   height: auto;
   min-height: 40;
   max-height: 100;
+  color: #ffffff;
+  placeholder-color: #aaaaaa;
 }
 
 .send-button {
