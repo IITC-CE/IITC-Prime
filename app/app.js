@@ -7,6 +7,7 @@ import { BottomSheetPlugin } from '@nativescript-community/ui-material-bottomshe
 import { install as installBottomSheet } from "@nativescript-community/ui-material-bottomsheet";
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
+import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebView from '@nativescript-community/ui-webview/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
@@ -53,6 +54,7 @@ app.use(WebView);
 app.use(CollectionView);
 app.use(CanvasSVG);
 app.use(ButtonPlugin);
+app.use(SwitchPlugin);
 app.use(RipplePlugin);
 app.use(BottomSheetPlugin);
 

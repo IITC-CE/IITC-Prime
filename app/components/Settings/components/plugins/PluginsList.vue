@@ -22,8 +22,8 @@
       <GridLayout
         class="list-item plugin-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="auto, *, 50"
-        rows="auto"
+        columns="auto, *, 56"
+        rows="82"
       >
         <!-- Plugin icon -->
         <ImageCacheIt
@@ -45,7 +45,7 @@
         </StackLayout>
 
         <!-- Toggle switch -->
-        <Switch
+        <MDSwitch
           col="2"
           class="switch"
           :checked="item.status === 'on'"
@@ -185,7 +185,8 @@ export default {
 
 .plugin-item {
   height: 82;
-  padding: 12 $spacing-m;
+  padding: 0 $spacing-m;
+  vertical-alignment: center;
 }
 
 .plugin-icon {
@@ -209,5 +210,9 @@ export default {
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
   height: 20;
+}
+
+.switch {
+  height: 82;
 }
 </style>

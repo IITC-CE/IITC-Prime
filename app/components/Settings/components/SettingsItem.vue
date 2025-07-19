@@ -4,7 +4,7 @@
   <GridLayout
     class="list-item list-item--big"
     :class="{ 'list-item--first': isFirst, 'list-item--last': isLast }"
-    columns="*, 50"
+    columns="*, 56"
     rows="auto"
     @tap="onTap"
   >
@@ -30,9 +30,8 @@
       />
 
       <!-- Switch toggle -->
-      <Switch
+      <MDSwitch
         v-else-if="type === 'switch'"
-        class="switch"
         :checked="value"
         @checkedChange="onSwitchChange"
       />

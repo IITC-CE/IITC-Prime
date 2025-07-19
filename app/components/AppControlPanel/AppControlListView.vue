@@ -131,7 +131,7 @@
             'list-item--bottom-left': switchItem.isBottomLeft,
             'list-item--bottom-right': switchItem.isBottomRight
           }"
-          columns="*, 50"
+          columns="*, 56"
           rows="54"
           @tap="onOverlayToggle(switchItem.index, 'label')"
         >
@@ -141,7 +141,7 @@
             col="0"
             row="0"
           />
-          <Switch
+          <MDSwitch
             class="switch"
             :checked="switchItem.active"
             @checkedChange="args => onOverlayToggle(switchItem.index, args.value)"
@@ -156,7 +156,7 @@
       <GridLayout
         class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="*, 50"
+        columns="*, 56"
         rows="54"
         orientation="horizontal"
         @tap="onOverlayToggle(item.item.index, 'label')"
@@ -167,7 +167,7 @@
           col="0"
           row="0"
         />
-        <Switch
+        <MDSwitch
           class="switch"
           :checked="item.item.active"
           @checkedChange="args => onOverlayToggle(item.item.index, args.value)"
