@@ -24,11 +24,12 @@ $surface: #0b2d3a;         // Base background color (dark blue)
 $surface-variant: #0b303e; // Slightly darker variant (was $accent)
 $primary: #2e6772;         // Main accent color (teal)
 $on-surface: #ffffff;      // Text color on dark surfaces
+$on-surface-dark: #bbbbbb; // Text color on dark surfaces
 $ripple: rgba(255, 255, 255, 0.1);
 
 // Extended palette (hybrid approach)
-$primary-light: #56b0b9;     // Lighter version of primary
-$primary-dark: #3a7f85;      // Darker version of primary
+$primary-light: #437680;     // Lighter version of primary
+$primary-dark: #295c66;      // Darker version of primary
 $on-primary: #ffffff;        // Text on primary color
 
 $surface-bright: #143542;    // Brighter version of surface
@@ -80,6 +81,7 @@ $spacing-xl: 32;
 $spacing-xxl: 48;
 $spacing-panel: 10;
 $spacing-item: 56;
+$spacing-item-big: 82;
 
 // Border radius
 $radius-small: 4;
@@ -127,9 +129,14 @@ $radius-full: 9999;  // For circular elements
   height: $spacing-item;
   ripple-color: $ripple;
   font-size: $font-size;
-  padding: $spacing-xxs $spacing-l;
+  padding: 0 $spacing-l;
   border-bottom-width: $spacing-xxs;
   border-bottom-color: $surface;
+  border-top-left-radius: 0;
+
+  &--big {
+    height: $spacing-item-big;
+  }
 
   &--top-left, &--first {
     border-top-left-radius: $radius-large;
@@ -166,6 +173,17 @@ $radius-full: 9999;  // For circular elements
 .form-label {
   font-size: $font-size-small;
   margin-bottom: $spacing-xs;
+}
+
+.switch {
+  width: 50;
+}
+
+.section-header {
+  padding: 12 16 8 0;
+  color: $primary-light;
+  font-size: $font-size;
+  font-weight: bold;
 }
 
 //-----------------------------------------------

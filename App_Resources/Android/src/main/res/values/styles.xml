@@ -27,6 +27,10 @@
         <item name="colorPrimaryDark">@color/ns_primaryDark</item>
         <item name="colorAccent">@color/ns_accent</item>
 
+        <!-- ActionBar text colors -->
+        <item name="android:textColorPrimary">@color/ns_text</item>
+        <item name="actionMenuTextColor">@color/ns_text</item>
+
         <!-- Добавляем настройки для элементов диалогов -->
         <item name="materialButtonStyle">@style/AppButtonStyle</item>
         <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>

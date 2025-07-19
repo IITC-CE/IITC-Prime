@@ -2,47 +2,38 @@
 
 <template>
   <Page
-    actionBarHidden="true"
     @navigatedTo="onNavigatedTo"
     @navigatedFrom="onNavigatedFrom"
   >
-    <GridLayout rows="auto, *">
-      <!-- Header -->
-      <GridLayout
-        row="0"
-        columns="auto, *, auto"
-        rows="auto"
-        class="settings-header"
-      >
-        <MDButton
-          col="0"
-          class="fa back-button"
-          :text="$filters.fonticon('fa-arrow-left')"
-          @tap="goBack"
-          variant="flat"
-          rippleColor="#ffffff"
-          once="true"
-        />
-        <Label col="1" :text="title" class="settings-header-title" once="true" />
-        <slot name="headerRight" col="2"></slot>
-      </GridLayout>
+    <ActionBar :title="title" flat="true" class="action-bar">
+      <NavigationButton
+        @tap="goBack"
+        text="Back"
+        android.systemIcon="ic_menu_back"
+      />
+      <template v-if="$slots.headerRight && isIOS">
+        <slot name="headerRight" ios.position="right"></slot>
+      </template>
+      <template v-if="$slots.headerRight && isAndroid">
+        <slot name="headerRight" android.position="actionBar"></slot>
+      </template>
+    </ActionBar>
 
-      <!-- Content -->
-      <ScrollView v-if="useScroll === 'true'" row="1" orientation="vertical" class="settings-content">
-        <StackLayout>
-          <slot></slot>
-        </StackLayout>
-      </ScrollView>
-
-      <StackLayout v-else row="1" class="settings-content">
+    <!-- Content -->
+    <component
+      :is="useScroll === 'true' ? 'ScrollView' : 'StackLayout'"
+      :orientation="useScroll === 'true' ? 'vertical' : undefined"
+      class="settings-container"
+    >
+      <StackLayout class="settings-content">
         <slot></slot>
       </StackLayout>
-    </GridLayout>
+    </component>
   </Page>
 </template>
 
 <script>
-import { Frame } from "@nativescript/core";
+import { Frame, isIOS, isAndroid } from "@nativescript/core";
 import { attachBackHandler, detachBackHandler } from '@/utils/platform';
 
 export default {
@@ -61,7 +52,10 @@ export default {
   },
 
   data() {
-    return {};
+    return {
+      isIOS,
+      isAndroid
+    };
   },
 
   methods: {
@@ -93,32 +87,28 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.settings-header {
+Page {
+  background-color: $surface;
+}
+
+.action-bar {
   background-color: $primary;
-  height: 56;
-  padding: 0 4;
+  color: white;
 }
 
-.back-button {
-  width: 48;
-  height: 48;
-  padding-top: 13;
-  font-size: 18;
+ActionItem {
   color: white;
-  background-color: transparent;
-  text-align: center;
 }
 
-.settings-header-title {
+.action-bar ActionItem {
   color: white;
-  font-size: 20;
-  font-weight: bold;
-  text-align: center;
-  vertical-alignment: center;
+}
+
+.settings-container {
+  background-color: $surface;
 }
 
 .settings-content {
-  background-color: $surface;
   padding-left: $spacing-m;
   padding-right: $spacing-m;
 }

@@ -132,7 +132,7 @@
             'list-item--bottom-right': switchItem.isBottomRight
           }"
           columns="*, 50"
-          rows="50"
+          rows="54"
           @tap="onOverlayToggle(switchItem.index, 'label')"
         >
           <Label
@@ -157,7 +157,7 @@
         class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         columns="*, 50"
-        rows="50"
+        rows="54"
         orientation="horizontal"
         @tap="onOverlayToggle(item.item.index, 'label')"
       >
@@ -381,6 +381,7 @@ export default {
 
 .select-label {
   font-size: $font-small-size;
+  color: $on-surface-dark;
 }
 
 .overlay-portal {
@@ -402,10 +403,7 @@ export default {
 }
 
 .overlay-item-label {
+  height: $spacing-item;
   font-size: $font-size;
-}
-
-.switch {
-  width: 50;
 }
 </style>

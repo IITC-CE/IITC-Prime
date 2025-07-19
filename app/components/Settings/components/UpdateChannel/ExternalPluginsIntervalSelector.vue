@@ -9,6 +9,7 @@
       title="Select Update Interval"
       textField="name"
       idField="value"
+      class="list-item--first list-item--last"
       @change="onIntervalSelected"
     />
   </StackLayout>
@@ -63,10 +64,11 @@ export default {
 @import '@/app';
 
 .update-interval-container {
-  margin: 8 16;
+  padding-bottom: $spacing-m;
 }
 
 .interval-label {
+  color: $on-surface-dark;
   margin-bottom: 8;
   font-size: 14;
 }

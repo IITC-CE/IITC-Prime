@@ -266,7 +266,7 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: $radius-small;
   font-size: 14;
-  height: auto;
+  height: 40;
   color: #ffffff;
   placeholder-color: #aaaaaa;
 }

@@ -15,7 +15,7 @@
         col="1"
         class="fa url-status-icon"
         :class="urlStatusClass"
-        :text="urlStatusIcon"
+        :text="$filters.fonticon(urlStatusIcon)"
       />
     </GridLayout>
 
@@ -154,22 +154,26 @@ export default {
 @import '@/app';
 
 .custom-url-container {
-  margin: 8 16;
+  padding-bottom: $spacing-m;
 }
 
 .url-input-container {
   border-width: 1;
   border-color: $surface-variant;
   border-radius: 4;
-  padding: 0 8;
   background-color: $surface-bright;
-  margin-bottom: 12;
+  margin-bottom: $spacing-s;
 }
 
 .url-input {
+  margin: 0;
+  width: 100%;
+  border-radius: 0;
+  padding: $spacing-s;
+  font-size: 14;
   height: 50;
-  font-size: 16;
-  padding: 0 8;
+  color: #ffffff;
+  placeholder-color: #aaaaaa;
 }
 
 .url-status-icon {
@@ -196,7 +200,7 @@ export default {
 .examples-label {
   margin: 4 0;
   font-size: 14;
-  color: $surface-variant;
+  color: $on-surface-dark;
 }
 
 .examples-container {
@@ -204,11 +208,12 @@ export default {
 }
 
 .example-button {
-  background-color: $surface-variant;
+  background-color: $primary;
   color: $on-surface;
   margin: 4;
   padding: 8;
   border-radius: 4;
   font-size: 12;
+  text-transform: none;
 }
 </style>

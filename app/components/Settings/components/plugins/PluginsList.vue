@@ -22,7 +22,7 @@
       <GridLayout
         class="list-item plugin-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="auto, *, auto"
+        columns="auto, *, 50"
         rows="auto"
       >
         <!-- Plugin icon -->
@@ -47,6 +47,7 @@
         <!-- Toggle switch -->
         <Switch
           col="2"
+          class="switch"
           :checked="item.status === 'on'"
           isUserInteractionEnabled="false"
         />
@@ -182,14 +183,6 @@ export default {
   width: 100%;
 }
 
-.section-header {
-  padding: 12 16 8 16;
-  color: $primary-light;
-  font-size: $font-size-small;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
 .plugin-item {
   height: 82;
   padding: 12 $spacing-m;
@@ -212,7 +205,7 @@ export default {
 }
 
 .plugin-description {
-  color: $on-surface;
+  color: $on-surface-dark;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
   height: 20;
