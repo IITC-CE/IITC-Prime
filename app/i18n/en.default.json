@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": {
+      "release": "IITC Prime",
+      "beta": "IITC Prime Beta",
+      "debug": "IITC Prime Debug"
+    }
+  }
+}

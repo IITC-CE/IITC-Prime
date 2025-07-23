@@ -9,14 +9,63 @@
 // e.g. project.ext.googlePlayServicesVersion = "15.0.1"
 // create a file named before-plugins.gradle in the current directory and place it there
 
+final BUILD_DATE = new Date().format('yyyy.MM.dd-HH:mm')
+
+def buildTypeFromEnv = System.getenv("BUILD_TYPE") ?: "debug"
+
+def getVersionCodeTimeStamps = { ->
+    def git = 'git log -1 --pretty=format:%ct'
+
+    def proc = git.execute()
+    proc.waitFor()
+    def unixtime = "${proc.in.text}".trim()
+
+    if (unixtime.isEmpty()) {
+        println "Failed to get commit date"
+        return -1
+    }
+    return (int)(Long.parseLong(unixtime) / 10)
+}
+
+def getPackageVersion = { ->
+    def packageJson = new groovy.json.JsonSlurper().parseText(file('../../../package.json').text)
+    return packageJson.version
+}
+
 android {
   defaultConfig {
     minSdkVersion 23
     compileSdkVersion 34
     targetSdkVersion 34
+    versionCode = getVersionCodeTimeStamps()
+    versionName = getPackageVersion()
     generatedDensities = []
   }
   aaptOptions {
     additionalParameters "--no-version-vectors"
+  }
+
+  buildTypes {
+    debug {
+        versionNameSuffix "-$BUILD_DATE"
+    }
+    release {
+    }
+  }
+
+  sourceSets {
+    main {
+      res.srcDirs += "src/${buildTypeFromEnv}/res"
+    }
+    debug {
+      if (buildTypeFromEnv != "debug") {
+        res.srcDirs = []
+      }
+    }
+    release {
+      if (buildTypeFromEnv != "release") {
+        res.srcDirs = []
+      }
+    }
   }
 }

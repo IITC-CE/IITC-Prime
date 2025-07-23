@@ -3,6 +3,8 @@ hooks/
 node_modules/
 platforms/
 
+**/Android/src/main/res/values*/strings.xml
+
 # Logs
 logs
 *.log
