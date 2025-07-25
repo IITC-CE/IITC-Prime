@@ -1,0 +1,66 @@
+name: 'Setup Development Environment'
+description: 'Setup Node.js, Java, Android SDK, Python and NativeScript CLI'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '18'
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: '17'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ inputs.java-version }}
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Cache Android SDK
+      uses: actions/cache@v4
+      with:
+        path: |
+          /usr/local/lib/android/sdk
+          ~/.android
+        key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-android-sdk-
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Cache Python virtual environment
+      uses: actions/cache@v4
+      with:
+        path: venv
+        key: ${{ runner.os }}-python-venv-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-python-venv-
+
+    - name: Install Python dependencies
+      shell: bash
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install six
+
+    - name: Cache NativeScript CLI
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-nativescript-cli-${{ hashFiles('**/package*.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nativescript-cli-
+
+    - name: Install NativeScript CLI
+      shell: bash
+      run: |
+        npm install -g nativescript
+        ns doctor android

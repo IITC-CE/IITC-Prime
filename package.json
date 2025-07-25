@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "run:android": "ns run android",
-    "build:android:release": "BUILD_TYPE=release ns build android --release --env.snapshot --env.compileSnapshot --env.uglify --aab",
-    "build:android:beta": "BUILD_TYPE=beta ns build android",
-    "build:android:debug": "BUILD_TYPE=debug ns build android",
+    "build:android:release": "BUILD_TYPE=release ns build android --release --clean --key-store-path $KEYSTORE_PATH --key-store-password $KEYSTORE_PASSWORD --key-store-alias $KEYSTORE_ALIAS --key-store-alias-password $KEYSTORE_ALIAS_PASSWORD --env.snapshot --env.compileSnapshot --env.uglify",
+    "build:android:beta": "BUILD_TYPE=beta ns build android --release --clean --key-store-path $KEYSTORE_PATH --key-store-password $KEYSTORE_PASSWORD --key-store-alias $KEYSTORE_ALIAS --key-store-alias-password $KEYSTORE_ALIAS_PASSWORD --env.snapshot --env.compileSnapshot --env.sourceMap",
+    "build:android:debug": "BUILD_TYPE=debug ns build android --env.sourceMap",
     "run:ios": "ns run ios",
     "build:ios:release": "ns build ios --release --env.uglify",
     "build:ios:beta": "ns build ios",
