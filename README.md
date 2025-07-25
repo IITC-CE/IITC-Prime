@@ -1,6 +1,18 @@
 # IITC Prime
 
-IITC Prime is a new Android/iOS mobile application for IITC (Ingress Intel Total Conversion), built with NativeScript and Vue.js.
+A new and modern way to use IITC on mobile
+
+---
+
+IITC Prime is a modern cross-platform mobile application for IITC (Ingress Intel Total Conversion) available on Android and iOS.
+IITC Prime is built with NativeScript and Vue.js, using a single JavaScript/TypeScript codebase for both Android and iOS.
+The app uses native UI components on each platform and features a clean, modern look inspired by Material 3 You.
+The app supports in‑app updates of the IITC core and lets you switch effortlessly between stable, beta, and custom build channels — no reinstall needed.
+IITC Prime simply makes using IITC on mobile easier and more enjoyable.
+
+Status: Beta testing.
+
+This app is not affiliated with Niantic Labs.
 
 ## Getting started
 

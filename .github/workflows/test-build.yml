@@ -1,52 +1,27 @@
 name: Make test build
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
   workflow_dispatch:
 
 jobs:
   test_build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
 
-      - name: Get yarn cache
-        id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Setup cache
+        uses: ./.github/actions/setup-cache
 
-      - uses: actions/cache@v4
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install six
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          python3 -m pip install six
-
-      - name: Install NativeScript
-        run: |
-          yarn global add nativescript@latest
-          tns doctor
-          tns package-manager set yarn
-
-      - name: Yarn dependencies
-        run: yarn
+      - name: Install dependencies
+        run: npm install
 
       - name: Make test build
-        run: tns build android --debug --clean
+        run: npm run build:android:debug
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

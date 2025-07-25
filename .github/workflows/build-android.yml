@@ -1,0 +1,110 @@
+name: Build Android
+
+on:
+  push:
+    branches: [master]
+    tags: ['*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Setup cache
+        uses: ./.github/actions/setup-cache
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Decode Android keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android_keystore.jks
+
+      - name: Set build type
+        run: |
+          if [[ $GITHUB_REF == refs/heads/master ]]; then
+            echo "BUILD_TYPE=beta" >> $GITHUB_ENV
+            echo "BUILD_SCRIPT=build:android:beta" >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "BUILD_TYPE=release" >> $GITHUB_ENV
+            echo "BUILD_SCRIPT=build:android:release" >> $GITHUB_ENV
+          fi
+
+      - name: Build Android APK
+        env:
+          KEYSTORE_PATH: ./android_keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+        run: npm run ${{ env.BUILD_SCRIPT }}
+
+      - name: Get APK filename
+        id: apk-info
+        run: |
+          APK_PATH=$(find platforms/android/app/build/outputs -name "*.apk" | head -n 1)
+          APK_FILENAME=$(basename "$APK_PATH")
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "apk_filename=$APK_FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Create release for tags
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: ${{ steps.apk-info.outputs.apk_path }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare metadata
+        run: |
+          mkdir -p artifact/.metadata
+          echo "${{ env.BUILD_TYPE }}" > artifact/.metadata/build_type
+          echo "${{ github.sha }}" > artifact/.metadata/commit
+          echo "${{ steps.apk-info.outputs.apk_filename }}" > artifact/.metadata/apk_filename
+          echo "$(date -u +'%Y-%m-%d_%H-%M')" > artifact/.metadata/buildstamp
+
+          # Copy APK to artifact directory
+          mkdir -p artifact/build
+          cp "${{ steps.apk-info.outputs.apk_path }}" artifact/build/
+
+      - uses: actions/upload-artifact@v4
+        id: upload-artifact
+        with:
+          name: android-build
+          include-hidden-files: true
+          path: |
+            artifact/.metadata/
+            artifact/build/
+
+      - name: Get artifact ID
+        id: get-artifact-id
+        if: vars.WEBSITE_REPO != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            const artifact = artifacts.data.artifacts.find(a => a.name === 'android-build');
+            return artifact.id;
+
+      - name: Send build to website
+        if: vars.WEBSITE_REPO != ''
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          repository: ${{ vars.WEBSITE_REPO }}
+          event-type: 'new_iitc_prime_build'
+          client-payload: |
+            {
+              "repo": {
+                "owner": "${{ github.repository_owner }}",
+                "repo": "${{ github.event.repository.name }}"
+              },
+              "artifact_id": "${{ steps.get-artifact-id.outputs.result }}"
+            }
