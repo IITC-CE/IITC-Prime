@@ -23,15 +23,16 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
-    - name: Cache Android SDK
+    - name: Cache Android Gradle dependencies
       uses: actions/cache@v4
       with:
         path: |
-          /usr/local/lib/android/sdk
-          ~/.android
-        key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.android/build-cache
+        key: ${{ runner.os }}-android-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
-          ${{ runner.os }}-android-sdk-
+          ${{ runner.os }}-android-gradle-
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
