@@ -11,6 +11,7 @@
     @loadFinished="onLoadFinished"
     @loadError="onLoadError"
     @shouldOverrideUrlLoading="onShouldOverrideUrlLoading"
+    @titleChanged="onTitleChanged"
   />
 </template>
 
@@ -75,11 +76,8 @@ export default {
         setProgress: (progress) => {
           this.$emit('progress', progress);
         },
-        setPageTitle: (title) => {
-          this.$emit('title-changed', title);
-        },
-        showPopup: (resultMsg) => {
-          this.$emit('show-popup', { transport: resultMsg });
+        showPopup: (popupData) => {
+          this.$emit('show-popup', popupData);
         },
         closePopup: () => {
           this.$emit('close-popup');
@@ -170,6 +168,10 @@ export default {
       }
       this.$emit('should-override-url-loading', args);
       return args;
+    },
+
+    onTitleChanged(args) {
+      this.$emit('page-title-changed', args.title);
     },
 
     /**

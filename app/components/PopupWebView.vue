@@ -23,7 +23,7 @@
             class="webview-container"
             :src="url"
             @webview-loaded="onWebViewLoaded"
-            @title-changed="updatePageTitle"
+            @page-title-changed="updatePageTitle"
             @external-url="handleExternalUrl"
             @progress="updateProgress"
             @close-popup="closePopup"
@@ -45,6 +45,7 @@
 
 <script>
 import BaseWebView from './BaseWebView.vue';
+import { transportManager } from '@/utils/webview/transport-manager';
 
 export default {
   name: 'PopupWebView',
@@ -58,8 +59,8 @@ export default {
       type: String,
       default: ''
     },
-    transport: {
-      type: Object,
+    transportId: {
+      type: String,
       default: null
     }
   },
@@ -99,20 +100,17 @@ export default {
     },
 
     closePopup() {
+      if (this.transportId) {
+        transportManager.cleanupTransport(this.transportId);
+      }
       this.$emit('close');
     },
 
     onWebViewLoaded({ webview }) {
-      if (this.transport) {
-        const transport = this.transport.obj;
-        transport?.setWebView(webview.android);
-
-        try {
-          if (transport && transport.getWebView()) {
-            this.transport.sendToTarget();
-          }
-        } catch (error) {
-          console.error('Error sending transport message:', error);
+      if (this.transportId) {
+        const success = transportManager.initializeTransport(this.transportId, webview);
+        if (!success) {
+          console.error('Failed to initialize transport:', this.transportId);
         }
       }
     }

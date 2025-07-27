@@ -89,7 +89,7 @@ export default {
         isVisible: false,
         props: {
           url: null,
-          transport: null
+          transportId: null
         }
       },
       sliding: {
@@ -151,17 +151,17 @@ export default {
       ]);
     },
 
-    handlePopup({ url, transport }) {
+    handlePopup(data) {
       this.popup = {
         isVisible: true,
-        props: { url, transport }
+        props: data
       };
     },
 
     handlePopupClose() {
       this.popup = {
         isVisible: false,
-        props: { url: null, transport: null }
+        props: { url: null, transportId: null }
       };
     },
 
