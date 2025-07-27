@@ -23,7 +23,7 @@
             class="webview-container"
             :src="url"
             @webview-loaded="onWebViewLoaded"
-            @title-changed="updatePageTitle"
+            @page-title-changed="updatePageTitle"
             @external-url="handleExternalUrl"
             @progress="updateProgress"
             @close-popup="closePopup"
@@ -45,6 +45,7 @@
 
 <script>
 import BaseWebView from './BaseWebView.vue';
+import { markRaw } from 'vue';
 
 export default {
   name: 'PopupWebView',
@@ -104,10 +105,10 @@ export default {
 
     onWebViewLoaded({ webview }) {
       if (this.transport) {
-        const transport = this.transport.obj;
-        transport?.setWebView(webview.android);
-
         try {
+          const transport = this.transport.obj;
+          transport?.setWebView(webview.android);
+
           if (transport && transport.getWebView()) {
             this.transport.sendToTarget();
           }

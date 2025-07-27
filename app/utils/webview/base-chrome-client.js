@@ -1,6 +1,7 @@
 // Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { isAndroid } from "@nativescript/core";
+import {markRaw} from "vue";
 
 /**
  * WebView chrome client implementation
@@ -15,12 +16,6 @@ export const BaseWebChromeClient = isAndroid ? android.webkit.WebChromeClient.ex
   onProgressChanged: function(view, progress) {
     if (this.component?.setProgress) {
       this.component.setProgress(progress);
-    }
-  },
-
-  onReceivedTitle: function(view, title) {
-    if (this.component?.setPageTitle) {
-      this.component.setPageTitle(title);
     }
   },
 
@@ -39,7 +34,8 @@ export const BaseWebChromeClient = isAndroid ? android.webkit.WebChromeClient.ex
     if (!isUserGesture) return false;
 
     if (this.component?.showPopup) {
-      this.component.showPopup(resultMsg);
+      const frozenResultMsg = markRaw(resultMsg);
+      this.component.showPopup(frozenResultMsg);
       return true;
     }
     return false;
