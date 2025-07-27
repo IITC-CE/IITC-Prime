@@ -76,8 +76,8 @@ export default {
         setProgress: (progress) => {
           this.$emit('progress', progress);
         },
-        showPopup: (resultMsg) => {
-          this.$emit('show-popup', { transport: resultMsg });
+        showPopup: (popupData) => {
+          this.$emit('show-popup', popupData);
         },
         closePopup: () => {
           this.$emit('close-popup');

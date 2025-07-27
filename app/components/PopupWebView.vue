@@ -45,7 +45,7 @@
 
 <script>
 import BaseWebView from './BaseWebView.vue';
-import { markRaw } from 'vue';
+import { transportManager } from '@/utils/webview/transport-manager';
 
 export default {
   name: 'PopupWebView',
@@ -59,8 +59,8 @@ export default {
       type: String,
       default: ''
     },
-    transport: {
-      type: Object,
+    transportId: {
+      type: String,
       default: null
     }
   },
@@ -100,20 +100,17 @@ export default {
     },
 
     closePopup() {
+      if (this.transportId) {
+        transportManager.cleanupTransport(this.transportId);
+      }
       this.$emit('close');
     },
 
     onWebViewLoaded({ webview }) {
-      if (this.transport) {
-        try {
-          const transport = this.transport.obj;
-          transport?.setWebView(webview.android);
-
-          if (transport && transport.getWebView()) {
-            this.transport.sendToTarget();
-          }
-        } catch (error) {
-          console.error('Error sending transport message:', error);
+      if (this.transportId) {
+        const success = transportManager.initializeTransport(this.transportId, webview);
+        if (!success) {
+          console.error('Failed to initialize transport:', this.transportId);
         }
       }
     }

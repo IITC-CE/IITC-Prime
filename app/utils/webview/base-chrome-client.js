@@ -1,7 +1,7 @@
 // Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { isAndroid } from "@nativescript/core";
-import {markRaw} from "vue";
+import { transportManager } from "./transport-manager";
 
 /**
  * WebView chrome client implementation
@@ -34,8 +34,8 @@ export const BaseWebChromeClient = isAndroid ? android.webkit.WebChromeClient.ex
     if (!isUserGesture) return false;
 
     if (this.component?.showPopup) {
-      const frozenResultMsg = markRaw(resultMsg);
-      this.component.showPopup(frozenResultMsg);
+      const popupData = transportManager.storeTransport(resultMsg);
+      this.component.showPopup(popupData);
       return true;
     }
     return false;
