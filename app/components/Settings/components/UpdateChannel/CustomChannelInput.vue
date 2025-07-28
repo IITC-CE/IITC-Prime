@@ -6,9 +6,8 @@
       <TextField
         col="0"
         class="url-input"
-        :text="url"
+        v-model="url"
         hint="Enter custom channel URL"
-        @textChange="onTextChange"
         returnKeyType="done"
       />
       <Label
@@ -39,6 +38,7 @@
 
 <script>
 import { MDButton } from '@nativescript-community/ui-material-button';
+import { mapActions } from 'vuex';
 
 export default {
   name: 'CustomChannelInput',
@@ -79,20 +79,13 @@ export default {
   },
 
   watch: {
-    customUrl(newValue) {
-      this.url = newValue;
+    url(newValue) {
       this.checkCustomUrl();
     }
   },
 
   methods: {
-    /**
-     * Handle text change in input field
-     */
-    onTextChange(event) {
-      this.url = event.value;
-      this.checkCustomUrl();
-    },
+    ...mapActions('manager', ['checkCustomChannelUrl']),
 
     /**
      * Check if custom URL is valid
@@ -110,20 +103,16 @@ export default {
         let urlToCheck = this.url;
         if (!/^https?:\/\//i.test(urlToCheck)) {
           urlToCheck = 'http://' + urlToCheck;
-          this.url = urlToCheck;
         }
 
-        // Check if URL is accessible
-        const metaUrl = urlToCheck.endsWith('/') ?
-          `${urlToCheck}meta.json` : `${urlToCheck}/meta.json`;
+        const isValid = await this.checkCustomChannelUrl(urlToCheck);
 
-        const response = await fetch(metaUrl, {
-          method: 'HEAD',
-          timeout: 2000
-        });
-
-        if (response.ok) {
+        if (isValid) {
           this.urlStatus = 'success';
+          if (this.url !== urlToCheck) {
+            this.url = urlToCheck;
+            await this.$nextTick();
+          }
           this.$emit('urlChanged', urlToCheck);
         } else {
           this.urlStatus = 'error';
@@ -139,7 +128,6 @@ export default {
      */
     setExampleUrl(url) {
       this.url = url;
-      this.checkCustomUrl();
     }
   },
 

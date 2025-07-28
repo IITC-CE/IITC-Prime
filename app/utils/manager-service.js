@@ -197,12 +197,19 @@ export class ManagerService {
       const metaUrl = fullUrl.endsWith('/') ?
         `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
 
-      const response = await fetch(metaUrl, {
-        method: 'HEAD',
-        timeout: 2000
+      const metaUrlWithCacheBust = `${metaUrl}?${Date.now()}`;
+
+      const response = await fetch(metaUrlWithCacheBust, {
+        method: 'GET',
+        timeout: 2000,
+        headers: {
+          'Accept': '*/*',
+          'Range': 'bytes=0-0'  // Request only first byte
+        }
       });
 
-      return response.ok;
+      // Accept both 200 (full response) and 206 (partial content from Range request)
+      return response.status === 200 || response.status === 206;
     } catch (error) {
       console.error('[ManagerService] Error checking custom URL:', error);
       return false;
