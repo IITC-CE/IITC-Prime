@@ -89,7 +89,7 @@ export const addPane = async (name, label, icon) => {
  * @param {number} level - Portal's level
  * @param {string} title - Portal's name/title
  * @param {number} health - Portal's health percentage
- * @param {Array} resonators - Portal's resonators data
+ * @param {Array|null} resonators - Portal's resonators data
  * @param {string} levelColor - Portal's level color
  */
 export const setPortalStatus = async (guid, team, level, title, health, resonators, levelColor) => {
@@ -100,7 +100,7 @@ export const setPortalStatus = async (guid, team, level, title, health, resonato
     isNeutral: team === 'N' || team === 'NEUTRAL',
     title,
     health,
-    resonators: resonators || [],
+    resonators,
     levelColor,
   };
   await store.dispatch('map/setPortalStatus', data);

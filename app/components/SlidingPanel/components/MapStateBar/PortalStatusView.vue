@@ -71,19 +71,24 @@ export default {
 
     // Prepare array of 8 resonators
     resonatorsArray() {
-      if (!this.hasPortalSelected || !this.portalStatus.resonators || !this.portalStatus.resonators.length) {
-        // Create 8 empty resonators if no data
-        return Array(8).fill().map(() => ({
-          level: 0,
-          energy: 0,
-          maxEnergy: 0,
-          healthPct: 0,
-          levelColor: '#808080',
-        }));
-      }
+      const resonators = this.hasPortalSelected ? this.portalStatus.resonators : null;
+      const result = [];
 
-      // Use data from API
-      return this.portalStatus.resonators;
+      for (let i = 0; i < 8; i++) {
+        const resonator = resonators?.[i];
+        if (resonator && resonator.energy > 0) {
+          result.push(resonator);
+        } else {
+          result.push({
+            level: 0,
+            energy: 0,
+            maxEnergy: 0,
+            healthPct: 0,
+            levelColor: '#808080',
+          });
+        }
+      }
+      return result;
     }
   }
 }

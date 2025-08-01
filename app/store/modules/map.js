@@ -20,7 +20,7 @@ export const map = {
       isNeutral: true,
       title: 'No portal selected',
       health: 0,
-      resonators: [],
+      resonators: null,
       levelColor: null,
     },
     mapStatus: {
@@ -84,7 +84,7 @@ export const map = {
           isNeutral: true,
           title: 'No portal selected',
           health: 0,
-          resonators: [],
+          resonators: null, // Reset to null for lazy initialization
           levelColor: null,
         };
       } else {
