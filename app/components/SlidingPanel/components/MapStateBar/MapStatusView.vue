@@ -26,11 +26,16 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      text_loading: 'Loading...',
+    };
+  },
   computed: {
     // Portal levels display text
     portalLevelsText() {
       const portalLevels = this.mapStatus?.portalLevels;
-      if (!portalLevels) return 'Loading...';
+      if (!portalLevels) return this.text_loading;
 
       if (portalLevels.hasPortals) {
         return 'portals';
@@ -46,9 +51,9 @@ export default {
     // Generate HTML-formatted status text
     fullMapStatusText() {
       const status = this.mapStatus?.mapStatus;
-      if (!status) return '<b>map:</b> Loading...';
+      if (!status) return this.text_loading;
 
-      let result = `<b>map:</b> ${status.short || 'Loading...'}`;
+      let result = `${status.short || this.text_loading}`;
 
       // Add progress if available
       if (status.progressPercent !== null) {
