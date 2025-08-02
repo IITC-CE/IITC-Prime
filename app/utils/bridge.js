@@ -49,7 +49,7 @@ export const router = async (event) => {
       await addPane(eventData.name, eventData.label, eventData.icon);
       break;
     case "setPortalStatus":
-      await setPortalStatus(eventData.guid, eventData.team, eventData.level, eventData.title, eventData.health, eventData.resonators, eventData.ui);
+      await setPortalStatus(eventData.guid, eventData.team, eventData.level, eventData.title, eventData.health, eventData.resonators, eventData.levelColor, eventData.isLoading);
       break;
     case "setMapStatus":
       await setMapStatus(eventData.portalLevels, eventData.mapStatus, eventData.requests);
@@ -90,7 +90,7 @@ export const injectBridgeIITC = async (webview) => {
     setActiveHighlighter: ["name"],
     addPane: ["name", "label", "icon"],
     setFollowMode: ["follow"],
-    setPortalStatus: ["guid", "team", "level", "title", "health", "resonators", "ui"],
+    setPortalStatus: ["guid", "team", "level", "title", "health", "resonators", "levelColor", "isLoading"],
     setMapStatus: ["portalLevels", "mapStatus", "requests"],
     setProgress: ["progress"],
     setPermalink: ["href"],

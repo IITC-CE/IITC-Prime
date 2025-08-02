@@ -3,12 +3,16 @@
 <template>
   <StackLayout
     class="portal-status-view"
+    :class="{
+      'portal-status-view--loading': portalStatus.isLoading,
+      'portal-status-view--loaded': !portalStatus.isLoading && hasPortalSelected
+    }"
     horizontalAlignment="left">
 
-    <!-- If no portal selected -->
+    <!-- If no portal selected or IITC not ready -->
     <Label v-if="!hasPortalSelected"
-           class="no-portal-message"
-           text="No portal selected" />
+           class="status-message"
+           :text="statusMessage" />
 
     <!-- If portal is selected -->
     <StackLayout v-else>
@@ -55,6 +59,8 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
+
 export default {
   name: 'PortalStatusView',
   props: {
@@ -64,26 +70,46 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+      isWebviewLoaded: state => state.ui.isWebviewLoaded,
+      isIitcLoaded: state => state.ui.isIitcLoaded
+    }),
+
     // Check if portal is selected
     hasPortalSelected() {
       return this.portalStatus && this.portalStatus.guid !== null;
     },
 
+    statusMessage() {
+      if (!this.isWebviewLoaded) {
+        return 'Loading...';
+      }
+      if (!this.isIitcLoaded) {
+        return 'Sign in required';
+      }
+      return 'No portal selected';
+    },
+
     // Prepare array of 8 resonators
     resonatorsArray() {
-      if (!this.hasPortalSelected || !this.portalStatus.resonators || !this.portalStatus.resonators.length) {
-        // Create 8 empty resonators if no data
-        return Array(8).fill().map(() => ({
-          level: 0,
-          energy: 0,
-          maxEnergy: 0,
-          healthPct: 0,
-          levelColor: '#808080',
-        }));
-      }
+      const resonators = this.hasPortalSelected ? this.portalStatus.resonators : null;
+      const result = [];
 
-      // Use data from API
-      return this.portalStatus.resonators;
+      for (let i = 0; i < 8; i++) {
+        const resonator = resonators?.[i];
+        if (resonator && resonator.energy > 0) {
+          result.push(resonator);
+        } else {
+          result.push({
+            level: 0,
+            energy: 0,
+            maxEnergy: 0,
+            healthPct: 0,
+            levelColor: '#808080',
+          });
+        }
+      }
+      return result;
     }
   }
 }
@@ -92,12 +118,37 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.portal-status-view {
-  font-size: $font-size;
-  padding-right: $spacing-m;
+@mixin portal-animation {
+  animation-duration: 0.2s;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
 }
 
-.no-portal-message {
+.portal-status-view {
+  font-size: $font-size;
+
+  &--loading {
+    @include portal-animation;
+    animation-name: fadeToLoading;
+  }
+
+  &--loaded {
+    @include portal-animation;
+    animation-name: fadeFromLoading;
+  }
+}
+
+@keyframes fadeToLoading {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
+@keyframes fadeFromLoading {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.status-message {
   text-align: center;
   color: $text;
   font-style: italic;

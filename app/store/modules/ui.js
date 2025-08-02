@@ -5,7 +5,8 @@ export const ui = {
   state: () => ({
     screenHeight: 0,
     slidingPanelWidth: 100,
-    isWebviewLoadFinished: false,
+    isWebviewLoaded: false,
+    isIitcLoaded: false,
     progress: 0,
     isDebugActive: false,
 
@@ -50,8 +51,11 @@ export const ui = {
     SET_SLIDING_PANEL_WIDTH(state, width) {
       state.slidingPanelWidth = width;
     },
-    SET_WEBVIEW_LOAD_STATUS(state, status) {
-      state.isWebviewLoadFinished = status;
+    SET_WEBVIEW_LOADED(state, status) {
+      state.isWebviewLoaded = status;
+    },
+    SET_IITC_LOADED(state, status) {
+      state.isIitcLoaded = status;
     },
     SET_PROGRESS(state, progress) {
       state.progress = progress;
@@ -111,8 +115,14 @@ export const ui = {
     setSlidingPanelWidth({ commit }, width) {
       commit('SET_SLIDING_PANEL_WIDTH', width);
     },
-    async setWebviewLoadStatus({ commit, dispatch }, status) {
-      commit('SET_WEBVIEW_LOAD_STATUS', status);
+    async setWebviewLoaded({ commit, dispatch }, status) {
+      commit('SET_WEBVIEW_LOADED', status);
+      // Reset IITC load status, portal status and map status when webview reloads
+      if (!status) {
+        dispatch('setIitcLoaded', false);
+        await dispatch('map/setPortalStatus', null, { root: true });
+        await dispatch('map/setMapStatus', null, { root: true });
+      }
       if (status) {
         await dispatch('manager/inject', null, { root: true });
       }
@@ -121,7 +131,12 @@ export const ui = {
       commit('SET_PROGRESS', progress);
     },
     reloadWebView() {},
-    iitcBootFinished() {},
+    setIitcLoaded({ commit }, status) {
+      commit('SET_IITC_LOADED', status);
+    },
+    iitcBootFinished({ dispatch }) {
+      dispatch('setIitcLoaded', true);
+    },
     toggleDebugMode({ commit, state }) {
       commit('SET_DEBUG_MODE', !state.isDebugActive);
     },

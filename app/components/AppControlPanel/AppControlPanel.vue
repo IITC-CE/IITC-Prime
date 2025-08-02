@@ -29,18 +29,20 @@
       />
 
       <!-- Search Button -->
-      <MDButton
-        col="2"
-        variant="flat"
-        class="fa app-control-button"
-        :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'search' }"
-        :text="$filters.fonticon('fa-search')"
-        @tap="handleControlButtonTap('search', $event)"
-        @pan="handleControlButtonPan('search', $event)"
-      />
+<!--      <MDButton-->
+<!--        v-show="isIitcLoaded"-->
+<!--        col="2"-->
+<!--        variant="flat"-->
+<!--        class="fa app-control-button"-->
+<!--        :class="{ 'app-control-button&#45;&#45;active': isPanelOpen && activeButton === 'search' }"-->
+<!--        :text="$filters.fonticon('fa-search')"-->
+<!--        @tap="handleControlButtonTap('search', $event)"-->
+<!--        @pan="handleControlButtonPan('search', $event)"-->
+<!--      />-->
 
       <!-- Location Button -->
       <MDButton
+        v-show="isIitcLoaded"
         col="3"
         variant="flat"
         class="fa app-control-button"
@@ -50,6 +52,7 @@
 
       <!-- Layers Button -->
       <MDButton
+        v-show="isIitcLoaded"
         col="4"
         variant="flat"
         class="fa app-control-button"
@@ -119,7 +122,8 @@ export default {
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
       isPanelOpen: state => state.ui.panelState.isOpen,
-      screenHeight: state => state.ui.screenHeight
+      screenHeight: state => state.ui.screenHeight,
+      isIitcLoaded: state => state.ui.isIitcLoaded
     }),
 
     ...mapGetters('map', ['isFollowingUser']),

@@ -13,11 +13,12 @@
     <!-- Portal status component - left side -->
     <PortalStatusView
       class="portalStatusView"
-      width="68%"
+      :width="isIitcLoaded ? '68%' : '100%'"
       :portalStatus="portalStatus" />
 
     <!-- Map status component - right side -->
     <MapStatusView
+      v-if="isIitcLoaded"
       class="mapStatusView"
       width="32%"
       :mapStatus="mapStatus" />
@@ -68,7 +69,8 @@ export default {
   computed: {
     ...mapState({
       mapStatus: state => state.map.mapStatus,
-      portalStatus: state => state.map.portalStatus
+      portalStatus: state => state.map.portalStatus,
+      isIitcLoaded: state => state.ui.isIitcLoaded
     })
   },
   methods: {
