@@ -22,6 +22,7 @@ export const map = {
       health: 0,
       resonators: null,
       levelColor: null,
+      isLoading: false,
     },
     mapStatus: {
       portalLevels: {
@@ -86,6 +87,7 @@ export const map = {
           health: 0,
           resonators: null, // Reset to null for lazy initialization
           levelColor: null,
+          isLoading: false,
         };
       } else {
         // Update with data from IITC

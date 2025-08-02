@@ -3,6 +3,10 @@
 <template>
   <StackLayout
     class="portal-status-view"
+    :class="{
+      'portal-status-view--loading': portalStatus.isLoading,
+      'portal-status-view--loaded': !portalStatus.isLoading && hasPortalSelected
+    }"
     horizontalAlignment="left">
 
     <!-- If no portal selected -->
@@ -97,9 +101,35 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
+@mixin portal-animation {
+  animation-duration: 0.2s;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
+}
+
 .portal-status-view {
   font-size: $font-size;
   padding-right: $spacing-m;
+
+  &--loading {
+    @include portal-animation;
+    animation-name: fadeToLoading;
+  }
+
+  &--loaded {
+    @include portal-animation;
+    animation-name: fadeFromLoading;
+  }
+}
+
+@keyframes fadeToLoading {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
+@keyframes fadeFromLoading {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
 }
 
 .no-portal-message {

@@ -117,9 +117,11 @@ export const ui = {
     },
     async setWebviewLoaded({ commit, dispatch }, status) {
       commit('SET_WEBVIEW_LOADED', status);
-      // Reset IITC load status when webview reloads
+      // Reset IITC load status, portal status and map status when webview reloads
       if (!status) {
         dispatch('setIitcLoaded', false);
+        await dispatch('map/setPortalStatus', null, { root: true });
+        await dispatch('map/setMapStatus', null, { root: true });
       }
       if (status) {
         await dispatch('manager/inject', null, { root: true });
