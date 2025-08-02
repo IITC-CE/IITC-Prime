@@ -71,7 +71,7 @@ export default {
 
     async onLoadStarted() {
       this.started = true;
-      await this.$store.dispatch('ui/setWebviewLoadStatus', false);
+      await this.$store.dispatch('ui/setWebviewLoaded', false);
     },
 
     async onLoadFinished(arg) {
@@ -84,7 +84,7 @@ export default {
         await injectDebugBridge(this.webview);
 
         // Then trigger plugin injection
-        await this.$store.dispatch('ui/setWebviewLoadStatus', true);
+        await this.$store.dispatch('ui/setWebviewLoaded', true);
       }
     },
 
