@@ -9,10 +9,10 @@
     }"
     horizontalAlignment="left">
 
-    <!-- If no portal selected -->
+    <!-- If no portal selected or IITC not ready -->
     <Label v-if="!hasPortalSelected"
-           class="no-portal-message"
-           text="No portal selected" />
+           class="status-message"
+           :text="statusMessage" />
 
     <!-- If portal is selected -->
     <StackLayout v-else>
@@ -59,6 +59,8 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
+
 export default {
   name: 'PortalStatusView',
   props: {
@@ -68,9 +70,24 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+      isWebviewLoaded: state => state.ui.isWebviewLoaded,
+      isIitcLoaded: state => state.ui.isIitcLoaded
+    }),
+
     // Check if portal is selected
     hasPortalSelected() {
       return this.portalStatus && this.portalStatus.guid !== null;
+    },
+
+    statusMessage() {
+      if (!this.isWebviewLoaded) {
+        return 'Loading...';
+      }
+      if (!this.isIitcLoaded) {
+        return 'Sign in required';
+      }
+      return 'No portal selected';
     },
 
     // Prepare array of 8 resonators
@@ -109,7 +126,6 @@ export default {
 
 .portal-status-view {
   font-size: $font-size;
-  padding-right: $spacing-m;
 
   &--loading {
     @include portal-animation;
@@ -132,7 +148,7 @@ export default {
   to { opacity: 1; }
 }
 
-.no-portal-message {
+.status-message {
   text-align: center;
   color: $text;
   font-style: italic;

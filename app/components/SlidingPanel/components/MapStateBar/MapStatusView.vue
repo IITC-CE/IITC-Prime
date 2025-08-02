@@ -83,6 +83,7 @@ export default {
 
 .map-status-view {
   font-size: $font-size-small;
+  padding-left: $spacing-m;
 }
 
 .portal-levels {
