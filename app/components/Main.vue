@@ -59,6 +59,7 @@ import { AndroidApplication, Application } from "@nativescript/core";
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from "@/utils/user-location";
+import { handleDeepLink } from '@/utils/deep-links';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -238,6 +239,9 @@ export default {
 
     this.keyboard.on('opened', this.onKeyboardOpened);
     this.keyboard.on('closed', this.onKeyboardClosed);
+
+    // Initialize deep link handling
+    handleDeepLink();
 
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async (action) => {
