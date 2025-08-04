@@ -16,7 +16,7 @@
     </StackLayout>
 
     <!-- buttons -->
-    <GridLayout class="panel-buttons" row="1" col="0" columns="auto, *, auto, auto, auto" verticalAlignment="top">
+    <GridLayout class="panel-buttons" row="1" col="0" columns="auto, *, auto, auto, auto, auto" verticalAlignment="top">
       <!-- Quick Access Button -->
       <MDButton
         col="0"
@@ -40,10 +40,20 @@
 <!--        @pan="handleControlButtonPan('search', $event)"-->
 <!--      />-->
 
+      <!-- Link Permission Button (Android only, when not default handler) -->
+      <MDButton
+        v-show="showLinkPermissionButton"
+        col="3"
+        variant="flat"
+        class="fa app-control-button app-control-button--warning"
+        :text="$filters.fonticon('fa-link')"
+        @tap="onLinkPermission"
+      />
+
       <!-- Location Button -->
       <MDButton
         v-show="isIitcLoaded"
-        col="3"
+        col="4"
         variant="flat"
         class="fa app-control-button"
         :text="$filters.fonticon(locationButtonIcon)"
@@ -53,7 +63,7 @@
       <!-- Layers Button -->
       <MDButton
         v-show="isIitcLoaded"
-        col="4"
+        col="5"
         variant="flat"
         class="fa app-control-button"
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
@@ -80,6 +90,8 @@ import AppControlListView from "./AppControlListView.vue";
 import { ControlPanelDataService } from "./services/controlPanelDataService.js";
 import { mapState, mapActions, mapGetters } from 'vuex';
 import { buttonGestureHandlerMixin } from './button-gesture-handler';
+import { isDefaultLinkHandler, openAppLinkSettings } from '@/utils/platform';
+import { Application } from '@nativescript/core';
 
 export default {
   name: 'AppControlPanel',
@@ -139,6 +151,8 @@ export default {
   data() {
     return {
       _activeButton: null, // Internal storage for local changes
+      showLinkPermissionButton: false, // Show link permission button
+      activityResumedHandler: null, // Store activity resumed handler
     }
   },
 
@@ -205,12 +219,56 @@ export default {
      */
     async onLocate() {
       await this.$store.dispatch('map/triggerUserLocate');
+    },
+
+    /**
+     * Handle link permission button tap
+     */
+    onLinkPermission() {
+      openAppLinkSettings();
+    },
+
+    /**
+     * Check and update link handler status
+     */
+    checkLinkHandlerStatus() {
+      const linkHandlerStatus = isDefaultLinkHandler();
+      this.showLinkPermissionButton = linkHandlerStatus === false;
+    },
+
+    /**
+     * Setup activity event handlers for link permission checking
+     */
+    setupActivityHandlers() {
+      if (!Application.android) return;
+
+      // Check immediately if activity is already available
+      if (Application.android.foregroundActivity) {
+        this.checkLinkHandlerStatus();
+      }
+
+      // Setup handler for activity resumed events
+      this.activityResumedHandler = () => {
+        this.checkLinkHandlerStatus();
+      };
+
+      Application.android.on('activityResumed', this.activityResumedHandler);
     }
   },
 
   created() {
     // Initialize active button from store
     this._activeButton = this.storedActivePanel || 'quick';
+  },
+
+  mounted() {
+    this.setupActivityHandlers();
+  },
+
+  beforeUnmount() {
+    if (this.activityResumedHandler && Application.android) {
+      Application.android.off('activityResumed', this.activityResumedHandler);
+    }
   },
 }
 </script>
@@ -264,6 +322,11 @@ export default {
 
   &--active {
     background-color: $surface-bright;
+  }
+
+  &--warning {
+    color: $state-warning;
+    background-color: rgba(255, 152, 0, 0.1);
   }
 }
 </style>
