@@ -17,6 +17,16 @@ export const INITIAL_INTERNAL_HOSTNAMES = [
  * @returns {string} URL with viewport parameter based on current settings
  */
 export const addViewportParam = (url) => {
+  if (!url) return url;
+  
   const desktopMode = store.getters['settings/isDesktopMode'];
-  return url + (url.includes("?") ? '&' : '?') + "vp=" + (desktopMode ? 'f' : 'm');
+  const viewportParam = desktopMode ? 'f' : 'm';
+  
+  // If vp parameter already exists, replace it
+  if (url.includes('vp=')) {
+    return url.replace(/vp=[fm]/g, `vp=${viewportParam}`);
+  }
+  
+  // Otherwise add new vp parameter
+  return url + (url.includes("?") ? '&' : '?') + `vp=${viewportParam}`;
 };

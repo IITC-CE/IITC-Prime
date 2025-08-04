@@ -1,5 +1,7 @@
 // Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+import { INGRESS_INTEL_MAP } from '@/utils/url-config';
+
 export const ui = {
   namespaced: true,
   state: () => ({
@@ -9,6 +11,7 @@ export const ui = {
     isIitcLoaded: false,
     progress: 0,
     isDebugActive: false,
+    currentUrl: INGRESS_INTEL_MAP,
 
     // Panel configuration
     mapStateBarHeight: 46,
@@ -62,6 +65,9 @@ export const ui = {
     },
     SET_DEBUG_MODE(state, isActive) {
       state.isDebugActive = isActive;
+    },
+    SET_CURRENT_URL(state, url) {
+      state.currentUrl = url;
     },
 
     // Set active panel in sliding panel with validation
@@ -139,6 +145,9 @@ export const ui = {
     },
     toggleDebugMode({ commit, state }) {
       commit('SET_DEBUG_MODE', !state.isDebugActive);
+    },
+    setCurrentUrl({ commit }, url) {
+      commit('SET_CURRENT_URL', url);
     },
 
     // Panel configuration actions

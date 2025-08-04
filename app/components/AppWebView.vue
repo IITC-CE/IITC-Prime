@@ -48,7 +48,10 @@ export default {
 
   computed: {
     intelMapUrl() {
-      return addViewportParam(INGRESS_INTEL_MAP);
+      // Add viewport param to current URL
+      const currentUrl = this.$store.state.ui.currentUrl;
+      const finalUrl = addViewportParam(currentUrl);
+      return finalUrl;
     },
 
     webview() {
@@ -85,6 +88,7 @@ export default {
 
         // Then trigger plugin injection
         await this.$store.dispatch('ui/setWebviewLoaded', true);
+
       }
     },
 

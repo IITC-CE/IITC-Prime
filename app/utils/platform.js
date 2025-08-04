@@ -1,6 +1,7 @@
 // Copyright (C) 2021-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import {Application, Utils, isAndroid, isIOS, Dialogs} from "@nativescript/core";
+import { INGRESS_INTEL_MAP } from './url-config';
 
 // Back button handler management
 let currentBackHandler = null;
@@ -166,4 +167,61 @@ export const detachBackHandler = () => {
 
   currentBackHandler = null;
   return true;
+};
+
+/**
+ * Check if the app is the default handler for Intel Map links (Android only)
+ * Requires <queries> section in AndroidManifest.xml for Android 11+
+ * @returns {boolean|null} True if app is default handler, false if not, null if not Android or can't check
+ */
+export const isDefaultLinkHandler = () => {
+  if (!isAndroid) return null;
+
+  try {
+    const activity = Application.android.foregroundActivity || Application.android.startActivity;
+    if (!activity) return null;
+
+    const packageManager = activity.getPackageManager();
+    const currentPackageName = activity.getPackageName();
+
+    const intent = new android.content.Intent(
+      android.content.Intent.ACTION_VIEW,
+      android.net.Uri.parse(INGRESS_INTEL_MAP)
+    );
+
+    const resolveInfo = packageManager.resolveActivity(
+      intent,
+      android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
+    );
+
+    if (!resolveInfo || !resolveInfo.activityInfo) return false;
+
+    return resolveInfo.activityInfo.packageName === currentPackageName;
+  } catch (error) {
+    console.error('Error checking default link handler:', error);
+    return null;
+  }
+};
+
+/**
+ * Open app link settings for the current app (Android only)
+ * @returns {boolean} Success status
+ */
+export const openAppLinkSettings = () => {
+  if (!isAndroid) return false;
+
+  try {
+    const activity = Application.android.foregroundActivity || Application.android.startActivity;
+    if (!activity) return false;
+
+    const packageName = activity.getPackageName();
+    const intent = new android.content.Intent(android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS);
+    intent.setData(android.net.Uri.parse(`package:${packageName}`));
+
+    activity.startActivity(intent);
+    return true;
+  } catch (error) {
+    console.error('Error opening app link settings:', error);
+    return false;
+  }
 };
