@@ -92,6 +92,7 @@ import { mapState, mapActions, mapGetters } from 'vuex';
 import { buttonGestureHandlerMixin } from './button-gesture-handler';
 import { isDefaultLinkHandler, openAppLinkSettings } from '@/utils/platform';
 import { Application } from '@nativescript/core';
+import { confirm } from '@nativescript-community/ui-material-dialogs';
 
 export default {
   name: 'AppControlPanel',
@@ -224,8 +225,22 @@ export default {
     /**
      * Handle link permission button tap
      */
-    onLinkPermission() {
-      openAppLinkSettings();
+    async onLinkPermission() {
+      try {
+        const result = await confirm({
+          title: 'Open links in IITC Prime?',
+          message: 'You can set IITC Prime to automatically open Intel Map links instead of using a browser.',
+          okButtonText: 'Enable',
+          cancelButtonText: 'Skip'
+        });
+
+        if (result) {
+          openAppLinkSettings();
+        }
+      } catch (error) {
+        console.error('Error showing link permission dialog:', error);
+        openAppLinkSettings();
+      }
     },
 
     /**
