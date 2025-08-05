@@ -229,7 +229,7 @@ export default {
       try {
         const result = await confirm({
           title: 'Open links in IITC Prime?',
-          message: 'You can set IITC Prime to automatically open Intel Map links instead of using a browser.',
+          message: 'You can set IITC Prime to automatically open Intel Map links instead of using a browser',
           okButtonText: 'Enable',
           cancelButtonText: 'Skip'
         });

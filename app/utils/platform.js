@@ -177,6 +177,11 @@ export const detachBackHandler = () => {
 export const isDefaultLinkHandler = () => {
   if (!isAndroid) return null;
 
+  // Only show deep link permission button on Android 12+ where system can reset the setting
+  if (android.os.Build.VERSION.SDK_INT < 31) { // Android 12 = API 31
+    return null; // Hide button on older Android - system doesn't reset deep link settings
+  }
+
   try {
     const activity = Application.android.foregroundActivity || Application.android.startActivity;
     if (!activity) return null;
