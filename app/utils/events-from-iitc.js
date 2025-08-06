@@ -2,6 +2,7 @@
 
 import store from "@/store";
 import { showLocationShareOptions } from "./share";
+import { shareFile } from '@/utils/file-manager';
 
 
 /**
@@ -151,3 +152,20 @@ export const addInternalHostname = async (domain) => {
 export const setFollowMode = async (follow) => {
   await store.dispatch('map/setFollowingUser', follow);
 }
+
+/**
+ * Handles file save requests from IITC
+ * @param {string} filename - Name of the file to save
+ * @param {string} dataType - MIME type of the file
+ * @param {string} content - File content (text only)
+ * @returns {Promise<Object>} Result object with success status
+ */
+export const saveFile = async (filename, dataType, content) => {
+  try {
+    await shareFile(filename, content);
+    return { success: true };
+  } catch (error) {
+    console.error('Bridge saveFile error:', error);
+    return { success: false, error: error.message };
+  }
+};

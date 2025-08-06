@@ -14,6 +14,7 @@ import {
   setActiveHighlighter,
   addInternalHostname,
   setFollowMode,
+  saveFile,
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -63,6 +64,8 @@ export const router = async (event) => {
     case "setFollowMode":
       await setFollowMode(eventData.follow);
       break;
+    case "saveFile":
+      return await saveFile(eventData.filename, eventData.dataType, eventData.content);
     case "console:log":
       // This event is handled by direct listeners in BaseWebView
       break;
@@ -95,7 +98,7 @@ export const injectBridgeIITC = async (webview) => {
     setProgress: ["progress"],
     setPermalink: ["href"],
     addInternalHostname: ["domain"],
-    saveFile: ["filename", "type", "content"],
+    saveFile: ["filename", "dataType", "content"],
     reloadIITC: ["clearCache"]
   }
   Object.entries(events).forEach(entry => {
