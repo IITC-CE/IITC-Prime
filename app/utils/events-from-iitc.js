@@ -3,6 +3,7 @@
 import store from "@/store";
 import { showLocationShareOptions } from "./share";
 import { shareFile, selectFiles, readFileContent } from '@/utils/file-manager';
+import { copyToClipboard } from '@/utils/clipboard';
 
 
 /**
@@ -236,4 +237,13 @@ export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callback
       `);
     }
   }
+};
+
+/**
+ * Handles copy to clipboard requests from IITC
+ * @param {string} text - Text to copy to clipboard
+ * @returns {Promise<void>}
+ */
+export const copyToClipboardBridge = async (text) => {
+  await copyToClipboard(text, "Copied to clipboard");
 };
