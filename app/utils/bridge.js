@@ -17,6 +17,7 @@ import {
   saveFile,
   chooseFiles,
   copyToClipboardBridge,
+  shareString,
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -72,6 +73,9 @@ export const router = async (event) => {
       return await chooseFiles(eventData.allowsMultipleSelection, eventData.acceptTypes, eventData.callbackId);
     case "copy":
       await copyToClipboardBridge(eventData.s);
+      break;
+    case "shareString":
+      await shareString(eventData.str);
       break;
     case "console:log":
       // This event is handled by direct listeners in BaseWebView

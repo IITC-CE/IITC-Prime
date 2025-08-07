@@ -4,6 +4,7 @@ import store from "@/store";
 import { showLocationShareOptions } from "./share";
 import { shareFile, selectFiles, readFileContent } from '@/utils/file-manager';
 import { copyToClipboard } from '@/utils/clipboard';
+import { shareContent } from "~/utils/platform";
 
 
 /**
@@ -246,4 +247,23 @@ export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callback
  */
 export const copyToClipboardBridge = async (text) => {
   await copyToClipboard(text, "Copied to clipboard");
+};
+
+/**
+ * Handles share string requests from IITC
+ * @param {string} text - Text to share
+ * @returns {Promise<void>}
+ */
+export const shareString = async (text) => {
+  try {
+    const success = shareContent(text, "text");
+    if (!success) {
+      // Fallback to clipboard if sharing fails
+      await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+    }
+  } catch (error) {
+    console.error('Bridge shareString error:', error);
+    // Fallback to clipboard if sharing fails
+    await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+  }
 };
