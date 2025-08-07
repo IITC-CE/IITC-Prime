@@ -195,7 +195,11 @@ export const map = {
     /**
      * Update user orientation in `user-location` plugin
      */
-    async userLocationOrientation({ commit }, { direction }) {}
+    async userLocationOrientation({ commit }, { direction }) {},
+    /**
+     * Execute JavaScript code in WebView
+     */
+    async executeJavaScript({ commit }, code) {}
   },
   getters: {
     isFollowingUser: state => state.isFollowingUser,

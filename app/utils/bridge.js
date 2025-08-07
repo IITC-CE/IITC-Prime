@@ -15,6 +15,7 @@ import {
   addInternalHostname,
   setFollowMode,
   saveFile,
+  chooseFiles,
 } from "@/utils/events-from-iitc";
 
 export const router = async (event) => {
@@ -66,6 +67,8 @@ export const router = async (event) => {
       break;
     case "saveFile":
       return await saveFile(eventData.filename, eventData.dataType, eventData.content);
+    case "chooseFiles":
+      return await chooseFiles(eventData.allowsMultipleSelection, eventData.acceptTypes, eventData.callbackId);
     case "console:log":
       // This event is handled by direct listeners in BaseWebView
       break;
@@ -101,6 +104,12 @@ export const injectBridgeIITC = async (webview) => {
     saveFile: ["filename", "dataType", "content"],
     reloadIITC: ["clearCache"]
   }
+
+  const asyncEvents = {
+    chooseFiles: ["allowsMultipleSelection", "acceptTypes"]
+  }
+
+  // regular sync bridge functions
   Object.entries(events).forEach(entry => {
     const [key, value] = entry;
     bridge += "\n" +
@@ -109,6 +118,31 @@ export const injectBridgeIITC = async (webview) => {
       "};"
   });
   bridge += "\nwindow.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};";
+
+  // async callback-based bridge functions
+  Object.entries(asyncEvents).forEach(entry => {
+    const [key, value] = entry;
+    bridge += "\n" +
+      "window.nsWebViewBridge." + key + " = function(" + value.join(', ') + ", callback) {" +
+      " var callbackId = 'cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);" +
+      " window._bridgeCallbacks = window._bridgeCallbacks || {};" +
+      " if (callback && typeof callback === 'function') { window._bridgeCallbacks[callbackId] = callback; }" +
+      " return window.nsWebViewBridge.emit('JSBridge', ['" + key + "', {" +
+      value.map(name => "'" + name + "': " + name).join(', ') +
+      (value.length > 0 ? ", " : "") + "'callbackId': callbackId}]); " +
+      "};"
+  });
+
+  // callback helper for async bridge functions
+  bridge += "\n" +
+    "// Helper to execute callback from native\n" +
+    "window.nsWebViewBridge._executeCallback = function(callbackId, result) {\n" +
+    "  if (window._bridgeCallbacks && window._bridgeCallbacks[callbackId]) {\n" +
+    "    var callback = window._bridgeCallbacks[callbackId];\n" +
+    "    delete window._bridgeCallbacks[callbackId];\n" +
+    "    callback(result);\n" +
+    "  }\n" +
+    "};";
 
   await webview.executeJavaScript(bridge);
 }
