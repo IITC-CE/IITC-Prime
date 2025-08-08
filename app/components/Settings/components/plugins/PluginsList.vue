@@ -17,15 +17,46 @@
       />
     </template>
 
-    <!-- Template for plugin items -->
-    <template #plugin="{ item }">
+    <!-- Template for plugin items with SVG icons -->
+    <template #plugin-svg="{ item }">
       <GridLayout
         class="list-item plugin-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         columns="auto, *, 56"
         rows="82"
       >
-        <!-- Plugin icon -->
+        <!-- SVG Plugin icon -->
+        <AsyncSVGIcon
+          col="0"
+          :src="getPluginIcon(item)"
+          icon-class="plugin-icon"
+        />
+
+        <!-- Plugin info -->
+        <StackLayout col="1" class="plugin-info">
+          <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+          <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+        </StackLayout>
+
+        <!-- Toggle switch -->
+        <MDSwitch
+          col="2"
+          class="switch"
+          :checked="item.status === 'on'"
+          isUserInteractionEnabled="false"
+        />
+      </GridLayout>
+    </template>
+
+    <!-- Template for plugin items with raster icons -->
+    <template #plugin-raster="{ item }">
+      <GridLayout
+        class="list-item plugin-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        columns="auto, *, 56"
+        rows="82"
+      >
+        <!-- Raster Plugin icon -->
         <ImageCacheIt
           col="0"
           :src="getPluginIcon(item)"
@@ -57,8 +88,14 @@
 </template>
 
 <script>
+import AsyncSVGIcon from './AsyncSVGIcon.vue';
+
 export default {
   name: 'PluginsList',
+
+  components: {
+    AsyncSVGIcon
+  },
 
   props: {
     // Array of plugins to display
@@ -137,7 +174,38 @@ export default {
   methods: {
     // Template selector function - determines which template to use
     templateSelector(item, index, items) {
-      return item.type === 'section-header' ? 'section-header' : 'plugin';
+      if (item.type === 'section-header') {
+        return 'section-header';
+      }
+
+      // Check if plugin has SVG icon
+      if (this.isPluginIconSVG(item)) {
+        return 'plugin-svg';
+      } else {
+        return 'plugin-raster';
+      }
+    },
+
+    isPluginIconSVG(plugin) {
+      const icon = plugin.icon || plugin.icon64;
+      if (!icon) return false;
+
+      // Check if it's a data URL with SVG content
+      if (typeof icon === 'string' && icon.startsWith('data:image/svg+xml')) {
+        return true;
+      }
+
+      // Check if it's an SVG string (starts with <svg)
+      if (typeof icon === 'string' && icon.trim().startsWith('<svg')) {
+        return true;
+      }
+
+      // Check if it's a file path ending with .svg
+      if (typeof icon === 'string' && icon.toLowerCase().endsWith('.svg')) {
+        return true;
+      }
+
+      return false;
     },
 
     getPluginName(plugin) {
@@ -149,8 +217,8 @@ export default {
     },
 
     getPluginIcon(plugin) {
-      return plugin.icon64 ||
-             plugin.icon ||
+      return plugin.icon ||
+             plugin.icon64 ||
              this.placeholderImageSource;
     },
 
