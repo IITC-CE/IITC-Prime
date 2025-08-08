@@ -21,7 +21,7 @@ import { injectBridgeIITC, router } from "@/utils/bridge";
 import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
 import { injectDebugBridge } from "@/utils/debug-bridge";
 import BaseWebView from './BaseWebView.vue';
-import { INGRESS_INTEL_MAP, addViewportParam } from "@/utils/url-config";
+import { addViewportParam } from "@/utils/url-config";
 import {
   changePortalHighlights,
   showLayer,
@@ -127,7 +127,6 @@ export default {
         console.error('Plugin injection failed:', error);
       }
     }
-
   },
 
   created() {
@@ -145,6 +144,11 @@ export default {
             break;
           case "map/setInjectPlugin":
             await this.injectPlugin(action.payload);
+            break;
+          case "map/executeJavaScript":
+            if (webview && action.payload) {
+              await webview.executeJavaScript(action.payload);
+            }
             break;
           case "map/setActiveBaseLayer":
             await webview.executeJavaScript(showLayer(action.payload, true));

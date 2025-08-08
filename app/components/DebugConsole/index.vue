@@ -55,7 +55,7 @@
 import { mapState, mapActions } from 'vuex';
 import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
-import clipboardUtilsMixin from './mixins/clipboardUtils';
+import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
 
 export default {
@@ -65,8 +65,7 @@ export default {
 
   mixins: [
     performanceOptimizationMixin,
-    logFormattingMixin,
-    clipboardUtilsMixin
+    logFormattingMixin
   ],
 
   props: {
@@ -249,6 +248,12 @@ export default {
 
     onCollectionViewLoaded(args) {
       this._collectionView = args.object;
+    },
+
+    // Copy log text to clipboard on long press
+    async copyLogToClipboard(item) {
+      const fullText = this.getFullLogText(item);
+      await copyToClipboard(fullText, "Log copied to clipboard");
     },
   },
 }

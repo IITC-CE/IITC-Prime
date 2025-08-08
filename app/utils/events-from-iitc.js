@@ -2,6 +2,9 @@
 
 import store from "@/store";
 import { showLocationShareOptions } from "./share";
+import { shareFile, selectFiles, readFileContent } from '@/utils/file-manager';
+import { copyToClipboard } from '@/utils/clipboard';
+import { shareContent } from "~/utils/platform";
 
 
 /**
@@ -151,3 +154,116 @@ export const addInternalHostname = async (domain) => {
 export const setFollowMode = async (follow) => {
   await store.dispatch('map/setFollowingUser', follow);
 }
+
+/**
+ * Handles file save requests from IITC
+ * @param {string} filename - Name of the file to save
+ * @param {string} dataType - MIME type of the file
+ * @param {string} content - File content (text only)
+ * @returns {Promise<Object>} Result object with success status
+ */
+export const saveFile = async (filename, dataType, content) => {
+  try {
+    await shareFile(filename, content);
+    return { success: true };
+  } catch (error) {
+    console.error('Bridge saveFile error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Handles file selection requests from IITC
+ * @param {boolean} allowsMultipleSelection - Whether multiple file selection is allowed
+ * @param {Array<string>} acceptTypes - Array of accepted MIME types
+ * @param {string} callbackId - Callback ID for response
+ * @returns {Promise<void>} Calls callback with File objects
+ */
+export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callbackId) => {
+  try {
+    const files = await selectFiles({
+      allowsMultipleSelection: allowsMultipleSelection || false,
+      acceptTypes: acceptTypes || ['*/*']
+    });
+
+    // Read file contents
+    const fileContents = await Promise.all(
+      files.map(async (file) => {
+        try {
+          const content = await readFileContent(file.path);
+          return {
+            name: content.name,
+            content: content.content,
+            type: content.type
+          };
+        } catch (error) {
+          console.error('Failed to read file:', file.path, error);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed reads
+    const validFiles = fileContents.filter(f => f !== null);
+
+    // Execute callback with File objects
+    if (callbackId) {
+      const callbackCode = `
+        if (window.app._executeCallback) {
+          var fileObjects = [];
+          ${validFiles.map((file, index) => `
+          var blob${index} = new Blob([${JSON.stringify(file.content)}], { type: '${file.type}' });
+          var file${index} = new File([blob${index}], '${file.name}', {
+            type: '${file.type}',
+            lastModified: Date.now()
+          });
+          fileObjects.push(file${index});
+          `).join('')}
+          window.nsWebViewBridge._executeCallback('${callbackId}', fileObjects);
+        }
+      `;
+
+      await store.dispatch('map/executeJavaScript', callbackCode);
+    }
+
+  } catch (error) {
+    console.error('Bridge chooseFiles error:', error);
+
+    // Execute callback with empty array on error
+    if (callbackId) {
+      await store.dispatch('map/executeJavaScript', `
+        if (window.nsWebViewBridge._executeCallback) {
+          window.nsWebViewBridge._executeCallback('${callbackId}', []);
+        }
+      `);
+    }
+  }
+};
+
+/**
+ * Handles copy to clipboard requests from IITC
+ * @param {string} text - Text to copy to clipboard
+ * @returns {Promise<void>}
+ */
+export const copyToClipboardBridge = async (text) => {
+  await copyToClipboard(text, "Copied to clipboard");
+};
+
+/**
+ * Handles share string requests from IITC
+ * @param {string} text - Text to share
+ * @returns {Promise<void>}
+ */
+export const shareString = async (text) => {
+  try {
+    const success = shareContent(text, "text");
+    if (!success) {
+      // Fallback to clipboard if sharing fails
+      await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+    }
+  } catch (error) {
+    console.error('Bridge shareString error:', error);
+    // Fallback to clipboard if sharing fails
+    await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+  }
+};
