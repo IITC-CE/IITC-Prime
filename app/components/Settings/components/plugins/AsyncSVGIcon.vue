@@ -10,6 +10,8 @@
 </template>
 
 <script>
+import svgCacheService from '@/utils/svg-cache';
+
 export default {
   name: 'AsyncSVGIcon',
 
@@ -54,6 +56,13 @@ export default {
         return;
       }
 
+      // Check cache first
+      const cachedSVG = svgCacheService.get(url);
+      if (cachedSVG) {
+        this.currentSrc = cachedSVG;
+        return;
+      }
+
       // Show placeholder while loading
       this.currentSrc = this.svgPlaceholder;
 
@@ -63,6 +72,10 @@ export default {
 
         if (response.ok) {
           const svgContent = await response.text();
+
+          // Cache the SVG content
+          svgCacheService.set(url, svgContent);
+
           this.currentSrc = svgContent;
         } else {
           // Keep placeholder on HTTP error
