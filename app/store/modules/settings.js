@@ -72,11 +72,6 @@ export const settings = {
      * Apply settings that require immediate action
      */
     async applySettings({ state, dispatch }, changedKeys = []) {
-      // Fake user agent changed
-      if (changedKeys.length === 0 || changedKeys.includes('fakeUserAgent')) {
-        await dispatch('ui/setFakeUserAgent', state.fakeUserAgent, { root: true });
-      }
-
       // Location display changed
       if (changedKeys.length === 0 || changedKeys.includes('showLocation')) {
         await dispatch('map/setLocationTracking', state.showLocation, { root: true });

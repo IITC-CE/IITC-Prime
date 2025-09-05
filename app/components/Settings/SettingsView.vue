@@ -54,7 +54,7 @@
     <SettingsItem
       type="switch"
       title="Fake User Agent"
-      description="Hide app identity from websites"
+      description="Appear as a desktop browser"
       :value="fakeUserAgent"
       @change="updateFakeUserAgent"
       :isLast="true"

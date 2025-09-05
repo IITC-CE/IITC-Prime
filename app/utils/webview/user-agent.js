@@ -18,3 +18,8 @@ export function sanitizeUserAgent(userAgent) {
 
   return sanitized;
 }
+
+export function getDesktopUserAgent() {
+  // Desktop Firefox user agent - same as in IITC Mobile
+  return "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20130810 Firefox/17.0 Iceweasel/17.0.8";
+}

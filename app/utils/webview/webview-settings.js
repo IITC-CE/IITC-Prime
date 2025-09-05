@@ -1,9 +1,12 @@
 // Copyright (C) 2024 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { isAndroid } from "@nativescript/core";
-import { sanitizeUserAgent } from "~/utils/webview/user-agent";
+import { sanitizeUserAgent, getDesktopUserAgent } from "~/utils/webview/user-agent";
 
-export function applyWebViewSettings(webview) {
+// Store original user agent to avoid losing it when switching modes
+let cachedOriginalUserAgent = null;
+
+export function applyWebViewSettings(webview, fakeUserAgent = false) {
   if (isAndroid) {
     const settings = webview.android.getSettings();
 
@@ -16,14 +19,24 @@ export function applyWebViewSettings(webview) {
     settings.setAllowFileAccess(true);
     settings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
-    // Apply sanitized User Agent
-    const originalUserAgent = settings.getUserAgentString();
-    const sanitizedUserAgent = sanitizeUserAgent(originalUserAgent);
-    settings.setUserAgentString(sanitizedUserAgent);
+    if (!cachedOriginalUserAgent) {
+      cachedOriginalUserAgent = settings.getUserAgentString();
+    }
+
+    // Apply User Agent
+    let finalUserAgent;
+
+    if (fakeUserAgent) {
+      finalUserAgent = getDesktopUserAgent();
+    } else {
+      finalUserAgent = sanitizeUserAgent(cachedOriginalUserAgent);
+    }
+
+    settings.setUserAgentString(finalUserAgent);
 
     return {
-      originalUserAgent,
-      sanitizedUserAgent
+      originalUserAgent: cachedOriginalUserAgent,
+      finalUserAgent
     };
   }
   return null;

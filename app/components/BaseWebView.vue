@@ -60,11 +60,22 @@ export default {
 
   computed: {
     ...mapState({
-      internalHostnames: state => state.map.internalHostnames
+      internalHostnames: state => state.map.internalHostnames,
+      fakeUserAgent: state => state.settings.fakeUserAgent
     }),
 
     webview() {
       return this.webViewInstance;
+    }
+  },
+
+  watch: {
+    fakeUserAgent(newValue) {
+      // Reapply WebView settings and reload when fake user agent setting changes
+      if (this.webViewInstance) {
+        applyWebViewSettings(this.webViewInstance, newValue);
+        this.webViewInstance.reload();
+      }
     }
   },
 
@@ -115,7 +126,7 @@ export default {
     setupWebView() {
       if (!this.webViewInstance) return;
 
-      applyWebViewSettings(this.webViewInstance);
+      applyWebViewSettings(this.webViewInstance, this.fakeUserAgent);
       this.setupWebChromeClient();
 
       // Setup console log event handlers
