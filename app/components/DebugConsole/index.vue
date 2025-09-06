@@ -243,6 +243,7 @@ export default {
 
     // Close debug console directly
     closeDebugConsole() {
+      this.$refs.controlsPanel.blurInput();
       this.$store.dispatch('ui/toggleDebugMode');
     },
 

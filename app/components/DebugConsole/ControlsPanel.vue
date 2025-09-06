@@ -128,6 +128,13 @@ export default {
       if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
         this.$refs.commandInput.nativeView.focus();
       }
+    },
+
+    // Remove focus from the command input field (closes keyboard)
+    blurInput() {
+      if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
+        this.$refs.commandInput.nativeView.dismissSoftInput();
+      }
     }
   }
 }
