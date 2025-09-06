@@ -33,6 +33,7 @@
           class="debug-console"
           :is-visible="isDebugActive"
           :is-keyboard-open="isKeyboardOpen"
+          :keyboard-height="keyboardHeight"
           @execute-command="executeDebugCommand"
         />
 
@@ -100,6 +101,7 @@ export default {
       removeLayoutListener: null,
       keyboard: null,
       isKeyboardOpen: false,
+      keyboardHeight: 0,
       userLocation: null,
     }
   },
@@ -203,10 +205,12 @@ export default {
     onKeyboardOpened(args) {
       this.sliding.isVisible = false;
       this.isKeyboardOpen = true;
+      this.keyboardHeight = args.data?.height || 0;
     },
     onKeyboardClosed() {
       this.sliding.isVisible = true;
       this.isKeyboardOpen = false;
+      this.keyboardHeight = 0;
     }
   },
 
