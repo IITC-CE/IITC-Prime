@@ -115,14 +115,20 @@ export default {
 
       try {
         await this.webview.executeJavaScript(`
-          try {
-            ${plugin.code}
-          } catch (e) {
-            window.lastError = e.toString();
-            console.error('injection error:', e);
-            throw e;
-          }
-        `);
+          (function() {
+            try {
+              ${plugin.code}
+            } catch (e) {
+              window.lastError = {
+                message: e.message,
+                stack: e.stack,
+                toString: e.toString()
+              };
+              console.error('injection error:', e.message, e.stack);
+              throw e;
+            }
+          })();
+        `, false);
       } catch (error) {
         console.error('Plugin injection failed:', error);
       }
