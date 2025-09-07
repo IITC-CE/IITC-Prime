@@ -36,3 +36,79 @@ index ba1249d..178ad51 100644
 \ No newline at end of file
 +{"version":3,"file":"nativescript-webview-bridge-loader.ios.js","sourceRoot":"","sources":["../../src/webview/nativescript-webview-bridge-loader.ios.ts"],"names":[],"mappings":"AACA,MAAM,CAAC,MAAM,aAAa,GAAW,2BAA2B,GAAG,0zGAA0zG,GAAG,OAAO,CAAC;AACx4G,MAAM,CAAC,MAAM,gBAAgB,GAAW,0vBAA0vB,CAAC"}
 \ No newline at end of file
+diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
+index 8b394b1..61d8c03 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.ios.js
++++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
+@@ -686,8 +686,69 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+         });
+     };
+     WKUIDelegateNotaImpl.prototype.webViewCreateWebViewWithConfigurationForNavigationActionWindowFeatures = function (webView, configuration, navigationAction, windowFeatures) {
+-        // Handle links that open in a new window / frame (via target="_blank" or window.open())
+-        if (navigationAction && (!navigationAction.targetFrame || (navigationAction.targetFrame && !navigationAction.targetFrame.mainFrame))) {
++        var owner = this.owner.get();
++        // Handle popup window requests (window.open() or target="_blank")
++        if (navigationAction && navigationAction.request && navigationAction.request.URL && (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame)) {
++            try {
++                var popupConfig = configuration;
++                popupConfig.userContentController.removeAllUserScripts();
++                var popupWebView_1 = WKWebView.alloc().initWithFrameConfiguration(CGRectZero, popupConfig);
++                if (webView.customUserAgent) {
++                    popupWebView_1.customUserAgent = webView.customUserAgent;
++                }
++                var currentVC = UIApplication.sharedApplication.keyWindow.rootViewController;
++                while (currentVC && currentVC.presentedViewController) {
++                    currentVC = currentVC.presentedViewController;
++                }
++                if (currentVC) {
++                    var popupVC = UIViewController.alloc().init();
++                    popupVC.view.backgroundColor = UIColor.whiteColor;
++                    popupVC.view.addSubview(popupWebView_1);
++                    popupWebView_1.translatesAutoresizingMaskIntoConstraints = false;
++                    NSLayoutConstraint.activateConstraints([
++                        popupWebView_1.topAnchor.constraintEqualToAnchor(popupVC.view.safeAreaLayoutGuide.topAnchor),
++                        popupWebView_1.bottomAnchor.constraintEqualToAnchor(popupVC.view.bottomAnchor),
++                        popupWebView_1.leadingAnchor.constraintEqualToAnchor(popupVC.view.leadingAnchor),
++                        popupWebView_1.trailingAnchor.constraintEqualToAnchor(popupVC.view.trailingAnchor)
++                    ]);
++                    var navController_1 = UINavigationController.alloc().initWithRootViewController(popupVC);
++                    // Create close button handler
++                    var CloseHandler = NSObject.extend({
++                        'onCloseButtonTap:'(sender) {
++                            navController_1.dismissViewControllerAnimatedCompletion(true, null);
++                        }
++                    }, {
++                        name: 'CloseHandler',
++                        exposedMethods: {
++                            'onCloseButtonTap:': {
++                                returns: interop.types.void,
++                                params: [interop.types.id]
++                            }
++                        }
++                    });
++                    var handler = CloseHandler.alloc().init();
++                    var closeButton = UIBarButtonItem.alloc().initWithBarButtonSystemItemTargetAction(UIBarButtonSystemItem.Done, handler, 'onCloseButtonTap:');
++                    popupVC.navigationItem.leftBarButtonItem = closeButton;
++                    var simpleUIDelegate_1 = NSObject.extend({
++                        webViewDidClose(webView) {
++                            navController_1.dismissViewControllerAnimatedCompletion(true, function () {
++                                popupWebView_1 = null;
++                                navController_1 = null;
++                                simpleUIDelegate_1 = null;
++                            });
++                        }
++                    }, {
++                        protocols: [WKUIDelegate]
++                    }).alloc().init();
++                    popupWebView_1.UIDelegate = simpleUIDelegate_1;
++                    currentVC.presentViewControllerAnimatedCompletion(navController_1, true, null);
++                    return popupWebView_1;
++                }
++            }
++            catch (error) {
++                console.error('[ui-webview] Error creating popup:', error);
++            }
++            // Load in main WebView (fallback or when popups disabled)
+             webView.loadRequest(navigationAction.request);
+         }
+         return null;
