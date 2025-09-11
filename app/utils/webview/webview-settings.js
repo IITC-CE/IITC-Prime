@@ -34,6 +34,15 @@ export function applyWebViewSettings(webview, fakeUserAgent = false) {
 
     settings.setUserAgentString(finalUserAgent);
 
+    // Set _ncc cookie to disable Niantic's cookie consent banner
+    try {
+      const CookieManager = android.webkit.CookieManager.getInstance();
+      CookieManager.setAcceptCookie(true);
+      CookieManager.setCookie("https://signin.nianticspatial.com", "_ncc=0; Path=/; Domain=.nianticspatial.com");
+    } catch (error) {
+      console.log('[Android] Could not set _ncc cookie:', error.message);
+    }
+
     return {
       originalUserAgent: cachedOriginalUserAgent,
       finalUserAgent
@@ -49,15 +58,14 @@ export function applyWebViewSettings(webview, fakeUserAgent = false) {
       // Enable JavaScript popup windows for iOS popup support
       preferences.javaScriptCanOpenWindowsAutomatically = true;
 
-      // Set required cookie for Niantic auth (from IITC-Mobile)
+      // Set _ncc cookie to disable Niantic's cookie consent banner
       try {
         const cookieStore = configuration.websiteDataStore.httpCookieStore;
 
-        // Create NSHTTPCookie for _ncc
         const cookieProperties = NSMutableDictionary.alloc().init();
         cookieProperties.setObjectForKey("_ncc", NSHTTPCookieName);
         cookieProperties.setObjectForKey("0", NSHTTPCookieValue);
-        cookieProperties.setObjectForKey("signin.nianticlabs.com", NSHTTPCookieDomain);
+        cookieProperties.setObjectForKey(".nianticspatial.com", NSHTTPCookieDomain);
         cookieProperties.setObjectForKey("/", NSHTTPCookiePath);
 
         const nsCookie = NSHTTPCookie.cookieWithProperties(cookieProperties);
@@ -66,8 +74,6 @@ export function applyWebViewSettings(webview, fakeUserAgent = false) {
           cookieStore.setCookieCompletionHandler(nsCookie, (error) => {
             if (error) {
               console.log('[iOS] Error setting auth cookie:', error.localizedDescription);
-            } else {
-              console.log('[iOS] Auth cookie _ncc set successfully for signin.nianticlabs.com');
             }
           });
         }
