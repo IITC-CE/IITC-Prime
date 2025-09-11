@@ -1,7 +1,7 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout rows="*, auto" class="debug-console">
+  <GridLayout rows="*, auto" class="debug-console" :style="{ 'padding-bottom': isKeyboardOpen && isIOS ? keyboardHeight : '0' }">
     <!-- Logs list -->
     <CollectionView
       ref="logsList"
@@ -40,14 +40,18 @@
       ref="controlsPanel"
     />
 
-    <MDButton
+    <MDRipple
       v-show="!isAtBottom && showControls"
-      class="fa scroll-bottom-button"
-      :text="$filters.fonticon('fa-arrow-down')"
-      variant="flat"
-      rippleColor="#ffffff"
+      class="scroll-bottom-button"
       @tap="scrollToBottom"
-    />
+    >
+      <Label
+        class="fa"
+        :text="$filters.fonticon('fa-arrow-down')"
+        horizontalAlignment="center"
+        verticalAlignment="center"
+      />
+    </MDRipple>
   </GridLayout>
 </template>
 
@@ -57,6 +61,7 @@ import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/p
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
+import { isIOS } from '@nativescript/core';
 
 export default {
   components: {
@@ -76,6 +81,10 @@ export default {
     isKeyboardOpen: {
       type: Boolean,
       default: false
+    },
+    keyboardHeight: {
+      type: Number,
+      default: 0
     }
   },
 
@@ -94,6 +103,10 @@ export default {
   },
 
   computed: {
+    isIOS() {
+      return isIOS;
+    },
+
     ...mapState(optimizeMapState({
       logs: 'debug.logs',
       commandHistory: 'debug.commandHistory',
@@ -243,6 +256,7 @@ export default {
 
     // Close debug console directly
     closeDebugConsole() {
+      this.$refs.controlsPanel.blurInput();
       this.$store.dispatch('ui/toggleDebugMode');
     },
 
@@ -337,13 +351,17 @@ export default {
   width: 50;
   height: 50;
   border-radius: $radius-full;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
   color: white;
   font-size: 18;
   vertical-align: bottom;
   horizontal-align: right;
   margin: $spacing-l $spacing-m;
   text-align: center;
-  padding-top: 15;
+}
+
+.scroll-bottom-button .fa {
+  margin-top: -50;
+  height: 50;
 }
 </style>

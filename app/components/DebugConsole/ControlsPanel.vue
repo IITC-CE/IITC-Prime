@@ -8,34 +8,46 @@
       class="controls-panel"
       columns="auto, *, auto, auto, auto">
 
-      <MDButton
+      <MDRipple
         col="0"
-        class="fa control-button"
-        :text="$filters.fonticon('fa-arrow-left')"
-        variant="flat"
+        class="control-button"
         @tap="handleClose"
-      />
-      <MDButton
+      >
+        <Label
+          class="fa"
+          :text="$filters.fonticon('fa-arrow-left')"
+        />
+      </MDRipple>
+      <MDRipple
         col="2"
-        class="fa control-button trash"
-        :text="$filters.fonticon('fa-trash')"
-        variant="flat"
+        class="control-button trash"
         @tap="$emit('clear')"
-      />
-      <MDButton
+      >
+        <Label
+          class="fa"
+          :text="$filters.fonticon('fa-trash')"
+        />
+      </MDRipple>
+      <MDRipple
         col="3"
-        class="fa control-button"
-        :text="$filters.fonticon('fa-arrow-up')"
-        variant="flat"
+        class="control-button"
         @tap="navigateHistoryUp"
-      />
-      <MDButton
+      >
+        <Label
+          class="fa"
+          :text="$filters.fonticon('fa-arrow-up')"
+        />
+      </MDRipple>
+      <MDRipple
         col="4"
-        class="fa control-button"
-        :text="$filters.fonticon('fa-arrow-down')"
-        variant="flat"
+        class="control-button"
         @tap="navigateHistoryDown"
-      />
+      >
+        <Label
+          class="fa"
+          :text="$filters.fonticon('fa-arrow-down')"
+        />
+      </MDRipple>
     </GridLayout>
 
     <!-- Command input -->
@@ -50,13 +62,16 @@
         autocorrect="false"
         maxLines="10"
       />
-      <MDButton
+      <MDRipple
         col="1"
-        class="fa btn-primary send-button"
-        :text="$filters.fonticon('fa-paper-plane')"
-        variant="flat"
+        class="btn-primary send-button"
         @tap="executeCommand"
-      />
+      >
+        <Label
+          class="fa"
+          :text="$filters.fonticon('fa-paper-plane')"
+        />
+      </MDRipple>
     </GridLayout>
   </StackLayout>
 </template>
@@ -128,6 +143,13 @@ export default {
       if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
         this.$refs.commandInput.nativeView.focus();
       }
+    },
+
+    // Remove focus from the command input field (closes keyboard)
+    blurInput() {
+      if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
+        this.$refs.commandInput.nativeView.dismissSoftInput();
+      }
     }
   }
 }
@@ -152,11 +174,12 @@ export default {
   color: white;
   border-radius: 4;
   margin: 0 $spacing-xs;
-  padding: 11 0 0 0;
+  padding: 0;
   height: 40;
   min-width: 40;
   width: 40;
   text-align: center;
+  vertical-align: center;
   ripple-color: $ripple;
 }
 
@@ -191,7 +214,8 @@ export default {
   font-size: 16;
   height: 40;
   width: 50;
-  padding: 11 3 0 0;
+  padding: 0 3 0 0;
+  vertical-align: center;
   text-align: center;
 }
 </style>

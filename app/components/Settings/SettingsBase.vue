@@ -7,9 +7,15 @@
   >
     <ActionBar :title="title" flat="true" class="action-bar">
       <NavigationButton
+        v-if="isAndroid"
         @tap="goBack"
         text="Back"
         android.systemIcon="ic_menu_back"
+      />
+      <NavigationButton
+        v-if="isIOS"
+        @tap="goBack"
+        text="Back"
       />
       <template v-if="$slots.headerRight && isIOS">
         <slot name="headerRight" ios.position="right"></slot>

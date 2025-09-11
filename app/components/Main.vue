@@ -3,79 +3,79 @@
 <template>
   <Frame>
     <Page actionBarHidden="true">
-    <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
-      <AbsoluteLayout class="page">
+      <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
+        <AbsoluteLayout class="page">
+          <!-- Main content with WebView (hidden when debug is active) -->
+          <GridLayout
+            rows="*, auto"
+            columns="*"
+            class="main-content"
+            v-show="!isDebugActive"
+          >
+            <AppWebView
+              ref="appWebView"
+              row="0"
+              col="0"
+              @show-popup="handlePopup"
+              @console-log="onConsoleLog"
+            />
+            <label
+              row="1"
+              col="0"
+              v-show="sliding.isVisible"
+              :height="layout.bottomPadding"
+            />
+          </GridLayout>
 
-        <!-- Main content with WebView (hidden when debug is active) -->
-        <GridLayout
-          rows="*, auto"
-          columns="*"
-          class="main-content"
-          v-show="!isDebugActive"
-        >
-          <AppWebView
-            ref="appWebView"
-            row="0"
-            col="0"
-            @show-popup="handlePopup"
-            @console-log="onConsoleLog"
+          <DebugConsole
+            v-show="isDebugActive"
+            class="debug-console"
+            :is-visible="isDebugActive"
+            :is-keyboard-open="isKeyboardOpen"
+            :keyboard-height="keyboardHeight"
+            @execute-command="executeDebugCommand"
           />
-          <label
-            row="1"
-            col="0"
-            v-show="sliding.isVisible"
-            :height="layout.bottomPadding"
+
+          <ProgressBar class="progress-bar" />
+          <SlidingPanel
+            v-show="sliding.isVisible && !isDebugActive"
+            class="sliding-panel"
+            :is-visible="sliding.isVisible && !isDebugActive"
           />
-        </GridLayout>
 
-        <DebugConsole
-          v-show="isDebugActive"
-          class="debug-console"
-          :is-visible="isDebugActive"
-          :is-keyboard-open="isKeyboardOpen"
-          @execute-command="executeDebugCommand"
-        />
-
-        <ProgressBar class="progress-bar" />
-        <SlidingPanel
-          v-show="sliding.isVisible && !isDebugActive"
-          class="sliding-panel"
-          :is-visible="sliding.isVisible && !isDebugActive"
-        />
-
-        <PopupWebView
-          v-if="popup.isVisible"
-          v-bind="popup.props"
-          @close="handlePopupClose"
-        />
-      </AbsoluteLayout>
-    </RootLayout>
+          <PopupWebView
+            v-if="popup.isVisible"
+            v-bind="popup.props"
+            @close="handlePopupClose"
+          />
+        </AbsoluteLayout>
+      </RootLayout>
     </Page>
   </Frame>
 </template>
 
 <script>
 import { AndroidApplication, Application } from "@nativescript/core";
-import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
-import { layoutService } from '~/utils/layout-service';
+import { keyboardOpening } from "@bezlepkin/nativescript-keyboard-opening";
+import { layoutService } from "~/utils/layout-service";
 import UserLocation from "@/utils/user-location";
-import { handleDeepLink } from '@/utils/deep-links';
+import { handleDeepLink } from "@/utils/deep-links";
 
-import AppWebView from './AppWebView';
-import ProgressBar from './ProgressBar';
-import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
-import PopupWebView from './PopupWebView.vue';
-import DebugConsole from './DebugConsole';
+import AppWebView from "./AppWebView";
+import ProgressBar from "./ProgressBar";
+import SlidingPanel from "./SlidingPanel/SlidingPanel.vue";
+import PopupWebView from "./PopupWebView.vue";
+import DebugConsole from "./DebugConsole";
 
 export default {
-  name: 'MainView',
+  name: "MainView",
 
   components: {
     AppWebView,
     ProgressBar,
     SlidingPanel,
     PopupWebView,
-    DebugConsole
+    DebugConsole,
   },
 
   data() {
@@ -84,14 +84,14 @@ export default {
       layout: {
         bottomPadding: 0,
         panelWidth: 0,
-        contentHeight: 0
+        contentHeight: 0,
       },
       popup: {
         isVisible: false,
         props: {
           url: null,
-          transportId: null
-        }
+          transportId: null,
+        },
       },
       sliding: {
         isVisible: true,
@@ -100,14 +100,15 @@ export default {
       removeLayoutListener: null,
       keyboard: null,
       isKeyboardOpen: false,
+      keyboardHeight: 0,
       userLocation: null,
-    }
+    };
   },
 
   computed: {
     isDebugActive() {
       return this.$store.state.ui.isDebugActive;
-    }
+    },
   },
 
   methods: {
@@ -135,7 +136,7 @@ export default {
       this.layout = {
         bottomPadding: dimensions.bottomPadding,
         panelWidth: dimensions.panelWidth,
-        contentHeight: dimensions.contentHeight
+        contentHeight: dimensions.contentHeight,
       };
 
       // Update Vuex store
@@ -147,28 +148,28 @@ export default {
      */
     async updateStoreLayout(dimensions) {
       await Promise.all([
-        this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth),
-        this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight)
+        this.$store.dispatch("ui/setSlidingPanelWidth", dimensions.panelWidth),
+        this.$store.dispatch("ui/setScreenHeight", dimensions.contentHeight),
       ]);
     },
 
     handlePopup(data) {
       this.popup = {
         isVisible: true,
-        props: data
+        props: data,
       };
     },
 
     handlePopupClose() {
       this.popup = {
         isVisible: false,
-        props: { url: null, transportId: null }
+        props: { url: null, transportId: null },
       };
     },
 
     // Handle console logs from AppWebView
     onConsoleLog(logData) {
-      this.$store.dispatch('debug/addLog', logData);
+      this.$store.dispatch("debug/addLog", logData);
     },
 
     // Execute debug command from Debug Console
@@ -181,38 +182,43 @@ export default {
     },
 
     async setupManager() {
-      await this.$store.dispatch('manager/run');
+      await this.$store.dispatch("manager/run");
     },
 
     setupAndroidBackHandler() {
       if (!Application.android) return;
 
-      Application.android.on(AndroidApplication.activityBackPressedEvent, (args) => {
-        // If debug is active, exit debug mode instead of navigating back
-        if (this.isDebugActive) {
-          this.$store.dispatch('ui/toggleDebugMode');
-          args.cancel = true;
-          return;
-        }
+      Application.android.on(
+        AndroidApplication.activityBackPressedEvent,
+        (args) => {
+          // If debug is active, exit debug mode instead of navigating back
+          if (this.isDebugActive) {
+            this.$store.dispatch("ui/toggleDebugMode");
+            args.cancel = true;
+            return;
+          }
 
-        this.$store.dispatch('navigation/setCurrentPane', 'map');
-        args.cancel = true;
-      });
+          this.$store.dispatch("navigation/setCurrentPane", "map");
+          args.cancel = true;
+        }
+      );
     },
 
     onKeyboardOpened(args) {
       this.sliding.isVisible = false;
       this.isKeyboardOpen = true;
+      this.keyboardHeight = args.data?.height || 0;
     },
     onKeyboardClosed() {
       this.sliding.isVisible = true;
       this.isKeyboardOpen = false;
-    }
+      this.keyboardHeight = 0;
+    },
   },
 
   async created() {
     // Initialize app settings
-    await this.$store.dispatch('settings/initSettings');
+    await this.$store.dispatch("settings/initSettings");
 
     this.setupManager().then();
     this.setupAndroidBackHandler();
@@ -224,7 +230,7 @@ export default {
     this.layout = {
       bottomPadding: layoutService.dimensions.bottomPadding,
       panelWidth: layoutService.dimensions.panelWidth,
-      contentHeight: layoutService.dimensions.contentHeight
+      contentHeight: layoutService.dimensions.contentHeight,
     };
 
     // Update store with initial values
@@ -233,12 +239,14 @@ export default {
     this.userLocation = new UserLocation();
 
     // Subscribe to layout changes
-    this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChanged.bind(this));
+    this.removeLayoutListener = layoutService.addLayoutChangeListener(
+      this.handleLayoutChanged.bind(this)
+    );
 
     this.keyboard = keyboardOpening();
 
-    this.keyboard.on('opened', this.onKeyboardOpened);
-    this.keyboard.on('closed', this.onKeyboardClosed);
+    this.keyboard.on("opened", this.onKeyboardOpened);
+    this.keyboard.on("closed", this.onKeyboardClosed);
 
     // Initialize deep link handling
     handleDeepLink();
@@ -252,7 +260,7 @@ export default {
             }
             break;
         }
-      }
+      },
     });
   },
 
@@ -267,19 +275,19 @@ export default {
     }
 
     if (this.keyboard) {
-      this.keyboard.off('opened');
-      this.keyboard.off('closed');
+      this.keyboard.off("opened");
+      this.keyboard.off("closed");
     }
 
     if (this.userLocation) {
       this.userLocation.stopTracking();
     }
-  }
+  },
 };
 </script>
 
 <style scoped lang="scss">
-@import '../app';
+@import "../app";
 
 .page {
   background-color: $accent;

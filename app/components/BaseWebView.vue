@@ -16,57 +16,58 @@
 </template>
 
 <script>
-import { AWebView } from '@nativescript-community/ui-webview';
+import { AWebView } from "@nativescript-community/ui-webview";
 import { isAndroid } from "@nativescript/core";
 import { applyWebViewSettings } from "@/utils/webview/webview-settings";
-import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
-import { performanceOptimizationMixin } from '~/utils/performance-optimization';
-import { mapState } from 'vuex';
+import { BaseWebChromeClient } from "@/utils/webview/base-chrome-client";
+import { performanceOptimizationMixin } from "~/utils/performance-optimization";
+import { mapState } from "vuex";
 
 export default {
-  name: 'BaseWebView',
+  name: "BaseWebView",
 
   mixins: [performanceOptimizationMixin],
 
   props: {
     src: {
       type: String,
-      default: ''
+      default: "",
     },
     viewPortSize: {
       type: String,
-      default: 'width=device-width, initial-scale=1.0'
+      default: "width=device-width, initial-scale=1.0",
     },
     debugMode: {
       type: Boolean,
-      default: true
+      default: true,
     },
     checkUrls: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   data() {
     return {
       webViewInstance: null,
       chromeClient: null,
+
       _webViewRef: null,
       isLoading: false,
       hasError: false,
-      errorDetails: null
-    }
+      errorDetails: null,
+    };
   },
 
   computed: {
     ...mapState({
-      internalHostnames: state => state.map.internalHostnames,
-      fakeUserAgent: state => state.settings.fakeUserAgent
+      internalHostnames: (state) => state.map.internalHostnames,
+      fakeUserAgent: (state) => state.settings.fakeUserAgent,
     }),
 
     webview() {
       return this.webViewInstance;
-    }
+    },
   },
 
   watch: {
@@ -76,7 +77,7 @@ export default {
         applyWebViewSettings(this.webViewInstance, newValue);
         this.webViewInstance.reload();
       }
-    }
+    },
   },
 
   methods: {
@@ -85,13 +86,13 @@ export default {
       const client = new BaseWebChromeClient();
       client.initWithComponent({
         setProgress: (progress) => {
-          this.$emit('progress', progress);
+          this.$emit("progress", progress);
         },
         showPopup: (popupData) => {
-          this.$emit('show-popup', popupData);
+          this.$emit("show-popup", popupData);
         },
         closePopup: () => {
-          this.$emit('close-popup');
+          this.$emit("close-popup");
         },
       });
       this.chromeClient = client;
@@ -112,14 +113,14 @@ export default {
       try {
         this._webViewRef = new WeakRef(this.webViewInstance);
       } catch (error) {
-        console.error('Failed to create WeakRef for WebView:', error);
+        console.error("Failed to create WeakRef for WebView:", error);
       }
 
       this.setupWebView();
 
-      this.$emit('webview-loaded', {
+      this.$emit("webview-loaded", {
         webview: this.webViewInstance,
-        args
+        args,
       });
     },
 
@@ -133,8 +134,8 @@ export default {
       this.setupDebugEventHandlers();
 
       // Setup JSBridge event handler
-      this.webViewInstance.on('JSBridge', (msg) => {
-        this.$emit('bridge-message', msg.data);
+      this.webViewInstance.on("JSBridge", (msg) => {
+        this.$emit("bridge-message", msg.data);
       });
     },
 
@@ -142,8 +143,8 @@ export default {
     setupDebugEventHandlers() {
       if (!this.webViewInstance) return;
 
-      this.webViewInstance.on('console:log', (event) => {
-        this.$emit('console-log', event.data);
+      this.webViewInstance.on("console:log", (event) => {
+        this.$emit("console-log", event.data);
       });
     },
 
@@ -151,12 +152,12 @@ export default {
       this.isLoading = true;
       this.hasError = false;
       this.errorDetails = null;
-      this.$emit('load-started', args);
+      this.$emit("load-started", args);
     },
 
     onLoadFinished(args) {
       this.isLoading = false;
-      this.$emit('load-finished', args);
+      this.$emit("load-finished", args);
     },
 
     onLoadError(args) {
@@ -165,9 +166,9 @@ export default {
       this.errorDetails = {
         code: args.code,
         message: args.message,
-        url: args.url
+        url: args.url,
       };
-      this.$emit('load-error', this.errorDetails);
+      this.$emit("load-error", this.errorDetails);
     },
 
     // URL Navigation Control
@@ -175,14 +176,14 @@ export default {
       // Only check URLs if checkUrls is true
       if (this.checkUrls && !this.isUrlAllowed(args.url)) {
         args.cancel = true;
-        this.$emit('external-url', args.url);
+        this.$emit("external-url", args.url);
       }
-      this.$emit('should-override-url-loading', args);
+      this.$emit("should-override-url-loading", args);
       return args;
     },
 
     onTitleChanged(args) {
-      this.$emit('page-title-changed', args.title);
+      this.$emit("page-title-changed", args.title);
     },
 
     /**
@@ -192,6 +193,8 @@ export default {
     isUrlAllowed(url) {
       if (!this.internalHostnames.length) return true;
 
+      if (url === "about:blank") return true;
+
       try {
         const uri = new URL(url);
         const hostname = uri.hostname;
@@ -199,23 +202,22 @@ export default {
         // Check each allowed domain
         for (const domain of this.internalHostnames) {
           if (hostname === domain) return true;
-          if (hostname.endsWith('.' + domain)) return true;
+          if (hostname.endsWith("." + domain)) return true;
         }
 
         return false;
       } catch (e) {
-        console.error('Invalid URL:', url);
+        console.error("Invalid URL:", url);
         return false;
       }
     },
 
-
     // Execute JavaScript command in webview
     executeCommand(command) {
-      if (!this.webViewInstance || !command || command.trim() === '') {
+      if (!this.webViewInstance || !command || command.trim() === "") {
         return;
       }
-      this.webViewInstance.emitToWebView('console:execute', { command });
+      this.webViewInstance.emitToWebView("console:execute", { command });
     },
 
     executeJavaScript(code) {
@@ -237,8 +239,16 @@ export default {
             this.chromeClient = null;
           }
 
-          const events = ['loaded', 'loadStarted', 'loadFinished', 'loadError', 'shouldOverrideUrlLoading', 'console:log', 'JSBridge'];
-          events.forEach(event => {
+          const events = [
+            "loaded",
+            "loadStarted",
+            "loadFinished",
+            "loadError",
+            "shouldOverrideUrlLoading",
+            "console:log",
+            "JSBridge",
+          ];
+          events.forEach((event) => {
             try {
               this.webViewInstance.removeEventListener(event);
             } catch (e) {
@@ -271,12 +281,11 @@ export default {
           this.isLoading = false;
           this.hasError = false;
           this.errorDetails = null;
-
         } catch (e) {
           console.error("Error during WebView cleanup:", e);
         }
       }
-    }
+    },
   },
 
   beforeUnmount() {
@@ -290,8 +299,8 @@ export default {
       this._webViewRef = null;
       this.chromeClient = null;
     } catch (error) {
-      console.error('Error during BaseWebView cleanup:', error);
+      console.error("Error during BaseWebView cleanup:", error);
     }
-  }
-}
+  },
+};
 </script>

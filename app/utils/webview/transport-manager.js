@@ -1,5 +1,7 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+import { isIOS, isAndroid } from "@nativescript/core";
+
 /**
  * Transport Manager - Isolates native transport objects from Vue reactivity
  */
@@ -39,12 +41,21 @@ class TransportManager {
     }
 
     try {
-      transport.obj?.setWebView(webview.android);
+      if (isAndroid) {
+        // Android transport using resultMsg object
+        transport.obj?.setWebView(webview.android);
 
-      if (transport.obj && transport.obj.getWebView()) {
-        transport.sendToTarget();
+        if (transport.obj && transport.obj.getWebView()) {
+          transport.sendToTarget();
+          return true;
+        }
+      } else if (isIOS) {
+        // iOS doesn't have transport objects like Android
+        // For iOS popups, we need to load the URL directly
+        console.log('[iOS Transport] No transport object needed, popup loads URL directly');
         return true;
       }
+      
       return false;
     } catch (error) {
       console.error('Error initializing transport:', error);

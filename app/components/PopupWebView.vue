@@ -5,7 +5,7 @@
     <StackLayout class="popup-content" width="90%" height="80%">
       <GridLayout class="popup-inner" rows="auto, *" columns="*">
         <GridLayout class="popup-header" row="0" col="0" columns="*, auto">
-          <Label :text="pageTitle" class="popup-title" col="0" row="0"/>
+          <Label :text="pageTitle" class="popup-title" col="0" row="0" />
           <MDButton
             @tap="closePopup"
             class="close-button"
@@ -37,52 +37,51 @@
             class="progress-bar"
           />
         </AbsoluteLayout>
-
       </GridLayout>
     </StackLayout>
   </AbsoluteLayout>
 </template>
 
 <script>
-import BaseWebView from './BaseWebView.vue';
-import { transportManager } from '@/utils/webview/transport-manager';
+import BaseWebView from "./BaseWebView.vue";
+import { transportManager } from "@/utils/webview/transport-manager";
 
 export default {
-  name: 'PopupWebView',
+  name: "PopupWebView",
 
   components: {
-    BaseWebView
+    BaseWebView,
   },
 
   props: {
     url: {
       type: String,
-      default: ''
+      default: "",
     },
     transportId: {
       type: String,
-      default: null
-    }
+      default: null,
+    },
   },
 
   data() {
     return {
-      pageTitle: 'Loading...',
+      pageTitle: "Loading...",
       isLoading: false,
       loadingProgress: 0,
-      hasError: false
-    }
+      hasError: false,
+    };
   },
 
   computed: {
     webview() {
       return this.$refs.baseWebView?.webview;
-    }
+    },
   },
 
   methods: {
     updatePageTitle(title) {
-      this.pageTitle = title || 'Loading...';
+      this.pageTitle = title || "Loading...";
     },
 
     updateProgress(progress) {
@@ -91,30 +90,37 @@ export default {
     },
 
     handleExternalUrl(url) {
-      console.debug('External URL in popup:', url);
+      console.debug("External URL in popup:", url);
     },
 
     handleLoadError(error) {
       this.hasError = true;
-      console.error('Popup WebView load error:', error);
+      console.error("Popup WebView load error:", error);
     },
 
     closePopup() {
+      console.log("[PopupWebView] Closing popup");
+
+      // Cleanup transport (Android)
       if (this.transportId) {
         transportManager.cleanupTransport(this.transportId);
       }
-      this.$emit('close');
+
+      this.$emit("close");
     },
 
     onWebViewLoaded({ webview }) {
       if (this.transportId) {
-        const success = transportManager.initializeTransport(this.transportId, webview);
+        const success = transportManager.initializeTransport(
+          this.transportId,
+          webview
+        );
         if (!success) {
-          console.error('Failed to initialize transport:', this.transportId);
+          console.error("Failed to initialize transport:", this.transportId);
         }
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
