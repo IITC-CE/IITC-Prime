@@ -4,6 +4,7 @@ node_modules/
 platforms/
 
 **/Android/src/main/res/values*/strings.xml
+App_Resources/iOS/*.lproj/*
 
 # Logs
 logs

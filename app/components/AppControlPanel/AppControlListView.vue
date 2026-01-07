@@ -1,23 +1,20 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <ListView
+    v-bind="$attrs"
     class="list-view"
     :items="listItems"
     :itemTemplateSelector="templateSelector"
-    @itemTap="onItemTap"
     separatorColor="#00000000"
+    iosEstimatedRowHeight="44"
   >
     <template #default="{ item }">
       <Label text="Unknown item type" />
     </template>
 
     <template #action-buttons-group="{ item }">
-      <GridLayout
-        columns="*, *, *, *"
-        rows="104"
-        class="block action-buttons-block"
-      >
+      <GridLayout columns="*, *, *, *" rows="104" class="block action-buttons-block">
         <StackLayout
           v-for="(button, index) in item.buttons"
           :key="button.id"
@@ -26,9 +23,18 @@
           @tap="onActionButtonTap(button.id)"
         >
           <MDRipple class="btn-quick-btn-icon">
-            <Label class="fa btn-quick-icon" :text="$filters.fonticon(button.icon)" horizontalAlignment="center" />
+            <Label
+              class="fa btn-quick-icon"
+              :text="$filters.fonticon(button.icon)"
+              horizontalAlignment="center"
+            />
           </MDRipple>
-          <Label class="btn-quick-text" :text="button.text" horizontalAlignment="center" textWrap="true" />
+          <Label
+            class="btn-quick-text"
+            :text="button.text"
+            horizontalAlignment="center"
+            textWrap="true"
+          />
         </StackLayout>
       </GridLayout>
     </template>
@@ -46,11 +52,7 @@
     </template>
 
     <template #select-fields-group="{ item }">
-      <GridLayout
-        columns="*, 2, *"
-        rows="28, 56"
-        class="block"
-      >
+      <GridLayout columns="*, 2, *" rows="28, 56" class="block">
         <!-- Highlighter column -->
         <Label
           v-if="item.fields[0].visible"
@@ -94,11 +96,7 @@
     </template>
 
     <template #portal-icons-group="{ item }">
-      <GridLayout
-        columns="*, *, *, *, *, *, *, *, *"
-        rows="42"
-        class="block"
-      >
+      <GridLayout columns="*, *, *, *, *, *, *, *, *" rows="42" class="block">
         <template v-for="(portal, index) in item.portals" :key="portal.layerId">
           <SVGView
             v-if="index <= 8"
@@ -106,7 +104,7 @@
             :class="{ 'overlay-portal--active': portal.active === true }"
             :col="index"
             @tap="onOverlayPortalToggle($event, portal.index)"
-            :src="'~/assets/icons/portals/portal_L'+index+'_'+String(portal.active)+'.svg'"
+            :src="'~/assets/icons/portals/portal_L' + index + '_' + String(portal.active) + '.svg'"
             stretch="aspectFit"
           />
         </template>
@@ -118,7 +116,10 @@
         columns="*, 2, *"
         rows="56"
         class="switch-pair-block"
-        :class="{ 'switch-pair-block--first': item.isFirst, 'switch-pair-block--last': item.isLast }"
+        :class="{
+          'switch-pair-block--first': item.isFirst,
+          'switch-pair-block--last': item.isLast,
+        }"
       >
         <GridLayout
           v-for="(switchItem, colIndex) in item.items"
@@ -129,18 +130,12 @@
             'list-item--top-left': switchItem.isTopLeft,
             'list-item--top-right': switchItem.isTopRight,
             'list-item--bottom-left': switchItem.isBottomLeft,
-            'list-item--bottom-right': switchItem.isBottomRight
+            'list-item--bottom-right': switchItem.isBottomRight,
           }"
           columns="*, 56"
           rows="54"
-          @tap="onOverlayToggle(switchItem.index, 'label')"
         >
-          <Label
-            class="overlay-item-label"
-            :text="switchItem.name"
-            col="0"
-            row="0"
-          />
+          <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <MDSwitch
             class="switch"
             :checked="switchItem.active"
@@ -159,14 +154,8 @@
         columns="*, 56"
         rows="54"
         orientation="horizontal"
-        @tap="onOverlayToggle(item.item.index, 'label')"
       >
-        <Label
-          class="overlay-item-label"
-          :text="item.item.name"
-          col="0"
-          row="0"
-        />
+        <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <MDSwitch
           class="switch"
           :checked="item.item.active"
@@ -176,11 +165,17 @@
         />
       </GridLayout>
     </template>
+
+    <template #spacer>
+      <GridLayout rows="80">
+        <Label row="0" text="" />
+      </GridLayout>
+    </template>
   </ListView>
 </template>
 
 <script>
-import SelectField from "@/components/base/SelectField.vue";
+import SelectField from '@/components/base/SelectField.vue';
 import { mapState } from 'vuex';
 import { $navigateTo } from 'nativescript-vue';
 import SettingsView from '@/components/Settings/SettingsView';
@@ -188,29 +183,30 @@ import PluginsView from '@/components/Settings/PluginsView';
 
 export default {
   name: 'AppControlListView',
+  inheritAttrs: false,
 
   components: {
-    SelectField
+    SelectField,
   },
 
   props: {
     listItems: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
 
   data() {
     return {
       settingsScreen: SettingsView,
       pluginsScreen: PluginsView,
-    }
+    };
   },
 
   computed: {
     ...mapState({
-      isDebugActive: state => state.ui.isDebugActive
-    })
+      isDebugActive: state => state.ui.isDebugActive,
+    }),
   },
 
   methods: {
@@ -222,18 +218,15 @@ export default {
         'select-fields-group',
         'portal-icons-group',
         'switch-pair',
-        'switch-single'
+        'switch-single',
+        'spacer',
       ];
       const itemType = data.item.type;
       return validTypes.includes(itemType) ? itemType : 'default';
     },
 
-    onItemTap(args) {
-      // Handle general item tap if needed
-    },
-
     onActionButtonTap(buttonId) {
-      switch(buttonId) {
+      switch (buttonId) {
         case 'settings':
           this.openSettings();
           break;
@@ -246,6 +239,30 @@ export default {
         case 'reload':
           this.reloadWebView();
           break;
+      }
+    },
+
+    onNavigationItemTouch(paneName, event) {
+      // Use touch events to avoid conflict with gesture handler
+      // Only trigger on tap (quick touch without movement)
+      if (!this.touchData) {
+        this.touchData = {};
+      }
+
+      if (event.action === 'down') {
+        this.touchData.startTime = Date.now();
+        this.touchData.startX = event.getX();
+        this.touchData.startY = event.getY();
+      } else if (event.action === 'up') {
+        const duration = Date.now() - (this.touchData.startTime || 0);
+        const deltaX = Math.abs(event.getX() - (this.touchData.startX || 0));
+        const deltaY = Math.abs(event.getY() - (this.touchData.startY || 0));
+        const distance = deltaX + deltaY;
+
+        // Treat as tap if quick (<300ms) and minimal movement (<15 DIP)
+        if (duration < 300 && distance < 15) {
+          this.switchToPane(paneName);
+        }
       }
     },
 
@@ -263,19 +280,22 @@ export default {
     onOverlayPortalToggle(e, index) {
       const currentLayer = this.$store.state.map.overlayLayers[index];
       const active = !currentLayer.active;
-      e.object.src = '~/assets/icons/portals/portal_L'+index+'_'+String(active)+'.svg';
-      this.$store.dispatch('map/setOverlayLayerProperty', {index, active});
+      e.object.src = '~/assets/icons/portals/portal_L' + index + '_' + String(active) + '.svg';
+      this.$store.dispatch('map/setOverlayLayerProperty', { index, active });
     },
 
     onOverlayToggle(index, value) {
       if (typeof value === 'boolean') {
         // Direct value from switch event
-        this.$store.dispatch('map/setOverlayLayerProperty', {index, active: value});
+        this.$store.dispatch('map/setOverlayLayerProperty', { index, active: value });
       } else {
         // Label tap - toggle current state
         const currentLayer = this.$store.state.map.overlayLayers[index];
         if (currentLayer) {
-          this.$store.dispatch('map/setOverlayLayerProperty', {index, active: !currentLayer.active});
+          this.$store.dispatch('map/setOverlayLayerProperty', {
+            index,
+            active: !currentLayer.active,
+          });
         }
       }
     },
@@ -292,8 +312,8 @@ export default {
         animated: true,
         transition: {
           name: 'slideLeft',
-          duration: 300
-        }
+          duration: 300,
+        },
       });
     },
 
@@ -302,8 +322,8 @@ export default {
         animated: true,
         transition: {
           name: 'slideLeft',
-          duration: 300
-        }
+          duration: 300,
+        },
       });
     },
 
@@ -317,8 +337,8 @@ export default {
 
     switchToPane(name) {
       this.$store.dispatch('navigation/setCurrentPane', name);
-    }
-  }
+    },
+  },
 };
 </script>
 

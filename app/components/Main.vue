@@ -1,52 +1,51 @@
-// Copyright (C) 2021-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <Frame>
     <Page actionBarHidden="true">
       <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
-        <AbsoluteLayout class="page">
-          <!-- Main content with WebView (hidden when debug is active) -->
-          <GridLayout
-            rows="*, auto"
-            columns="*"
-            class="main-content"
-            v-show="!isDebugActive"
-          >
-            <AppWebView
-              ref="appWebView"
-              row="0"
-              col="0"
-              @show-popup="handlePopup"
-              @console-log="onConsoleLog"
-            />
-            <label
-              row="1"
-              col="0"
-              v-show="sliding.isVisible"
-              :height="layout.bottomPadding"
-            />
-          </GridLayout>
+        <BottomSheetPanel
+          v-show="sliding.isVisible && !isDebugActive"
+          :isVisible="sliding.isVisible"
+          :gestureEnabled="!isDebugActive"
+          @bottomSheetReady="handleBottomSheetReady"
+        >
+          <AbsoluteLayout class="page">
+            <!-- Main content with WebView (hidden when debug is active) -->
+            <GridLayout rows="*, auto" columns="*" class="main-content">
+              <AppWebView
+                ref="appWebView"
+                row="0"
+                col="0"
+                @show-popup="handlePopup"
+                @console-log="onConsoleLog"
+              />
+              <label row="1" col="0" :height="layout.bottomPadding" />
+            </GridLayout>
 
+            <ProgressBar class="progress-bar" />
+
+            <PopupWebView v-if="popup.isVisible" v-bind="popup.props" @close="handlePopupClose" />
+          </AbsoluteLayout>
+        </BottomSheetPanel>
+
+        <!-- MapStateBar overlay - positioned at bottom, above BottomSheet -->
+        <MapStateBar
+          v-show="sliding.isVisible && !isDebugActive"
+          :bottomSheetRef="bottomSheetInstance"
+          verticalAlignment="bottom"
+          :height="mapStateBarHeight"
+          class="map-state-bar-overlay"
+        />
+
+        <!-- Debug Console -->
+        <AbsoluteLayout v-show="isDebugActive" class="page">
           <DebugConsole
-            v-show="isDebugActive"
             class="debug-console"
             :is-visible="isDebugActive"
             :is-keyboard-open="isKeyboardOpen"
             :keyboard-height="keyboardHeight"
             @execute-command="executeDebugCommand"
-          />
-
-          <ProgressBar class="progress-bar" />
-          <SlidingPanel
-            v-show="sliding.isVisible && !isDebugActive"
-            class="sliding-panel"
-            :is-visible="sliding.isVisible && !isDebugActive"
-          />
-
-          <PopupWebView
-            v-if="popup.isVisible"
-            v-bind="popup.props"
-            @close="handlePopupClose"
           />
         </AbsoluteLayout>
       </RootLayout>
@@ -55,25 +54,29 @@
 </template>
 
 <script>
-import { AndroidApplication, Application } from "@nativescript/core";
-import { keyboardOpening } from "@bezlepkin/nativescript-keyboard-opening";
-import { layoutService } from "~/utils/layout-service";
-import UserLocation from "@/utils/user-location";
-import { handleDeepLink } from "@/utils/deep-links";
+import { AndroidApplication, Application } from '@nativescript/core';
+import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
+import { layoutService } from '~/utils/layout-service';
+import UserLocation from '@/utils/user-location';
+import { handleDeepLink } from '@/utils/deep-links';
 
-import AppWebView from "./AppWebView";
-import ProgressBar from "./ProgressBar";
-import SlidingPanel from "./SlidingPanel/SlidingPanel.vue";
-import PopupWebView from "./PopupWebView.vue";
-import DebugConsole from "./DebugConsole";
+import AppWebView from './AppWebView';
+import ProgressBar from './ProgressBar';
+import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
+import BottomSheetPanel from './BottomSheetPanel.vue';
+import MapStateBar from './SlidingPanel/MapStateBar.vue';
+import PopupWebView from './PopupWebView.vue';
+import DebugConsole from './DebugConsole';
 
 export default {
-  name: "MainView",
+  name: 'MainView',
 
   components: {
     AppWebView,
     ProgressBar,
     SlidingPanel,
+    BottomSheetPanel,
+    MapStateBar,
     PopupWebView,
     DebugConsole,
   },
@@ -96,6 +99,8 @@ export default {
       sliding: {
         isVisible: true,
       },
+      bottomSheetInstance: null,
+      mapStateBarHeight: 46,
       unsubscribeStore: null,
       removeLayoutListener: null,
       keyboard: null,
@@ -118,7 +123,7 @@ export default {
      */
     onRootLayoutChanged(args) {
       if (!this.$refs.rootLayout || !this.$refs.rootLayout.nativeView) {
-        console.error("RootLayout reference not available");
+        console.error('RootLayout reference not available');
         return;
       }
 
@@ -148,8 +153,8 @@ export default {
      */
     async updateStoreLayout(dimensions) {
       await Promise.all([
-        this.$store.dispatch("ui/setSlidingPanelWidth", dimensions.panelWidth),
-        this.$store.dispatch("ui/setScreenHeight", dimensions.contentHeight),
+        this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth),
+        this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight),
       ]);
     },
 
@@ -167,9 +172,17 @@ export default {
       };
     },
 
+    /**
+     * Handle BottomSheet ready event
+     * Store reference to native instance for MapStateBar
+     */
+    handleBottomSheetReady(bottomSheet) {
+      this.bottomSheetInstance = bottomSheet;
+    },
+
     // Handle console logs from AppWebView
     onConsoleLog(logData) {
-      this.$store.dispatch("debug/addLog", logData);
+      this.$store.dispatch('debug/addLog', logData);
     },
 
     // Execute debug command from Debug Console
@@ -177,31 +190,28 @@ export default {
       if (this.$refs.appWebView) {
         this.$refs.appWebView.executeDebugCommand(command);
       } else {
-        console.error("AppWebView reference not found");
+        console.error('AppWebView reference not found');
       }
     },
 
     async setupManager() {
-      await this.$store.dispatch("manager/run");
+      await this.$store.dispatch('manager/run');
     },
 
     setupAndroidBackHandler() {
       if (!Application.android) return;
 
-      Application.android.on(
-        AndroidApplication.activityBackPressedEvent,
-        (args) => {
-          // If debug is active, exit debug mode instead of navigating back
-          if (this.isDebugActive) {
-            this.$store.dispatch("ui/toggleDebugMode");
-            args.cancel = true;
-            return;
-          }
-
-          this.$store.dispatch("navigation/setCurrentPane", "map");
+      Application.android.on(AndroidApplication.activityBackPressedEvent, args => {
+        // If debug is active, exit debug mode instead of navigating back
+        if (this.isDebugActive) {
+          this.$store.dispatch('ui/toggleDebugMode');
           args.cancel = true;
+          return;
         }
-      );
+
+        this.$store.dispatch('navigation/setCurrentPane', 'map');
+        args.cancel = true;
+      });
     },
 
     onKeyboardOpened(args) {
@@ -218,7 +228,7 @@ export default {
 
   async created() {
     // Initialize app settings
-    await this.$store.dispatch("settings/initSettings");
+    await this.$store.dispatch('settings/initSettings');
 
     this.setupManager().then();
     this.setupAndroidBackHandler();
@@ -245,16 +255,16 @@ export default {
 
     this.keyboard = keyboardOpening();
 
-    this.keyboard.on("opened", this.onKeyboardOpened);
-    this.keyboard.on("closed", this.onKeyboardClosed);
+    this.keyboard.on('opened', this.onKeyboardOpened);
+    this.keyboard.on('closed', this.onKeyboardClosed);
 
     // Initialize deep link handling
     handleDeepLink();
 
     this.unsubscribeStore = this.$store.subscribeAction({
-      after: async (action) => {
+      after: async action => {
         switch (action.type) {
-          case "map/triggerUserLocate":
+          case 'map/triggerUserLocate':
             if (this.userLocation) {
               await this.userLocation.locate();
             }
@@ -275,8 +285,8 @@ export default {
     }
 
     if (this.keyboard) {
-      this.keyboard.off("opened");
-      this.keyboard.off("closed");
+      this.keyboard.off('opened');
+      this.keyboard.off('closed');
     }
 
     if (this.userLocation) {
@@ -287,7 +297,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../app";
+@import '../app';
 
 .page {
   background-color: $accent;
@@ -319,5 +329,9 @@ export default {
   width: 100%;
   height: 100%;
   z-index: 100;
+}
+
+.map-state-bar-overlay {
+  z-index: 1000;
 }
 </style>
