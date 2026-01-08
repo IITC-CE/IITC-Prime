@@ -98,6 +98,7 @@ export default {
     return {
       screenHeight: this._getScreenHeight(),
       stepIndexLocal: 0,
+      lastStepIndex: 0,
       _activeButton: null,
       removeLayoutListener: null,
     };
@@ -141,13 +142,19 @@ export default {
 
     /**
      * Steps for bottom sheet positions
-     * [BOTTOM, MIDDLE, TOP]
+     * When keyboard is closed: [BOTTOM, MIDDLE, TOP]
+     * When keyboard is open: [HIDDEN, BOTTOM, MIDDLE, TOP]
      */
     steps() {
       const bottomPadding = 110; // Visible height when closed
       const height = this.screenHeight || 800;
       const middlePosition = height / 2;
       const topPosition = height - 50;
+
+      // Include HIDDEN position (0) only when keyboard is open
+      if (!this.isVisible) {
+        return [0, bottomPadding, middlePosition, topPosition];
+      }
 
       return [bottomPadding, middlePosition, topPosition];
     },
@@ -159,18 +166,59 @@ export default {
     },
 
     /**
+     * Watch isVisible prop to handle keyboard open/close
+     */
+    isVisible(newValue, oldValue) {
+      if (!newValue && oldValue) {
+        // Keyboard opened - steps array now includes HIDDEN at index 0
+        // Current panel position shifts +1 in the array
+        // Hide panel to HIDDEN position (index 0)
+        this.$nextTick(() => {
+          this.stepIndexLocal = 0; // HIDDEN
+        });
+      } else if (newValue && !oldValue) {
+        // Keyboard closed - steps array no longer includes HIDDEN
+        // Restore panel to previous position, adjusting index -1
+        if (this.lastStepIndex > 0) {
+          this.$nextTick(() => {
+            this.stepIndexLocal = this.lastStepIndex - 1;
+          });
+        }
+      }
+    },
+
+    /**
      * Watch stepIndexLocal changes and sync to store
      */
     stepIndexLocal(newIndex) {
       // Validate index
       if (newIndex === undefined || newIndex === null) return;
 
-      // Convert step index to position name
-      const positions = ['BOTTOM', 'MIDDLE', 'TOP'];
-      const position = positions[newIndex] || 'BOTTOM';
+      // Determine position names based on whether HIDDEN is included
+      let positions, isOpen;
+
+      if (!this.isVisible) {
+        // Keyboard open: [HIDDEN, BOTTOM, MIDDLE, TOP]
+        positions = ['HIDDEN', 'BOTTOM', 'MIDDLE', 'TOP'];
+        // Save position if not HIDDEN
+        if (newIndex > 0) {
+          this.lastStepIndex = newIndex;
+        }
+        // Panel is open if index > 1 (MIDDLE or TOP)
+        isOpen = newIndex > 1;
+      } else {
+        // Keyboard closed: [BOTTOM, MIDDLE, TOP]
+        positions = ['BOTTOM', 'MIDDLE', 'TOP'];
+        // Always save position
+        this.lastStepIndex = newIndex;
+        // Panel is open if index > 0 (MIDDLE or TOP)
+        isOpen = newIndex > 0;
+      }
+
+      const position = positions[newIndex] || positions[0];
 
       // Get step value
-      const stepValue = this.steps && this.steps[newIndex] ? this.steps[newIndex] : 110;
+      const stepValue = this.steps && this.steps[newIndex] !== undefined ? this.steps[newIndex] : 0;
 
       // Update store
       this.setPanelPosition({
@@ -179,7 +227,7 @@ export default {
       });
 
       // Update open state
-      this.setPanelOpenState(newIndex !== 0);
+      this.setPanelOpenState(isOpen);
     },
 
     /**
@@ -265,20 +313,22 @@ export default {
       // If panel is closed, open with the selected button
       if (!this.isPanelOpen) {
         this.switchPanel(button);
-        // Trigger panel to open by updating stepIndexLocal
+        // Trigger panel to open by updating stepIndexLocal to MIDDLE
         // The BottomSheet component will detect the change and emit stepIndexChange event
         this.$nextTick(() => {
-          this.stepIndexLocal = 1;
+          // MIDDLE position index depends on whether keyboard is open
+          this.stepIndexLocal = this.isVisible ? 1 : 2;
         });
         return;
       }
 
-      // If clicking the same button again, close panel
+      // If clicking the same button again, close panel to BOTTOM
       if (button === this.activeButton) {
         this.setActivePanel(null);
-        // Close panel
+        // Close panel to BOTTOM position
         this.$nextTick(() => {
-          this.stepIndexLocal = 0;
+          // BOTTOM position index depends on whether keyboard is open
+          this.stepIndexLocal = this.isVisible ? 0 : 1;
         });
         return;
       }
@@ -312,11 +362,12 @@ export default {
      * Handle open panel command
      */
     handleOpenCommand() {
-      if (this.stepIndexLocal !== 0) return; // Already open
+      const middleIndex = this.isVisible ? 1 : 2;
+      if (this.stepIndexLocal >= middleIndex) return; // Already open
 
       // Open to middle position
       this.$nextTick(() => {
-        this.stepIndexLocal = 1;
+        this.stepIndexLocal = middleIndex; // MIDDLE
       });
 
       // Set default panel if none is active
@@ -329,11 +380,12 @@ export default {
      * Handle close panel command
      */
     handleCloseCommand() {
-      if (this.stepIndexLocal === 0) return; // Already closed
+      const bottomIndex = this.isVisible ? 0 : 1;
+      if (this.stepIndexLocal === bottomIndex) return; // Already at BOTTOM
 
-      // Close panel
+      // Close panel to BOTTOM position
       this.$nextTick(() => {
-        this.stepIndexLocal = 0;
+        this.stepIndexLocal = bottomIndex; // BOTTOM
       });
     },
 
@@ -350,8 +402,9 @@ export default {
     // Initialize active button from store
     this._activeButton = this.storedActivePanel || 'quick';
 
-    // Initialize panel in closed position (bottom)
-    this.stepIndexLocal = 0;
+    // Initialize panel in BOTTOM position (visible but closed)
+    // Index 0 when keyboard closed (no HIDDEN), index 1 when keyboard open (with HIDDEN)
+    this.stepIndexLocal = this.isVisible ? 0 : 1;
 
     // Listen for layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);

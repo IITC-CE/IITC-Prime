@@ -5,7 +5,7 @@
     <Page actionBarHidden="true">
       <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
         <BottomSheetPanel
-          v-show="sliding.isVisible && !isDebugActive"
+          v-show="!isDebugActive"
           :isVisible="sliding.isVisible"
           :gestureEnabled="!isDebugActive"
           @bottomSheetReady="handleBottomSheetReady"
@@ -20,7 +20,7 @@
                 @show-popup="handlePopup"
                 @console-log="onConsoleLog"
               />
-              <label row="1" col="0" :height="layout.bottomPadding" />
+              <label v-show="sliding.isVisible" row="1" col="0" :height="layout.bottomPadding" />
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
