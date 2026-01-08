@@ -7,38 +7,44 @@
     height="100%"
     :minHeight="screenHeight / 2"
     rows="auto, auto, *"
-    columns="*">
-
+    columns="*"
+  >
     <StackLayout class="panel-header" row="0" col="0" verticalAlignment="top">
-      <Label
-        class="panel-header-line"
-      />
+      <Label class="panel-header-line" />
     </StackLayout>
 
     <!-- buttons -->
-    <GridLayout class="panel-buttons" row="1" col="0" columns="auto, *, auto, auto, auto, auto" verticalAlignment="top">
+    <GridLayout
+      class="panel-buttons"
+      row="1"
+      col="0"
+      columns="auto, *, auto, auto, auto, auto"
+      verticalAlignment="top"
+    >
       <!-- Quick Access Button -->
       <MDButton
         col="0"
         variant="flat"
         class="fa app-control-button"
-        :class="{ 'app-control-button--active': isPanelOpen && (activeButton === 'quick' || activeButton === null) }"
+        :class="{
+          'app-control-button--active':
+            isPanelOpen && (activeButton === 'quick' || activeButton === null),
+        }"
         :text="$filters.fonticon('fa-bars')"
         @tap="handleControlButtonTap('quick', $event)"
-        @pan="handleControlButtonPan('quick', $event)"
       />
 
       <!-- Search Button -->
-<!--      <MDButton-->
-<!--        v-show="isIitcLoaded"-->
-<!--        col="2"-->
-<!--        variant="flat"-->
-<!--        class="fa app-control-button"-->
-<!--        :class="{ 'app-control-button&#45;&#45;active': isPanelOpen && activeButton === 'search' }"-->
-<!--        :text="$filters.fonticon('fa-search')"-->
-<!--        @tap="handleControlButtonTap('search', $event)"-->
-<!--        @pan="handleControlButtonPan('search', $event)"-->
-<!--      />-->
+      <!--      <MDButton-->
+      <!--        v-show="isIitcLoaded"-->
+      <!--        col="2"-->
+      <!--        variant="flat"-->
+      <!--        class="fa app-control-button"-->
+      <!--        :class="{ 'app-control-button&#45;&#45;active': isPanelOpen && activeButton === 'search' }"-->
+      <!--        :text="$filters.fonticon('fa-search')"-->
+      <!--        @tap="handleControlButtonTap('search', $event)"-->
+      <!--        @pan="handleControlButtonPan('search', $event)"-->
+      <!--      />-->
 
       <!-- Link Permission Button (Android only, when not default handler) -->
       <MDButton
@@ -69,9 +75,7 @@
         :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
         :text="$filters.fonticon('fa-layer-group')"
         @tap="handleControlButtonTap('layers', $event)"
-        @pan="handleControlButtonPan('layers', $event)"
       />
-
     </GridLayout>
 
     <!-- content -->
@@ -86,18 +90,15 @@
 </template>
 
 <script>
-import AppControlListView from "./AppControlListView.vue";
-import { ControlPanelDataService } from "./services/controlPanelDataService.js";
+import AppControlListView from './AppControlListView.vue';
+import { ControlPanelDataService } from './services/controlPanelDataService.js';
 import { mapState, mapActions, mapGetters } from 'vuex';
-import { buttonGestureHandlerMixin } from './button-gesture-handler';
 import { isDefaultLinkHandler, openAppLinkSettings } from '@/utils/platform';
 import { Application } from '@nativescript/core';
 import { confirm } from '@nativescript-community/ui-material-dialogs';
 
 export default {
   name: 'AppControlPanel',
-
-  mixins: [buttonGestureHandlerMixin],
 
   components: {
     AppControlListView,
@@ -106,8 +107,8 @@ export default {
   props: {
     maxHeight: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
   },
 
   computed: {
@@ -120,7 +121,7 @@ export default {
       },
       set(value) {
         this.$data._activeButton = value;
-      }
+      },
     },
 
     /**
@@ -128,15 +129,15 @@ export default {
      */
     locationButtonIcon() {
       return this.isFollowingUser
-        ? 'fa-crosshairs'        // Following mode icon
-        : 'fa-location-arrow';   // Regular locate icon
+        ? 'fa-crosshairs' // Following mode icon
+        : 'fa-location-arrow'; // Regular locate icon
     },
 
     ...mapState({
       storedActivePanel: state => state.ui.activePanel,
       isPanelOpen: state => state.ui.panelState.isOpen,
       screenHeight: state => state.ui.screenHeight,
-      isIitcLoaded: state => state.ui.isIitcLoaded
+      isIitcLoaded: state => state.ui.isIitcLoaded,
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
@@ -146,7 +147,7 @@ export default {
      */
     currentListItems() {
       return ControlPanelDataService.generateListData(this.activeButton, this.$store);
-    }
+    },
   },
 
   data() {
@@ -154,19 +155,19 @@ export default {
       _activeButton: null, // Internal storage for local changes
       showLinkPermissionButton: false, // Show link permission button
       activityResumedHandler: null, // Store activity resumed handler
-    }
+    };
   },
 
   watch: {
     storedActivePanel(newValue) {
       this._activeButton = newValue;
-    }
+    },
   },
 
   methods: {
     ...mapActions({
       setActivePanel: 'ui/setActivePanel',
-      switchPanel: 'ui/switchPanel'
+      switchPanel: 'ui/switchPanel',
     }),
 
     /**
@@ -193,26 +194,14 @@ export default {
      * Handle control button tap with gesture handling
      */
     handleControlButtonTap(buttonName, event) {
-      this.handleButtonTap(event);
-
-      if (this.isCurrentlyPanning()) {
-        return;
-      }
-
-      const isActive = this.isPanelOpen &&
-        (buttonName === 'quick' ?
-          (this.activeButton === 'quick' || this.activeButton === null) :
-          this.activeButton === buttonName);
+      const isActive =
+        this.isPanelOpen &&
+        (buttonName === 'quick'
+          ? this.activeButton === 'quick' || this.activeButton === null
+          : this.activeButton === buttonName);
 
       const action = isActive ? null : buttonName;
       this.setActiveButton(action);
-    },
-
-    /**
-     * Handle control button pan gesture
-     */
-    handleControlButtonPan(buttonName, event) {
-      this.handleButtonPan(event);
     },
 
     /**
@@ -229,9 +218,10 @@ export default {
       try {
         const result = await confirm({
           title: 'Open links in IITC Prime?',
-          message: 'You can set IITC Prime to automatically open Intel Map links instead of using a browser',
+          message:
+            'You can set IITC Prime to automatically open Intel Map links instead of using a browser',
           okButtonText: 'Enable',
-          cancelButtonText: 'Skip'
+          cancelButtonText: 'Skip',
         });
 
         if (result) {
@@ -268,7 +258,7 @@ export default {
       };
 
       Application.android.on('activityResumed', this.activityResumedHandler);
-    }
+    },
   },
 
   created() {
@@ -285,7 +275,7 @@ export default {
       Application.android.off('activityResumed', this.activityResumedHandler);
     }
   },
-}
+};
 </script>
 
 <style scoped lang="scss">

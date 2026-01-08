@@ -8,6 +8,7 @@
           v-show="!isDebugActive"
           :isVisible="sliding.isVisible"
           :gestureEnabled="!isDebugActive"
+          :panelWidth="layout.panelWidth"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -34,7 +35,9 @@
           v-show="sliding.isVisible && !isDebugActive"
           :bottomSheetRef="bottomSheetInstance"
           verticalAlignment="bottom"
+          horizontalAlignment="left"
           :height="mapStateBarHeight"
+          :width="layout.panelWidth"
           class="map-state-bar-overlay"
         />
 
@@ -62,7 +65,6 @@ import { handleDeepLink } from '@/utils/deep-links';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
-import SlidingPanel from './SlidingPanel/SlidingPanel.vue';
 import BottomSheetPanel from './BottomSheetPanel.vue';
 import MapStateBar from './SlidingPanel/MapStateBar.vue';
 import PopupWebView from './PopupWebView.vue';
@@ -74,7 +76,6 @@ export default {
   components: {
     AppWebView,
     ProgressBar,
-    SlidingPanel,
     BottomSheetPanel,
     MapStateBar,
     PopupWebView,
@@ -152,10 +153,7 @@ export default {
      * Update layout related values in the Vuex store
      */
     async updateStoreLayout(dimensions) {
-      await Promise.all([
-        this.$store.dispatch('ui/setSlidingPanelWidth', dimensions.panelWidth),
-        this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight),
-      ]);
+      await this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight);
     },
 
     handlePopup(data) {
@@ -253,10 +251,11 @@ export default {
       this.handleLayoutChanged.bind(this)
     );
 
-    this.keyboard = keyboardOpening();
-
-    this.keyboard.on('opened', this.onKeyboardOpened);
-    this.keyboard.on('closed', this.onKeyboardClosed);
+    setTimeout(() => {
+      this.keyboard = keyboardOpening();
+      this.keyboard.on('opened', this.onKeyboardOpened);
+      this.keyboard.on('closed', this.onKeyboardClosed);
+    }, 1000);
 
     // Initialize deep link handling
     handleDeepLink();

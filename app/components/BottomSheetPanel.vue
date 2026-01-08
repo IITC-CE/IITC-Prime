@@ -19,7 +19,7 @@
       ~bottomSheet
       class="panel-container"
       rows="auto, auto, *"
-      width="100%"
+      :width="panelWidth || '100%'"
       height="100%"
     >
       <!-- Header with drag indicator -->
@@ -91,6 +91,10 @@ export default {
     gestureEnabled: {
       type: Boolean,
       default: true,
+    },
+    panelWidth: {
+      type: Number,
+      default: 0,
     },
   },
 
