@@ -1,8 +1,8 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 export class ControlPanelDataService {
   static generateListData(activeButton, store) {
-    switch(activeButton) {
+    switch (activeButton) {
       case 'quick':
       case null:
         return this.getQuickAccessData(store);
@@ -24,9 +24,9 @@ export class ControlPanelDataService {
           { id: 'settings', icon: 'fa-tools', text: 'Settings' },
           { id: 'plugins', icon: 'fa-toolbox', text: 'Plugins' },
           { id: 'debug', icon: 'fa-terminal', text: 'Debug' },
-          { id: 'reload', icon: 'fa-redo', text: 'Reload IITC' }
-        ]
-      }
+          { id: 'reload', icon: 'fa-redo', text: 'Reload IITC' },
+        ],
+      },
     ];
 
     // Add navigation items from store
@@ -38,8 +38,14 @@ export class ControlPanelDataService {
         icon: pane.icon,
         text: pane.label,
         isFirst: index === 0,
-        isLast: index === filteredPanes.length - 1
+        isLast: index === filteredPanes.length - 1,
       });
+    });
+
+    // Add spacer item at the end to ensure scrollability
+    data.push({
+      type: 'spacer',
+      id: 'spacer',
     });
 
     return data;
@@ -52,7 +58,10 @@ export class ControlPanelDataService {
     const highlightersList = store.state.map.highlightersList;
     const baseLayersList = store.state.map.baseLayersList;
 
-    if ((highlightersList && highlightersList.length > 0) || (baseLayersList && baseLayersList.length > 0)) {
+    if (
+      (highlightersList && highlightersList.length > 0) ||
+      (baseLayersList && baseLayersList.length > 0)
+    ) {
       data.push({
         type: 'select-fields-group',
         id: 'select-fields',
@@ -62,16 +71,16 @@ export class ControlPanelDataService {
             label: 'Highlighter',
             items: highlightersList,
             selectedValue: store.state.map.highlighterSelected,
-            visible: highlightersList && highlightersList.length > 0
+            visible: highlightersList && highlightersList.length > 0,
           },
           {
             type: 'base-layer',
             label: 'Base layer',
             items: baseLayersList,
             selectedIndex: store.state.map.baseLayerSelected,
-            visible: baseLayersList && baseLayersList.length > 0
-          }
-        ]
+            visible: baseLayersList && baseLayersList.length > 0,
+          },
+        ],
       });
     }
 
@@ -83,14 +92,20 @@ export class ControlPanelDataService {
         id: 'portal-icons',
         portals: overlayLayers.slice(0, 9).map((layer, index) => ({
           ...layer,
-          index
-        }))
+          index,
+        })),
       });
 
       // Add switch items for remaining layers
       const switchItems = this.generateSwitchItems(overlayLayers);
       data.push(...switchItems);
     }
+
+    // Add spacer item at the end to ensure scrollability
+    data.push({
+      type: 'spacer',
+      id: 'spacer',
+    });
 
     return data;
   }
@@ -110,11 +125,11 @@ export class ControlPanelDataService {
     // First 4 items as pairs (2 per row)
     const pairedItems = filteredLayers.slice(0, 4);
     const totalPairs = Math.ceil(pairedItems.length / 2);
-    
+
     for (let i = 0; i < pairedItems.length; i += 2) {
       const pair = pairedItems.slice(i, i + 2);
       const pairIndex = i / 2;
-      
+
       if (pair.length === 2) {
         items.push({
           type: 'switch-pair',
@@ -124,16 +139,16 @@ export class ControlPanelDataService {
             isTopLeft: pairIndex === 0 && idx === 0,
             isTopRight: pairIndex === 0 && idx === 1,
             isBottomLeft: pairIndex === totalPairs - 1 && idx === 0,
-            isBottomRight: pairIndex === totalPairs - 1 && idx === 1
+            isBottomRight: pairIndex === totalPairs - 1 && idx === 1,
           })),
           isFirst: pairIndex === 0,
-          isLast: pairIndex === totalPairs - 1
+          isLast: pairIndex === totalPairs - 1,
         });
       } else if (pair.length === 1) {
         items.push({
           type: 'switch-single',
           id: `switch-single-${pair[0].index}`,
-          item: pair[0]
+          item: pair[0],
         });
       }
     }
@@ -146,7 +161,7 @@ export class ControlPanelDataService {
         id: `switch-single-${item.index}`,
         item,
         isFirst: index === 0,
-        isLast: index === singleItems.length - 1
+        isLast: index === singleItems.length - 1,
       });
     });
 

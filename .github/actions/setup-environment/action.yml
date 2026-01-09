@@ -5,7 +5,7 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
-    default: '18'
+    default: '20'
   java-version:
     description: 'Java version to use'
     required: false
