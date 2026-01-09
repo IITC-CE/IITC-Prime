@@ -72,8 +72,8 @@
 
 <script>
 import { mapState, mapActions, mapGetters } from 'vuex';
-import AppControlListView from '@/components/AppControlPanel/AppControlListView.vue';
-import { ControlPanelDataService } from '@/components/AppControlPanel/services/controlPanelDataService.js';
+import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
+import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
 import { layoutService } from '~/utils/layout-service';
 
 export default {

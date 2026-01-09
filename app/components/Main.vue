@@ -65,8 +65,8 @@ import { handleDeepLink } from '@/utils/deep-links';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
-import BottomSheetPanel from './BottomSheetPanel.vue';
-import MapStateBar from './SlidingPanel/MapStateBar.vue';
+import BottomSheetPanel from './BottomPanel/BottomSheetPanel.vue';
+import MapStateBar from './BottomPanel/MapStateBar/MapStateBar.vue';
 import PopupWebView from './PopupWebView.vue';
 import DebugConsole from './DebugConsole';
 

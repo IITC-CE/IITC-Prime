@@ -242,30 +242,6 @@ export default {
       }
     },
 
-    onNavigationItemTouch(paneName, event) {
-      // Use touch events to avoid conflict with gesture handler
-      // Only trigger on tap (quick touch without movement)
-      if (!this.touchData) {
-        this.touchData = {};
-      }
-
-      if (event.action === 'down') {
-        this.touchData.startTime = Date.now();
-        this.touchData.startX = event.getX();
-        this.touchData.startY = event.getY();
-      } else if (event.action === 'up') {
-        const duration = Date.now() - (this.touchData.startTime || 0);
-        const deltaX = Math.abs(event.getX() - (this.touchData.startX || 0));
-        const deltaY = Math.abs(event.getY() - (this.touchData.startY || 0));
-        const distance = deltaX + deltaY;
-
-        // Treat as tap if quick (<300ms) and minimal movement (<15 DIP)
-        if (duration < 300 && distance < 15) {
-          this.switchToPane(paneName);
-        }
-      }
-    },
-
     onNavigationItemTap(paneName) {
       this.switchToPane(paneName);
     },

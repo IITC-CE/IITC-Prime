@@ -22,8 +22,8 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import PortalStatusView from './components/MapStateBar/PortalStatusView';
-import MapStatusView from './components/MapStateBar/MapStatusView';
+import PortalStatusView from './PortalStatusView';
+import MapStatusView from './MapStatusView';
 
 const SWIPE_DISTANCE_MINIMUM = 10;
 

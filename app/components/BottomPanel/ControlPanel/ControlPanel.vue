@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <GridLayout
@@ -90,7 +90,7 @@
 </template>
 
 <script>
-import AppControlListView from './AppControlListView.vue';
+import AppControlListView from './ControlListView.vue';
 import { ControlPanelDataService } from './services/controlPanelDataService.js';
 import { mapState, mapActions, mapGetters } from 'vuex';
 import { isDefaultLinkHandler, openAppLinkSettings } from '@/utils/platform';
