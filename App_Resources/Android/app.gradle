@@ -33,6 +33,9 @@ def getPackageVersion = { ->
 }
 
 android {
+  // Determine build type: AAB (bundle) or APK (assemble)
+  def buildingBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains('bundle') }
+
   defaultConfig {
     minSdkVersion 23
     compileSdkVersion 34
@@ -40,6 +43,15 @@ android {
     versionCode = getVersionCodeTimeStamps()
     versionName = getPackageVersion()
     generatedDensities = []
+    ndk {
+      if (buildingBundle) {
+        // AAB for Google Play: all architectures
+        abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+      } else {
+        // APK for direct distribution: arm64-v8a only
+        abiFilters 'arm64-v8a'
+      }
+    }
   }
   aaptOptions {
     additionalParameters "--no-version-vectors"
@@ -48,9 +60,22 @@ android {
   buildTypes {
     debug {
         versionNameSuffix "-$BUILD_DATE"
+        multiDexEnabled true
     }
     release {
     }
+  }
+
+  packagingOptions {
+    if (!buildingBundle) {
+      exclude "lib/armeabi-v7a/**"
+      exclude "lib/x86/**"
+      exclude "lib/x86_64/**"
+    }
+  }
+
+  dependenciesInfo {
+    includeInApk = false
   }
 
   sourceSets {
