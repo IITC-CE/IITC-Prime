@@ -1,0 +1,16 @@
+diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
+index 794f42a..cbb9e84 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.ios.js
++++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
+@@ -694,7 +694,10 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+             if (supportPopups) {
+                 try {
+                     var popupConfig = configuration;
+-                    popupConfig.userContentController.removeAllUserScripts();
++                    // iOS shares WKUserContentController between parent and popup webviews by default.
++                    // Create a fresh controller to prevent user scripts from being injected into popups.
++                    popupConfig.userContentController = WKUserContentController.alloc().init();
++
+                     var popupWebView_1 = WKWebView.alloc().initWithFrameConfiguration(CGRectZero, popupConfig);
+                     if (webView.customUserAgent) {
+                         popupWebView_1.customUserAgent = webView.customUserAgent;
