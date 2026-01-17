@@ -75,9 +75,14 @@ export default {
     },
 
     async onLoadStarted(arg) {
+      // Ignore internal navigations (about:blank, file://) - they don't require webview reset
+      if (!arg?.url || arg.url === 'about:blank' || arg.url.startsWith('file://')) {
+        return;
+      }
+
       // Reset lastInjectedUrl when starting new navigation
       // This allows bridge re-injection on reload
-      if (arg?.url && arg.url.startsWith('https://intel.ingress.com')) {
+      if (arg.url.startsWith('https://intel.ingress.com')) {
         this.lastInjectedUrl = null;
       }
 

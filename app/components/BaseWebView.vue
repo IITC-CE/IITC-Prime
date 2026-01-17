@@ -193,7 +193,8 @@ export default {
     isUrlAllowed(url) {
       if (!this.internalHostnames.length) return true;
 
-      if (url === 'about:blank') return true;
+      // Allow internal/system URLs
+      if (url === 'about:blank' || url?.startsWith('file://')) return true;
 
       try {
         const uri = new URL(url);
