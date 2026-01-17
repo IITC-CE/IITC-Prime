@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <BaseWebView
@@ -17,11 +17,11 @@
 </template>
 
 <script>
-import { injectBridgeIITC, router } from "@/utils/bridge";
-import { injectIITCPrimeResources } from "~/utils/iitc-prime-resources";
-import { injectDebugBridge } from "@/utils/debug-bridge";
-import BaseWebView from "./BaseWebView.vue";
-import { addViewportParam } from "@/utils/url-config";
+import { injectBridgeIITC, router } from '@/utils/bridge';
+import { injectIITCPrimeResources } from '~/utils/iitc-prime-resources';
+import { injectDebugBridge } from '@/utils/debug-bridge';
+import BaseWebView from './BaseWebView.vue';
+import { addViewportParam } from '@/utils/url-config';
 
 import {
   changePortalHighlights,
@@ -31,10 +31,10 @@ import {
   userLocationLocate,
   userLocationUpdate,
   userLocationOrientation,
-} from "@/utils/events-to-iitc";
+} from '@/utils/events-to-iitc';
 
 export default {
-  name: "AppWebView",
+  name: 'AppWebView',
 
   components: {
     BaseWebView,
@@ -43,7 +43,8 @@ export default {
   data() {
     return {
       store_unsubscribe: () => {},
-      started: false,
+      lastInjectedUrl: null, // Track last URL we injected bridge into
+      injectionInProgress: false, // Prevent concurrent injections
     };
   },
 
@@ -62,38 +63,65 @@ export default {
 
   methods: {
     handleShowPopup(data) {
-      this.$emit("show-popup", data);
+      this.$emit('show-popup', data);
     },
 
     handleExternalUrl(url) {
-      this.$emit("show-popup", { url });
+      this.$emit('show-popup', { url });
     },
 
     handleLoadError(error) {
-      console.error("WebView load error:", error);
+      console.error('WebView load error:', error);
     },
 
-    async onLoadStarted() {
-      this.started = true;
-      await this.$store.dispatch("ui/setWebviewLoaded", false);
+    async onLoadStarted(arg) {
+      // Reset lastInjectedUrl when starting new navigation
+      // This allows bridge re-injection on reload
+      if (arg?.url && arg.url.startsWith('https://intel.ingress.com')) {
+        this.lastInjectedUrl = null;
+      }
+
+      await this.$store.dispatch('ui/setWebviewLoaded', false);
     },
 
     async onLoadFinished(arg) {
-      // Only process Intel pages that have a corresponding onLoadStarted
-      if (this.started && arg.url && arg.url.startsWith("https://intel.ingress.com")) {
-        this.started = false;
+      // Only process Intel pages
+      if (!arg?.url || !arg.url.startsWith('https://intel.ingress.com')) {
+        return;
+      }
 
+      // Deduplication: check if we already processed this exact URL
+      if (this.lastInjectedUrl === arg.url) {
+        return;
+      }
+
+      // Prevent concurrent injections
+      if (this.injectionInProgress) {
+        return;
+      }
+
+      // Lock injection BEFORE any async operations
+      this.injectionInProgress = true;
+
+      try {
         // Inject bridges first
         await injectBridgeIITC(this.webview);
         await injectDebugBridge(this.webview);
 
+        // Mark this URL as processed
+        this.lastInjectedUrl = arg.url;
+
         // Then trigger plugin injection
-        await this.$store.dispatch("ui/setWebviewLoaded", true);
+        await this.$store.dispatch('ui/setWebviewLoaded', true);
+      } catch (error) {
+        console.error('[AppWebView] Bridge injection failed:', error);
+      } finally {
+        this.injectionInProgress = false;
       }
     },
 
     async onWebViewLoaded({ webview }) {
-      this.$emit("webview-loaded", { webview });
+      this.$emit('webview-loaded', { webview });
     },
 
     handleBridgeMessage(eventData) {
@@ -101,7 +129,7 @@ export default {
     },
 
     handleConsoleLog(logData) {
-      this.$emit("console-log", logData);
+      this.$emit('console-log', logData);
     },
 
     // Public method to execute debug command
@@ -133,7 +161,7 @@ export default {
           false
         );
       } catch (error) {
-        console.error("Plugin injection failed:", error);
+        console.error('Plugin injection failed:', error);
       }
     },
   },
@@ -145,61 +173,49 @@ export default {
         if (!webview) return;
 
         switch (action.type) {
-          case "ui/reloadWebView":
+          case 'ui/reloadWebView':
             await this.$refs.baseWebView.reload();
             break;
-          case "ui/iitcBootFinished":
+          case 'ui/iitcBootFinished':
             await injectIITCPrimeResources(webview);
             break;
-          case "map/setInjectPlugin":
+          case 'map/setInjectPlugin':
             await this.injectPlugin(action.payload);
             break;
-          case "map/executeJavaScript":
+          case 'map/executeJavaScript':
             if (webview && action.payload) {
               await webview.executeJavaScript(action.payload);
             }
             break;
-          case "map/setActiveBaseLayer":
+          case 'map/setActiveBaseLayer':
             await webview.executeJavaScript(showLayer(action.payload, true));
             break;
-          case "map/setOverlayLayerProperty":
+          case 'map/setOverlayLayerProperty':
             const overlay_layer = state.map.overlayLayers[action.payload.index];
-            await webview.executeJavaScript(
-              showLayer(overlay_layer.layerId, overlay_layer.active)
-            );
+            await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
             break;
-          case "map/setActiveHighlighter":
-            await webview.executeJavaScript(
-              changePortalHighlights(action.payload)
-            );
+          case 'map/setActiveHighlighter':
+            await webview.executeJavaScript(changePortalHighlights(action.payload));
             break;
-          case "navigation/setCurrentPane":
+          case 'navigation/setCurrentPane':
             await webview.executeJavaScript(switchToPane(action.payload));
             break;
-          case "map/locateMapOnce":
+          case 'map/locateMapOnce':
             await webview.executeJavaScript(
-              setView(
-                action.payload.lat,
-                action.payload.lng,
-                action.payload.persistentZoom
-              )
+              setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
             );
             break;
-          case "map/userLocationLocate":
+          case 'map/userLocationLocate':
             const { lat, lng, accuracy, persistentZoom } = action.payload;
-            await webview.executeJavaScript(
-              userLocationLocate(lat, lng, accuracy, persistentZoom)
-            );
+            await webview.executeJavaScript(userLocationLocate(lat, lng, accuracy, persistentZoom));
             break;
-          case "map/setLocation":
+          case 'map/setLocation':
             await webview.executeJavaScript(
               userLocationUpdate(action.payload.lat, action.payload.lng)
             );
             break;
-          case "map/userLocationOrientation":
-            await webview.executeJavaScript(
-              userLocationOrientation(action.payload.direction)
-            );
+          case 'map/userLocationOrientation':
+            await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
             break;
         }
       },
