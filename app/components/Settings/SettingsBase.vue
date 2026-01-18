@@ -1,22 +1,21 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <Page
-    @navigatedTo="onNavigatedTo"
-    @navigatedFrom="onNavigatedFrom"
-  >
-    <ActionBar :title="title" flat="true" class="action-bar">
+  <Page @navigatedTo="onNavigatedTo" @navigatedFrom="onNavigatedFrom">
+    <ActionBar
+      :title="title"
+      flat="true"
+      color="#ffffff"
+      ios:backgroundColor="#143542"
+      android:backgroundColor="#143542"
+    >
       <NavigationButton
         v-if="isAndroid"
         @tap="goBack"
         text="Back"
         android.systemIcon="ic_menu_back"
       />
-      <NavigationButton
-        v-if="isIOS"
-        @tap="goBack"
-        text="Back"
-      />
+      <NavigationButton v-if="isIOS" @tap="goBack" text="Back" />
       <template v-if="$slots.headerRight && isIOS">
         <slot name="headerRight" ios.position="right"></slot>
       </template>
@@ -39,7 +38,7 @@
 </template>
 
 <script>
-import { Frame, isIOS, isAndroid } from "@nativescript/core";
+import { Frame, isIOS, isAndroid } from '@nativescript/core';
 import { attachBackHandler, detachBackHandler } from '@/utils/platform';
 
 export default {
@@ -48,19 +47,19 @@ export default {
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     useScroll: {
       type: String,
       required: false,
-      default: "true",
-    }
+      default: 'true',
+    },
   },
 
   data() {
     return {
       isIOS,
-      isAndroid
+      isAndroid,
     };
   },
 
@@ -81,12 +80,12 @@ export default {
       // Detach back press handler when navigating FROM this page
       detachBackHandler();
       this.$emit('navigatedFrom', event);
-    }
+    },
   },
 
   beforeUnmount() {
     detachBackHandler();
-  }
+  },
 };
 </script>
 
@@ -95,19 +94,6 @@ export default {
 
 Page {
   background-color: $surface;
-}
-
-.action-bar {
-  background-color: $primary;
-  color: white;
-}
-
-ActionItem {
-  color: white;
-}
-
-.action-bar ActionItem {
-  color: white;
 }
 
 .settings-container {
