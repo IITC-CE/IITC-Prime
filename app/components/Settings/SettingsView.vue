@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <SettingsBase title="Settings">
@@ -60,6 +60,17 @@
       :isLast="true"
     />
 
+    <!-- Data Management section -->
+    <SettingsSection title="Data management" />
+    <SettingsItem
+      type="action"
+      title="Clear cookies"
+      description="Remove all stored cookies and session data"
+      @action="clearCookies"
+      :isFirst="true"
+      :isLast="true"
+    />
+
     <!-- About section -->
     <SettingsSection title="Information" />
     <SettingsItem
@@ -75,7 +86,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
-import {markRaw} from "vue";
+import { markRaw } from 'vue';
 
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
@@ -83,6 +94,13 @@ import SettingsItem from './components/SettingsItem';
 import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
 import AboutView from './AboutView';
+import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
+import {
+  confirm as confirmMaterial,
+  alert as alertMaterial,
+} from '@nativescript-community/ui-material-dialogs';
+import { confirm as confirmNative, alert as alertNative } from '@nativescript/core/ui/dialogs';
+import { isAndroid } from '@nativescript/core';
 
 export default {
   name: 'SettingsView',
@@ -97,7 +115,7 @@ export default {
     return {
       pluginsScreen: PluginsView,
       updateChannelScreen: UpdateChannelView,
-      aboutScreen: AboutView
+      aboutScreen: AboutView,
     };
   },
 
@@ -106,12 +124,9 @@ export default {
       'isDesktopMode',
       'isFakeUserAgent',
       'isPersistentZoom',
-      'isShowLocation'
+      'isShowLocation',
     ]),
-    ...mapGetters('manager', [
-      'currentChannel',
-      'enabledPlugins'
-    ]),
+    ...mapGetters('manager', ['currentChannel', 'enabledPlugins']),
 
     desktopMode() {
       return this.isDesktopMode;
@@ -136,7 +151,7 @@ export default {
 
     updateChannelDescription() {
       return `Current: ${this.currentChannel}`;
-    }
+    },
   },
 
   methods: {
@@ -165,12 +180,42 @@ export default {
 
     async loadPluginsInfo() {
       await this.loadPlugins();
-    }
+    },
+
+    async clearCookies() {
+      const confirm = isAndroid ? confirmMaterial : confirmNative;
+      const alert = isAndroid ? alertMaterial : alertNative;
+
+      const confirmed = await confirm({
+        title: 'Clear cookies',
+        message:
+          'This will clear all cookies and session data. You will need to log in again. Continue?',
+        okButtonText: 'Clear',
+        cancelButtonText: 'Cancel',
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      const success = await clearWebViewCookies();
+
+      if (success) {
+        await this.$store.dispatch('ui/reloadWebView');
+        this.$navigateBack();
+      } else {
+        await alert({
+          title: 'Error',
+          message: 'Failed to clear cookies. Please try again.',
+          okButtonText: 'OK',
+        });
+      }
+    },
   },
 
   async mounted() {
     await this.loadChannelInfo();
     await this.loadPluginsInfo();
-  }
+  },
 };
 </script>
