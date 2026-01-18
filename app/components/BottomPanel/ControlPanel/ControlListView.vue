@@ -383,11 +383,16 @@ export default {
 .overlay-portal {
   border-radius: $radius-large;
   horizontal-align: center;
+  vertical-align: middle;
 
   &--active {
     background-color: $surface-bright;
     box-shadow: 0 2 5 rgba(0, 0, 0, 0.1);
   }
+}
+
+.switch {
+  height: 32;
 }
 
 .switch-pair-block {

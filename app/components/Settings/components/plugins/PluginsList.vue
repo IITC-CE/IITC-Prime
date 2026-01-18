@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <CollectionView
@@ -10,11 +10,7 @@
   >
     <!-- Template for section headers -->
     <template #section-header="{ item }">
-      <Label
-        :text="item.title"
-        class="section-header"
-        once="true"
-      />
+      <Label :text="item.title" class="section-header" once="true" />
     </template>
 
     <!-- Template for plugin items with SVG icons -->
@@ -26,11 +22,7 @@
         rows="82"
       >
         <!-- SVG Plugin icon -->
-        <AsyncSVGIcon
-          col="0"
-          :src="getPluginIcon(item)"
-          icon-class="plugin-icon"
-        />
+        <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
 
         <!-- Plugin info -->
         <StackLayout col="1" class="plugin-info">
@@ -94,24 +86,24 @@ export default {
   name: 'PluginsList',
 
   components: {
-    AsyncSVGIcon
+    AsyncSVGIcon,
   },
 
   props: {
     // Array of plugins to display
     plugins: {
       type: Array,
-      required: true
+      required: true,
     },
     // Whether to show enabled plugins first in separate section
     showEnabledFirst: {
       type: Boolean,
-      default: false
+      default: false,
     },
     // Optional section title
     title: {
       type: String,
-      default: null
+      default: null,
     },
   },
 
@@ -130,33 +122,38 @@ export default {
         if (enabledPlugins.length > 0) {
           items.push({
             type: 'section-header',
-            title: 'Enabled'
+            title: 'Enabled',
           });
-          items.push(...enabledPlugins.map((plugin, index) => ({
-            ...plugin,
-            type: 'plugin',
-            isFirst: index === 0,
-            isLast: index === enabledPlugins.length - 1
-          })));
+          items.push(
+            ...enabledPlugins.map((plugin, index) => ({
+              ...plugin,
+              type: 'plugin',
+              isFirst: index === 0,
+              isLast: index === enabledPlugins.length - 1,
+            }))
+          );
         }
 
         // Add all plugins section header
         items.push({
           type: 'section-header',
-          title: 'All plugins'
+          title: 'All plugins',
         });
       }
 
       // Add all plugins (sorted)
-      const sortedPlugins = this.plugins
-        .sort((a, b) => this.getPluginName(a).localeCompare(this.getPluginName(b)));
+      const sortedPlugins = this.plugins.sort((a, b) =>
+        this.getPluginName(a).localeCompare(this.getPluginName(b))
+      );
 
-      items.push(...sortedPlugins.map((plugin, index) => ({
-        ...plugin,
-        type: 'plugin',
-        isFirst: index === 0,
-        isLast: index === sortedPlugins.length - 1
-      })));
+      items.push(
+        ...sortedPlugins.map((plugin, index) => ({
+          ...plugin,
+          type: 'plugin',
+          isFirst: index === 0,
+          isLast: index === sortedPlugins.length - 1,
+        }))
+      );
 
       return items;
     },
@@ -168,7 +165,7 @@ export default {
       } catch (error) {
         console.error('Failed to load placeholder icon:', error);
       }
-    }
+    },
   },
 
   methods: {
@@ -217,9 +214,7 @@ export default {
     },
 
     getPluginIcon(plugin) {
-      return plugin.icon ||
-             plugin.icon64 ||
-             this.placeholderImageSource;
+      return plugin.icon || plugin.icon64 || this.placeholderImageSource;
     },
 
     // Handle item tap to toggle plugin status
@@ -232,16 +227,14 @@ export default {
       }
 
       // Skip if event came from switch to avoid double triggers
-      if (event.object &&
-          event.object.className &&
-          event.object.className.includes('switch')) {
+      if (event.object && event.object.className && event.object.className.includes('switch')) {
         return;
       }
 
       this.$emit('toggle', item);
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped lang="scss">
@@ -281,6 +274,7 @@ export default {
 }
 
 .switch {
-  height: 82;
+  height: 32;
+  vertical-align: middle;
 }
 </style>

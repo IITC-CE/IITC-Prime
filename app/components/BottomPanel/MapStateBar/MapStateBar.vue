@@ -16,7 +16,7 @@
     />
 
     <!-- Map status component - right side -->
-    <MapStatusView v-if="isIitcLoaded" class="mapStatusView" width="32%" :mapStatus="mapStatus" />
+    <MapStatusView v-show="isIitcLoaded" class="mapStatusView" width="32%" :mapStatus="mapStatus" />
   </MDRipple>
 </template>
 

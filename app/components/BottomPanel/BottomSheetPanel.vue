@@ -134,7 +134,9 @@ export default {
      * Determine location button icon based on follow mode
      */
     locationButtonIcon() {
-      return this.isFollowingUser ? 'fa-crosshairs' : 'fa-location-arrow';
+      return this.isFollowingUser
+        ? 'fa-crosshairs' // Following mode icon
+        : 'fa-location-arrow'; // Regular locate icon
     },
 
     /**
@@ -462,13 +464,14 @@ export default {
   max-width: 42;
   height: 42;
   margin: 0 5;
-  padding-top: 11;
+  padding: 0;
   font-size: 18;
   border-radius: 10;
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
-  text-align: center;
   ripple-color: $ripple;
+  horizontal-alignment: center;
+  vertical-alignment: center;
 
   &--active {
     background-color: $surface-bright;
