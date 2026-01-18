@@ -103,5 +103,6 @@ Page {
 .settings-content {
   padding-left: $spacing-m;
   padding-right: $spacing-m;
+  padding-bottom: $spacing-l;
 }
 </style>

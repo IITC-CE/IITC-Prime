@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 @import '@nativescript/theme/core';
 @import '@nativescript/theme/default';
@@ -11,7 +11,7 @@
 //-----------------------------------------------
 
 .fa {
-  font-family: "Font Awesome 5 Free", "fa-solid-900";
+  font-family: 'Font Awesome 5 Free', 'fa-solid-900';
   font-weight: 900;
 }
 
@@ -20,20 +20,20 @@
 //-----------------------------------------------
 
 // Original colors
-$surface: #0b2d3a;         // Base background color (dark blue)
+$surface: #0b2d3a; // Base background color (dark blue)
 $surface-variant: #0b303e; // Slightly darker variant (was $accent)
-$primary: #2e6772;         // Main accent color (teal)
-$on-surface: #ffffff;      // Text color on dark surfaces
+$primary: #2e6772; // Main accent color (teal)
+$on-surface: #ffffff; // Text color on dark surfaces
 $on-surface-dark: #bbbbbb; // Text color on dark surfaces
 $ripple: rgba(255, 255, 255, 0.1);
 
 // Extended palette (hybrid approach)
-$primary-light: #437680;     // Lighter version of primary
-$primary-dark: #295c66;      // Darker version of primary
-$on-primary: #ffffff;        // Text on primary color
+$primary-light: #437680; // Lighter version of primary
+$primary-dark: #295c66; // Darker version of primary
+$on-primary: #ffffff; // Text on primary color
 
-$surface-bright: #143542;    // Brighter version of surface
-$surface-dim: #0c2d3a;       // Dimmer version of surface
+$surface-bright: #143542; // Brighter version of surface
+$surface-dim: #0c2d3a; // Dimmer version of surface
 $surface-container: #11394a; // Container on surface
 
 // States
@@ -47,7 +47,6 @@ $state-warning: #ff9800;
 $state-error: #e53935;
 $state-disabled: #888;
 
-
 // Elevation overlay (for depth effect)
 $elevation-level1: rgba(255, 255, 255, 0.05);
 $elevation-level2: rgba(255, 255, 255, 0.08);
@@ -58,11 +57,11 @@ $elevation-level3: rgba(255, 255, 255, 0.11);
 //-----------------------------------------------
 
 // Font sizes
-$font-size-display: 24;    // Large titles
-$font-size-headline: 20;   // Section headers
-$font-size-title: 16;      // Content titles
-$font-size: 14;            // Body text
-$font-size-small: 12;      // Captions, labels
+$font-size-display: 24; // Large titles
+$font-size-headline: 20; // Section headers
+$font-size-title: 16; // Content titles
+$font-size: 14; // Body text
+$font-size-small: 12; // Captions, labels
 
 // Line heights
 $line-height-relaxed: 1.5;
@@ -88,7 +87,7 @@ $spacing-item-big: 82;
 $radius-small: 4;
 $radius-medium: 8;
 $radius-large: 16;
-$radius-full: 9999;  // For circular elements
+$radius-full: 9999; // For circular elements
 
 //-----------------------------------------------
 // COMPONENT STYLES
@@ -139,16 +138,20 @@ $radius-full: 9999;  // For circular elements
     height: $spacing-item-big;
   }
 
-  &--top-left, &--first {
+  &--top-left,
+  &--first {
     border-top-left-radius: $radius-large;
   }
-  &--top-right, &--first {
+  &--top-right,
+  &--first {
     border-top-right-radius: $radius-large;
   }
-  &--bottom-left, &--last {
+  &--bottom-left,
+  &--last {
     border-bottom-left-radius: $radius-large;
   }
-  &--bottom-right, &--last {
+  &--bottom-right,
+  &--last {
     border-bottom-right-radius: $radius-large;
   }
 }
@@ -184,12 +187,22 @@ $radius-full: 9999;  // For circular elements
 }
 
 //-----------------------------------------------
+// DIALOGS
+//-----------------------------------------------
+
+// iOS dialog button color
+// Using iOS system blue for dark mode (#0A84FF)
+Button.ns-dialog-item {
+  color: #0a84ff;
+}
+
+//-----------------------------------------------
 // LEGACY VARIABLES (for backward compatibility)
 //-----------------------------------------------
 
 // Bottom sheet specific colors
-$bottom-sheet-surface: #f6f6f6;  // Light background for bottom sheets
-$on-bottom-sheet: #222222;       // Dark text for bottom sheets
+$bottom-sheet-surface: #f6f6f6; // Light background for bottom sheets
+$on-bottom-sheet: #222222; // Dark text for bottom sheets
 
 $base: $surface;
 $accent: $surface-variant;

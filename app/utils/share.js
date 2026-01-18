@@ -1,7 +1,7 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { action } from "@nativescript-community/ui-material-dialogs";
-import { shareContent } from "~/utils/platform";
+import { action } from '~/utils/dialogs';
+import { shareContent } from '~/utils/platform';
 
 /**
  * Creates a link to open a specific portal in Ingress Prime.
@@ -21,23 +21,23 @@ const makePrimeLink = (guid, lat, lng) => {
 
   // Define URL components
   const link = {
-    'link': `https://intel.ingress.com/portal/${guid || ''}`
+    link: `https://intel.ingress.com/portal/${guid || ''}`,
   };
   const android = {
-    'apn': 'com.nianticproject.ingress'
+    apn: 'com.nianticproject.ingress',
   };
   const ios = {
-    'isi': '576505181',
-    'ibi': 'com.google.ingress',
-    'ifl': 'https://apps.apple.com/app/ingress/id576505181'
+    isi: '576505181',
+    ibi: 'com.google.ingress',
+    ifl: 'https://apps.apple.com/app/ingress/id576505181',
   };
   const other = {
-    'ofl': `https://intel.ingress.com/intel?pll=${lat},${lng}`
+    ofl: `https://intel.ingress.com/intel?pll=${lat},${lng}`,
   };
 
   // Construct URL with all parameters
   const url = new URL(base);
-  for (const [key, value] of Object.entries({...link, ...android, ...ios, ...other})) {
+  for (const [key, value] of Object.entries({ ...link, ...android, ...ios, ...other })) {
     url.searchParams.set(key, value);
   }
 
@@ -57,15 +57,15 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
   try {
     // Prepare options for the dialog
     const options = {
-      title: "Share Location",
-      message: "Choose how to share",
-      cancelButtonText: "Cancel",
-      actions: ["Share as text", "Open in maps", "Share link"]
+      title: 'Share Location',
+      message: 'Choose how to share',
+      cancelButtonText: 'Cancel',
+      actions: ['Share as text', 'Open in maps', 'Share link'],
     };
 
     // Add Ingress Prime option if it's a portal or has guid
     if (isPortal || guid) {
-      options.actions.push("Open in Ingress Prime");
+      options.actions.push('Open in Ingress Prime');
     }
 
     // Show dialog with options
@@ -79,19 +79,19 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
       switch (index) {
         case 0: // Share as text
           const textContent = `${title ? title + '\n' : ''}Location: ${lat},${lng}`;
-          return shareContent(textContent, "text", title || "Location");
+          return shareContent(textContent, 'text', title || 'Location');
 
         case 1: // Open in maps
-          return shareContent({lat, lng}, "geo", title);
+          return shareContent({ lat, lng }, 'geo', title);
 
         case 2: // Share link
           const url = `https://intel.ingress.com/?ll=${lat},${lng}&z=17${isPortal ? `&pll=${lat},${lng}` : ''}`;
-          return shareContent(url, "url", title || "Intel Map");
+          return shareContent(url, 'url', title || 'Intel Map');
 
         case 3: // Open in Ingress Prime (if available)
           if (options.actions.length > 3) {
             const primeUrl = makePrimeLink(guid, lat, lng);
-            return shareContent(primeUrl, "prime");
+            return shareContent(primeUrl, 'prime');
           }
           return false;
       }
@@ -99,7 +99,7 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
       return false;
     });
   } catch (error) {
-    console.error("Error showing location share options:", error);
+    console.error('Error showing location share options:', error);
     return Promise.resolve(false);
   }
 };
