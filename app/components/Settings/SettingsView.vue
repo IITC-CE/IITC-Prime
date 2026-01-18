@@ -95,12 +95,7 @@ import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
 import AboutView from './AboutView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
-import {
-  confirm as confirmMaterial,
-  alert as alertMaterial,
-} from '@nativescript-community/ui-material-dialogs';
-import { confirm as confirmNative, alert as alertNative } from '@nativescript/core/ui/dialogs';
-import { isAndroid } from '@nativescript/core';
+import { confirm, alert } from '~/utils/dialogs';
 
 export default {
   name: 'SettingsView',
@@ -183,9 +178,6 @@ export default {
     },
 
     async clearCookies() {
-      const confirm = isAndroid ? confirmMaterial : confirmNative;
-      const alert = isAndroid ? alertMaterial : alertNative;
-
       const confirmed = await confirm({
         title: 'Clear cookies',
         message:
