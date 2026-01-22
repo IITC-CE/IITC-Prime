@@ -38,8 +38,8 @@ android {
 
   defaultConfig {
     minSdkVersion 23
-    compileSdkVersion 34
-    targetSdkVersion 34
+    compileSdkVersion 36
+    targetSdkVersion 36
     versionCode = getVersionCodeTimeStamps()
     versionName = getPackageVersion()
     generatedDensities = []

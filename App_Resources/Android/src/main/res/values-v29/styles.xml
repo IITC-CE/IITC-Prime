@@ -2,8 +2,10 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Application theme -->
-    <style name="AppThemeBase29" parent="AppThemeBase21">
+    <style name="AppThemeBase29" parent="AppThemeBase27">
         <item name="android:forceDarkAllowed">true</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
     </style>
 
     <style name="AppTheme" parent="AppThemeBase29">

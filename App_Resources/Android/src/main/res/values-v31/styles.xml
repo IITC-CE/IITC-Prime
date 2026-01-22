@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Android 12+ (API 31+) Splash Screen Theme -->
+    <style name="LaunchScreenThemeBase31" parent="LaunchScreenThemeBase">
+        <!-- Splash screen background color -->
+        <item name="android:windowSplashScreenBackground">@color/ns_primary</item>
+
+        <!-- Splash screen icon -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+
+        <!-- Navigation bar color for splash screen -->
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="LaunchScreenTheme" parent="LaunchScreenThemeBase31">
+    </style>
+
+    <!-- Application theme for Android 12+ -->
+    <!-- Currently no specific overrides needed - inherits from AppThemeBase29 -->
+    <style name="AppTheme" parent="AppThemeBase29">
+    </style>
+
+</resources>
