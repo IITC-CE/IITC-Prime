@@ -57,11 +57,12 @@
 </template>
 
 <script>
-import { AndroidApplication, Application } from '@nativescript/core';
+import { AndroidApplication, Application, isAndroid } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
+import { restoreLayoutAfterResume } from '@/utils/platform';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -183,6 +184,14 @@ export default {
       this.$store.dispatch('debug/addLog', logData);
     },
 
+    /**
+     * Handle app resume (after lock/unlock screen)
+     * Restores proper layout and system bar appearance (Android only)
+     */
+    handleAppResume() {
+      restoreLayoutAfterResume();
+    },
+
     // Execute debug command from Debug Console
     executeDebugCommand(command) {
       if (this.$refs.appWebView) {
@@ -241,6 +250,11 @@ export default {
       contentHeight: layoutService.dimensions.contentHeight,
     };
 
+    // Handle app resume (after lock/unlock) on Android
+    if (isAndroid) {
+      Application.on(Application.resumeEvent, this.handleAppResume);
+    }
+
     // Update store with initial values
     this.updateStoreLayout(layoutService.dimensions);
 
@@ -286,6 +300,11 @@ export default {
     if (this.keyboard) {
       this.keyboard.off('opened');
       this.keyboard.off('closed');
+    }
+
+    // Remove resume event listener on Android
+    if (isAndroid) {
+      Application.off(Application.resumeEvent, this.handleAppResume);
     }
 
     if (this.userLocation) {

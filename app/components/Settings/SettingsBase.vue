@@ -92,8 +92,8 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-Page {
-  background-color: $surface;
+ActionBar {
+  padding-top: 0;
 }
 
 .settings-container {
