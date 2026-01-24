@@ -26,6 +26,10 @@
     <string>LaunchScreen</string>
     <key>UIRequiresFullScreen</key>
     <true/>
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
       <string>armv7</string>
