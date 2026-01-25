@@ -18,7 +18,7 @@
 
 <script>
 import { injectBridgeIITC, router } from '@/utils/bridge';
-import { injectIITCPrimeResources } from '~/utils/iitc-prime-resources';
+import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam } from '@/utils/url-config';
@@ -114,6 +114,9 @@ export default {
         await injectBridgeIITC(this.webview);
         await injectDebugBridge(this.webview);
 
+        // Inject custom CSS styles
+        await injectCustomStyles(this.webview);
+
         // Mark this URL as processed
         this.lastInjectedUrl = arg.url;
 
@@ -183,11 +186,7 @@ export default {
             await this.$refs.baseWebView.reload();
             break;
           case 'ui/iitcBootFinished':
-            try {
-              await injectIITCPrimeResources(webview);
-            } catch (error) {
-              console.error('[AppWebView] injectIITCPrimeResources failed:', error);
-            }
+            await installFileChooserOverride(webview);
             // Set initial safe area insets after IITC loads
             await webview.executeJavaScript(setSafeAreaInsets(state.ui.safeAreaBottomInset));
             break;
