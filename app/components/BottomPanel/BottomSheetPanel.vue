@@ -29,7 +29,7 @@
 
       <!-- Control buttons -->
       <GridLayout row="1" class="panel-buttons" columns="auto, *, auto, auto">
-        <!-- Quick Access Button -->
+        <!-- Quick Access Button / Back Button -->
         <MDButton
           col="0"
           variant="flat"
@@ -38,8 +38,8 @@
             'app-control-button--active':
               isPanelOpen && (activeButton === 'quick' || activeButton === null),
           }"
-          :text="$filters.fonticon('fa-bars')"
-          @tap="handleControlButtonTap('quick')"
+          :text="$filters.fonticon(isMapPane ? 'fa-bars' : 'fa-arrow-left')"
+          @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
 
         <!-- Location Button -->
@@ -114,9 +114,17 @@ export default {
       isPanelOpen: state => state.ui.panelState.isOpen,
       isIitcLoaded: state => state.ui.isIitcLoaded,
       panelCommand: state => state.ui.panelCommand,
+      currentPane: state => state.navigation.currentPane,
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
+
+    /**
+     * Check if current pane is map
+     */
+    isMapPane() {
+      return this.currentPane === 'map';
+    },
 
     /**
      * Active button state
@@ -169,6 +177,19 @@ export default {
   watch: {
     storedActivePanel(newValue) {
       this._activeButton = newValue;
+    },
+
+    /**
+     * Watch isMapPane to collapse panel when switching to non-map panes
+     */
+    isMapPane(newValue) {
+      if (!newValue) {
+        // Switched to non-map pane - collapse panel to BOTTOM position
+        this.$nextTick(() => {
+          // BOTTOM position index depends on whether keyboard is open
+          this.stepIndexLocal = this.isVisible ? 0 : 1;
+        });
+      }
     },
 
     /**
@@ -341,6 +362,13 @@ export default {
 
       // Switch to different panel
       this.switchPanel(button);
+    },
+
+    /**
+     * Handle back button to return to map pane
+     */
+    handleBackToMap() {
+      this.$store.dispatch('navigation/setCurrentPane', 'map');
     },
 
     /**
