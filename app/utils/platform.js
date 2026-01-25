@@ -307,3 +307,27 @@ export const openAppLinkSettings = () => {
     return false;
   }
 };
+
+/**
+ * Get application display name from native resources
+ * @returns {string} Application name
+ */
+export const getAppName = () => {
+  try {
+    if (isAndroid) {
+      const context = Application.android.context;
+      const appInfo = context.getApplicationInfo();
+      const packageManager = context.getPackageManager();
+      return appInfo.loadLabel(packageManager).toString();
+    } else if (isIOS) {
+      return (
+        NSBundle.mainBundle.objectForInfoDictionaryKey('CFBundleDisplayName') ||
+        NSBundle.mainBundle.objectForInfoDictionaryKey('CFBundleName')
+      );
+    }
+  } catch (e) {
+    console.error('Error getting app name:', e);
+  }
+
+  return 'IITC-CE Prime';
+};

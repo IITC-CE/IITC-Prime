@@ -18,7 +18,7 @@
 
 <script>
 import { injectBridgeIITC, router } from '@/utils/bridge';
-import { injectIITCPrimeResources } from '~/utils/iitc-prime-resources';
+import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam } from '@/utils/url-config';
@@ -31,6 +31,7 @@ import {
   userLocationLocate,
   userLocationUpdate,
   userLocationOrientation,
+  setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
 
 export default {
@@ -113,6 +114,9 @@ export default {
         await injectBridgeIITC(this.webview);
         await injectDebugBridge(this.webview);
 
+        // Inject custom CSS styles
+        await injectCustomStyles(this.webview);
+
         // Mark this URL as processed
         this.lastInjectedUrl = arg.url;
 
@@ -182,7 +186,9 @@ export default {
             await this.$refs.baseWebView.reload();
             break;
           case 'ui/iitcBootFinished':
-            await injectIITCPrimeResources(webview);
+            await installFileChooserOverride(webview);
+            // Set initial safe area insets after IITC loads
+            await webview.executeJavaScript(setSafeAreaInsets(state.ui.safeAreaBottomInset));
             break;
           case 'map/setInjectPlugin':
             await this.injectPlugin(action.payload);
@@ -221,6 +227,9 @@ export default {
             break;
           case 'map/userLocationOrientation':
             await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
+            break;
+          case 'ui/setSafeAreaInsets':
+            await webview.executeJavaScript(setSafeAreaInsets(action.payload));
             break;
         }
       },

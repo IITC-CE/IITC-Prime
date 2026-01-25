@@ -28,8 +28,8 @@
       </StackLayout>
 
       <!-- Control buttons -->
-      <GridLayout row="1" class="panel-buttons" columns="auto, *, auto, auto">
-        <!-- Quick Access Button -->
+      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto">
+        <!-- Quick Access Button / Back Button -->
         <MDButton
           col="0"
           variant="flat"
@@ -38,14 +38,17 @@
             'app-control-button--active':
               isPanelOpen && (activeButton === 'quick' || activeButton === null),
           }"
-          :text="$filters.fonticon('fa-bars')"
-          @tap="handleControlButtonTap('quick')"
+          :text="$filters.fonticon(isMapPane ? 'fa-bars' : 'fa-arrow-left')"
+          @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
+
+        <!-- App Name / Pane Title -->
+        <Label col="1" :text="panelTitle" class="panel-title-label" verticalAlignment="center" />
 
         <!-- Location Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="2"
+          col="3"
           variant="flat"
           class="fa app-control-button"
           :text="$filters.fonticon(locationButtonIcon)"
@@ -55,7 +58,7 @@
         <!-- Layers Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="3"
+          col="4"
           variant="flat"
           class="fa app-control-button"
           :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
@@ -75,6 +78,7 @@ import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
 import { layoutService } from '~/utils/layout-service';
+import { getAppName } from '~/utils/platform';
 
 export default {
   name: 'BottomSheetPanel',
@@ -105,6 +109,7 @@ export default {
       lastStepIndex: 0,
       _activeButton: null,
       removeLayoutListener: null,
+      PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
 
@@ -114,9 +119,30 @@ export default {
       isPanelOpen: state => state.ui.panelState.isOpen,
       isIitcLoaded: state => state.ui.isIitcLoaded,
       panelCommand: state => state.ui.panelCommand,
+      currentPane: state => state.navigation.currentPane,
+      panes: state => state.navigation.panes,
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
+
+    /**
+     * Check if current pane is map
+     */
+    isMapPane() {
+      return this.currentPane === 'map';
+    },
+
+    /**
+     * Get panel title - app name for map pane, pane label for others
+     */
+    panelTitle() {
+      if (this.isMapPane) {
+        return getAppName();
+      }
+
+      const pane = this.panes.find(p => p.name === this.currentPane);
+      return pane ? pane.label : '';
+    },
 
     /**
      * Active button state
@@ -152,23 +178,57 @@ export default {
      * When keyboard is open: [HIDDEN, BOTTOM, MIDDLE, TOP]
      */
     steps() {
-      const bottomPadding = 110; // Visible height when closed
       const height = this.screenHeight || 800;
       const middlePosition = height / 2;
       const topPosition = height - 50;
 
       // Include HIDDEN position (0) only when keyboard is open
       if (!this.isVisible) {
-        return [0, bottomPadding, middlePosition, topPosition];
+        return [0, this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
       }
 
-      return [bottomPadding, middlePosition, topPosition];
+      return [this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
+    },
+
+    /**
+     * Check if panel is positioned on the side (landscape tablet mode)
+     */
+    isPanelOnSide() {
+      const dimensions = layoutService.dimensions;
+      return this.panelWidth < dimensions.availableWidth;
+    },
+
+    /**
+     * Calculate safe area inset for WebView bottom
+     */
+    safeAreaBottomInset() {
+      // Panel full width (portrait OR landscape on phone):
+      //   - WebView is clipped at bottom
+      //   - Safe area = 10px
+      //
+      // Panel on side (landscape on tablet):
+      //   - WebView extends to bottom of screen, panel overlaps from side
+      //   - Safe area = panel height (110px)
+      return this.isPanelOnSide ? this.PANEL_CLOSED_HEIGHT : 10;
     },
   },
 
   watch: {
     storedActivePanel(newValue) {
       this._activeButton = newValue;
+    },
+
+    /**
+     * Watch isMapPane to collapse panel when switching to non-map panes
+     */
+    isMapPane(newValue) {
+      if (!newValue) {
+        // Switched to non-map pane - collapse panel to BOTTOM position
+        this.$nextTick(() => {
+          // BOTTOM position index depends on whether keyboard is open
+          this.stepIndexLocal = this.isVisible ? 0 : 1;
+        });
+      }
     },
 
     /**
@@ -253,6 +313,13 @@ export default {
         }
       },
       deep: true,
+    },
+
+    /**
+     * Watch safe area inset changes and update store
+     */
+    safeAreaBottomInset(newValue) {
+      this.$store.dispatch('ui/setSafeAreaInsets', newValue);
     },
   },
 
@@ -341,6 +408,13 @@ export default {
 
       // Switch to different panel
       this.switchPanel(button);
+    },
+
+    /**
+     * Handle back button to return to map pane
+     */
+    handleBackToMap() {
+      this.$store.dispatch('navigation/setCurrentPane', 'map');
     },
 
     /**
@@ -456,6 +530,13 @@ export default {
   margin-top: 0;
   margin-bottom: 8;
   background-color: $surface;
+}
+
+.panel-title-label {
+  font-size: $font-size;
+  color: $on-surface;
+  margin-left: $spacing-s;
+  font-weight: bold;
 }
 
 .app-control-button {

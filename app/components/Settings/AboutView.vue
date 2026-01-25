@@ -1,13 +1,14 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="About IITC Prime">
+  <SettingsBase title="About">
     <StackLayout class="about-container">
-      <Label class="app-name" text="IITC Prime" />
+      <Label class="app-name" :text="appName" />
       <Label class="app-version" :text="'Version: ' + appVersion" />
 
       <Label class="app-description" textWrap="true">
-        IITC Prime is a mobile client for Ingress Intel Total Conversion that provides an enhanced interface for the Ingress Intel Map.
+        IITC Prime is a mobile client for Ingress Intel Total Conversion that provides an enhanced
+        interface for the Ingress Intel Map.
       </Label>
     </StackLayout>
   </SettingsBase>
@@ -16,17 +17,19 @@
 <script>
 import SettingsBase from './SettingsBase';
 import * as appVersion from '@nativescript/appversion';
+import { getAppName } from '~/utils/platform';
 
 export default {
   name: 'AboutView',
 
   components: {
-    SettingsBase
+    SettingsBase,
   },
 
   data() {
     return {
-      appVersion: 'Loading...'
+      appName: getAppName(),
+      appVersion: 'Loading...',
     };
   },
 
@@ -43,8 +46,8 @@ export default {
         console.error('Error loading app version:', error);
         this.appVersion = 'Unknown';
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -70,7 +73,7 @@ export default {
 
 .app-version {
   font-size: 16;
-  color: $surface-variant;
+  color: $on-surface-dark;
   margin-bottom: 24;
 }
 

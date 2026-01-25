@@ -4,13 +4,13 @@ export const navigation = {
   namespaced: true,
   state: () => ({
     panes: [
-      { name: "all", label: "All", icon: "fa-list" },
-      { name: "faction", label: "Faction", icon: "fa-user-friends" },
-      { name: "alerts", label: "Alerts", icon: "fa-bell" },
-      { name: "info", label: "Info", icon: "fa-info-circle" },
-      { name: "map", label: "Map", icon: "fa-map" }
+      { name: 'all', label: 'Chat: All', icon: 'fa-bullhorn' },
+      { name: 'faction', label: 'Chat: Faction', icon: 'fa-user-friends' },
+      { name: 'alerts', label: 'Alerts', icon: 'fa-bell' },
+      { name: 'info', label: 'Portal info', icon: 'fa-info-circle' },
+      { name: 'map', label: 'Map', icon: 'fa-map' },
     ],
-    currentPane: "map"
+    currentPane: 'map',
   }),
   mutations: {
     ADD_PANE(state, pane) {
@@ -18,7 +18,7 @@ export const navigation = {
     },
     SET_CURRENT_PANE(state, name) {
       state.currentPane = name;
-    }
+    },
   },
   actions: {
     addPane({ commit }, pane) {
@@ -26,6 +26,6 @@ export const navigation = {
     },
     setCurrentPane({ commit }, name) {
       commit('SET_CURRENT_PANE', name);
-    }
-  }
+    },
+  },
 };

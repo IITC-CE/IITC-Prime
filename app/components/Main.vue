@@ -25,10 +25,10 @@
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
-
-            <PopupWebView v-if="popup.isVisible" v-bind="popup.props" @close="handlePopupClose" />
           </AbsoluteLayout>
         </BottomSheetPanel>
+
+        <PopupWebView v-if="popup.isVisible" v-bind="popup.props" @close="handlePopupClose" />
 
         <!-- MapStateBar overlay - positioned at bottom, above BottomSheet -->
         <MapStateBar
