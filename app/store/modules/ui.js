@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { INGRESS_INTEL_MAP } from '@/utils/url-config';
 
@@ -30,6 +30,9 @@ export const ui = {
       action: '',
       timestamp: 0,
     },
+
+    // Safe area inset for WebView bottom padding (in pixels)
+    safeAreaBottomInset: 10,
   }),
 
   mutations: {
@@ -71,6 +74,11 @@ export const ui = {
       if (key in state.panelState) {
         state.panelState[key] = value;
       }
+    },
+
+    // Set safe area bottom inset
+    SET_SAFE_AREA_INSET(state, value) {
+      state.safeAreaBottomInset = value;
     },
   },
 
@@ -151,6 +159,11 @@ export const ui = {
       dispatch('setPanelOpenState', false);
       commit('SET_ACTIVE_PANEL', 'quick');
       commit('SEND_PANEL_COMMAND', 'close');
+    },
+
+    // Set safe area insets
+    setSafeAreaInsets({ commit }, bottomPx) {
+      commit('SET_SAFE_AREA_INSET', bottomPx);
     },
   },
 };

@@ -109,6 +109,7 @@ export default {
       lastStepIndex: 0,
       _activeButton: null,
       removeLayoutListener: null,
+      PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
 
@@ -177,17 +178,38 @@ export default {
      * When keyboard is open: [HIDDEN, BOTTOM, MIDDLE, TOP]
      */
     steps() {
-      const bottomPadding = 110; // Visible height when closed
       const height = this.screenHeight || 800;
       const middlePosition = height / 2;
       const topPosition = height - 50;
 
       // Include HIDDEN position (0) only when keyboard is open
       if (!this.isVisible) {
-        return [0, bottomPadding, middlePosition, topPosition];
+        return [0, this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
       }
 
-      return [bottomPadding, middlePosition, topPosition];
+      return [this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
+    },
+
+    /**
+     * Check if panel is positioned on the side (landscape tablet mode)
+     */
+    isPanelOnSide() {
+      const dimensions = layoutService.dimensions;
+      return this.panelWidth < dimensions.availableWidth;
+    },
+
+    /**
+     * Calculate safe area inset for WebView bottom
+     */
+    safeAreaBottomInset() {
+      // Panel full width (portrait OR landscape on phone):
+      //   - WebView is clipped at bottom
+      //   - Safe area = 10px
+      //
+      // Panel on side (landscape on tablet):
+      //   - WebView extends to bottom of screen, panel overlaps from side
+      //   - Safe area = panel height (110px)
+      return this.isPanelOnSide ? this.PANEL_CLOSED_HEIGHT : 10;
     },
   },
 
@@ -291,6 +313,13 @@ export default {
         }
       },
       deep: true,
+    },
+
+    /**
+     * Watch safe area inset changes and update store
+     */
+    safeAreaBottomInset(newValue) {
+      this.$store.dispatch('ui/setSafeAreaInsets', newValue);
     },
   },
 

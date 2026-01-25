@@ -31,6 +31,7 @@ import {
   userLocationLocate,
   userLocationUpdate,
   userLocationOrientation,
+  setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
 
 export default {
@@ -182,7 +183,13 @@ export default {
             await this.$refs.baseWebView.reload();
             break;
           case 'ui/iitcBootFinished':
-            await injectIITCPrimeResources(webview);
+            try {
+              await injectIITCPrimeResources(webview);
+            } catch (error) {
+              console.error('[AppWebView] injectIITCPrimeResources failed:', error);
+            }
+            // Set initial safe area insets after IITC loads
+            await webview.executeJavaScript(setSafeAreaInsets(state.ui.safeAreaBottomInset));
             break;
           case 'map/setInjectPlugin':
             await this.injectPlugin(action.payload);
@@ -221,6 +228,9 @@ export default {
             break;
           case 'map/userLocationOrientation':
             await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
+            break;
+          case 'ui/setSafeAreaInsets':
+            await webview.executeJavaScript(setSafeAreaInsets(action.payload));
             break;
         }
       },
