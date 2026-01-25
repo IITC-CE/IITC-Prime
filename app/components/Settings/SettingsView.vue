@@ -75,7 +75,7 @@
     <SettingsSection title="Information" />
     <SettingsItem
       type="nav"
-      title="About IITC Prime"
+      title="About"
       description="Version and app information"
       :targetScreen="aboutScreen"
       :isFirst="true"

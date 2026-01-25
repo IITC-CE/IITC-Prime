@@ -28,7 +28,7 @@
       </StackLayout>
 
       <!-- Control buttons -->
-      <GridLayout row="1" class="panel-buttons" columns="auto, *, auto, auto">
+      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto">
         <!-- Quick Access Button / Back Button -->
         <MDButton
           col="0"
@@ -42,10 +42,13 @@
           @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
 
+        <!-- App Name / Pane Title -->
+        <Label col="1" :text="panelTitle" class="panel-title-label" verticalAlignment="center" />
+
         <!-- Location Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="2"
+          col="3"
           variant="flat"
           class="fa app-control-button"
           :text="$filters.fonticon(locationButtonIcon)"
@@ -55,7 +58,7 @@
         <!-- Layers Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="3"
+          col="4"
           variant="flat"
           class="fa app-control-button"
           :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
@@ -75,6 +78,7 @@ import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
 import { layoutService } from '~/utils/layout-service';
+import { getAppName } from '~/utils/platform';
 
 export default {
   name: 'BottomSheetPanel',
@@ -115,6 +119,7 @@ export default {
       isIitcLoaded: state => state.ui.isIitcLoaded,
       panelCommand: state => state.ui.panelCommand,
       currentPane: state => state.navigation.currentPane,
+      panes: state => state.navigation.panes,
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
@@ -124,6 +129,18 @@ export default {
      */
     isMapPane() {
       return this.currentPane === 'map';
+    },
+
+    /**
+     * Get panel title - app name for map pane, pane label for others
+     */
+    panelTitle() {
+      if (this.isMapPane) {
+        return getAppName();
+      }
+
+      const pane = this.panes.find(p => p.name === this.currentPane);
+      return pane ? pane.label : '';
     },
 
     /**
@@ -484,6 +501,13 @@ export default {
   margin-top: 0;
   margin-bottom: 8;
   background-color: $surface;
+}
+
+.panel-title-label {
+  font-size: $font-size;
+  color: $on-surface;
+  margin-left: $spacing-s;
+  font-weight: bold;
 }
 
 .app-control-button {
