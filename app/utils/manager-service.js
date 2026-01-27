@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 /**
  * ManagerService - a service for working with lib-iitc-manager.
@@ -15,7 +15,7 @@ export class ManagerService {
       onMessage: null,
       onProgress: null,
       onInjectPlugin: null,
-      onPluginEvent: null
+      onPluginEvent: null,
     };
   }
 
@@ -35,7 +35,7 @@ export class ManagerService {
           },
           async set(obj) {
             await storage.set(obj);
-          }
+          },
         },
         message: (message, args) => {
           console.log(`[ManagerService] message: ${message}`, args);
@@ -43,22 +43,23 @@ export class ManagerService {
             this.callbacks.onMessage(message, args);
           }
         },
-        progressbar: (isShow) => {
+        progressbar: isShow => {
           if (this.callbacks.onProgress) {
             this.callbacks.onProgress(isShow);
           }
         },
-        inject_plugin: (plugin) => {
+        inject_plugin: plugin => {
           if (this.callbacks.onInjectPlugin) {
             this.callbacks.onInjectPlugin(plugin);
           }
         },
-        plugin_event: (event) => {
+        plugin_event: event => {
           if (this.callbacks.onPluginEvent) {
             this.callbacks.onPluginEvent(event);
           }
         },
-        is_daemon: false
+        use_fetch_head_method: false,
+        is_daemon: false,
       });
 
       this.isInitialized = true;
@@ -82,14 +83,14 @@ export class ManagerService {
     const [channel, customUrl, plugins] = await Promise.all([
       this.getUpdateChannel(),
       this.getCustomChannelUrl(),
-      this.getPlugins()
+      this.getPlugins(),
     ]);
 
     return {
       isRunning: true,
       currentChannel: channel,
       customChannelUrl: customUrl,
-      plugins
+      plugins,
     };
   }
 
@@ -132,7 +133,7 @@ export class ManagerService {
     const plugins = await this.getPlugins();
     return {
       currentChannel: channel,
-      plugins
+      plugins,
     };
   }
 
@@ -165,8 +166,7 @@ export class ManagerService {
   async getCustomChannelUrl() {
     const manager = await this.initialize();
     const data = await manager.storage.get(['network_host']);
-    return (data.network_host && data.network_host.custom) ?
-      data.network_host.custom : '';
+    return data.network_host && data.network_host.custom ? data.network_host.custom : '';
   }
 
   /**
@@ -176,7 +176,7 @@ export class ManagerService {
     const manager = await this.initialize();
     await manager.setCustomChannelUrl(url);
     return {
-      customChannelUrl: url
+      customChannelUrl: url,
     };
   }
 
@@ -194,8 +194,7 @@ export class ManagerService {
       }
 
       // Test if meta.json is accessible
-      const metaUrl = fullUrl.endsWith('/') ?
-        `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
+      const metaUrl = fullUrl.endsWith('/') ? `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
 
       const metaUrlWithCacheBust = `${metaUrl}?${Date.now()}`;
 
@@ -203,9 +202,9 @@ export class ManagerService {
         method: 'GET',
         timeout: 2000,
         headers: {
-          'Accept': '*/*',
-          'Range': 'bytes=0-0'  // Request only first byte
-        }
+          Accept: '*/*',
+          Range: 'bytes=0-0', // Request only first byte
+        },
       });
 
       // Accept both 200 (full response) and 206 (partial content from Range request)
@@ -250,7 +249,7 @@ export class ManagerService {
     const plugins = await this.getPlugins();
     return {
       plugins,
-      updatedPlugin: { uid, status: action }
+      updatedPlugin: { uid, status: action },
     };
   }
 
@@ -265,7 +264,7 @@ export class ManagerService {
     const plugins = await this.getPlugins();
     return {
       result,
-      plugins
+      plugins,
     };
   }
 
@@ -286,7 +285,7 @@ export class ManagerService {
       onMessage: null,
       onProgress: null,
       onInjectPlugin: null,
-      onPluginEvent: null
+      onPluginEvent: null,
     };
   }
 }
