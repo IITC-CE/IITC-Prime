@@ -14,7 +14,7 @@
     </template>
 
     <template #action-buttons-group="{ item }">
-      <GridLayout columns="*, *, *, *" rows="104" class="block action-buttons-block">
+      <GridLayout columns="*, *, *, *" class="block action-buttons-block">
         <StackLayout
           v-for="(button, index) in item.buttons"
           :key="button.id"
@@ -41,7 +41,7 @@
 
     <template #navigation-item="{ item }">
       <MDRipple
-        class="list-item"
+        class="list-item list-item--icon-text"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         orientation="horizontal"
         @tap="onNavigationItemTap(item.id)"
@@ -333,8 +333,8 @@ export default {
 }
 
 .action-buttons-block {
-  padding-top: $spacing-xs;
-  padding-bottom: $spacing-xs;
+  padding-top: $spacing-s;
+  padding-bottom: $spacing-m;
 }
 
 .btn-quick {
@@ -365,14 +365,14 @@ export default {
 
 .icon {
   font-size: 18;
-  width: 32;
+  width: $spacing-item;
+  height: $spacing-item;
   vertical-align: center;
   text-align: center;
 }
 
 .navigation-item-label {
   font-size: $font-size;
-  padding-left: 15;
 }
 
 .select-label {

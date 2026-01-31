@@ -1,11 +1,11 @@
-// Copyright (C) 2021-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import store from "@/store";
-import { showLocationShareOptions } from "./share";
+import store from '@/store';
+import { showLocationShareOptions } from './share';
 import { shareFile, selectFiles, readFileContent } from '@/utils/file-manager';
 import { copyToClipboard } from '@/utils/clipboard';
-import { shareContent } from "~/utils/platform";
-
+import { shareContent } from '~/utils/platform';
+import { mapIcon } from './pane-icon-compat';
 
 /**
  * Handles request to share geographic position
@@ -19,33 +19,33 @@ import { shareContent } from "~/utils/platform";
  */
 export const sharePosition = (lat, lng, zoom, title, isPortal, guid) => {
   return showLocationShareOptions(lat, lng, title, isPortal, guid);
-}
+};
 
 /**
  * Returns the versionName of mobile app
  * @returns {string}
  */
 export const getVersionName = () => {
-  const appVersionName = require("@nativescript/appversion");
+  const appVersionName = require('@nativescript/appversion');
   return appVersionName.getVersionNameSync();
-}
+};
 
 /**
  * Fires when IITC completes its initialization process
  */
-export const bootFinished = async (name) => {
+export const bootFinished = async name => {
   await store.dispatch('ui/iitcBootFinished');
-}
+};
 
 /**
  * Switching the active panel, if required.
  * @param {string} name Panel ID
  */
-export const switchToPane = async (name) => {
+export const switchToPane = async name => {
   if (store.state.navigation.currentPane !== name) {
     await store.dispatch('navigation/setCurrentPane', name);
   }
-}
+};
 
 /**
  * Assigns the basemap and overlay layers.
@@ -55,23 +55,23 @@ export const switchToPane = async (name) => {
 export const setLayers = async (base_layers, overlay_layer) => {
   await store.dispatch('map/setBaseLayers', base_layers);
   await store.dispatch('map/setOverlayLayers', overlay_layer);
-}
+};
 
 /**
  * Adds a new portal highlighter to the available list
  * @param {string} name Highlighter name
  */
-export const addPortalHighlighter = async (name) => {
+export const addPortalHighlighter = async name => {
   await store.dispatch('map/addHighlighter', name);
-}
+};
 
 /**
  * Sets the active portal highlighter
  * @param {string} name Highlighter name
  */
-export const setActiveHighlighter = async (name) => {
+export const setActiveHighlighter = async name => {
   await store.dispatch('map/setActiveHighlighter', name);
-}
+};
 
 /**
  * Adding IITC panels. Panels allow to display some windows in full screen in mobile IITC.
@@ -81,9 +81,13 @@ export const setActiveHighlighter = async (name) => {
  */
 export const addPane = async (name, label, icon) => {
   if (!store.state.navigation.panes.find(o => o.name === name)) {
-    await store.dispatch('navigation/addPane', {name: name, label: label, icon: icon});
+    await store.dispatch('navigation/addPane', {
+      name: name,
+      label: label,
+      icon: mapIcon(icon),
+    });
   }
-}
+};
 
 /**
  * Handles portal status data from IITC
@@ -96,7 +100,16 @@ export const addPane = async (name, label, icon) => {
  * @param {string} levelColor - Portal's level color
  * @param {boolean} isLoading - Boolean indicating if portal details are still loading
  */
-export const setPortalStatus = async (guid, team, level, title, health, resonators, levelColor, isLoading) => {
+export const setPortalStatus = async (
+  guid,
+  team,
+  level,
+  title,
+  health,
+  resonators,
+  levelColor,
+  isLoading
+) => {
   const data = {
     guid,
     team,
@@ -109,7 +122,7 @@ export const setPortalStatus = async (guid, team, level, title, health, resonato
     isLoading,
   };
   await store.dispatch('map/setPortalStatus', data);
-}
+};
 
 /**
  * Handles map status data from IITC
@@ -121,39 +134,39 @@ export const setMapStatus = async (portalLevels, mapStatus, requests) => {
   const data = {
     portalLevels,
     mapStatus,
-    requests
+    requests,
   };
   await store.dispatch('map/setMapStatus', data);
-}
+};
 
 /**
  * Sets the progress of loading page resources.
  * @param {number} progress Number from 0 to 1. If there is request, but it is impossible to determine progress, then -1.
  */
-export const setProgress = async (progress) => {
+export const setProgress = async progress => {
   if (progress !== -1) {
     // maximum for setProgress is 100
     await store.dispatch('ui/setProgress', Math.round(progress * 100));
   } else {
     await store.dispatch('ui/setProgress', 0);
   }
-}
+};
 
 /**
  * Adds a new domain to the allowed domains list
  * @param {string} domain Domain name to add
  */
-export const addInternalHostname = async (domain) => {
+export const addInternalHostname = async domain => {
   await store.dispatch('map/addInternalHostname', domain);
-}
+};
 
 /**
  * Handles follow mode state changes from IITC user location plugin
  * @param {boolean} follow - Whether follow mode is active
  */
-export const setFollowMode = async (follow) => {
+export const setFollowMode = async follow => {
   await store.dispatch('map/setFollowingUser', follow);
-}
+};
 
 /**
  * Handles file save requests from IITC
@@ -183,18 +196,18 @@ export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callback
   try {
     const files = await selectFiles({
       allowsMultipleSelection: allowsMultipleSelection || false,
-      acceptTypes: acceptTypes || ['*/*']
+      acceptTypes: acceptTypes || ['*/*'],
     });
 
     // Read file contents
     const fileContents = await Promise.all(
-      files.map(async (file) => {
+      files.map(async file => {
         try {
           const content = await readFileContent(file.path);
           return {
             name: content.name,
             content: content.content,
-            type: content.type
+            type: content.type,
           };
         } catch (error) {
           console.error('Failed to read file:', file.path, error);
@@ -211,31 +224,37 @@ export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callback
       const callbackCode = `
         if (window.app._executeCallback) {
           var fileObjects = [];
-          ${validFiles.map((file, index) => `
+          ${validFiles
+            .map(
+              (file, index) => `
           var blob${index} = new Blob([${JSON.stringify(file.content)}], { type: '${file.type}' });
           var file${index} = new File([blob${index}], '${file.name}', {
             type: '${file.type}',
             lastModified: Date.now()
           });
           fileObjects.push(file${index});
-          `).join('')}
+          `
+            )
+            .join('')}
           window.nsWebViewBridge._executeCallback('${callbackId}', fileObjects);
         }
       `;
 
       await store.dispatch('map/executeJavaScript', callbackCode);
     }
-
   } catch (error) {
     console.error('Bridge chooseFiles error:', error);
 
     // Execute callback with empty array on error
     if (callbackId) {
-      await store.dispatch('map/executeJavaScript', `
+      await store.dispatch(
+        'map/executeJavaScript',
+        `
         if (window.nsWebViewBridge._executeCallback) {
           window.nsWebViewBridge._executeCallback('${callbackId}', []);
         }
-      `);
+      `
+      );
     }
   }
 };
@@ -245,8 +264,8 @@ export const chooseFiles = async (allowsMultipleSelection, acceptTypes, callback
  * @param {string} text - Text to copy to clipboard
  * @returns {Promise<void>}
  */
-export const copyToClipboardBridge = async (text) => {
-  await copyToClipboard(text, "Copied to clipboard");
+export const copyToClipboardBridge = async text => {
+  await copyToClipboard(text, 'Copied to clipboard');
 };
 
 /**
@@ -254,16 +273,16 @@ export const copyToClipboardBridge = async (text) => {
  * @param {string} text - Text to share
  * @returns {Promise<void>}
  */
-export const shareString = async (text) => {
+export const shareString = async text => {
   try {
-    const success = shareContent(text, "text");
+    const success = shareContent(text, 'text');
     if (!success) {
       // Fallback to clipboard if sharing fails
-      await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+      await copyToClipboard(text, 'Shared to clipboard (sharing unavailable)');
     }
   } catch (error) {
     console.error('Bridge shareString error:', error);
     // Fallback to clipboard if sharing fails
-    await copyToClipboard(text, "Shared to clipboard (sharing unavailable)");
+    await copyToClipboard(text, 'Shared to clipboard (sharing unavailable)');
   }
 };
