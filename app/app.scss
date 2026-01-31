@@ -166,6 +166,10 @@ $radius-full: 9999; // For circular elements
   &--last {
     border-bottom-right-radius: $radius-large;
   }
+
+  &--icon-text {
+    padding-left: $spacing-m;
+  }
 }
 
 // Dialog styles
