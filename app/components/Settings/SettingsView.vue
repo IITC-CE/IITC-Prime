@@ -79,6 +79,13 @@
       description="Version and app information"
       :targetScreen="aboutScreen"
       :isFirst="true"
+    />
+
+    <SettingsItem
+      type="nav"
+      title="Open Source Licenses"
+      description="View licenses of used libraries"
+      :targetScreen="licensesScreen"
       :isLast="true"
     />
   </SettingsBase>
@@ -94,6 +101,7 @@ import SettingsItem from './components/SettingsItem';
 import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
 import AboutView from './AboutView';
+import LicensesView from './LicensesView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
 import { confirm, alert } from '~/utils/dialogs';
 
@@ -111,6 +119,7 @@ export default {
       pluginsScreen: PluginsView,
       updateChannelScreen: UpdateChannelView,
       aboutScreen: AboutView,
+      licensesScreen: LicensesView,
     };
   },
 

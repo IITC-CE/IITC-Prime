@@ -18,6 +18,11 @@ This app is not affiliated with Niantic Labs.
 
 How to prepare your environment to work with NativeScript is described here: https://docs.nativescript.org/environment-setup.html
 
+**iOS build requirement:** Install CocoaPods acknowledgements gem:
+```bash
+gem install cocoapods-acknowledgements
+```
+
 ## Build Commands
 
 Run the app:
