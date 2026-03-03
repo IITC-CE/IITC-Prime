@@ -5,6 +5,7 @@ platforms/
 
 **/Android/src/main/res/values*/strings.xml
 App_Resources/iOS/*.lproj/*
+App_Resources/Android/local.properties
 
 # Logs
 logs

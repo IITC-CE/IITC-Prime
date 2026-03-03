@@ -14,7 +14,7 @@ import CollectionView from '@nativescript-community/ui-collectionview/vue3';
 import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
 import { ImageCacheIt } from '@triniwiz/nativescript-image-cache-it';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
-import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue';
+import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
 
 import Main from '~/components/Main';
 import store from './store';
