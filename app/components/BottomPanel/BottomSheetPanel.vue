@@ -2,7 +2,6 @@
 
 <template>
   <BottomSheet
-    @loaded="onBottomSheetLoaded"
     v-model="stepIndexLocal"
     :steps="steps"
     scrollViewId="panelScrollView"
@@ -16,7 +15,7 @@
 
     <!-- Bottom Sheet Content -->
     <GridLayout
-      ~bottomSheet
+      nodeRole="bottomSheet"
       class="panel-container"
       rows="auto, auto, *"
       :width="panelWidth || '100%'"
@@ -330,44 +329,6 @@ export default {
       setPanelPosition: 'ui/setPanelPosition',
       setPanelOpenState: 'ui/setPanelOpenState',
     }),
-
-    /**
-     * Fix for NativeScript Vue 3 compatibility
-     * The ~bottomSheet directive syntax doesn't work in Vue 3
-     * We need to manually set the bottomSheet property
-     */
-    onBottomSheetLoaded(args) {
-      const bottomSheet = args.object;
-
-      // The bottom sheet panel is the last child
-      // Plugin may add backdrop before it, so structure can be:
-      // - On first load: [main content, bottomSheet panel]
-      // - After resume: [main content, backdrop, bottomSheet panel]
-      const childCount = bottomSheet.getChildrenCount();
-
-      if (childCount >= 2) {
-        // Always take the last child - that's our panel
-        const bottomSheetPanel = bottomSheet.getChildAt(childCount - 1);
-
-        // Set bottomSheet property
-        bottomSheet.bottomSheet = bottomSheetPanel;
-
-        // Fix panel visibility after resume - force reapply translation and opacity
-        this.$nextTick(() => {
-          const trData = bottomSheet.computeTranslationData();
-          bottomSheet.applyTrData(trData);
-
-          // Fix: bottomSheetPanel should always be fully opaque (opacity: 1)
-          // The backdrop opacity is being incorrectly applied to the panel by applyTrData
-          if (bottomSheetPanel.opacity !== 1) {
-            bottomSheetPanel.opacity = 1;
-          }
-        });
-      }
-
-      // Emit bottomSheet instance to parent for MapStateBar
-      this.$emit('bottomSheetReady', bottomSheet);
-    },
 
     /**
      * Get screen height from layout service
