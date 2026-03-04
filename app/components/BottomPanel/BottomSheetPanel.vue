@@ -7,6 +7,7 @@
     scrollViewId="panelScrollView"
     :gestureEnabled="gestureEnabled"
     backdropColor="rgba(0, 0, 0, 0.3)"
+    @loaded="$emit('bottomSheetReady', $event.object)"
   >
     <!-- Main content area (slot for WebView from parent) -->
     <GridLayout width="100%" height="100%">
@@ -85,6 +86,8 @@ export default {
   components: {
     AppControlListView,
   },
+
+  emits: ['bottomSheetReady'],
 
   props: {
     isVisible: {
