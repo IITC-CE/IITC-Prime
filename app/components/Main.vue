@@ -2,8 +2,18 @@
 
 <template>
   <Frame>
-    <Page actionBarHidden="true">
-      <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
+    <Page
+      actionBarHidden="true"
+      androidOverflowEdge="dont-apply"
+      @androidOverflowInset="onAndroidInset"
+    >
+      <RootLayout
+        ref="rootLayout"
+        height="100%"
+        width="100%"
+        :paddingBottom="navBarHeight"
+        @layoutChanged="onRootLayoutChanged"
+      >
         <BottomSheetPanel
           v-show="!isDebugActive"
           :isVisible="sliding.isVisible"
@@ -57,12 +67,11 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, isAndroid } from '@nativescript/core';
+import { AndroidApplication, Application, Utils, isAndroid } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
-import { restoreLayoutAfterResume } from '@/utils/platform';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -109,6 +118,7 @@ export default {
       isKeyboardOpen: false,
       keyboardHeight: 0,
       userLocation: null,
+      navBarHeight: 0,
     };
   },
 
@@ -184,12 +194,15 @@ export default {
       this.$store.dispatch('debug/addLog', logData);
     },
 
-    /**
-     * Handle app resume (after lock/unlock screen)
-     * Restores proper layout and system bar appearance (Android only)
-     */
-    handleAppResume() {
-      restoreLayoutAfterResume();
+    onAndroidInset(args) {
+      if (!isAndroid) return;
+      const toDIP = px => Utils.layout.toDeviceIndependentPixels(px);
+      this.navBarHeight = toDIP(args.inset.bottom ?? 0);
+      args.inset.topConsumed = true;
+      args.inset.bottomConsumed = true;
+      args.inset.leftConsumed = true;
+      args.inset.rightConsumed = true;
+      args.inset.imeBottomConsumed = true;
     },
 
     // Execute debug command from Debug Console
@@ -250,11 +263,6 @@ export default {
       contentHeight: layoutService.dimensions.contentHeight,
     };
 
-    // Handle app resume (after lock/unlock) on Android
-    if (isAndroid) {
-      Application.on(Application.resumeEvent, this.handleAppResume);
-    }
-
     // Update store with initial values
     this.updateStoreLayout(layoutService.dimensions);
 
@@ -300,11 +308,6 @@ export default {
     if (this.keyboard) {
       this.keyboard.off('opened');
       this.keyboard.off('closed');
-    }
-
-    // Remove resume event listener on Android
-    if (isAndroid) {
-      Application.off(Application.resumeEvent, this.handleAppResume);
     }
 
     if (this.userLocation) {
