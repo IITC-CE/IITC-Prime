@@ -5,6 +5,7 @@
     title="Plugins"
     use-scroll="false"
     @navigatedTo="onNavigatedTo"
+    v-slot="{ bottomPadding }"
   >
     <GridLayout rows="auto, auto, auto, *" class="main-container">
       <!-- Search field -->
@@ -37,6 +38,7 @@
           v-if="filteredPlugins.length > 0"
           :plugins="filteredPlugins"
           :showEnabledFirst="activeCategory === 'All'"
+          :bottomPadding="bottomPadding"
           @toggle="togglePlugin"
         />
         <Label

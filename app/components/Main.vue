@@ -67,11 +67,12 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, Utils, isAndroid } from '@nativescript/core';
+import { AndroidApplication, Application, isAndroid } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
+import { parseAndroidInsets } from '@/utils/platform';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -195,9 +196,9 @@ export default {
     },
 
     onAndroidInset(args) {
-      if (!isAndroid) return;
-      const toDIP = px => Utils.layout.toDeviceIndependentPixels(px);
-      this.navBarHeight = toDIP(args.inset.bottom ?? 0);
+      if (!isAndroid || !args?.inset) return;
+      const insets = parseAndroidInsets(args.inset);
+      this.navBarHeight = insets.bottom;
       args.inset.topConsumed = true;
       args.inset.bottomConsumed = true;
       args.inset.leftConsumed = true;

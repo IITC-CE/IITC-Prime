@@ -1,7 +1,12 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <Page @navigatedTo="onNavigatedTo" @navigatedFrom="onNavigatedFrom" androidOverflowEdge="dont-apply" @androidOverflowInset="onAndroidInset">
+  <Page
+    @navigatedTo="onNavigatedTo"
+    @navigatedFrom="onNavigatedFrom"
+    androidOverflowEdge="dont-apply"
+    @androidOverflowInset="onAndroidInset"
+  >
     <ActionBar
       :title="title"
       flat="true"
@@ -28,11 +33,10 @@
     <component
       :is="useScroll === 'true' ? 'ScrollView' : 'StackLayout'"
       :orientation="useScroll === 'true' ? 'vertical' : undefined"
-      :paddingBottom="navBarHeight"
       class="settings-container"
     >
-      <StackLayout class="settings-content">
-        <slot></slot>
+      <StackLayout class="settings-content" :style="contentInsetStyle">
+        <slot :bottomPadding="contentBottomPadding"></slot>
       </StackLayout>
     </component>
   </Page>
@@ -40,7 +44,13 @@
 
 <script>
 import { Frame, Utils, isIOS, isAndroid } from '@nativescript/core';
-import { attachBackHandler, detachBackHandler } from '@/utils/platform';
+import {
+  attachBackHandler,
+  detachBackHandler,
+  parseAndroidInsets,
+  getStatusBarHeight,
+  getNavigationBarHeight,
+} from '@/utils/platform';
 
 export default {
   name: 'SettingsBase',
@@ -61,23 +71,48 @@ export default {
     return {
       isIOS,
       isAndroid,
-      navBarHeight: 0,
+      statusBarInset: 0,
+      navBarInset: 0,
+      leftInset: 0,
+      rightInset: 0,
     };
+  },
+
+  computed: {
+    contentBottomPadding() {
+      return 24 + this.navBarInset; // $spacing-l + nav bar
+    },
+
+    contentInsetStyle() {
+      const base = 16; // $spacing-m
+      const style = {
+        paddingLeft: base + this.leftInset,
+        paddingRight: base + this.rightInset,
+      };
+      if (this.useScroll === 'true') {
+        style.paddingBottom = this.contentBottomPadding;
+      }
+      return style;
+    },
   },
 
   methods: {
     onAndroidInset(args) {
-      if (!isAndroid) return;
-      const toDIP = px => Utils.layout.toDeviceIndependentPixels(px);
-      this.navBarHeight = toDIP(args.inset.bottom ?? 0);
+      if (!isAndroid || !args?.inset) return;
+      const insets = parseAndroidInsets(args.inset);
 
-      // Apply status bar height as top padding to the native Toolbar
+      if (insets.top > 0) this.statusBarInset = insets.top;
+      if (insets.bottom > 0) this.navBarInset = insets.bottom;
+      this.leftInset = insets.left;
+      this.rightInset = insets.right;
+
+      // Apply status bar + side insets to native ActionBar toolbar
       const toolbar = this.$el?.nativeView?.actionBar?.nativeViewProtected;
       if (toolbar) {
         toolbar.setPaddingRelative(
-          toolbar.getPaddingStart(),
-          args.inset.top ?? 0,
-          toolbar.getPaddingEnd(),
+          Utils.layout.toDevicePixels(this.leftInset),
+          Utils.layout.toDevicePixels(this.statusBarInset),
+          Utils.layout.toDevicePixels(this.rightInset),
           toolbar.getPaddingBottom()
         );
       }
@@ -93,19 +128,22 @@ export default {
       Frame.topmost().goBack();
     },
 
-    // Forward navigation event to parent component
     onNavigatedTo(event) {
-      // Attach back press handler when navigating TO this page
       attachBackHandler(this.goBack);
       this.$emit('navigatedTo', event);
     },
 
-    // Handle navigation away from this page
     onNavigatedFrom(event) {
-      // Detach back press handler when navigating FROM this page
       detachBackHandler();
       this.$emit('navigatedFrom', event);
     },
+  },
+
+  created() {
+    if (isAndroid) {
+      this.statusBarInset = getStatusBarHeight();
+      this.navBarInset = getNavigationBarHeight();
+    }
   },
 
   beforeUnmount() {
@@ -126,8 +164,5 @@ ActionBar {
 }
 
 .settings-content {
-  padding-left: $spacing-m;
-  padding-right: $spacing-m;
-  padding-bottom: $spacing-l;
 }
 </style>

@@ -7,111 +7,47 @@ import { INGRESS_INTEL_MAP } from './url-config';
 let currentBackHandler = null;
 
 /**
- * Restore layout after app resume by triggering WindowInsets recalculation
- * This fixes ActionBar/content positioning after screen lock/unlock
- * @returns {boolean} Success status
+ * Get status bar height in DIP (Android only, fallback for when insets not yet dispatched)
+ * @returns {number}
  */
-export const restoreLayoutAfterResume = () => {
-  if (!isAndroid) return false;
-
-  try {
-    const activity = Application.android.startActivity || Application.android.foregroundActivity;
-    if (!activity) return false;
-
-    // Trigger WindowInsets recalculation by calling setStatusBarColor
-    // The actual color value doesn't matter - the call itself triggers the fix
-    if (Utils.android.setStatusBarColor) {
-      Utils.android.setStatusBarColor(activity, 'transparent');
-    }
-
-    // Set light icons for status bar and navigation bar
-    setSystemBarsLightIcons();
-
-    return true;
-  } catch (error) {
-    console.error('Error restoring layout after resume:', error);
-    return false;
-  }
+export const getStatusBarHeight = () => {
+  if (!isAndroid) return 0;
+  const activity = Application.android.foregroundActivity || Application.android.startActivity;
+  if (!activity) return 0;
+  const resourceId = activity.getResources().getIdentifier('status_bar_height', 'dimen', 'android');
+  if (!resourceId) return 0;
+  return Utils.layout.toDeviceIndependentPixels(
+    activity.getResources().getDimensionPixelSize(resourceId)
+  );
 };
 
 /**
- * Set status bar and navigation bar icons to light (white) for dark app theme
- * This is needed because Theme.Material3.Dark doesn't automatically set light icons
- * when custom colors are used
- * @returns {boolean} Success status
+ * Get navigation bar height in DIP (Android only, fallback for when insets not yet dispatched)
+ * @returns {number}
  */
-export const setSystemBarsLightIcons = () => {
-  if (!isAndroid) return false;
-
-  try {
-    const activity = Application.android.startActivity || Application.android.foregroundActivity;
-    if (!activity) return false;
-
-    const window = activity.getWindow();
-    const decorView = window.getDecorView();
-
-    // For Android 11+ (API 30+), use WindowInsetsController
-    if (android.os.Build.VERSION.SDK_INT >= 30) {
-      const insetsController = window.getInsetsController();
-      if (insetsController) {
-        // Clear APPEARANCE_LIGHT flags to use light (white) icons on dark background
-        insetsController.setSystemBarsAppearance(
-          0, // Clear flags
-          android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS |
-            android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-        );
-        return true;
-      }
-    } else if (android.os.Build.VERSION.SDK_INT >= 26) {
-      // For Android 8+ (API 26-29), use systemUiVisibility for both bars
-      let flags = decorView.getSystemUiVisibility();
-      flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-      flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-      decorView.setSystemUiVisibility(flags);
-      return true;
-    } else if (android.os.Build.VERSION.SDK_INT >= 23) {
-      // For Android 6+ (API 23-25), only status bar is supported
-      let flags = decorView.getSystemUiVisibility();
-      flags &= ~android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-      decorView.setSystemUiVisibility(flags);
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Error setting system bars light icons:', error);
-    return false;
-  }
-};
-
-export const getStatusBarHeight = () => {
-  let result = 0;
-  if (Application.android) {
-    const activity = Application.android.foregroundActivity || Application.android.startActivity;
-    if (!activity) return 0;
-    const resourceId = activity
-      .getResources()
-      .getIdentifier('status_bar_height', 'dimen', 'android');
-    if (!resourceId) return 0;
-    result = activity.getResources().getDimensionPixelSize(resourceId);
-    result = Utils.layout.toDeviceIndependentPixels(result);
-  }
-  return result;
-};
-
 export const getNavigationBarHeight = () => {
-  let result = 0;
-  if (Application.android) {
-    const activity = Application.android.foregroundActivity || Application.android.startActivity;
-    if (!activity) return 0;
-    const resourceId = activity
-      .getResources()
-      .getIdentifier('navigation_bar_height', 'dimen', 'android');
-    if (!resourceId) return 0;
-    result = activity.getResources().getDimensionPixelSize(resourceId);
-    result = Utils.layout.toDeviceIndependentPixels(result);
+  if (!isAndroid) return 0;
+  const activity = Application.android.foregroundActivity || Application.android.startActivity;
+  if (!activity) return 0;
+  const resourceId = activity
+    .getResources()
+    .getIdentifier('navigation_bar_height', 'dimen', 'android');
+  if (!resourceId) return 0;
+  return Utils.layout.toDeviceIndependentPixels(
+    activity.getResources().getDimensionPixelSize(resourceId)
+  );
+};
+
+/**
+ * Enable edge-to-edge scrolling for a ListView or CollectionView on Android.
+ * Allows items to draw behind the navigation bar while scrolling.
+ * Call from the `@loaded` event handler of the list component.
+ * @param {object} listView - The NativeScript ListView/CollectionView instance (args.object)
+ */
+export const enableListEdgeToEdge = listView => {
+  if (isAndroid && listView?.android) {
+    listView.android.setClipToPadding(false);
   }
-  return result;
 };
 
 /**
@@ -241,6 +177,22 @@ export const detachBackHandler = () => {
 
   currentBackHandler = null;
   return true;
+};
+
+/**
+ * Parse Android window insets into DIP values including display cutouts
+ * @param {object} inset - NativeScript inset object from @androidOverflowInset
+ * @returns {{ top: number, bottom: number, left: number, right: number }}
+ */
+export const parseAndroidInsets = inset => {
+  const toDIP = px => Utils.layout.toDeviceIndependentPixels(px);
+  return {
+    top: toDIP(inset.top ?? 0),
+    bottom: toDIP(inset.bottom ?? 0),
+    // Horizontal insets include display cutout (camera notch in landscape)
+    left: toDIP(Math.max(inset.left ?? 0, inset.cutoutLeft ?? 0)),
+    right: toDIP(Math.max(inset.right ?? 0, inset.cutoutRight ?? 0)),
+  };
 };
 
 /**
