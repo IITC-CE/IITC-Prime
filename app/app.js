@@ -49,11 +49,14 @@ registerElement('CheckBox', () => CheckBox, {
 
 if (isAndroid) {
   Application.android.on('activityCreated', args => {
-    Utils.android.enableEdgeToEdge(args.activity, {
-      statusBarLightColor: new Color(0),
-      statusBarDarkColor: new Color(0),
-      handleDarkMode: () => true,
-    });
+    const activity = args.activity;
+    if (activity instanceof androidx.activity.ComponentActivity) {
+      androidx.activity.EdgeToEdge.enable(
+        activity,
+        androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+      );
+    }
     // Seed initial top inset from Android resources (before the first inset dispatch)
     store.dispatch('ui/setSafeAreaInsets', { top: getStatusBarHeight() });
   });
