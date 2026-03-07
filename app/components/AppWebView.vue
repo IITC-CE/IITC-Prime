@@ -188,7 +188,14 @@ export default {
           case 'ui/iitcBootFinished':
             await installFileChooserOverride(webview);
             // Set initial safe area insets after IITC loads
-            await webview.executeJavaScript(setSafeAreaInsets(state.ui.safeAreaBottomInset));
+            await webview.executeJavaScript(
+              setSafeAreaInsets(
+                state.ui.safeAreaTopInset,
+                state.ui.safeAreaBottomInset,
+                state.ui.safeAreaLeftInset,
+                state.ui.safeAreaRightInset
+              )
+            );
             break;
           case 'map/setInjectPlugin':
             await this.injectPlugin(action.payload);
@@ -229,7 +236,14 @@ export default {
             await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
             break;
           case 'ui/setSafeAreaInsets':
-            await webview.executeJavaScript(setSafeAreaInsets(action.payload));
+            await webview.executeJavaScript(
+              setSafeAreaInsets(
+                state.ui.safeAreaTopInset,
+                state.ui.safeAreaBottomInset,
+                state.ui.safeAreaLeftInset,
+                state.ui.safeAreaRightInset
+              )
+            );
             break;
         }
       },

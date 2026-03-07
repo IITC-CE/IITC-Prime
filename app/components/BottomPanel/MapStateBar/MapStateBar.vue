@@ -5,6 +5,7 @@
     class="map-state-bar"
     orientation="horizontal"
     rippleColor="#ffffff"
+    :style="{ paddingBottom: navBarHeight + 8 }"
     @tap="handleTap"
     @pan="handlePan"
   >
@@ -42,6 +43,13 @@ export default {
     bottomSheetRef: {
       type: Object,
       default: null,
+    },
+    /**
+     * Navigation bar height in DIPs — used to extend background behind the transparent nav bar
+     */
+    navBarHeight: {
+      type: Number,
+      default: 0,
     },
   },
 
@@ -175,7 +183,7 @@ export default {
   width: 100%;
   height: 100%;
   background-color: $surface;
-  padding: 0 10 8;
+  padding: 0 10;
 
   .portalStatusView,
   .mapStatusView {

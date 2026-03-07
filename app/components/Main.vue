@@ -7,18 +7,13 @@
       androidOverflowEdge="dont-apply"
       @androidOverflowInset="onAndroidInset"
     >
-      <RootLayout
-        ref="rootLayout"
-        height="100%"
-        width="100%"
-        :paddingBottom="navBarHeight"
-        @layoutChanged="onRootLayoutChanged"
-      >
+      <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
         <BottomSheetPanel
           v-show="!isDebugActive"
           :isVisible="sliding.isVisible"
           :gestureEnabled="!isDebugActive"
           :panelWidth="layout.panelWidth"
+          :navBarHeight="navBarHeight"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -46,7 +41,8 @@
           :bottomSheetRef="bottomSheetInstance"
           verticalAlignment="bottom"
           horizontalAlignment="left"
-          :height="mapStateBarHeight"
+          :height="mapStateBarHeight + navBarHeight"
+          :navBarHeight="navBarHeight"
           :width="layout.panelWidth"
           class="map-state-bar-overlay"
         />
@@ -197,8 +193,18 @@ export default {
 
     onAndroidInset(args) {
       if (!isAndroid || !args?.inset) return;
-      const insets = parseAndroidInsets(args.inset);
-      this.navBarHeight = insets.bottom;
+      const raw = args.inset;
+      const { top, bottom, left, right } = parseAndroidInsets(raw);
+
+      // Only update navBarHeight when keyboard is not open (imeBottom > 0 means keyboard is showing).
+      if (raw.imeBottom === 0) {
+        this.navBarHeight = bottom;
+      }
+
+      // Dispatch insets to store for WebView CSS variables
+      const insetUpdate = { bottom, left, right };
+      this.$store.dispatch('ui/setSafeAreaInsets', insetUpdate);
+
       args.inset.topConsumed = true;
       args.inset.bottomConsumed = true;
       args.inset.leftConsumed = true;

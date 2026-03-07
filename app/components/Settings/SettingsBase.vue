@@ -102,7 +102,7 @@ export default {
       const insets = parseAndroidInsets(args.inset);
 
       if (insets.top > 0) this.statusBarInset = insets.top;
-      if (insets.bottom > 0) this.navBarInset = insets.bottom;
+      this.navBarInset = insets.bottom;
       this.leftInset = insets.left;
       this.rightInset = insets.right;
 

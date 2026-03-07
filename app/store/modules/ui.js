@@ -31,8 +31,11 @@ export const ui = {
       timestamp: 0,
     },
 
-    // Safe area inset for WebView bottom padding (in pixels)
+    // Safe area insets for WebView padding (in DIPs)
+    safeAreaTopInset: 0,
     safeAreaBottomInset: 10,
+    safeAreaLeftInset: 0,
+    safeAreaRightInset: 0,
   }),
 
   mutations: {
@@ -76,9 +79,17 @@ export const ui = {
       }
     },
 
-    // Set safe area bottom inset
+    SET_SAFE_AREA_TOP_INSET(state, value) {
+      state.safeAreaTopInset = value;
+    },
     SET_SAFE_AREA_INSET(state, value) {
       state.safeAreaBottomInset = value;
+    },
+    SET_SAFE_AREA_LEFT_INSET(state, value) {
+      state.safeAreaLeftInset = value;
+    },
+    SET_SAFE_AREA_RIGHT_INSET(state, value) {
+      state.safeAreaRightInset = value;
     },
   },
 
@@ -161,9 +172,12 @@ export const ui = {
       commit('SEND_PANEL_COMMAND', 'close');
     },
 
-    // Set safe area insets
-    setSafeAreaInsets({ commit }, bottomPx) {
-      commit('SET_SAFE_AREA_INSET', bottomPx);
+    // Set safe area insets; pass only the values you want to update
+    setSafeAreaInsets({ commit }, { top, bottom, left, right } = {}) {
+      if (top !== undefined) commit('SET_SAFE_AREA_TOP_INSET', top);
+      if (bottom !== undefined) commit('SET_SAFE_AREA_INSET', bottom);
+      if (left !== undefined) commit('SET_SAFE_AREA_LEFT_INSET', left);
+      if (right !== undefined) commit('SET_SAFE_AREA_RIGHT_INSET', right);
     },
   },
 };

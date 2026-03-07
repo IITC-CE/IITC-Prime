@@ -102,6 +102,10 @@ export default {
       type: Number,
       default: 0,
     },
+    navBarHeight: {
+      type: Number,
+      default: 0,
+    },
   },
 
   data() {
@@ -183,13 +187,15 @@ export default {
       const height = this.screenHeight || 800;
       const middlePosition = height / 2;
       const topPosition = height - 50;
+      // Bottom step extends behind the nav bar so panel content stays above it
+      const bottomStep = this.PANEL_CLOSED_HEIGHT + this.navBarHeight;
 
       // Include HIDDEN position (0) only when keyboard is open
       if (!this.isVisible) {
-        return [0, this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
+        return [0, bottomStep, middlePosition, topPosition];
       }
 
-      return [this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
+      return [bottomStep, middlePosition, topPosition];
     },
 
     /**
@@ -321,7 +327,7 @@ export default {
      * Watch safe area inset changes and update store
      */
     safeAreaBottomInset(newValue) {
-      this.$store.dispatch('ui/setSafeAreaInsets', newValue);
+      this.$store.dispatch('ui/setSafeAreaInsets', { bottom: newValue });
     },
   },
 

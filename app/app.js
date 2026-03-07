@@ -20,6 +20,7 @@ import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-b
 import Main from '~/components/Main';
 import store from './store';
 import { initializeTracing } from './app-trace';
+import { getStatusBarHeight } from '@/utils/platform';
 
 // Initialize app logging
 initializeTracing();
@@ -53,6 +54,8 @@ if (isAndroid) {
       statusBarDarkColor: new Color(0),
       handleDarkMode: () => true,
     });
+    // Seed initial top inset from Android resources (before the first inset dispatch)
+    store.dispatch('ui/setSafeAreaInsets', { top: getStatusBarHeight() });
   });
 }
 

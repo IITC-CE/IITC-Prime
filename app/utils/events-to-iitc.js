@@ -65,9 +65,19 @@ export const setView = (lat, lng, persistentZoom) => {
 };
 
 /**
- * Sets CSS safe area insets for bottom padding
- * @param {number} bottomPx Bottom padding in pixels
+ * Sets CSS safe area insets for all four sides.
+ * Values are in DIPs, which are numerically equivalent to CSS px in a WebView.
+ * @param {number} top Top inset in DIPs
+ * @param {number} bottom Bottom inset in DIPs
+ * @param {number} left Left inset in DIPs
+ * @param {number} right Right inset in DIPs
  */
-export const setSafeAreaInsets = bottomPx => {
-  return `document.documentElement.style.setProperty('--safe-area-inset-bottom', '${bottomPx}px'); true`;
+export const setSafeAreaInsets = (top = 0, bottom = 0, left = 0, right = 0) => {
+  return `
+    document.documentElement.style.setProperty('--safe-area-inset-top', '${top}px');
+    document.documentElement.style.setProperty('--safe-area-inset-bottom', '${bottom}px');
+    document.documentElement.style.setProperty('--safe-area-inset-left', '${left}px');
+    document.documentElement.style.setProperty('--safe-area-inset-right', '${right}px');
+    true
+  `;
 };
