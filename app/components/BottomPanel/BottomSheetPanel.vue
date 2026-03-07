@@ -19,7 +19,8 @@
       nodeRole="bottomSheet"
       class="panel-container"
       rows="auto, auto, *"
-      :width="panelWidth || '100%'"
+      :marginLeft="safeAreaLeftInset"
+      :width="panelWidth ? panelWidth - safeAreaLeftInset : '100%'"
       height="100%"
     >
       <!-- Header with drag indicator -->
@@ -103,6 +104,14 @@ export default {
       default: 0,
     },
     navBarHeight: {
+      type: Number,
+      default: 0,
+    },
+    safeAreaLeftInset: {
+      type: Number,
+      default: 0,
+    },
+    safeAreaRightInset: {
       type: Number,
       default: 0,
     },

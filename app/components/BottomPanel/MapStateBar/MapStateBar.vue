@@ -5,6 +5,8 @@
     class="map-state-bar"
     orientation="horizontal"
     rippleColor="#ffffff"
+    :marginLeft="safeAreaLeftInset"
+    :width="panelWidth ? panelWidth - safeAreaLeftInset : '100%'"
     :style="{ paddingBottom: navBarHeight + 8 }"
     @tap="handleTap"
     @pan="handlePan"
@@ -48,6 +50,14 @@ export default {
      * Navigation bar height in DIPs — used to extend background behind the transparent nav bar
      */
     navBarHeight: {
+      type: Number,
+      default: 0,
+    },
+    panelWidth: {
+      type: Number,
+      default: 0,
+    },
+    safeAreaLeftInset: {
       type: Number,
       default: 0,
     },

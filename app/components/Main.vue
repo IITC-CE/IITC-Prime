@@ -13,6 +13,8 @@
           :isVisible="sliding.isVisible"
           :gestureEnabled="!isDebugActive"
           :panelWidth="layout.panelWidth"
+          :safeAreaLeftInset="safeAreaLeftInset"
+          :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
           @bottomSheetReady="handleBottomSheetReady"
         >
@@ -43,7 +45,8 @@
           horizontalAlignment="left"
           :height="mapStateBarHeight + navBarHeight"
           :navBarHeight="navBarHeight"
-          :width="layout.panelWidth"
+          :panelWidth="layout.panelWidth"
+          :safeAreaLeftInset="safeAreaLeftInset"
           class="map-state-bar-overlay"
         />
 
@@ -122,6 +125,12 @@ export default {
   computed: {
     isDebugActive() {
       return this.$store.state.ui.isDebugActive;
+    },
+    safeAreaLeftInset() {
+      return this.$store.state.ui.safeAreaLeftInset;
+    },
+    safeAreaRightInset() {
+      return this.$store.state.ui.safeAreaRightInset;
     },
   },
 
