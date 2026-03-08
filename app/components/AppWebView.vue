@@ -22,6 +22,7 @@ import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-pri
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam } from '@/utils/url-config';
+import { isIOS } from '@nativescript/core';
 
 import {
   changePortalHighlights,
@@ -130,6 +131,14 @@ export default {
     },
 
     async onWebViewLoaded({ webview }) {
+      if (isIOS) {
+        // Prevent iOS from auto-shifting web content into safe area.
+        // 2 = UIScrollViewContentInsetAdjustmentBehavior.never
+        const nativeView = webview?.nativeViewProtected;
+        if (nativeView?.scrollView) {
+          nativeView.scrollView.contentInsetAdjustmentBehavior = 2;
+        }
+      }
       this.$emit('webview-loaded', { webview });
     },
 
