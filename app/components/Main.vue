@@ -66,7 +66,7 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, isAndroid } from '@nativescript/core';
+import { AndroidApplication, Application, isAndroid, isIOS } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
@@ -127,10 +127,10 @@ export default {
       return this.$store.state.ui.isDebugActive;
     },
     safeAreaLeftInset() {
-      return this.$store.state.ui.safeAreaLeftInset;
+      return this.$store.state.ui.screenSafeArea.left;
     },
     safeAreaRightInset() {
-      return this.$store.state.ui.safeAreaRightInset;
+      return this.$store.state.ui.screenSafeArea.right;
     },
   },
 
@@ -147,6 +147,10 @@ export default {
 
       // Measure the real available dimensions with our layout service
       layoutService.measureLayout(this.$refs.rootLayout.nativeView);
+
+      if (isIOS) {
+        this.readIOSSafeAreaInsets();
+      }
     },
 
     /**
@@ -170,7 +174,11 @@ export default {
      * Update layout related values in the Vuex store
      */
     async updateStoreLayout(dimensions) {
-      await this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight);
+      await this.$store.dispatch('ui/setLayoutDimensions', {
+        contentHeight: dimensions.contentHeight,
+        panelWidth: dimensions.panelWidth,
+        availableWidth: dimensions.availableWidth,
+      });
     },
 
     handlePopup(data) {
@@ -200,19 +208,32 @@ export default {
       this.$store.dispatch('debug/addLog', logData);
     },
 
+    readIOSSafeAreaInsets() {
+      const rootView = this.$refs.rootLayout?.nativeView;
+      if (!rootView?.ios) return;
+
+      const insets = rootView.ios.safeAreaInsets;
+      if (!insets) return;
+
+      this.$store.dispatch('ui/setScreenSafeArea', {
+        top: insets.top,
+        bottom: insets.bottom,
+        left: insets.left,
+        right: insets.right,
+      });
+    },
+
     onAndroidInset(args) {
       if (!isAndroid || !args?.inset) return;
       const raw = args.inset;
-      const { top, bottom, left, right } = parseAndroidInsets(raw);
+      const { bottom, left, right } = parseAndroidInsets(raw);
 
       // Only update navBarHeight when keyboard is not open (imeBottom > 0 means keyboard is showing).
       if (raw.imeBottom === 0) {
         this.navBarHeight = bottom;
       }
 
-      // Dispatch insets to store for WebView CSS variables
-      const insetUpdate = { bottom, left, right };
-      this.$store.dispatch('ui/setSafeAreaInsets', insetUpdate);
+      this.$store.dispatch('ui/setScreenSafeArea', { bottom, left, right });
 
       args.inset.topConsumed = true;
       args.inset.bottomConsumed = true;

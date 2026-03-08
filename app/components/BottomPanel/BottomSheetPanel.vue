@@ -19,8 +19,8 @@
       nodeRole="bottomSheet"
       class="panel-container"
       rows="auto, auto, *"
-      :marginLeft="safeAreaLeftInset"
-      :width="panelWidth ? panelWidth - safeAreaLeftInset : '100%'"
+      :marginLeft="effectiveLeftInset"
+      :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
       height="100%"
     >
       <!-- Header with drag indicator -->
@@ -78,6 +78,7 @@
 import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
+import { isIOS } from '@nativescript/core';
 import { layoutService } from '~/utils/layout-service';
 import { getAppName } from '~/utils/platform';
 
@@ -139,6 +140,15 @@ export default {
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
+
+    /**
+     * On iOS, ui-persistent-bottomsheet sets iosOverflowSafeAreaEnabled=false on the
+     * bottomSheet child, so iOS automatically constrains it to the safe area.
+     * We must not add marginLeft on iOS or the inset would be applied twice.
+     */
+    effectiveLeftInset() {
+      return isIOS ? 0 : this.safeAreaLeftInset;
+    },
 
     /**
      * Check if current pane is map
@@ -205,28 +215,6 @@ export default {
       }
 
       return [bottomStep, middlePosition, topPosition];
-    },
-
-    /**
-     * Check if panel is positioned on the side (landscape tablet mode)
-     */
-    isPanelOnSide() {
-      const dimensions = layoutService.dimensions;
-      return this.panelWidth < dimensions.availableWidth;
-    },
-
-    /**
-     * Calculate safe area inset for WebView bottom
-     */
-    safeAreaBottomInset() {
-      // Panel full width (portrait OR landscape on phone):
-      //   - WebView is clipped at bottom
-      //   - Safe area = 10px
-      //
-      // Panel on side (landscape on tablet):
-      //   - WebView extends to bottom of screen, panel overlaps from side
-      //   - Safe area = panel height (110px)
-      return this.isPanelOnSide ? this.PANEL_CLOSED_HEIGHT : 10;
     },
   },
 
@@ -330,13 +318,6 @@ export default {
         }
       },
       deep: true,
-    },
-
-    /**
-     * Watch safe area inset changes and update store
-     */
-    safeAreaBottomInset(newValue) {
-      this.$store.dispatch('ui/setSafeAreaInsets', { bottom: newValue });
     },
   },
 

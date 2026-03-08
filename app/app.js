@@ -58,7 +58,7 @@ if (isAndroid) {
       );
     }
     // Seed initial top inset from Android resources (before the first inset dispatch)
-    store.dispatch('ui/setSafeAreaInsets', { top: getStatusBarHeight() });
+    store.dispatch('ui/setScreenSafeArea', { top: getStatusBarHeight() });
   });
 }
 
