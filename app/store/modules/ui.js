@@ -36,6 +36,8 @@ export const ui = {
     // Raw OS/screen safe area insets (status bar, nav bar, home indicator, notch) in DIPs.
     // Used for native element positioning. WebView CSS vars use the webviewSafeArea getter.
     screenSafeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+
+    isKeyboardOpen: false,
   }),
 
   getters: {
@@ -47,9 +49,10 @@ export const ui = {
     },
 
     // Computed WebView safe area insets: screen insets adjusted for panel layout.
+    // When keyboard is open, bottom is 0: WebView is already above keyboard, no panel to avoid.
     webviewSafeArea: (state, getters) => ({
       top: state.screenSafeArea.top,
-      bottom: getters.webViewBottomInset,
+      bottom: state.isKeyboardOpen ? 0 : getters.webViewBottomInset,
       left: state.screenSafeArea.left,
       right: state.screenSafeArea.right,
     }),
@@ -100,6 +103,10 @@ export const ui = {
       if (key in state.panelState) {
         state.panelState[key] = value;
       }
+    },
+
+    SET_KEYBOARD_OPEN(state, isOpen) {
+      state.isKeyboardOpen = isOpen;
     },
 
     SET_SCREEN_SAFE_AREA(state, { top, bottom, left, right } = {}) {
@@ -189,6 +196,10 @@ export const ui = {
       dispatch('setPanelOpenState', false);
       commit('SET_ACTIVE_PANEL', 'quick');
       commit('SEND_PANEL_COMMAND', 'close');
+    },
+
+    setKeyboardOpen({ commit }, isOpen) {
+      commit('SET_KEYBOARD_OPEN', isOpen);
     },
 
     // Update raw OS/screen safe area insets; pass only the values you want to update

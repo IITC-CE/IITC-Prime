@@ -243,6 +243,7 @@ export default {
           case 'map/userLocationOrientation':
             await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
             break;
+          case 'ui/setKeyboardOpen':
           case 'ui/setScreenSafeArea':
           case 'ui/setLayoutDimensions': {
             const wsa = this.$store.getters['ui/webviewSafeArea'];

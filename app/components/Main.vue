@@ -28,7 +28,7 @@
                 @show-popup="handlePopup"
                 @console-log="onConsoleLog"
               />
-              <label v-show="sliding.isVisible" row="1" col="0" :height="layout.bottomPadding" />
+              <label row="1" col="0" :height="contentBottomPadding" />
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
@@ -131,6 +131,20 @@ export default {
     },
     safeAreaRightInset() {
       return this.$store.state.ui.screenSafeArea.right;
+    },
+
+    /**
+     * Bottom spacer height for AppWebView content area.
+     * On Android with keyboard open: equals keyboardHeight to shrink WebView viewport,
+     * so the browser engine scrolls focused inputs above the keyboard (adjustResize emulation).
+     * Otherwise: equals bottomPadding to reserve space for the bottom panel.
+     * On iOS WKWebView handles keyboard avoidance natively — no special handling needed.
+     */
+    contentBottomPadding() {
+      if (isAndroid && this.isKeyboardOpen) {
+        return this.keyboardHeight;
+      }
+      return this.layout.bottomPadding + this.navBarHeight;
     },
   },
 
@@ -275,11 +289,13 @@ export default {
       this.sliding.isVisible = false;
       this.isKeyboardOpen = true;
       this.keyboardHeight = args.data?.height || 0;
+      this.$store.dispatch('ui/setKeyboardOpen', true);
     },
     onKeyboardClosed() {
       this.sliding.isVisible = true;
       this.isKeyboardOpen = false;
       this.keyboardHeight = 0;
+      this.$store.dispatch('ui/setKeyboardOpen', false);
     },
   },
 
