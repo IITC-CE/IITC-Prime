@@ -115,9 +115,6 @@ export default {
         await injectBridgeIITC(this.webview);
         await injectDebugBridge(this.webview);
 
-        // Inject custom CSS styles
-        await injectCustomStyles(this.webview);
-
         // Mark this URL as processed
         this.lastInjectedUrl = arg.url;
 
@@ -196,6 +193,7 @@ export default {
             break;
           case 'ui/iitcBootFinished': {
             await installFileChooserOverride(webview);
+            await injectCustomStyles(webview);
             // Set initial safe area insets after IITC loads
             const wsa = this.$store.getters['ui/webviewSafeArea'];
             await webview.executeJavaScript(
