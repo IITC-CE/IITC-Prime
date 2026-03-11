@@ -1,7 +1,7 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout rows="*, auto" class="debug-console" :style="{ 'padding-bottom': isKeyboardOpen && isIOS ? keyboardHeight : '0' }">
+  <GridLayout rows="*, auto" class="debug-console" :style="{ 'padding-bottom': keyboardPaddingBottom }">
     <!-- Logs list -->
     <CollectionView
       ref="logsList"
@@ -61,7 +61,7 @@ import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/p
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
-import { isIOS } from '@nativescript/core';
+import { isAndroid } from '@nativescript/core';
 
 export default {
   components: {
@@ -103,8 +103,18 @@ export default {
   },
 
   computed: {
-    isIOS() {
-      return isIOS;
+    isAndroid() {
+      return isAndroid;
+    },
+
+    // On Android: keyboardHeight is exact (imeBottomConsumed = true, no native resize).
+    // On iOS: keyboardHeight from UIKeyboardFrameEndUserInfoKey includes the home indicator
+    // area which the safe area already accounts for, so subtract safeAreaBottom.
+    keyboardPaddingBottom() {
+      if (!this.isKeyboardOpen) return 0;
+      if (isAndroid) return this.keyboardHeight;
+      const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
+      return Math.max(0, this.keyboardHeight - safeAreaBottom);
     },
 
     ...mapState(optimizeMapState({
