@@ -2,13 +2,20 @@
 
 <template>
   <Frame>
-    <Page actionBarHidden="true">
+    <Page
+      actionBarHidden="true"
+      androidOverflowEdge="dont-apply"
+      @androidOverflowInset="onAndroidInset"
+    >
       <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
         <BottomSheetPanel
           v-show="!isDebugActive"
           :isVisible="sliding.isVisible"
           :gestureEnabled="!isDebugActive"
           :panelWidth="layout.panelWidth"
+          :safeAreaLeftInset="safeAreaLeftInset"
+          :safeAreaRightInset="safeAreaRightInset"
+          :navBarHeight="navBarHeight"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -21,7 +28,7 @@
                 @show-popup="handlePopup"
                 @console-log="onConsoleLog"
               />
-              <label v-show="sliding.isVisible" row="1" col="0" :height="layout.bottomPadding" />
+              <label row="1" col="0" :height="contentBottomPadding" />
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
@@ -36,8 +43,10 @@
           :bottomSheetRef="bottomSheetInstance"
           verticalAlignment="bottom"
           horizontalAlignment="left"
-          :height="mapStateBarHeight"
-          :width="layout.panelWidth"
+          :height="mapStateBarHeight + navBarHeight"
+          :navBarHeight="navBarHeight"
+          :panelWidth="layout.panelWidth"
+          :safeAreaLeftInset="safeAreaLeftInset"
           class="map-state-bar-overlay"
         />
 
@@ -57,12 +66,12 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, isAndroid } from '@nativescript/core';
+import { AndroidApplication, Application, isAndroid, isIOS } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
-import { restoreLayoutAfterResume } from '@/utils/platform';
+import { parseAndroidInsets } from '@/utils/platform';
 
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
@@ -109,12 +118,33 @@ export default {
       isKeyboardOpen: false,
       keyboardHeight: 0,
       userLocation: null,
+      navBarHeight: 0,
     };
   },
 
   computed: {
     isDebugActive() {
       return this.$store.state.ui.isDebugActive;
+    },
+    safeAreaLeftInset() {
+      return this.$store.state.ui.screenSafeArea.left;
+    },
+    safeAreaRightInset() {
+      return this.$store.state.ui.screenSafeArea.right;
+    },
+
+    /**
+     * Bottom spacer height for AppWebView content area.
+     * On Android with keyboard open: equals keyboardHeight to shrink WebView viewport,
+     * so the browser engine scrolls focused inputs above the keyboard (adjustResize emulation).
+     * Otherwise: equals bottomPadding to reserve space for the bottom panel.
+     * On iOS WKWebView handles keyboard avoidance natively — no special handling needed.
+     */
+    contentBottomPadding() {
+      if (isAndroid && this.isKeyboardOpen) {
+        return this.keyboardHeight;
+      }
+      return this.layout.bottomPadding + this.navBarHeight;
     },
   },
 
@@ -131,6 +161,10 @@ export default {
 
       // Measure the real available dimensions with our layout service
       layoutService.measureLayout(this.$refs.rootLayout.nativeView);
+
+      if (isIOS) {
+        this.readIOSSafeAreaInsets();
+      }
     },
 
     /**
@@ -154,7 +188,11 @@ export default {
      * Update layout related values in the Vuex store
      */
     async updateStoreLayout(dimensions) {
-      await this.$store.dispatch('ui/setScreenHeight', dimensions.contentHeight);
+      await this.$store.dispatch('ui/setLayoutDimensions', {
+        contentHeight: dimensions.contentHeight,
+        panelWidth: dimensions.panelWidth,
+        availableWidth: dimensions.availableWidth,
+      });
     },
 
     handlePopup(data) {
@@ -184,12 +222,38 @@ export default {
       this.$store.dispatch('debug/addLog', logData);
     },
 
-    /**
-     * Handle app resume (after lock/unlock screen)
-     * Restores proper layout and system bar appearance (Android only)
-     */
-    handleAppResume() {
-      restoreLayoutAfterResume();
+    readIOSSafeAreaInsets() {
+      const rootView = this.$refs.rootLayout?.nativeView;
+      if (!rootView?.ios) return;
+
+      const insets = rootView.ios.safeAreaInsets;
+      if (!insets) return;
+
+      this.$store.dispatch('ui/setScreenSafeArea', {
+        top: insets.top,
+        bottom: insets.bottom,
+        left: insets.left,
+        right: insets.right,
+      });
+    },
+
+    onAndroidInset(args) {
+      if (!isAndroid || !args?.inset) return;
+      const raw = args.inset;
+      const { bottom, left, right } = parseAndroidInsets(raw);
+
+      // Only update navBarHeight when keyboard is not open (imeBottom > 0 means keyboard is showing).
+      if (raw.imeBottom === 0) {
+        this.navBarHeight = bottom;
+      }
+
+      this.$store.dispatch('ui/setScreenSafeArea', { bottom, left, right });
+
+      args.inset.topConsumed = true;
+      args.inset.bottomConsumed = true;
+      args.inset.leftConsumed = true;
+      args.inset.rightConsumed = true;
+      args.inset.imeBottomConsumed = true;
     },
 
     // Execute debug command from Debug Console
@@ -225,11 +289,13 @@ export default {
       this.sliding.isVisible = false;
       this.isKeyboardOpen = true;
       this.keyboardHeight = args.data?.height || 0;
+      this.$store.dispatch('ui/setKeyboardOpen', true);
     },
     onKeyboardClosed() {
       this.sliding.isVisible = true;
       this.isKeyboardOpen = false;
       this.keyboardHeight = 0;
+      this.$store.dispatch('ui/setKeyboardOpen', false);
     },
   },
 
@@ -249,11 +315,6 @@ export default {
       panelWidth: layoutService.dimensions.panelWidth,
       contentHeight: layoutService.dimensions.contentHeight,
     };
-
-    // Handle app resume (after lock/unlock) on Android
-    if (isAndroid) {
-      Application.on(Application.resumeEvent, this.handleAppResume);
-    }
 
     // Update store with initial values
     this.updateStoreLayout(layoutService.dimensions);
@@ -300,11 +361,6 @@ export default {
     if (this.keyboard) {
       this.keyboard.off('opened');
       this.keyboard.off('closed');
-    }
-
-    // Remove resume event listener on Android
-    if (isAndroid) {
-      Application.off(Application.resumeEvent, this.handleAppResume);
     }
 
     if (this.userLocation) {

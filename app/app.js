@@ -1,6 +1,7 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { createApp, registerElement } from 'nativescript-vue';
+import { Application, Utils, Color, isAndroid } from '@nativescript/core';
 
 import { FontIcon, fonticon } from '@nativescript-community/fonticon';
 import { BottomSheetPlugin } from '@nativescript-community/ui-material-bottomsheet/vue3';
@@ -19,6 +20,7 @@ import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-b
 import Main from '~/components/Main';
 import store from './store';
 import { initializeTracing } from './app-trace';
+import { getStatusBarHeight } from '@/utils/platform';
 
 // Initialize app logging
 initializeTracing();
@@ -44,6 +46,21 @@ registerElement('CheckBox', () => CheckBox, {
     event: 'checkedChange',
   },
 });
+
+if (isAndroid) {
+  Application.android.on('activityCreated', args => {
+    const activity = args.activity;
+    if (activity instanceof androidx.activity.ComponentActivity) {
+      androidx.activity.EdgeToEdge.enable(
+        activity,
+        androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+      );
+    }
+    // Seed initial top inset from Android resources (before the first inset dispatch)
+    store.dispatch('ui/setScreenSafeArea', { top: getStatusBarHeight() });
+  });
+}
 
 const app = createApp(Main);
 

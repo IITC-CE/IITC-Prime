@@ -6,6 +6,8 @@ export const ui = {
   namespaced: true,
   state: () => ({
     screenHeight: 0,
+    panelWidth: 0,
+    availableWidth: 0,
     isWebviewLoaded: false,
     isIitcLoaded: false,
     progress: 0,
@@ -31,13 +33,40 @@ export const ui = {
       timestamp: 0,
     },
 
-    // Safe area inset for WebView bottom padding (in pixels)
-    safeAreaBottomInset: 10,
+    // Raw OS/screen safe area insets (status bar, nav bar, home indicator, notch) in DIPs.
+    // Used for native element positioning. WebView CSS vars use the webviewSafeArea getter.
+    screenSafeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+
+    isKeyboardOpen: false,
   }),
+
+  getters: {
+    // WebView bottom padding: panel height when panel is on side (tablet landscape), else small gap above panel
+    webViewBottomInset: state => {
+      const PANEL_CLOSED_HEIGHT = 110;
+      const isPanelOnSide = state.panelWidth > 0 && state.panelWidth < state.availableWidth;
+      return isPanelOnSide ? PANEL_CLOSED_HEIGHT : 10;
+    },
+
+    // Computed WebView safe area insets: screen insets adjusted for panel layout.
+    // When keyboard is open, bottom is 0: WebView is already above keyboard, no panel to avoid.
+    webviewSafeArea: (state, getters) => ({
+      top: state.screenSafeArea.top,
+      bottom: state.isKeyboardOpen ? 0 : getters.webViewBottomInset,
+      left: state.screenSafeArea.left,
+      right: state.screenSafeArea.right,
+    }),
+  },
 
   mutations: {
     SET_SCREEN_HEIGHT(state, height) {
       state.screenHeight = height;
+    },
+    SET_PANEL_WIDTH(state, width) {
+      state.panelWidth = width;
+    },
+    SET_AVAILABLE_WIDTH(state, width) {
+      state.availableWidth = width;
     },
     SET_WEBVIEW_LOADED(state, status) {
       state.isWebviewLoaded = status;
@@ -76,15 +105,23 @@ export const ui = {
       }
     },
 
-    // Set safe area bottom inset
-    SET_SAFE_AREA_INSET(state, value) {
-      state.safeAreaBottomInset = value;
+    SET_KEYBOARD_OPEN(state, isOpen) {
+      state.isKeyboardOpen = isOpen;
+    },
+
+    SET_SCREEN_SAFE_AREA(state, { top, bottom, left, right } = {}) {
+      if (top !== undefined) state.screenSafeArea.top = top;
+      if (bottom !== undefined) state.screenSafeArea.bottom = bottom;
+      if (left !== undefined) state.screenSafeArea.left = left;
+      if (right !== undefined) state.screenSafeArea.right = right;
     },
   },
 
   actions: {
-    setScreenHeight({ commit }, height) {
-      commit('SET_SCREEN_HEIGHT', height);
+    setLayoutDimensions({ commit }, { contentHeight, panelWidth, availableWidth }) {
+      commit('SET_SCREEN_HEIGHT', contentHeight);
+      commit('SET_PANEL_WIDTH', panelWidth);
+      commit('SET_AVAILABLE_WIDTH', availableWidth);
     },
     async setWebviewLoaded({ commit, dispatch }, status) {
       commit('SET_WEBVIEW_LOADED', status);
@@ -161,9 +198,13 @@ export const ui = {
       commit('SEND_PANEL_COMMAND', 'close');
     },
 
-    // Set safe area insets
-    setSafeAreaInsets({ commit }, bottomPx) {
-      commit('SET_SAFE_AREA_INSET', bottomPx);
+    setKeyboardOpen({ commit }, isOpen) {
+      commit('SET_KEYBOARD_OPEN', isOpen);
+    },
+
+    // Update raw OS/screen safe area insets; pass only the values you want to update
+    setScreenSafeArea({ commit }, insets) {
+      commit('SET_SCREEN_SAFE_AREA', insets);
     },
   },
 };

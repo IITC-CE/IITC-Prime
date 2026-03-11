@@ -1,13 +1,15 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Open Source Licenses" use-scroll="false">
+  <SettingsBase title="Open Source Licenses" use-scroll="false" v-slot="{ bottomPadding }">
     <GridLayout rows="*" class="licenses-list-container">
       <ListView
         row="0"
         :items="licenses"
+        :style="{ paddingBottom: bottomPadding }"
         class="licenses-list"
         separatorColor="transparent"
+        @loaded="onLoaded"
         @itemTap="onItemTap"
       >
         <template #default="{ item }">
@@ -27,14 +29,16 @@
 </template>
 
 <script>
+import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
+import { enableListEdgeToEdge } from '@/utils/platform';
 
 export default {
   name: 'LicensesView',
 
   components: {
-    SettingsBase,
+    SettingsBase: markRaw(SettingsBase),
   },
 
   data() {
@@ -48,6 +52,10 @@ export default {
   },
 
   methods: {
+    onLoaded(args) {
+      enableListEdgeToEdge(args.object);
+    },
+
     loadLicenses() {
       let licensesData = null;
       try {

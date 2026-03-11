@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import * as appVersion from '@nativescript/appversion';
 import { getAppName } from '~/utils/platform';
@@ -23,7 +24,7 @@ export default {
   name: 'AboutView',
 
   components: {
-    SettingsBase,
+    SettingsBase: markRaw(SettingsBase),
   },
 
   data() {

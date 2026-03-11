@@ -22,6 +22,7 @@ import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-pri
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam } from '@/utils/url-config';
+import { isIOS } from '@nativescript/core';
 
 import {
   changePortalHighlights,
@@ -114,9 +115,6 @@ export default {
         await injectBridgeIITC(this.webview);
         await injectDebugBridge(this.webview);
 
-        // Inject custom CSS styles
-        await injectCustomStyles(this.webview);
-
         // Mark this URL as processed
         this.lastInjectedUrl = arg.url;
 
@@ -130,6 +128,14 @@ export default {
     },
 
     async onWebViewLoaded({ webview }) {
+      if (isIOS) {
+        // Prevent iOS from auto-shifting web content into safe area.
+        // 2 = UIScrollViewContentInsetAdjustmentBehavior.never
+        const nativeView = webview?.nativeViewProtected;
+        if (nativeView?.scrollView) {
+          nativeView.scrollView.contentInsetAdjustmentBehavior = 2;
+        }
+      }
       this.$emit('webview-loaded', { webview });
     },
 
@@ -185,11 +191,16 @@ export default {
           case 'ui/reloadWebView':
             await this.$refs.baseWebView.reload();
             break;
-          case 'ui/iitcBootFinished':
+          case 'ui/iitcBootFinished': {
             await installFileChooserOverride(webview);
+            await injectCustomStyles(webview);
             // Set initial safe area insets after IITC loads
-            await webview.executeJavaScript(setSafeAreaInsets(state.ui.safeAreaBottomInset));
+            const wsa = this.$store.getters['ui/webviewSafeArea'];
+            await webview.executeJavaScript(
+              setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
+            );
             break;
+          }
           case 'map/setInjectPlugin':
             await this.injectPlugin(action.payload);
             break;
@@ -201,10 +212,11 @@ export default {
           case 'map/setActiveBaseLayer':
             await webview.executeJavaScript(showLayer(action.payload, true));
             break;
-          case 'map/setOverlayLayerProperty':
+          case 'map/setOverlayLayerProperty': {
             const overlay_layer = state.map.overlayLayers[action.payload.index];
             await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
             break;
+          }
           case 'map/setActiveHighlighter':
             await webview.executeJavaScript(changePortalHighlights(action.payload));
             break;
@@ -216,10 +228,11 @@ export default {
               setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
             );
             break;
-          case 'map/userLocationLocate':
+          case 'map/userLocationLocate': {
             const { lat, lng, accuracy, persistentZoom } = action.payload;
             await webview.executeJavaScript(userLocationLocate(lat, lng, accuracy, persistentZoom));
             break;
+          }
           case 'map/setLocation':
             await webview.executeJavaScript(
               userLocationUpdate(action.payload.lat, action.payload.lng)
@@ -228,9 +241,15 @@ export default {
           case 'map/userLocationOrientation':
             await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
             break;
-          case 'ui/setSafeAreaInsets':
-            await webview.executeJavaScript(setSafeAreaInsets(action.payload));
+          case 'ui/setKeyboardOpen':
+          case 'ui/setScreenSafeArea':
+          case 'ui/setLayoutDimensions': {
+            const wsa = this.$store.getters['ui/webviewSafeArea'];
+            await webview.executeJavaScript(
+              setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
+            );
             break;
+          }
         }
       },
     });

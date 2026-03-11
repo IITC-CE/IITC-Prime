@@ -19,7 +19,8 @@
       nodeRole="bottomSheet"
       class="panel-container"
       rows="auto, auto, *"
-      :width="panelWidth || '100%'"
+      :marginLeft="effectiveLeftInset"
+      :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
       height="100%"
     >
       <!-- Header with drag indicator -->
@@ -77,6 +78,7 @@
 import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
+import { isIOS } from '@nativescript/core';
 import { layoutService } from '~/utils/layout-service';
 import { getAppName } from '~/utils/platform';
 
@@ -99,6 +101,18 @@ export default {
       default: true,
     },
     panelWidth: {
+      type: Number,
+      default: 0,
+    },
+    navBarHeight: {
+      type: Number,
+      default: 0,
+    },
+    safeAreaLeftInset: {
+      type: Number,
+      default: 0,
+    },
+    safeAreaRightInset: {
       type: Number,
       default: 0,
     },
@@ -126,6 +140,15 @@ export default {
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
+
+    /**
+     * On iOS, ui-persistent-bottomsheet sets iosOverflowSafeAreaEnabled=false on the
+     * bottomSheet child, so iOS automatically constrains it to the safe area.
+     * We must not add marginLeft on iOS or the inset would be applied twice.
+     */
+    effectiveLeftInset() {
+      return isIOS ? 0 : this.safeAreaLeftInset;
+    },
 
     /**
      * Check if current pane is map
@@ -183,35 +206,15 @@ export default {
       const height = this.screenHeight || 800;
       const middlePosition = height / 2;
       const topPosition = height - 50;
+      // Bottom step extends behind the nav bar so panel content stays above it
+      const bottomStep = this.PANEL_CLOSED_HEIGHT + this.navBarHeight;
 
       // Include HIDDEN position (0) only when keyboard is open
       if (!this.isVisible) {
-        return [0, this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
+        return [0, bottomStep, middlePosition, topPosition];
       }
 
-      return [this.PANEL_CLOSED_HEIGHT, middlePosition, topPosition];
-    },
-
-    /**
-     * Check if panel is positioned on the side (landscape tablet mode)
-     */
-    isPanelOnSide() {
-      const dimensions = layoutService.dimensions;
-      return this.panelWidth < dimensions.availableWidth;
-    },
-
-    /**
-     * Calculate safe area inset for WebView bottom
-     */
-    safeAreaBottomInset() {
-      // Panel full width (portrait OR landscape on phone):
-      //   - WebView is clipped at bottom
-      //   - Safe area = 10px
-      //
-      // Panel on side (landscape on tablet):
-      //   - WebView extends to bottom of screen, panel overlaps from side
-      //   - Safe area = panel height (110px)
-      return this.isPanelOnSide ? this.PANEL_CLOSED_HEIGHT : 10;
+      return [bottomStep, middlePosition, topPosition];
     },
   },
 
@@ -315,13 +318,6 @@ export default {
         }
       },
       deep: true,
-    },
-
-    /**
-     * Watch safe area inset changes and update store
-     */
-    safeAreaBottomInset(newValue) {
-      this.$store.dispatch('ui/setSafeAreaInsets', newValue);
     },
   },
 

@@ -6,6 +6,8 @@
     class="plugins-list"
     :items="combinedItems"
     :itemTemplateSelector="templateSelector"
+    :style="{ paddingBottom: bottomPadding }"
+    @loaded="onLoaded"
     @itemTap="onItemTap"
   >
     <!-- Template for section headers -->
@@ -81,6 +83,7 @@
 
 <script>
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
+import { enableListEdgeToEdge } from '@/utils/platform';
 
 export default {
   name: 'PluginsList',
@@ -104,6 +107,10 @@ export default {
     title: {
       type: String,
       default: null,
+    },
+    bottomPadding: {
+      type: Number,
+      default: 0,
     },
   },
 
@@ -215,6 +222,10 @@ export default {
 
     getPluginIcon(plugin) {
       return plugin.icon || plugin.icon64 || this.placeholderImageSource;
+    },
+
+    onLoaded(args) {
+      enableListEdgeToEdge(args.object);
     },
 
     // Handle item tap to toggle plugin status
