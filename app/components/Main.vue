@@ -16,6 +16,7 @@
           :safeAreaLeftInset="safeAreaLeftInset"
           :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
+          :listBottomPadding="mapStateBarHeight + navBarHeight"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
