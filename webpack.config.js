@@ -1,11 +1,96 @@
 const webpack = require('@nativescript/webpack');
 const TerserPlugin = require('terser-webpack-plugin');
+const { resolve, join } = require('path');
+const { readFileSync } = require('fs');
+
+require('dotenv').config();
+
+const SentryCliPlugin = require('@sentry/webpack-plugin').sentryWebpackPlugin;
+const SourceMapDevToolPlugin = require('webpack').SourceMapDevToolPlugin;
+
+const SENTRY_PREFIX = process.env.SENTRY_PREFIX || 'app:///';
 
 module.exports = env => {
   webpack.init(env);
 
   // Learn how to customize:
   // https://docs.nativescript.org/webpack
+
+  const isStoreBuild = !!env.production;
+  const sentryEnabled = !!env['sentry'];
+
+  const platform = webpack.Utils.platform.getPlatformName();
+  const projectSlug = `${process.env.SENTRY_PROJECT_SLUG}-${platform}`;
+
+  // Read version from package.json (used by both platforms via getPackageVersion() in app.gradle)
+  const versionString = sentryEnabled
+    ? JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8')).version
+    : null;
+
+  const SENTRY_DIST = isStoreBuild ? `${Date.now()}` : `dev-${Date.now()}`;
+  const SENTRY_RELEASE = isStoreBuild ? versionString : SENTRY_DIST;
+
+  webpack.chainWebpack(config => {
+    config.plugin('DefinePlugin').tap(args => {
+      Object.assign(args[0], {
+        __SENTRY_DIST__: `'${SENTRY_DIST}'`,
+        __SENTRY_RELEASE__: `'${SENTRY_RELEASE}'`,
+        __SENTRY_ENVIRONMENT__: `'${isStoreBuild ? 'production' : 'development'}'`,
+        __ENABLE_SENTRY__: sentryEnabled,
+        __SENTRY_PREFIX__: `'${SENTRY_PREFIX}'`,
+        __SENTRY_DSN_IOS__: JSON.stringify(process.env.SENTRY_DSN_IOS),
+        __SENTRY_DSN_ANDROID__: JSON.stringify(process.env.SENTRY_DSN_ANDROID),
+      });
+      return args;
+    });
+
+    if (sentryEnabled) {
+      config.devtool(false);
+
+      // Relative sourceMappingURL so Sentry CLI can resolve map files by path (not URL scheme)
+      config.plugin('SourceMapDevToolPlugin|sentry').use(SourceMapDevToolPlugin, [
+        {
+          append: `\n//# sourceMappingURL=[name].js.map`,
+          filename: '[name].js.map',
+        },
+      ]);
+
+      const distPath = webpack.Utils.platform.getAbsoluteDistPath();
+      config
+        .plugin('SentryCliPlugin')
+        .init(() =>
+          SentryCliPlugin({
+            org: process.env.SENTRY_ORG_SLUG,
+            project: projectSlug,
+            sourcemaps: {
+              // Include both bundles and maps for debug ID injection and upload.
+              // Android uses .mjs, iOS uses .js — both need to be listed so Sentry CLI injects
+              // debug IDs into bundles and uploads matching sourcemaps.
+              // At runtime the native SDK reads debug IDs from bundles → debug_meta.images.
+              // Sentry matches frame.filename == code_file → gets debug_id → finds map → symbolication.
+              assets: [`${distPath}/*.mjs`, `${distPath}/*.js`, `${distPath}/*.js.map`],
+              // Delete source maps after upload so they are not bundled into the APK
+              filesToDeleteAfterUpload: `${distPath}/*.js.map`,
+            },
+            release: {
+              dist: SENTRY_DIST,
+              cleanArtifacts: true,
+              deploy: {
+                env: isStoreBuild ? 'production' : 'development',
+              },
+              setCommits: {
+                auto: true,
+                ignoreMissing: true,
+              },
+              ...(SENTRY_RELEASE ? { name: SENTRY_RELEASE } : {}),
+            },
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            telemetry: false,
+          })
+        )
+        .use(SentryCliPlugin);
+    }
+  });
 
   const config = webpack.resolveConfig();
 
@@ -14,6 +99,10 @@ module.exports = env => {
   config.externals.push('~/licenses.json');
 
   if (env.production || env.uglify) {
+    // Sentry requires specific line length for source map correctness
+    const sentryFormatOptions =
+      isStoreBuild || sentryDev ? { max_line_len: 1000, indent_level: 1 } : {};
+
     config.optimization = config.optimization || {};
     config.optimization.minimizer = [
       new TerserPlugin({
@@ -38,6 +127,7 @@ module.exports = env => {
             comments: false,
             semicolons: true,
             ecma: 2020,
+            ...sentryFormatOptions,
           },
         },
         extractComments: false,

@@ -32,3 +32,4 @@ typings/
 !.vscode/extensions.json
 
 package-lock.json
+.env
