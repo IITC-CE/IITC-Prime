@@ -165,18 +165,11 @@
         />
       </GridLayout>
     </template>
-
-    <template #spacer>
-      <GridLayout rows="80">
-        <Label row="0" text="" />
-      </GridLayout>
-    </template>
   </ListView>
 </template>
 
 <script>
 import SelectField from '@/components/base/SelectField.vue';
-import { mapState } from 'vuex';
 import { $navigateTo } from 'nativescript-vue';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
@@ -203,12 +196,6 @@ export default {
     };
   },
 
-  computed: {
-    ...mapState({
-      isDebugActive: state => state.ui.isDebugActive,
-    }),
-  },
-
   methods: {
     // Template selector function - determines which template to use
     templateSelector(data) {
@@ -219,7 +206,6 @@ export default {
         'portal-icons-group',
         'switch-pair',
         'switch-single',
-        'spacer',
       ];
       const itemType = data.item.type;
       return validTypes.includes(itemType) ? itemType : 'default';

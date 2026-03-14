@@ -42,12 +42,6 @@ export class ControlPanelDataService {
       });
     });
 
-    // Add spacer item at the end to ensure scrollability
-    data.push({
-      type: 'spacer',
-      id: 'spacer',
-    });
-
     return data;
   }
 
@@ -100,12 +94,6 @@ export class ControlPanelDataService {
       const switchItems = this.generateSwitchItems(overlayLayers);
       data.push(...switchItems);
     }
-
-    // Add spacer item at the end to ensure scrollability
-    data.push({
-      type: 'spacer',
-      id: 'spacer',
-    });
 
     return data;
   }

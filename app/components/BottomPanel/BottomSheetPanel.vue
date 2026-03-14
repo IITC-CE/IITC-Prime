@@ -22,6 +22,7 @@
       :marginLeft="effectiveLeftInset"
       :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
       height="100%"
+      :style="{ paddingBottom: effectiveListPaddingBottom }"
     >
       <!-- Header with drag indicator -->
       <StackLayout row="0" class="panel-header">
@@ -68,7 +69,7 @@
         />
       </GridLayout>
 
-      <!-- Content area with ListView (as in demo) -->
+      <!-- Content area -->
       <AppControlListView row="2" id="panelScrollView" :listItems="currentListItems" />
     </GridLayout>
   </BottomSheet>
@@ -113,6 +114,10 @@ export default {
       default: 0,
     },
     safeAreaRightInset: {
+      type: Number,
+      default: 0,
+    },
+    listBottomPadding: {
       type: Number,
       default: 0,
     },
@@ -215,6 +220,19 @@ export default {
       }
 
       return [bottomStep, middlePosition, topPosition];
+    },
+
+    /**
+     * Effective bottom padding for the panel content area.
+     * listBottomPadding reserves space above MapStateBar/navBar.
+     * The extra gap (screenHeight - topPosition) compensates for the portion
+     * of the ListView that extends below the visible screen at TOP position,
+     * ensuring content can scroll far enough to clear the MapStateBar.
+     */
+    effectiveListPaddingBottom() {
+      const topPosition = this.steps[this.steps.length - 1];
+      const topGap = (this.screenHeight || 800) - topPosition;
+      return this.listBottomPadding + topGap;
     },
   },
 
