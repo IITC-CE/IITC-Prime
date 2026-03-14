@@ -41,6 +41,10 @@ npm run version:minor  # Increment minor version
 npm run version:major  # Increment major version
 ```
 
+## Crash Reporting
+
+The app uses [Sentry](https://sentry.io/) to collect app crash and error reports. Sentry is only enabled in builds compiled with the `--env.sentry` flag — it is not included in F-Droid official repo builds. No personal data is collected; reports contain only app error details, device model, OS version, and app version to help diagnose app issues.
+
 ## Environment Variables
 
 - `BUILD_TYPE`: Set build variant (`debug` (default), `beta`, `release`)

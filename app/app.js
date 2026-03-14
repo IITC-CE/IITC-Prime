@@ -16,6 +16,7 @@ import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
 import { ImageCacheIt } from '@triniwiz/nativescript-image-cache-it';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
 import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
+import { initSentry, setupVueErrorHandler } from './sentry';
 
 import Main from '~/components/Main';
 import store from './store';
@@ -24,6 +25,7 @@ import { getStatusBarHeight } from '@/utils/platform';
 
 // Initialize app logging
 initializeTracing();
+initSentry();
 ImageCacheIt.enableAutoMM();
 
 // Install BottomSheet plugins
@@ -63,6 +65,8 @@ if (isAndroid) {
 }
 
 const app = createApp(Main);
+
+setupVueErrorHandler(app);
 
 app.config.globalProperties.$filters = {
   fonticon: fonticon,
