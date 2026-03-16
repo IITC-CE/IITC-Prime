@@ -180,6 +180,25 @@ export const detachBackHandler = () => {
 };
 
 /**
+ * Fix text input colors for system dark mode.
+ * Use as @loaded handler on TextField/TextView components.
+ * @param {object} args - NativeScript loaded event args
+ */
+export const fixTextInputColors = args => {
+  const view = args.object;
+  const { Color: NSColor } = require('@nativescript/core');
+  view.style.color = new NSColor('#ffffff');
+  view.style.placeholderColor = new NSColor('#aaaaaa');
+  if (isAndroid) {
+    // Center text vertically for single-line appearance
+    const nativeView = view.nativeViewProtected;
+    const gravity = nativeView.getGravity();
+    const horizontalGravity = gravity & android.view.Gravity.HORIZONTAL_GRAVITY_MASK;
+    nativeView.setGravity(horizontalGravity | android.view.Gravity.CENTER_VERTICAL);
+  }
+};
+
+/**
  * Parse Android window insets into DIP values including display cutouts
  * @param {object} inset - NativeScript inset object from @androidOverflowInset
  * @returns {{ top: number, bottom: number, left: number, right: number }}

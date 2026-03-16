@@ -1,59 +1,63 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="sheet-content">
-    <Label text="Add Plugin" class="sheet-title" />
+  <StackLayout class="sheet-root" androidOverflowEdge="always">
+    <FlexboxLayout class="sheet-content" androidOverflowEdge="always">
+      <Label text="Add Plugin" class="sheet-title" />
 
-    <!-- URL input -->
-    <TextField
-      ref="urlField"
-      class="url-field"
-      hint="https://example.com/plugin.user.js"
-      v-model="pluginUrl"
-      autocorrect="false"
-      autocapitalizationType="none"
-      keyboardType="url"
-      returnKeyType="go"
-      @returnPress="loadPlugin"
-    />
+      <!-- URL input -->
+      <TextField
+        ref="urlField"
+        class="text-input url-field"
+        hint="https://example.com/plugin.user.js"
+        v-model="pluginUrl"
+        autocorrect="false"
+        autocapitalizationType="none"
+        keyboardType="url"
+        returnKeyType="go"
+        @returnPress="loadPlugin"
+        @loaded="fixTextInputColors"
+      />
 
-    <!-- Load button -->
-    <MDButton
-      class="btn-primary btn-load"
-      text="Load from URL"
-      :isEnabled="!!pluginUrl.trim() && !isLoading"
-      @tap="loadPlugin"
-    />
+      <!-- Load button -->
+      <MDButton
+        class="btn-primary btn-load"
+        text="Load from URL"
+        :isEnabled="!!pluginUrl.trim() && !isLoading"
+        @tap="loadPlugin"
+      />
 
-    <!-- Divider -->
-    <GridLayout columns="*, auto, *" class="divider-row">
-      <StackLayout col="0" class="divider-line" />
-      <Label col="1" text="— or —" class="divider-text" />
-      <StackLayout col="2" class="divider-line" />
-    </GridLayout>
+      <!-- Divider -->
+      <FlexboxLayout class="divider-row" clipToBounds="true">
+        <StackLayout class="divider-line" />
+        <Label text="or" :class="['divider-text', { android: isAndroid }]" />
+        <StackLayout class="divider-line" />
+      </FlexboxLayout>
+      <!-- Choose file -->
+      <MDButton class="btn-primary btn-file" text="Choose from files" @tap="chooseFile" />
 
-    <!-- Choose file -->
-    <MDButton class="btn-primary btn-file" text="Choose from files" @tap="chooseFile" />
+      <!-- Loading indicator -->
+      <ActivityIndicator v-if="isLoading" busy="true" class="loading-indicator" />
 
-    <!-- Loading indicator -->
-    <ActivityIndicator v-if="isLoading" busy="true" class="loading-indicator" />
-
-    <!-- Error message -->
-    <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
+      <!-- Error message -->
+      <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
+    </FlexboxLayout>
   </StackLayout>
 </template>
 
 <script>
+import { isAndroid } from '@nativescript/core';
 import { mapActions } from 'vuex';
 import { ajaxGet, parseMeta } from 'lib-iitc-manager';
 import { confirm, alert } from '@/utils/dialogs';
-import * as Clipboard from 'nativescript-clipboard';
+import { fixTextInputColors } from '@/utils/platform';
 
 export default {
   name: 'AddPluginSheet',
 
   data() {
     return {
+      isAndroid,
       pluginUrl: '',
       isLoading: false,
       errorMessage: '',
@@ -62,6 +66,7 @@ export default {
 
   methods: {
     ...mapActions('manager', ['addUserScripts']),
+    fixTextInputColors,
 
     async checkClipboard() {
       try {
@@ -144,8 +149,16 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
+.sheet-root {
+  background-color: $surface;
+  border-radius: $radius-large $radius-large 0 0;
+}
+
 .sheet-content {
-  padding: $spacing-m;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: $spacing-l;
+  padding-bottom: $spacing-xl;
   background-color: $surface;
   border-radius: $radius-large $radius-large 0 0;
 }
@@ -158,14 +171,7 @@ export default {
 }
 
 .url-field {
-  padding: $spacing-s;
   margin: 0;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: $radius-small;
-  font-size: 14;
-  height: 40;
-  color: #ffffff;
-  placeholder-color: #aaaaaa;
 }
 
 .btn-load {
@@ -173,20 +179,26 @@ export default {
 }
 
 .divider-row {
-  margin: $spacing-s 0;
-  vertical-alignment: center;
+  flex-direction: row;
+  align-items: center;
+  height: 24;
 }
 
 .divider-line {
+  flex-grow: 1;
   height: 1;
   background-color: rgba(255, 255, 255, 0.15);
-  vertical-alignment: center;
 }
 
 .divider-text {
   color: $on-surface-dark;
   font-size: $font-size-small;
   margin: 0 $spacing-m;
+  height: 24;
+}
+
+.divider-text.android {
+  line-height: 1;
 }
 
 .btn-file {

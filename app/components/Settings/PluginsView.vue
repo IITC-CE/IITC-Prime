@@ -9,7 +9,7 @@
     <template #default="{ bottomPadding }">
       <GridLayout rows="auto, auto, auto, *" class="main-container">
         <!-- Search field -->
-        <TextField row="0" class="search-field" hint="Search plugins..." v-model="searchQuery" />
+        <TextField row="0" class="text-input search-field" hint="Search plugins..." v-model="searchQuery" @loaded="fixTextInputColors" />
 
         <!-- Categories list component -->
         <CategoriesList
@@ -45,11 +45,13 @@
 </template>
 
 <script>
+import { isIOS } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import { confirm } from '@/utils/dialogs';
+import { fixTextInputColors } from '@/utils/platform';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
@@ -147,11 +149,16 @@ export default {
 
   methods: {
     ...mapActions('manager', ['loadPlugins', 'managePlugin']),
+    fixTextInputColors,
 
     openAddPlugin() {
       this.$showBottomSheet(AddPluginSheet, {
         dismissOnBackgroundTap: true,
         dismissOnDraggingDownSheet: true,
+        skipCollapsedState: true,
+        ignoreBottomSafeArea: true,
+        ignoreKeyboardHeight: false,
+        transparent: isIOS,
       });
     },
 
@@ -285,14 +292,7 @@ export default {
 
 .search-field {
   margin: $spacing-m 0 $spacing-s 0;
-  padding: $spacing-s;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: $radius-small;
-  font-size: 14;
-  height: 40;
-  color: #ffffff;
-  placeholder-color: #aaaaaa;
 }
 
 .loading-indicator {

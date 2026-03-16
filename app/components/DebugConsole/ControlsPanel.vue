@@ -1,52 +1,20 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <StackLayout class="controls-container">
     <!-- Controls panel -->
-    <GridLayout
-      row="0"
-      class="controls-panel"
-      columns="auto, *, auto, auto, auto">
-
-      <MDRipple
-        col="0"
-        class="control-button"
-        @tap="handleClose"
-      >
-        <Label
-          class="fa"
-          :text="$filters.fonticon('fa-arrow-left')"
-        />
+    <GridLayout row="0" class="controls-panel" columns="auto, *, auto, auto, auto">
+      <MDRipple col="0" class="control-button" @tap="handleClose">
+        <Label class="fa" :text="$filters.fonticon('fa-arrow-left')" />
       </MDRipple>
-      <MDRipple
-        col="2"
-        class="control-button trash"
-        @tap="$emit('clear')"
-      >
-        <Label
-          class="fa"
-          :text="$filters.fonticon('fa-trash')"
-        />
+      <MDRipple col="2" class="control-button trash" @tap="$emit('clear')">
+        <Label class="fa" :text="$filters.fonticon('fa-trash')" />
       </MDRipple>
-      <MDRipple
-        col="3"
-        class="control-button"
-        @tap="navigateHistoryUp"
-      >
-        <Label
-          class="fa"
-          :text="$filters.fonticon('fa-arrow-up')"
-        />
+      <MDRipple col="3" class="control-button" @tap="navigateHistoryUp">
+        <Label class="fa" :text="$filters.fonticon('fa-arrow-up')" />
       </MDRipple>
-      <MDRipple
-        col="4"
-        class="control-button"
-        @tap="navigateHistoryDown"
-      >
-        <Label
-          class="fa"
-          :text="$filters.fonticon('fa-arrow-down')"
-        />
+      <MDRipple col="4" class="control-button" @tap="navigateHistoryDown">
+        <Label class="fa" :text="$filters.fonticon('fa-arrow-down')" />
       </MDRipple>
     </GridLayout>
 
@@ -55,48 +23,44 @@
       <TextView
         ref="commandInput"
         col="0"
-        class="command-input"
+        class="text-input command-input"
         v-model="commandText"
         @returnPress="executeCommand"
+        @loaded="fixTextInputColors"
         hint="Enter JavaScript command..."
         autocorrect="false"
         maxLines="10"
       />
-      <MDRipple
-        col="1"
-        class="btn-primary send-button"
-        @tap="executeCommand"
-      >
-        <Label
-          class="fa"
-          :text="$filters.fonticon('fa-paper-plane')"
-        />
+      <MDRipple col="1" class="btn-primary send-button" @tap="executeCommand">
+        <Label class="fa" :text="$filters.fonticon('fa-paper-plane')" />
       </MDRipple>
     </GridLayout>
   </StackLayout>
 </template>
 
 <script>
+import { fixTextInputColors } from '@/utils/platform';
+
 export default {
   props: {
     command: {
       type: String,
-      default: ''
+      default: '',
     },
     commandHistory: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     historyPosition: {
       type: Number,
-      default: -1
-    }
+      default: -1,
+    },
   },
 
   data() {
     return {
-      commandText: ''
-    }
+      commandText: '',
+    };
   },
 
   watch: {
@@ -105,10 +69,12 @@ export default {
     },
     commandText(newVal) {
       this.$emit('update:command', newVal);
-    }
+    },
   },
 
   methods: {
+    fixTextInputColors,
+
     // Execute command and emit result to parent
     executeCommand() {
       if (!this.commandText || this.commandText.trim() === '') return;
@@ -150,9 +116,9 @@ export default {
       if (this.$refs.commandInput && this.$refs.commandInput.nativeView) {
         this.$refs.commandInput.nativeView.dismissSoftInput();
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped lang="scss">
@@ -195,16 +161,9 @@ export default {
 
 .command-input {
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: $radius-small;
-  padding: $spacing-s;
   font-family: monospace;
-  font-size: 14;
   height: auto;
-  min-height: 40;
   max-height: 100;
-  color: #ffffff;
-  placeholder-color: #aaaaaa;
 }
 
 .send-button {
