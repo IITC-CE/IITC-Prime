@@ -101,7 +101,7 @@ module.exports = env => {
   if (env.production || env.uglify) {
     // Sentry requires specific line length for source map correctness
     const sentryFormatOptions =
-      isStoreBuild || sentryDev ? { max_line_len: 1000, indent_level: 1 } : {};
+      isStoreBuild || sentryEnabled ? { max_line_len: 1000, indent_level: 1 } : {};
 
     config.optimization = config.optimization || {};
     config.optimization.minimizer = [
