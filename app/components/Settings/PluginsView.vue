@@ -1,54 +1,45 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase
-    title="Plugins"
-    use-scroll="false"
-    @navigatedTo="onNavigatedTo"
-    v-slot="{ bottomPadding }"
-  >
-    <GridLayout rows="auto, auto, auto, *" class="main-container">
-      <!-- Search field -->
-      <TextField
-        row="0"
-        class="search-field"
-        hint="Search plugins..."
-        v-model="searchQuery"
-      />
+  <SettingsBase title="Plugins" use-scroll="false" @navigatedTo="onNavigatedTo">
+    <template #headerRight>
+      <ActionItem text="Add plugin" @tap="openAddPlugin" color="white" />
+    </template>
 
-      <!-- Categories list component -->
-      <CategoriesList
-        row="1"
-        :categories="categoriesWithPlugins"
-        :activeCategory="activeCategory"
-        @categorySelected="setActiveCategory"
-      />
+    <template #default="{ bottomPadding }">
+      <GridLayout rows="auto, auto, auto, *" class="main-container">
+        <!-- Search field -->
+        <TextField row="0" class="search-field" hint="Search plugins..." v-model="searchQuery" />
 
-      <!-- Loading indicator -->
-      <ActivityIndicator
-        row="2"
-        v-if="!isPluginsVisible"
-        busy="true"
-        class="loading-indicator"
-      />
-
-      <!-- Plugins container -->
-      <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
-        <PluginsList
-          v-if="filteredPlugins.length > 0"
-          :plugins="filteredPlugins"
-          :showEnabledFirst="activeCategory === 'All'"
-          :bottomPadding="bottomPadding"
-          @toggle="togglePlugin"
+        <!-- Categories list component -->
+        <CategoriesList
+          row="1"
+          :categories="categoriesWithPlugins"
+          :activeCategory="activeCategory"
+          @categorySelected="setActiveCategory"
         />
-        <Label
-          v-if="filteredPlugins.length === 0"
-          :text="getEmptyMessage()"
-          class="no-plugins"
-          once="true"
-        />
+
+        <!-- Loading indicator -->
+        <ActivityIndicator row="2" v-if="!isPluginsVisible" busy="true" class="loading-indicator" />
+
+        <!-- Plugins container -->
+        <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
+          <PluginsList
+            v-if="filteredPlugins.length > 0"
+            :plugins="filteredPlugins"
+            :showEnabledFirst="activeCategory === 'All'"
+            :bottomPadding="bottomPadding"
+            @toggle="togglePlugin"
+          />
+          <Label
+            v-if="filteredPlugins.length === 0"
+            :text="getEmptyMessage()"
+            class="no-plugins"
+            once="true"
+          />
+        </GridLayout>
       </GridLayout>
-    </GridLayout>
+    </template>
   </SettingsBase>
 </template>
 
@@ -58,6 +49,7 @@ import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import SettingsBase from './SettingsBase';
+import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
 import PluginsList from './components/plugins/PluginsList';
 
@@ -67,7 +59,7 @@ export default {
   components: {
     SettingsBase: markRaw(SettingsBase),
     CategoriesList: markRaw(CategoriesList),
-    PluginsList: markRaw(PluginsList)
+    PluginsList: markRaw(PluginsList),
   },
 
   mixins: [performanceOptimizationMixin],
@@ -78,7 +70,7 @@ export default {
       activeCategory: 'All',
       isPluginsVisible: false,
 
-      _searchDebouncer: createDebouncer(300)
+      _searchDebouncer: createDebouncer(300),
     };
   },
 
@@ -116,7 +108,7 @@ export default {
 
     categoriesWithPlugins() {
       const result = {
-        all: { name: 'All', hasNew: false }
+        all: { name: 'All', hasNew: false },
       };
 
       // If data not loaded yet, return just "All" category
@@ -131,12 +123,12 @@ export default {
         if (!result[category]) {
           result[category] = {
             name: category,
-            hasNew: false
+            hasNew: false,
           };
         }
 
         // Check if plugin was added within last hour
-        if (plugin.addedAt && (Date.now() / 1000 - plugin.addedAt) < 3600) {
+        if (plugin.addedAt && Date.now() / 1000 - plugin.addedAt < 3600) {
           result[category].hasNew = true;
           result.all.hasNew = true;
         }
@@ -148,14 +140,18 @@ export default {
         .sort(([, a], [, b]) => a.name.localeCompare(b.name));
 
       return { all: result.all, ...Object.fromEntries(sorted) };
-    }
+    },
   },
 
   methods: {
-    ...mapActions('manager', [
-      'loadPlugins',
-      'managePlugin'
-    ]),
+    ...mapActions('manager', ['loadPlugins', 'managePlugin']),
+
+    openAddPlugin() {
+      this.$showBottomSheet(AddPluginSheet, {
+        dismissOnBackgroundTap: true,
+        dismissOnDraggingDownSheet: true,
+      });
+    },
 
     onNavigatedTo() {
       // Show plugins after navigation is complete
@@ -182,7 +178,11 @@ export default {
         const description = (plugin.description || '').toLowerCase();
         const category = (plugin.category || '').toLowerCase();
 
-        if (name.includes(normalizedQuery) || description.includes(normalizedQuery) || category.includes(normalizedQuery)) {
+        if (
+          name.includes(normalizedQuery) ||
+          description.includes(normalizedQuery) ||
+          category.includes(normalizedQuery)
+        ) {
           const score = Math.max(
             fuzzysearch(query, plugin.name || ''),
             fuzzysearch(query, plugin.description || ''),
@@ -221,7 +221,7 @@ export default {
         // Call API to update plugin status
         await this.managePlugin({
           uid: plugin.uid,
-          action: newStatus
+          action: newStatus,
         });
       } catch (error) {
         console.error('Failed to toggle plugin:', error);
@@ -239,7 +239,7 @@ export default {
       } catch (error) {
         console.error('Failed to load plugins:', error);
       }
-    }
+    },
   },
 
   mounted() {
@@ -249,7 +249,6 @@ export default {
     // Plugins will be shown in onNavigatedTo event
     this.isPluginsVisible = false;
   },
-
 };
 </script>
 
