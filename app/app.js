@@ -12,6 +12,7 @@ import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebView from '@nativescript-community/ui-webview/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
+import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
 import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
 import { ImageCacheIt } from '@triniwiz/nativescript-image-cache-it';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
@@ -81,5 +82,6 @@ app.use(SwitchPlugin);
 app.use(RipplePlugin);
 app.use(BottomSheetPlugin);
 app.use(PersistentBottomSheetPlugin);
+app.use(SwipeMenuPlugin);
 
 app.start();

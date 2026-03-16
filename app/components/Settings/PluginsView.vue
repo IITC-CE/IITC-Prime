@@ -30,6 +30,7 @@
             :showEnabledFirst="activeCategory === 'All'"
             :bottomPadding="bottomPadding"
             @toggle="togglePlugin"
+            @delete="deletePlugin"
           />
           <Label
             v-if="filteredPlugins.length === 0"
@@ -48,6 +49,7 @@ import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
+import { confirm } from '@/utils/dialogs';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
@@ -226,6 +228,27 @@ export default {
       } catch (error) {
         console.error('Failed to toggle plugin:', error);
         // On error, reload data to ensure UI reflects actual state
+        await this.loadPlugins();
+      }
+    },
+
+    async deletePlugin(plugin) {
+      const confirmed = await confirm({
+        title: 'Delete plugin',
+        message: `Are you sure you want to delete "${plugin.name}"?`,
+        okButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+      });
+
+      if (!confirmed) return;
+
+      try {
+        await this.managePlugin({
+          uid: plugin.uid,
+          action: 'delete',
+        });
+      } catch (error) {
+        console.error('Failed to delete plugin:', error);
         await this.loadPlugins();
       }
     },

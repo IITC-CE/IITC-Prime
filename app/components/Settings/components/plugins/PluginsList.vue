@@ -2,13 +2,13 @@
 
 <template>
   <CollectionView
+    ref="collectionView"
     row="1"
     class="plugins-list"
     :items="combinedItems"
     :itemTemplateSelector="templateSelector"
     :style="{ paddingBottom: bottomPadding }"
     @loaded="onLoaded"
-    @itemTap="onItemTap"
   >
     <!-- Template for section headers -->
     <template #section-header="{ item }">
@@ -17,66 +17,136 @@
 
     <!-- Template for plugin items with SVG icons -->
     <template #plugin-svg="{ item }">
-      <GridLayout
-        class="list-item plugin-item"
-        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="auto, *, 56"
-        rows="82"
+      <SwipeMenu
+        :startingSide="item.startingSide"
+        :translationFunction="drawerTranslationFunction"
+        :rightSwipeDistance="0"
       >
-        <!-- SVG Plugin icon -->
-        <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
+        <GridLayout
+          ~mainContent
+          class="list-item plugin-item"
+          :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+          columns="auto, *, 56"
+          rows="82"
+          width="100%"
+          @tap="onPluginTap(item)"
+        >
+          <!-- SVG Plugin icon -->
+          <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
 
-        <!-- Plugin info -->
-        <StackLayout col="1" class="plugin-info">
-          <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-          <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          <!-- Plugin info -->
+          <StackLayout col="1" class="plugin-info">
+            <FlexboxLayout class="plugin-name-row">
+              <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+              <Label
+                v-if="item.user && !item.override"
+                text="user"
+                class="plugin-tag plugin-tag--user"
+                once="true"
+              />
+              <Label
+                v-if="item.override"
+                text="override"
+                class="plugin-tag plugin-tag--override"
+                once="true"
+              />
+            </FlexboxLayout>
+            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          </StackLayout>
+
+          <!-- Toggle switch -->
+          <MDSwitch
+            col="2"
+            class="switch"
+            :checked="item.status === 'on'"
+            isUserInteractionEnabled="false"
+          />
+        </GridLayout>
+        <StackLayout
+          ~rightDrawer
+          :class="
+            item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
+          "
+          @tap="onSwipeAction(item)"
+        >
+          <Label
+            :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+            class="fa swipe-drawer-icon"
+          />
         </StackLayout>
-
-        <!-- Toggle switch -->
-        <MDSwitch
-          col="2"
-          class="switch"
-          :checked="item.status === 'on'"
-          isUserInteractionEnabled="false"
-        />
-      </GridLayout>
+      </SwipeMenu>
     </template>
 
     <!-- Template for plugin items with raster icons -->
     <template #plugin-raster="{ item }">
-      <GridLayout
-        class="list-item plugin-item"
-        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="auto, *, 56"
-        rows="82"
+      <SwipeMenu
+        :startingSide="item.startingSide"
+        :translationFunction="drawerTranslationFunction"
+        :rightSwipeDistance="0"
       >
-        <!-- Raster Plugin icon -->
-        <ImageCacheIt
-          col="0"
-          :src="getPluginIcon(item)"
-          :placeHolder="placeholderImageSource"
-          :errorHolder="placeholderImageSource"
-          class="plugin-icon"
-          stretch="aspectFit"
-          loadMode="async"
-          transition="fade"
-          once="true"
-        />
+        <GridLayout
+          ~mainContent
+          class="list-item plugin-item"
+          :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+          columns="auto, *, 56"
+          rows="82"
+          width="100%"
+          @tap="onPluginTap(item)"
+        >
+          <!-- Raster Plugin icon -->
+          <ImageCacheIt
+            col="0"
+            :src="getPluginIcon(item)"
+            :placeHolder="placeholderImageSource"
+            :errorHolder="placeholderImageSource"
+            class="plugin-icon"
+            stretch="aspectFit"
+            loadMode="async"
+            transition="fade"
+            once="true"
+          />
 
-        <!-- Plugin info -->
-        <StackLayout col="1" class="plugin-info">
-          <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-          <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          <!-- Plugin info -->
+          <StackLayout col="1" class="plugin-info">
+            <FlexboxLayout class="plugin-name-row">
+              <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+              <Label
+                v-if="item.user && !item.override"
+                text="user"
+                class="plugin-tag plugin-tag--user"
+                once="true"
+              />
+              <Label
+                v-if="item.override"
+                text="override"
+                class="plugin-tag plugin-tag--override"
+                once="true"
+              />
+            </FlexboxLayout>
+            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          </StackLayout>
+
+          <!-- Toggle switch -->
+          <MDSwitch
+            col="2"
+            class="switch"
+            :checked="item.status === 'on'"
+            isUserInteractionEnabled="false"
+          />
+        </GridLayout>
+        <StackLayout
+          ~rightDrawer
+          :class="
+            item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
+          "
+          @tap="onSwipeAction(item)"
+        >
+          <Label
+            :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+            class="fa swipe-drawer-icon"
+          />
         </StackLayout>
-
-        <!-- Toggle switch -->
-        <MDSwitch
-          col="2"
-          class="switch"
-          :checked="item.status === 'on'"
-          isUserInteractionEnabled="false"
-        />
-      </GridLayout>
+      </SwipeMenu>
     </template>
   </CollectionView>
 </template>
@@ -224,24 +294,28 @@ export default {
       return plugin.icon || plugin.icon64 || this.placeholderImageSource;
     },
 
+    drawerTranslationFunction(side, width, value, delta, progress) {
+      return {
+        mainContent: {
+          translateX: side === 'right' ? -delta : delta,
+        },
+      };
+    },
+
+    onSwipeAction(item) {
+      if (item.user) {
+        this.$emit('delete', item);
+      } else {
+        this.collectionViewRef?.closeCurrentMenu();
+      }
+    },
+
     onLoaded(args) {
+      this.collectionViewRef = args.object;
       enableListEdgeToEdge(args.object);
     },
 
-    // Handle item tap to toggle plugin status
-    onItemTap(event) {
-      const item = event.item;
-
-      // Ignore taps on section headers
-      if (item.type === 'section-header') {
-        return;
-      }
-
-      // Skip if event came from switch to avoid double triggers
-      if (event.object && event.object.className && event.object.className.includes('switch')) {
-        return;
-      }
-
+    onPluginTap(item) {
       this.$emit('toggle', item);
     },
   },
@@ -271,10 +345,30 @@ export default {
   vertical-alignment: center;
 }
 
+.plugin-name-row {
+  align-items: center;
+}
+
 .plugin-name {
   color: $on-surface;
   font-size: $font-size;
   font-weight: 500;
+}
+
+.plugin-tag {
+  font-size: 10;
+  padding: 1 6;
+  margin-left: 6;
+  border-radius: 3;
+  color: #ffffff;
+
+  &--user {
+    background-color: #6b7c3a;
+  }
+
+  &--override {
+    background-color: $state-warning;
+  }
 }
 
 .plugin-description {
@@ -287,5 +381,26 @@ export default {
 .switch {
   height: 32;
   vertical-align: middle;
+}
+
+.swipe-drawer {
+  width: 82;
+  height: 82;
+
+  &--delete {
+    background-color: $state-error;
+  }
+
+  &--disable {
+    background-color: #666666;
+  }
+}
+
+.swipe-drawer-icon {
+  color: #ffffff;
+  font-size: 22;
+  text-alignment: center;
+  vertical-alignment: center;
+  height: 100%;
 }
 </style>
