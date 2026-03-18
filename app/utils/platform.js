@@ -280,6 +280,79 @@ export const openAppLinkSettings = () => {
 };
 
 /**
+ * Read clipboard text if it matches a pattern.
+ *
+ * iOS 14+: uses UIPasteboard.detectPatterns to check for URL presence
+ * Only reads the actual content (which shows the dialog on iOS 16+)
+ * if a URL pattern is detected.
+ *
+ * Android: reads clipboard directly.
+ *
+ * @param {RegExp} pattern - RegExp to test against clipboard text
+ * @returns {Promise<string|null>} Matching clipboard text or null
+ */
+export const getClipboardTextIfMatches = async pattern => {
+  try {
+    if (isIOS) {
+      return await _readClipboardIOS(pattern);
+    } else {
+      return _readClipboardAndroid(pattern);
+    }
+  } catch (e) {
+    console.error('Error reading clipboard:', e);
+    return null;
+  }
+};
+
+function _readClipboardIOS(pattern) {
+  return new Promise(resolve => {
+    const pasteboard = UIPasteboard.generalPasteboard;
+
+    // iOS 14+: detect patterns without triggering paste permission dialog
+    const osVersion = parseFloat(UIDevice.currentDevice.systemVersion);
+    if (osVersion >= 14.0) {
+      const patterns = NSSet.setWithObject(UIPasteboardDetectionPatternProbableWebURL);
+
+      pasteboard.detectPatternsForPatternsCompletionHandler(patterns, (detected, error) => {
+        if (error || !detected || detected.count === 0) {
+          resolve(null);
+          return;
+        }
+
+        // URL detected - now read content
+        const text = pasteboard.string;
+        resolve(text && pattern.test(text) ? text.trim() : null);
+      });
+    } else {
+      // iOS < 14: no paste dialog, read directly
+      const text = pasteboard.string;
+      resolve(text && pattern.test(text) ? text.trim() : null);
+    }
+  });
+}
+
+function _readClipboardAndroid(pattern) {
+  const context = Utils.android.getApplicationContext();
+  const clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+
+  const description = clipboard.getPrimaryClipDescription();
+  if (!description) return null;
+
+  if (
+    !description.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_PLAIN) &&
+    !description.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_HTML)
+  ) {
+    return null;
+  }
+
+  const clip = clipboard.getPrimaryClip();
+  if (!clip || clip.getItemCount() === 0) return null;
+
+  const text = clip.getItemAt(0).getText()?.toString();
+  return text && pattern.test(text) ? text.trim() : null;
+}
+
+/**
  * Get application display name from native resources
  * @returns {string} Application name
  */

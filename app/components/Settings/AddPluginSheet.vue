@@ -50,7 +50,7 @@ import { isAndroid } from '@nativescript/core';
 import { mapActions } from 'vuex';
 import { ajaxGet, parseMeta } from 'lib-iitc-manager';
 import { confirm, alert } from '@/utils/dialogs';
-import { fixTextInputColors } from '@/utils/platform';
+import { getClipboardTextIfMatches, fixTextInputColors } from '@/utils/platform';
 
 export default {
   name: 'AddPluginSheet',
@@ -69,12 +69,10 @@ export default {
     fixTextInputColors,
 
     async checkClipboard() {
-      try {
-        const text = await Clipboard.getText();
-        if (text && text.includes('.user.js')) {
-          this.pluginUrl = text.trim();
-        }
-      } catch (_) {}
+      const url = await getClipboardTextIfMatches(/\.user\.js/i);
+      if (url) {
+        this.pluginUrl = url;
+      }
     },
 
     async loadPlugin() {
