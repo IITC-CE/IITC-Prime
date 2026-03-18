@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { managerService } from '@/utils/manager-service';
 
@@ -53,15 +53,15 @@ export const manager = {
         onMessage: (message, args) => {
           dispatch('ui/showMessage', message, { root: true });
         },
-        onProgress: (isShow) => {
+        onProgress: isShow => {
           commit('SET_PROGRESS', isShow);
         },
-        onInjectPlugin: (plugin) => {
+        onInjectPlugin: plugin => {
           dispatch('map/setInjectPlugin', plugin, { root: true });
         },
-        onPluginEvent: (event) => {
+        onPluginEvent: event => {
           dispatch('handlePluginEvent', event);
-        }
+        },
       });
 
       commit('SET_PROGRESS', true);
@@ -203,6 +203,15 @@ export const manager = {
     },
 
     /**
+     * Add user scripts (external plugins)
+     */
+    async addUserScripts({ commit }, scripts) {
+      const data = await managerService.addUserScripts(scripts);
+      commit('SET_PLUGINS', data.plugins);
+      return data;
+    },
+
+    /**
      * Handle plugin state changes from manager
      */
     async handlePluginEvent({ commit, dispatch }, event) {
@@ -212,8 +221,10 @@ export const manager = {
           commit('UPDATE_PLUGIN_STATUS', { uid, status });
 
           // Handle user-location plugin changes - only for add/remove, not update
-          if (uid === "User Location+https://github.com/IITC-CE/ingress-intel-total-conversion" &&
-              event.event !== 'update') {
+          if (
+            uid === 'User Location+https://github.com/IITC-CE/ingress-intel-total-conversion' &&
+            event.event !== 'update'
+          ) {
             const isEnabled = event.event === 'add';
             await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
           }
@@ -271,5 +282,5 @@ export const manager = {
      * Custom channel URL
      */
     customChannelUrl: state => state.customChannelUrl,
-  }
+  },
 };

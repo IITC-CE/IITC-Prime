@@ -185,6 +185,19 @@ $radius-full: 9999; // For circular elements
   color: $on-surface;
 }
 
+// Text inputs
+.text-input {
+  padding: $spacing-s;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: $radius-small;
+  font-size: $font-size;
+  min-height: 40;
+  color: $on-surface;
+  placeholder-color: $on-surface-dark;
+  border-bottom-width: 0;
+  border-color: transparent;
+}
+
 // Form elements
 .form-field {
   margin-bottom: $spacing-m;
