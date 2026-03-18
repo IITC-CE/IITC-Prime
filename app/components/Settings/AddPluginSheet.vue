@@ -49,8 +49,9 @@
 import { isAndroid } from '@nativescript/core';
 import { mapActions } from 'vuex';
 import { ajaxGet, parseMeta } from 'lib-iitc-manager';
-import { confirm, alert } from '@/utils/dialogs';
+import { confirm } from '@/utils/dialogs';
 import { getClipboardTextIfMatches, fixTextInputColors } from '@/utils/platform';
+import { selectFiles, readFileContent } from '@/utils/file-manager';
 
 export default {
   name: 'AddPluginSheet',
@@ -89,38 +90,8 @@ export default {
           return;
         }
 
-        const meta = parseMeta(code);
-        if (!meta || !meta.name) {
-          this.errorMessage =
-            'Invalid userscript. The file must contain a valid ==UserScript== header.';
-          return;
-        }
-
         const filename = url.substr(url.lastIndexOf('/') + 1);
-        if (filename) {
-          meta.filename = filename;
-        }
-
-        const message = [
-          `Name: ${meta.name}`,
-          meta.description ? `Description: ${meta.description}` : null,
-          meta.version ? `Version: ${meta.version}` : null,
-          `Category: ${meta.category || 'Misc'}`,
-        ]
-          .filter(Boolean)
-          .join('\n');
-
-        const confirmed = await confirm({
-          title: 'Add plugin?',
-          message,
-          okButtonText: 'Add',
-          cancelButtonText: 'Cancel',
-        });
-
-        if (!confirmed) return;
-
-        await this.addUserScripts([{ meta, code }]);
-        this.$closeBottomSheet();
+        await this.confirmAndAdd(code, filename);
       } catch (error) {
         console.error('Failed to add plugin:', error);
         this.errorMessage = `Error: ${error.message || 'Unknown error occurred'}`;
@@ -130,11 +101,67 @@ export default {
     },
 
     async chooseFile() {
-      await alert({
-        title: 'Not implemented',
-        message: 'Adding plugins from file is not yet supported.',
-        okButtonText: 'OK',
+      if (this.isLoading) return;
+
+      this.errorMessage = '';
+
+      try {
+        const files = await selectFiles({
+          allowsMultipleSelection: false,
+          acceptTypes: ['text/javascript', 'application/javascript'],
+        });
+
+        if (!files.length) return;
+
+        this.isLoading = true;
+
+        const { content: code, name: fileName } = await readFileContent(files[0].path);
+        if (!code) {
+          this.errorMessage = 'Failed to read file. The file may be empty or inaccessible.';
+          return;
+        }
+
+        await this.confirmAndAdd(code, fileName);
+      } catch (error) {
+        console.error('Failed to add plugin from file:', error);
+        this.errorMessage = `Error: ${error.message || 'Unknown error occurred'}`;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async confirmAndAdd(code, filename) {
+      const meta = parseMeta(code);
+      if (!meta || !meta.name) {
+        this.errorMessage =
+          'Invalid userscript. The file must contain a valid ==UserScript== header.';
+        return;
+      }
+
+      if (filename) {
+        meta.filename = filename;
+      }
+
+      const message = [
+        `Name: ${meta.name}`,
+        meta.description ? `Description: ${meta.description}` : null,
+        meta.version ? `Version: ${meta.version}` : null,
+        `Category: ${meta.category || 'Misc'}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const confirmed = await confirm({
+        title: 'Add plugin?',
+        message,
+        okButtonText: 'Add',
+        cancelButtonText: 'Cancel',
       });
+
+      if (!confirmed) return;
+
+      await this.addUserScripts([{ meta, code }]);
+      this.$closeBottomSheet();
     },
   },
 
