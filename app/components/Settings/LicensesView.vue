@@ -59,7 +59,8 @@ export default {
     loadLicenses() {
       let licensesData = null;
       try {
-        licensesData = require('~/licenses.json');
+        const module = require('~/licenses.json');
+        licensesData = module.default || module;
       } catch (err) {
         licensesData = { dependencies: [] };
       }
