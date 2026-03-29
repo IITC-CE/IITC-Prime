@@ -1,29 +1,32 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Plugins" use-scroll="false" @navigatedTo="onNavigatedTo">
+  <SettingsBase
+    search
+    v-model:searchText="searchQuery"
+    searchHint="Search plugins..."
+    use-scroll="false"
+    @navigatedTo="onNavigatedTo"
+  >
     <template #headerRight>
       <Label text="Add plugin" @tap="openAddPlugin" class="header-action" />
     </template>
 
     <template #default="{ bottomPadding }">
-      <GridLayout rows="auto, auto, auto, *" class="main-container">
-        <!-- Search field -->
-        <TextField row="0" class="text-input search-field" hint="Search plugins..." v-model="searchQuery" @loaded="fixTextInputColors" />
-
+      <GridLayout rows="auto, auto, *" class="main-container">
         <!-- Categories list component -->
         <CategoriesList
-          row="1"
+          row="0"
           :categories="categoriesWithPlugins"
           :activeCategory="activeCategory"
           @categorySelected="setActiveCategory"
         />
 
         <!-- Loading indicator -->
-        <ActivityIndicator row="2" v-if="!isPluginsVisible" busy="true" class="loading-indicator" />
+        <ActivityIndicator row="1" v-if="!isPluginsVisible" busy="true" class="loading-indicator" />
 
         <!-- Plugins container -->
-        <GridLayout row="3" class="plugins-container" v-if="isPluginsVisible">
+        <GridLayout row="2" class="plugins-container" v-if="isPluginsVisible">
           <PluginsList
             v-if="filteredPlugins.length > 0"
             :plugins="filteredPlugins"
@@ -51,7 +54,6 @@ import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import { confirm } from '@/utils/dialogs';
-import { fixTextInputColors } from '@/utils/platform';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
@@ -149,7 +151,6 @@ export default {
 
   methods: {
     ...mapActions('manager', ['loadPlugins', 'managePlugin']),
-    fixTextInputColors,
 
     openAddPlugin() {
       this.$showBottomSheet(AddPluginSheet, {
@@ -288,11 +289,6 @@ export default {
 .main-container {
   width: 100%;
   height: 100%;
-}
-
-.search-field {
-  margin: $spacing-m 0 $spacing-s 0;
-  width: 100%;
 }
 
 .loading-indicator {

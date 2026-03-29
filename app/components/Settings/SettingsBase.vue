@@ -9,7 +9,15 @@
     @androidOverflowInset="onAndroidInset"
   >
     <GridLayout rows="auto, *" class="page-root">
-      <CustomActionBar row="0" :title="title" :style="actionBarStyle">
+      <CustomActionBar
+        row="0"
+        :title="title"
+        :search="search"
+        :searchText="searchText"
+        :searchHint="searchHint"
+        :style="actionBarStyle"
+        @update:searchText="$emit('update:searchText', $event)"
+      >
         <slot name="headerRight"></slot>
       </CustomActionBar>
 
@@ -20,7 +28,7 @@
         :orientation="useScroll === 'true' ? 'vertical' : undefined"
         class="settings-container"
       >
-        <StackLayout class="settings-content" :style="contentInsetStyle">
+        <StackLayout :style="contentInsetStyle">
           <slot :bottomPadding="contentBottomPadding"></slot>
         </StackLayout>
       </component>
@@ -50,14 +58,28 @@ export default {
   props: {
     title: {
       type: String,
-      required: true,
+      default: '',
     },
     useScroll: {
       type: String,
       required: false,
       default: 'true',
     },
+    search: {
+      type: Boolean,
+      default: false,
+    },
+    searchText: {
+      type: String,
+      default: '',
+    },
+    searchHint: {
+      type: String,
+      default: 'Search...',
+    },
   },
+
+  emits: ['navigatedTo', 'navigatedFrom', 'update:searchText'],
 
   data() {
     return {
@@ -149,8 +171,5 @@ export default {
 
 .settings-container {
   background-color: $surface;
-}
-
-.settings-content {
 }
 </style>
