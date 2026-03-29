@@ -3,12 +3,11 @@
 <template>
   <SettingsBase title="Update Channel">
     <template #headerRight>
-      <ActionItem
+      <Label
         text="Update now"
         @tap="runForceUpdate"
         :isEnabled="!isUpdating"
-        color="white"
-        class="update-action-item"
+        class="header-action"
       />
     </template>
 
@@ -236,9 +235,5 @@ export default {
   width: 24;
   height: 24;
   horizontal-align: center;
-}
-
-.update-action-item {
-  color: white;
 }
 </style>

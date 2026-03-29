@@ -3,7 +3,7 @@
 <template>
   <SettingsBase title="Plugins" use-scroll="false" @navigatedTo="onNavigatedTo">
     <template #headerRight>
-      <ActionItem text="Add plugin" @tap="openAddPlugin" color="white" />
+      <Label text="Add plugin" @tap="openAddPlugin" class="header-action" />
     </template>
 
     <template #default="{ bottomPadding }">
