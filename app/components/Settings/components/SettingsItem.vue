@@ -29,6 +29,14 @@
         once="true"
       />
 
+      <!-- External link icon -->
+      <Label
+        v-else-if="type === 'link'"
+        class="fa settings-nav-icon"
+        :text="$filters.fonticon('fa-external-link-alt')"
+        once="true"
+      />
+
       <!-- Switch toggle -->
       <MDSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
     </StackLayout>
@@ -37,6 +45,7 @@
 
 <script>
 import { $navigateTo } from 'nativescript-vue';
+import { Utils } from '@nativescript/core';
 
 export default {
   name: 'SettingsItem',
@@ -55,7 +64,7 @@ export default {
     type: {
       type: String,
       required: true,
-      validator: value => ['nav', 'switch', 'action', 'value'].includes(value),
+      validator: value => ['nav', 'switch', 'action', 'value', 'link'].includes(value),
     },
 
     // Switch-specific props
@@ -72,6 +81,12 @@ export default {
     navProps: {
       type: Object,
       default: () => ({}),
+    },
+
+    // Link-specific props
+    url: {
+      type: String,
+      default: null,
     },
 
     // Position props
@@ -97,6 +112,8 @@ export default {
             duration: 300,
           },
         });
+      } else if (this.type === 'link' && this.url) {
+        Utils.openUrl(this.url);
       } else if (this.type === 'action') {
         // Emit custom action event
         this.$emit('action');
