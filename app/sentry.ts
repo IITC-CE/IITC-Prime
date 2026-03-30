@@ -26,24 +26,25 @@ export function initSentry() {
     release: __SENTRY_RELEASE__,
     environment: __SENTRY_ENVIRONMENT__,
     appPrefix: __SENTRY_PREFIX__,
-    // debugsymbolicator.js sets platform='android' for .mjs files (NativeScript uses .mjs, not .js).
-    // Fix: override to 'javascript' so Sentry's JS symbolication engine processes these frames.
-    ...(!__APPLE__ && {
-      beforeSend: event => {
-        if (event.exception?.values) {
-          for (const ex of event.exception.values) {
-            if (ex.stacktrace?.frames) {
-              for (const frame of ex.stacktrace.frames) {
-                if (frame.filename?.includes('/files/app/')) {
-                  frame.platform = 'javascript';
-                }
+    beforeSend: event => {
+      // Strip IP address for privacy
+      event.user = { ...event.user, ip_address: '0.0.0.0' };
+
+      // debugsymbolicator.js sets platform='android' for .mjs files (NativeScript uses .mjs, not .js).
+      // Fix: override to 'javascript' so Sentry's JS symbolication engine processes these frames.
+      if (!__APPLE__ && event.exception?.values) {
+        for (const ex of event.exception.values) {
+          if (ex.stacktrace?.frames) {
+            for (const frame of ex.stacktrace.frames) {
+              if (frame.filename?.includes('/files/app/')) {
+                frame.platform = 'javascript';
               }
             }
           }
         }
-        return event;
-      },
-    }),
+      }
+      return event;
+    },
   });
 
   Page.on('navigatedTo', event => {
