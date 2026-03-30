@@ -2,48 +2,43 @@
 
 <template>
   <Page
+    actionBarHidden="true"
     @navigatedTo="onNavigatedTo"
     @navigatedFrom="onNavigatedFrom"
     androidOverflowEdge="dont-apply"
     @androidOverflowInset="onAndroidInset"
   >
-    <ActionBar
-      :title="title"
-      flat="true"
-      color="#ffffff"
-      ios:backgroundColor="#143542"
-      android:backgroundColor="#143542"
-    >
-      <NavigationButton
-        v-if="isAndroid"
-        @tap="goBack"
-        text="Back"
-        android.systemIcon="ic_menu_back"
-      />
-      <NavigationButton v-if="isIOS" @tap="goBack" text="Back" />
-      <template v-if="$slots.headerRight && isIOS">
-        <slot name="headerRight" ios.position="right"></slot>
-      </template>
-      <template v-if="$slots.headerRight && isAndroid">
-        <slot name="headerRight" android.position="actionBar"></slot>
-      </template>
-    </ActionBar>
+    <GridLayout rows="auto, *" class="page-root">
+      <CustomActionBar
+        row="0"
+        :title="title"
+        :search="search"
+        :searchText="searchText"
+        :searchHint="searchHint"
+        :style="actionBarStyle"
+        @update:searchText="$emit('update:searchText', $event)"
+      >
+        <slot name="headerRight"></slot>
+      </CustomActionBar>
 
-    <!-- Content -->
-    <component
-      :is="useScroll === 'true' ? 'ScrollView' : 'StackLayout'"
-      :orientation="useScroll === 'true' ? 'vertical' : undefined"
-      class="settings-container"
-    >
-      <StackLayout class="settings-content" :style="contentInsetStyle">
-        <slot :bottomPadding="contentBottomPadding"></slot>
-      </StackLayout>
-    </component>
+      <!-- Content -->
+      <component
+        row="1"
+        :is="useScroll === 'true' ? 'ScrollView' : 'StackLayout'"
+        :orientation="useScroll === 'true' ? 'vertical' : undefined"
+        class="settings-container"
+      >
+        <StackLayout :style="contentInsetStyle">
+          <slot :bottomPadding="contentBottomPadding"></slot>
+        </StackLayout>
+      </component>
+    </GridLayout>
   </Page>
 </template>
 
 <script>
-import { Frame, Utils, isIOS, isAndroid } from '@nativescript/core';
+import { Frame, isIOS, isAndroid } from '@nativescript/core';
+import { markRaw } from 'vue';
 import {
   attachBackHandler,
   detachBackHandler,
@@ -51,26 +46,43 @@ import {
   getStatusBarHeight,
   getNavigationBarHeight,
 } from '@/utils/platform';
+import CustomActionBar from './components/CustomActionBar';
 
 export default {
   name: 'SettingsBase',
 
+  components: {
+    CustomActionBar: markRaw(CustomActionBar),
+  },
+
   props: {
     title: {
       type: String,
-      required: true,
+      default: '',
     },
     useScroll: {
       type: String,
       required: false,
       default: 'true',
     },
+    search: {
+      type: Boolean,
+      default: false,
+    },
+    searchText: {
+      type: String,
+      default: '',
+    },
+    searchHint: {
+      type: String,
+      default: 'Search...',
+    },
   },
+
+  emits: ['navigatedTo', 'navigatedFrom', 'update:searchText'],
 
   data() {
     return {
-      isIOS,
-      isAndroid,
       statusBarInset: 0,
       navBarInset: 0,
       leftInset: 0,
@@ -81,6 +93,14 @@ export default {
   computed: {
     contentBottomPadding() {
       return 24 + this.navBarInset; // $spacing-l + nav bar
+    },
+
+    actionBarStyle() {
+      return {
+        paddingTop: this.statusBarInset,
+        paddingLeft: this.leftInset,
+        paddingRight: this.rightInset,
+      };
     },
 
     contentInsetStyle() {
@@ -106,17 +126,6 @@ export default {
       this.leftInset = insets.left;
       this.rightInset = insets.right;
 
-      // Apply status bar + side insets to native ActionBar toolbar
-      const toolbar = this.$el?.nativeView?.actionBar?.nativeViewProtected;
-      if (toolbar) {
-        toolbar.setPaddingRelative(
-          Utils.layout.toDevicePixels(this.leftInset),
-          Utils.layout.toDevicePixels(this.statusBarInset),
-          Utils.layout.toDevicePixels(this.rightInset),
-          toolbar.getPaddingBottom()
-        );
-      }
-
       args.inset.topConsumed = true;
       args.inset.bottomConsumed = true;
       args.inset.leftConsumed = true;
@@ -124,12 +133,8 @@ export default {
       args.inset.imeBottomConsumed = true;
     },
 
-    goBack() {
-      Frame.topmost().goBack();
-    },
-
     onNavigatedTo(event) {
-      attachBackHandler(this.goBack);
+      attachBackHandler(() => Frame.topmost().goBack());
       this.$emit('navigatedTo', event);
     },
 
@@ -143,6 +148,11 @@ export default {
     if (isAndroid) {
       this.statusBarInset = getStatusBarHeight();
       this.navBarInset = getNavigationBarHeight();
+    } else if (isIOS) {
+      const window = UIApplication.sharedApplication?.keyWindow;
+      if (window) {
+        this.navBarInset = window.safeAreaInsets.bottom;
+      }
     }
   },
 
@@ -155,14 +165,11 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-ActionBar {
-  padding-top: 0;
+.page-root {
+  background-color: $surface;
 }
 
 .settings-container {
   background-color: $surface;
-}
-
-.settings-content {
 }
 </style>

@@ -134,6 +134,13 @@ $radius-full: 9999; // For circular elements
   padding: $spacing-s $spacing-m;
 }
 
+.header-action {
+  color: $on-surface;
+  font-size: $font-size;
+  padding: $spacing-s $spacing-m;
+  vertical-alignment: center;
+}
+
 // Lists
 .list-item {
   background-color: $surface-bright;
