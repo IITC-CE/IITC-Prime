@@ -1,5 +1,30 @@
+diff --git a/node_modules/@nativescript-community/ui-webview/index.android.js b/node_modules/@nativescript-community/ui-webview/index.android.js
+index ced902a..45fc3ad 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.android.js
++++ b/node_modules/@nativescript-community/ui-webview/index.android.js
+@@ -98,6 +98,10 @@ function initializeWebViewClient() {
+         return false;
+     };
+     WebViewExtClientImpl.prototype.shouldInterceptRequest = function (view, request) {
++        // shouldInterceptRequest may be called on a background thread where
++        // the NativeScript runtime is unavailable. Return null to fall back to
++        // default WebView request handling.
++        try {
+         var owner = this.owner.get();
+         if (!owner) {
+             if (Trace.isEnabled()) {
+@@ -154,6 +158,9 @@ function initializeWebViewClient() {
+         responseHeaders.put('Access-Control-Allow-Origin', '*');
+         response.setResponseHeaders(responseHeaders);
+         return response;
++        } catch (e) {
++            return null;
++        }
+     };
+     WebViewExtClientImpl.prototype.onPageStarted = function (view, url, favicon) {
+         _super.prototype.onPageStarted.call(this, view, url, favicon);
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index 794f42a..cbb9e84 100644
+index 794f42a..c08d393 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
 @@ -694,7 +694,10 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
@@ -14,3 +39,7 @@ index 794f42a..cbb9e84 100644
                      var popupWebView_1 = WKWebView.alloc().initWithFrameConfiguration(CGRectZero, popupConfig);
                      if (webView.customUserAgent) {
                          popupWebView_1.customUserAgent = webView.customUserAgent;
+diff --git a/node_modules/@nativescript-community/ui-webview/platforms/android/ui_webview.aar b/node_modules/@nativescript-community/ui-webview/platforms/android/ui_webview.aar
+new file mode 100644
+index 0000000..d50a747
+Binary files /dev/null and b/node_modules/@nativescript-community/ui-webview/platforms/android/ui_webview.aar differ
