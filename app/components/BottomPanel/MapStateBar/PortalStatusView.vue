@@ -1,60 +1,63 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <StackLayout
     class="portal-status-view"
     :class="{
       'portal-status-view--loading': portalStatus.isLoading,
-      'portal-status-view--loaded': !portalStatus.isLoading && hasPortalSelected
+      'portal-status-view--loaded': !portalStatus.isLoading && hasPortalSelected,
     }"
-    horizontalAlignment="left">
-
+    horizontalAlignment="left"
+  >
     <!-- If no portal selected or IITC not ready -->
-    <Label v-if="!hasPortalSelected"
-           class="status-message"
-           :text="statusMessage" />
+    <Label v-if="!hasPortalSelected" class="status-message" :text="statusMessage" />
 
     <!-- If portal is selected -->
-    <StackLayout v-else>
+    <GridLayout v-else columns="10, *" rows="auto">
+      <!-- Team color bar -->
+      <StackLayout col="0" :class="['team-bar', 'team-bar--' + portalTeam]" />
+
       <!-- Portal information -->
-      <GridLayout class="portal-info"
-                 columns="auto, auto, *"
-                 rows="auto">
-        <!-- Level badge -->
-        <Label col="0"
-               class="level-badge"
-               :text="'L' + portalStatus.level"
-               :style="{ backgroundColor: portalStatus.levelColor || '#808080' }" />
+      <StackLayout col="1">
+        <GridLayout class="portal-info" columns="auto, auto, *" rows="auto">
+          <!-- Level badge -->
+          <Label
+            col="0"
+            class="level-badge"
+            :text="'L' + portalStatus.level"
+            :style="{ backgroundColor: portalStatus.levelColor || '#808080' }"
+          />
 
-        <!-- Health percentage -->
-        <Label col="1"
-               class="health-percentage"
-               :text="portalStatus.health + '%'" />
+          <!-- Health percentage -->
+          <Label col="1" class="health-percentage" :text="portalStatus.health + '%'" />
 
-        <!-- Portal title -->
-        <Label col="2"
-               class="portal-title"
-               :text="portalStatus.title"
-               textWrap="false" />
-      </GridLayout>
-
-      <!-- Resonators grid -->
-      <GridLayout class="resonators-grid"
-                 rows="auto"
-                 columns="1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*">
-        <GridLayout v-for="(resonator, index) in resonatorsArray"
-                   :key="index"
-                   :col="index * 2"
-                   class="resonator"
-                   :class="{ empty: resonator.energy <= 0 }">
-          <StackLayout
-            v-if="resonator.energy > 0"
-            class="resonator-fill"
-            horizontalAlignment="left"
-            :style="{ backgroundColor: resonator.levelColor, width: resonator.healthPct + '%' }" />
+          <!-- Portal title -->
+          <Label col="2" class="portal-title" :text="portalStatus.title" textWrap="false" />
         </GridLayout>
-      </GridLayout>
-    </StackLayout>
+
+        <!-- Resonators grid -->
+        <GridLayout
+          class="resonators-grid"
+          rows="auto"
+          columns="1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*, 4, 1*"
+        >
+          <GridLayout
+            v-for="(resonator, index) in resonatorsArray"
+            :key="index"
+            :col="index * 2"
+            class="resonator"
+            :class="{ empty: resonator.energy <= 0 }"
+          >
+            <StackLayout
+              v-if="resonator.energy > 0"
+              class="resonator-fill"
+              horizontalAlignment="left"
+              :style="{ backgroundColor: resonator.levelColor, width: resonator.healthPct + '%' }"
+            />
+          </GridLayout>
+        </GridLayout>
+      </StackLayout>
+    </GridLayout>
   </StackLayout>
 </template>
 
@@ -66,14 +69,22 @@ export default {
   props: {
     portalStatus: {
       type: Object,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     ...mapState({
       isWebviewLoaded: state => state.ui.isWebviewLoaded,
-      isIitcLoaded: state => state.ui.isIitcLoaded
+      isIitcLoaded: state => state.ui.isIitcLoaded,
     }),
+
+    portalTeam() {
+      const team = this.portalStatus?.team;
+      if (team === 'E' || team === 'ENLIGHTENED') return 'enlightened';
+      if (team === 'R' || team === 'RESISTANCE') return 'resistance';
+      if (team === 'M' || team === 'MACHINA') return 'machina';
+      return 'neutral';
+    },
 
     // Check if portal is selected
     hasPortalSelected() {
@@ -110,9 +121,9 @@ export default {
         }
       }
       return result;
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped lang="scss">
@@ -139,13 +150,21 @@ export default {
 }
 
 @keyframes fadeToLoading {
-  from { opacity: 1; }
-  to { opacity: 0.6; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
 }
 
 @keyframes fadeFromLoading {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .status-message {
@@ -173,6 +192,17 @@ export default {
 
 .resonator-fill {
   height: 100%;
+}
+
+.team-bar {
+  width: calc(10 - $spacing-xs);
+  border-radius: 2;
+  margin-right: $spacing-xs;
+
+  &--enlightened { background-color: $team-enlightened; }
+  &--resistance  { background-color: $team-resistance; }
+  &--machina     { background-color: $team-machina; }
+  &--neutral     { background-color: $team-neutral; }
 }
 
 .portal-info {
