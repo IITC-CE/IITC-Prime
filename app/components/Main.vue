@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, isAndroid, isIOS } from '@nativescript/core';
+import { AndroidApplication, Application, Frame, isAndroid, isIOS } from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
@@ -286,7 +286,13 @@ export default {
       });
     },
 
+    isMainPageActive() {
+      const frame = Frame.topmost();
+      return !frame?.backStack?.length;
+    },
+
     onKeyboardOpened(args) {
+      if (!this.isMainPageActive()) return;
       this.sliding.isVisible = false;
       this.isKeyboardOpen = true;
       this.keyboardHeight = args.data?.height || 0;
