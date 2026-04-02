@@ -10,21 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Setup environment
-        uses: ./.github/actions/setup-environment
-
-      - name: Setup cache
-        uses: ./.github/actions/setup-cache
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Decode Android keystore
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android_keystore.jks
-
-      - name: Set build type
+      - name: Set build script
         run: |
           if [[ $GITHUB_REF == refs/heads/master ]]; then
             echo "BUILD_TYPE=beta" >> $GITHUB_ENV
@@ -35,32 +23,25 @@ jobs:
           fi
 
       - name: Build Android APK
-        env:
-          KEYSTORE_PATH: ./android_keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
-          SENTRY_ORG_SLUG: ${{ secrets.SENTRY_ORG_SLUG }}
-          SENTRY_PROJECT_SLUG: ${{ secrets.SENTRY_PROJECT_SLUG }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_DSN_ANDROID: ${{ secrets.SENTRY_DSN_ANDROID }}
-          SENTRY_DSN_IOS: ${{ secrets.SENTRY_DSN_IOS }}
-        run: npm run ${{ env.BUILD_SCRIPT }}
-
-      - name: Get APK filename
-        id: apk-info
-        run: |
-          APK_PATH=$(find platforms/android/app/build/outputs -name "*.apk" | head -n 1)
-          APK_FILENAME=$(basename "$APK_PATH")
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "apk_filename=$APK_FILENAME" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/build-android
+        id: build
+        with:
+          build-script: ${{ env.BUILD_SCRIPT }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.KEYSTORE_PASSWORD }}
+          keystore-alias: ${{ secrets.KEYSTORE_ALIAS }}
+          keystore-alias-password: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          sentry-org-slug: ${{ secrets.SENTRY_ORG_SLUG }}
+          sentry-project-slug: ${{ secrets.SENTRY_PROJECT_SLUG }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-dsn-android: ${{ secrets.SENTRY_DSN_ANDROID }}
 
       - name: Create release for tags
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: ${{ steps.apk-info.outputs.apk_path }}
+          artifacts: ${{ steps.build.outputs.output-path }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare metadata
@@ -68,12 +49,11 @@ jobs:
           mkdir -p artifact/.metadata
           echo "${{ env.BUILD_TYPE }}" > artifact/.metadata/build_type
           echo "${{ github.sha }}" > artifact/.metadata/commit
-          echo "${{ steps.apk-info.outputs.apk_filename }}" > artifact/.metadata/apk_filename
+          echo "${{ steps.build.outputs.output-filename }}" > artifact/.metadata/apk_filename
           echo "$(date -u +'%Y-%m-%d_%H-%M')" > artifact/.metadata/buildstamp
 
-          # Copy APK to artifact directory
           mkdir -p artifact/build
-          cp "${{ steps.apk-info.outputs.apk_path }}" artifact/build/
+          cp "${{ steps.build.outputs.output-path }}" artifact/build/
 
       - uses: actions/upload-artifact@v4
         id: upload-artifact

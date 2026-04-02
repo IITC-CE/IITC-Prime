@@ -1,0 +1,81 @@
+name: 'Build Android'
+description: 'Build Android APK or AAB'
+
+inputs:
+  build-script:
+    description: 'npm build script to run'
+    required: true
+  keystore-base64:
+    description: 'Base64-encoded Android keystore'
+    required: true
+  keystore-password:
+    description: 'Keystore password'
+    required: true
+  keystore-alias:
+    description: 'Keystore alias'
+    required: true
+  keystore-alias-password:
+    description: 'Keystore alias password'
+    required: true
+  sentry-org-slug:
+    description: 'Sentry organization slug'
+    required: false
+    default: ''
+  sentry-project-slug:
+    description: 'Sentry project slug'
+    required: false
+    default: ''
+  sentry-auth-token:
+    description: 'Sentry auth token'
+    required: false
+    default: ''
+  sentry-dsn-android:
+    description: 'Sentry DSN for Android'
+    required: false
+    default: ''
+
+outputs:
+  output-path:
+    description: 'Path to built APK or AAB'
+    value: ${{ steps.find-output.outputs.path }}
+  output-filename:
+    description: 'Filename of built APK or AAB'
+    value: ${{ steps.find-output.outputs.filename }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup environment
+      uses: ./.github/actions/setup-android-env
+
+    - name: Setup cache
+      uses: ./.github/actions/setup-cache
+
+    - name: Install dependencies
+      shell: bash
+      run: npm install
+
+    - name: Decode Android keystore
+      shell: bash
+      run: echo "${{ inputs.keystore-base64 }}" | base64 -d > android_keystore.jks
+
+    - name: Build
+      shell: bash
+      env:
+        KEYSTORE_PATH: ./android_keystore.jks
+        KEYSTORE_PASSWORD: ${{ inputs.keystore-password }}
+        KEYSTORE_ALIAS: ${{ inputs.keystore-alias }}
+        KEYSTORE_ALIAS_PASSWORD: ${{ inputs.keystore-alias-password }}
+        SENTRY_ORG_SLUG: ${{ inputs.sentry-org-slug }}
+        SENTRY_PROJECT_SLUG: ${{ inputs.sentry-project-slug }}
+        SENTRY_AUTH_TOKEN: ${{ inputs.sentry-auth-token }}
+        SENTRY_DSN_ANDROID: ${{ inputs.sentry-dsn-android }}
+      run: npm run ${{ inputs.build-script }}
+
+    - name: Find build output
+      id: find-output
+      shell: bash
+      run: |
+        OUTPUT=$(find platforms/android/app/build/outputs -name "*.apk" -o -name "*.aab" | head -n 1)
+        echo "path=$OUTPUT" >> $GITHUB_OUTPUT
+        echo "filename=$(basename $OUTPUT)" >> $GITHUB_OUTPUT

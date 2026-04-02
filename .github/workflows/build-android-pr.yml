@@ -1,4 +1,4 @@
-name: Make test build
+name: Build Android PR
 
 on:
   pull_request:
@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup environment
-        uses: ./.github/actions/setup-environment
+        uses: ./.github/actions/setup-android-env
 
       - name: Setup cache
         uses: ./.github/actions/setup-cache
