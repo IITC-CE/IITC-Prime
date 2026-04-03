@@ -14,7 +14,6 @@ import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
 import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
 import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
-import { ImageCacheIt } from '@triniwiz/nativescript-image-cache-it';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
 import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
 import { initSentry, setupVueErrorHandler } from './sentry';
@@ -27,7 +26,6 @@ import { getStatusBarHeight } from '@/utils/platform';
 // Initialize app logging
 initializeTracing();
 initSentry();
-ImageCacheIt.enableAutoMM();
 
 // Install BottomSheet plugins
 installBottomSheet();
@@ -39,10 +37,6 @@ FontIcon.paths = {
 FontIcon.loadCssSync();
 
 registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').Label);
-registerElement(
-  'ImageCacheIt',
-  () => require('@triniwiz/nativescript-image-cache-it').ImageCacheIt
-);
 registerElement('CheckBox', () => CheckBox, {
   model: {
     prop: 'checked',

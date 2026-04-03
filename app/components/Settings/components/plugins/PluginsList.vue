@@ -94,17 +94,7 @@
           @tap="onPluginTap(item)"
         >
           <!-- Raster Plugin icon -->
-          <ImageCacheIt
-            col="0"
-            :src="getPluginIcon(item)"
-            :placeHolder="placeholderImageSource"
-            :errorHolder="placeholderImageSource"
-            class="plugin-icon"
-            stretch="aspectFit"
-            loadMode="async"
-            transition="fade"
-            once="true"
-          />
+          <AsyncRasterIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
 
           <!-- Plugin info -->
           <StackLayout col="1" class="plugin-info">
@@ -153,6 +143,7 @@
 
 <script>
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
+import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import { enableListEdgeToEdge } from '@/utils/platform';
 
 export default {
@@ -160,6 +151,7 @@ export default {
 
   components: {
     AsyncSVGIcon,
+    AsyncRasterIcon,
   },
 
   props: {
@@ -233,15 +225,6 @@ export default {
       );
 
       return items;
-    },
-
-    placeholderImageSource() {
-      try {
-        const ImageSource = require('@nativescript/core').ImageSource;
-        return ImageSource.fromFileSync('~/assets/icons/userscript-no-icon.png');
-      } catch (error) {
-        console.error('Failed to load placeholder icon:', error);
-      }
     },
   },
 
