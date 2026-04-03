@@ -1,0 +1,6 @@
+IITC Prime is the official mobile client for IITC-CE (Ingress Intel Total Conversion) — a community-built enhancement for the Ingress intel map that loads faster and offers far more features than the standard map.
+
+Note: this app uses data from the Ingress intel map hosted by Niantic. Load times depend on Niantic's servers. IITC Prime is not affiliated with Niantic Labs.
+
+Website: https://iitc.app
+GitHub: https://github.com/IITC-CE/IITC-Prime

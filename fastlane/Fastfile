@@ -1,0 +1,41 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+default_platform(:android)
+
+platform :android do
+  desc "Deploy beta version to Google Play Store"
+  lane :deploy_beta do
+    changelog = changelog_from_git_commits(merge_commit_filtering: "exclude_merges")
+    upload_to_play_store(
+      track: "beta",
+      package_name: "org.exarhteam.iitcprime",
+      aab: "platforms/android/app/build/outputs/bundle/release/app-release.aab",
+      json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
+      skip_upload_apk: true,
+      changelog: changelog
+    )
+  end
+
+  desc "Deploy production version to Google Play Store"
+  lane :deploy_production do
+    changelog = changelog_from_git_commits(merge_commit_filtering: "exclude_merges")
+    upload_to_play_store(
+      track: "production",
+      package_name: "org.exarhteam.iitcprime",
+      aab: "platforms/android/app/build/outputs/bundle/release/app-release.aab",
+      json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
+      skip_upload_apk: true,
+      changelog: changelog
+    )
+  end
+end

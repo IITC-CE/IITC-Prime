@@ -48,7 +48,7 @@ The app uses [Sentry](https://sentry.io/) to collect app crash and error reports
 ## Environment Variables
 
 - `BUILD_TYPE`: Set build variant (`debug` (default), `beta`, `release`)
-- `APP_ID_SUFFIX`: Add custom suffix to application ID (e.g., `gplay`, `fdroid`)
+- `APP_ID_SUFFIX`: Add custom suffix to application ID (e.g., `fdroid`)
 
 ## Development
 

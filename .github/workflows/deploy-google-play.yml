@@ -1,0 +1,48 @@
+name: Deploy to Google Play
+
+on:
+  push:
+    branches: [master]
+    tags: ['*']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: vars.GOOGLE_PLAY_ENABLED != ''
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set build script and track
+        run: |
+          if [[ $GITHUB_REF == refs/heads/master ]]; then
+            echo "BUILD_SCRIPT=build:android:gplay-beta" >> $GITHUB_ENV
+            echo "FASTLANE_LANE=deploy_beta" >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "BUILD_SCRIPT=build:android:gplay-release" >> $GITHUB_ENV
+            echo "FASTLANE_LANE=deploy_production" >> $GITHUB_ENV
+          fi
+
+      - name: Build Android AAB
+        uses: ./.github/actions/build-android
+        with:
+          build-script: ${{ env.BUILD_SCRIPT }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.KEYSTORE_PASSWORD }}
+          keystore-alias: ${{ secrets.KEYSTORE_ALIAS }}
+          keystore-alias-password: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          sentry-org-slug: ${{ secrets.SENTRY_ORG_SLUG }}
+          sentry-project-slug: ${{ secrets.SENTRY_PROJECT_SLUG }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-dsn-android: ${{ secrets.SENTRY_DSN_ANDROID }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Deploy to Google Play
+        env:
+          GOOGLE_PLAY_ACCOUNT: ${{ secrets.GOOGLE_PLAY_ACCOUNT }}
+        run: bundle exec fastlane ${{ env.FASTLANE_LANE }}
