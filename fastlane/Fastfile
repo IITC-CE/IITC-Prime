@@ -16,26 +16,38 @@ platform :android do
   desc "Deploy beta version to Google Play Store"
   lane :deploy_beta do
     changelog = changelog_from_git_commits(merge_commit_filtering: "exclude_merges")
+    write_changelog(text: changelog)
     upload_to_play_store(
       track: "beta",
       package_name: "org.exarhteam.iitcprime",
       aab: "platforms/android/app/build/outputs/bundle/release/app-release.aab",
       json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
       skip_upload_apk: true,
-      changelog: changelog
+      skip_upload_images: true,
+      skip_upload_screenshots: true
     )
   end
 
   desc "Deploy production version to Google Play Store"
   lane :deploy_production do
     changelog = changelog_from_git_commits(merge_commit_filtering: "exclude_merges")
+    write_changelog(text: changelog)
     upload_to_play_store(
       track: "production",
       package_name: "org.exarhteam.iitcprime",
       aab: "platforms/android/app/build/outputs/bundle/release/app-release.aab",
       json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
       skip_upload_apk: true,
-      changelog: changelog
+      skip_upload_images: true,
+      skip_upload_screenshots: true
     )
+  end
+
+  private_lane :write_changelog do |options|
+    changelogs_dir = File.join("fastlane", "metadata", "android", "en-US", "changelogs")
+    FileUtils.mkdir_p(changelogs_dir)
+    # Google Play limits changelog to 500 characters
+    truncated = options[:text].to_s[0, 500]
+    File.write(File.join(changelogs_dir, "default.txt"), truncated)
   end
 end

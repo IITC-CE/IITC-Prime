@@ -7,6 +7,9 @@ platforms/
 App_Resources/iOS/*.lproj/*
 App_Resources/Android/local.properties
 
+# Fastlane generated changelogs
+fastlane/metadata/android/*/changelogs/
+
 # Logs
 logs
 *.log
