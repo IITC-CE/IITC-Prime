@@ -157,24 +157,7 @@ export default {
       if (!this.webview || !plugin?.code) return;
 
       try {
-        await this.webview.executeJavaScript(
-          `
-          (function() {
-            try {
-              ${plugin.code}
-            } catch (e) {
-              window.lastError = {
-                message: e.message,
-                stack: e.stack,
-                toString: e.toString()
-              };
-              console.error('injection error:', e.message, e.stack);
-              throw e;
-            }
-          })();
-        `,
-          false
-        );
+        await this.webview.executeJavaScript(plugin.code, false);
       } catch (error) {
         console.error('Plugin injection failed:', error);
       }

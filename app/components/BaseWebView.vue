@@ -94,6 +94,9 @@ export default {
         closePopup: () => {
           this.$emit('close-popup');
         },
+        onConsoleMessage: logData => {
+          this.$emit('console-log', logData);
+        },
       });
       this.chromeClient = client;
       return client;
@@ -136,6 +139,11 @@ export default {
       // Setup JSBridge event handler
       this.webViewInstance.on('JSBridge', msg => {
         this.$emit('bridge-message', msg.data);
+      });
+
+      // Setup GM API bridge event handler
+      this.webViewInstance.on('gmBridgeRequest', msg => {
+        this.$emit('bridge-message', ['gmBridgeRequest', msg.data]);
       });
     },
 
@@ -248,6 +256,7 @@ export default {
             'shouldOverrideUrlLoading',
             'console:log',
             'JSBridge',
+            'gmBridgeRequest',
           ];
           events.forEach(event => {
             try {
