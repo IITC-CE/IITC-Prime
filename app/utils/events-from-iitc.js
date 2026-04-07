@@ -1,6 +1,8 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import store from '@/store';
+import { ApplicationSettings } from '@nativescript/core';
+import { strToBase64 } from 'lib-iitc-manager';
 import { showLocationShareOptions } from './share';
 import { shareFile, selectFiles, readFileContent } from '@/utils/file-manager';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -284,5 +286,94 @@ export const shareString = async text => {
     console.error('Bridge shareString error:', error);
     // Fallback to clipboard if sharing fails
     await copyToClipboard(text, 'Shared to clipboard (sharing unavailable)');
+  }
+};
+
+/**
+ * Handles GM API bridge requests from WebView plugins.
+ * @param {string} dataStr - JSON-encoded request data
+ * @returns {Promise<void>}
+ */
+export const gmBridgeRequest = async dataStr => {
+  const data = JSON.parse(dataStr);
+
+  switch (data.task_type) {
+    case 'getStorage': {
+      const allKeys = ApplicationSettings.getAllKeys();
+      const pluginData = {};
+      for (const key of allKeys) {
+        if (key.startsWith('VMin')) {
+          pluginData[key] = ApplicationSettings.getString(key);
+        }
+      }
+      const response = strToBase64(
+        JSON.stringify({
+          task_type: 'getStorage',
+          response: JSON.stringify(pluginData),
+        })
+      );
+      await store.dispatch(
+        'map/executeJavaScript',
+        `window.dispatchEvent(new CustomEvent('gmBridgeResponse', { detail: '${response}' }))`
+      );
+      break;
+    }
+    case 'setValue':
+      ApplicationSettings.setString(data.key, data.value);
+      break;
+    case 'delValue':
+      ApplicationSettings.remove(data.key);
+      break;
+    case 'xmlHttpRequest': {
+      try {
+        const options = {
+          method: data.method || 'GET',
+          headers: data.headers || {},
+        };
+        if (data.data) {
+          options.body = data.data;
+        }
+        if (data.timeout && data.timeout > 0) {
+          options.signal = AbortSignal.timeout(data.timeout);
+        }
+
+        const fetchResponse = await fetch(data.url, options);
+        const responseText = await fetchResponse.text();
+
+        const responseHeaders = {};
+        fetchResponse.headers.forEach((value, key) => {
+          responseHeaders[key] = value;
+        });
+
+        const xhrResponse = {
+          finalUrl: fetchResponse.url,
+          readyState: 4,
+          status: fetchResponse.status,
+          statusText: fetchResponse.statusText,
+          responseHeaders: Object.entries(responseHeaders)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join('\r\n'),
+          responseText: responseText,
+          response: responseText,
+        };
+
+        const response = strToBase64(
+          JSON.stringify({
+            task_type: 'xmlHttpRequest',
+            task_uuid: data.task_uuid,
+            response: JSON.stringify(xhrResponse),
+          })
+        );
+        await store.dispatch(
+          'map/executeJavaScript',
+          `window.dispatchEvent(new CustomEvent('gmBridgeResponse', { detail: '${response}' }))`
+        );
+      } catch (error) {
+        console.error('[GM API] xmlHttpRequest error:', error);
+      }
+      break;
+    }
+    default:
+      console.warn('[GM API] Unknown task_type:', data.task_type);
   }
 };

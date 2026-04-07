@@ -140,6 +140,11 @@ export default {
       this.webViewInstance.on('JSBridge', msg => {
         this.$emit('bridge-message', msg.data);
       });
+
+      // Setup GM API bridge event handler
+      this.webViewInstance.on('gmBridgeRequest', msg => {
+        this.$emit('bridge-message', ['gmBridgeRequest', msg.data]);
+      });
     },
 
     // Setup event handlers for console bridge
@@ -251,6 +256,7 @@ export default {
             'shouldOverrideUrlLoading',
             'console:log',
             'JSBridge',
+            'gmBridgeRequest',
           ];
           events.forEach(event => {
             try {

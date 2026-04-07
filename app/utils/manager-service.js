@@ -37,6 +37,18 @@ export class ManagerService {
             await storage.set(obj);
           },
         },
+        gm_api: {
+          bridge_adapter_code: `
+            window.__iitc_gm_bridge__ = {
+              send(data) {
+                window.nsWebViewBridge.emit('gmBridgeRequest', JSON.stringify(data));
+              },
+              onResponse(cb) {
+                window.addEventListener('gmBridgeResponse', function(e) { cb(e.detail); });
+              }
+            };
+          `,
+        },
         message: (message, args) => {
           console.log(`[ManagerService] message: ${message}`, args);
           if (this.callbacks.onMessage) {

@@ -18,6 +18,7 @@ import {
   chooseFiles,
   copyToClipboardBridge,
   shareString,
+  gmBridgeRequest,
 } from '@/utils/events-from-iitc';
 
 export const router = async event => {
@@ -89,6 +90,9 @@ export const router = async event => {
       break;
     case 'shareString':
       await shareString(eventData.str);
+      break;
+    case 'gmBridgeRequest':
+      await gmBridgeRequest(eventData);
       break;
     case 'console:log':
       // This event is handled by direct listeners in BaseWebView
