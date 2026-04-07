@@ -94,6 +94,9 @@ export default {
         closePopup: () => {
           this.$emit('close-popup');
         },
+        onConsoleMessage: logData => {
+          this.$emit('console-log', logData);
+        },
       });
       this.chromeClient = client;
       return client;

@@ -4,20 +4,11 @@
  * Debug bridge for WebView console interception
  * Provides console logging and JavaScript execution capabilities
  */
-export const injectDebugBridge = async (webview) => {
+export const injectDebugBridge = async webview => {
   const script = `
   (function() {
     function debugBridge() {
       if (window.__debugBridgeInstalled) return;
-
-      // Store original console methods
-      const originalConsole = {
-        log: console.log,
-        warn: console.warn,
-        error: console.error,
-        info: console.info,
-        debug: console.debug
-      };
 
       // Helper function to safely stringify any type of value
       function formatArg(arg) {
@@ -33,61 +24,52 @@ export const injectDebugBridge = async (webview) => {
         return String(arg);
       }
 
-      // Override console methods
-      console.log = function() {
-        const args = Array.from(arguments);
-        window.nsWebViewBridge.emit('console:log', {
-          type: 'log',
-          message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString(),
-          source: 'webview'
-        });
-        return originalConsole.log.apply(console, args);
-      };
+      // On iOS, override console methods to forward to native via bridge.
+      // On Android, native onConsoleMessage handler captures all console output.
+      var isAndroid = typeof androidWebViewBridge !== 'undefined';
+      if (!isAndroid) {
+        var originalConsole = {
+          log: console.log,
+          warn: console.warn,
+          error: console.error,
+          info: console.info,
+          debug: console.debug
+        };
 
-      console.warn = function() {
-        const args = Array.from(arguments);
-        window.nsWebViewBridge.emit('console:log', {
-          type: 'warn',
-          message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString(),
-          source: 'webview'
+        ['log', 'warn', 'error', 'info', 'debug'].forEach(function(level) {
+          console[level] = function() {
+            var args = Array.from(arguments);
+            window.nsWebViewBridge.emit('console:log', {
+              type: level,
+              message: args.map(function(arg) { return formatArg(arg); }).join(' '),
+              timestamp: new Date().toISOString(),
+              source: 'webview'
+            });
+            return originalConsole[level].apply(console, args);
+          };
         });
-        return originalConsole.warn.apply(console, args);
-      };
 
-      console.error = function() {
-        const args = Array.from(arguments);
-        window.nsWebViewBridge.emit('console:log', {
-          type: 'error',
-          message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString(),
-          source: 'webview'
-        });
-        return originalConsole.error.apply(console, args);
-      };
+        // Catch uncaught exceptions (syntax errors, runtime errors not in try/catch)
+        window.onerror = function(message, source, lineno, colno, error) {
+          window.nsWebViewBridge.emit('console:log', {
+            type: 'error',
+            message: (error && error.stack) ? error.stack : message,
+            timestamp: new Date().toISOString(),
+            source: source ? source + ':' + lineno : 'webview'
+          });
+        };
 
-      console.info = function() {
-        const args = Array.from(arguments);
-        window.nsWebViewBridge.emit('console:log', {
-          type: 'info',
-          message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString(),
-          source: 'webview'
+        // Catch unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event.reason;
+          window.nsWebViewBridge.emit('console:log', {
+            type: 'error',
+            message: 'Unhandled rejection: ' + ((reason && reason.stack) ? reason.stack : formatArg(reason)),
+            timestamp: new Date().toISOString(),
+            source: 'webview'
+          });
         });
-        return originalConsole.info.apply(console, args);
-      };
-
-      console.debug = function() {
-        const args = Array.from(arguments);
-        window.nsWebViewBridge.emit('console:log', {
-          type: 'debug',
-          message: args.map(arg => formatArg(arg)).join(' '),
-          timestamp: new Date().toISOString(),
-          source: 'webview'
-        });
-        return originalConsole.debug.apply(console, args);
-      };
+      }
 
       // Handler for executing JavaScript commands from app
       window.nsWebViewBridge.on('console:execute', function(data) {

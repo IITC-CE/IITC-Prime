@@ -1,7 +1,7 @@
 // Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { isAndroid } from "@nativescript/core";
-import { transportManager } from "./transport-manager";
+import { isAndroid } from '@nativescript/core';
+import { transportManager } from './transport-manager';
 
 /**
  * WebView Chrome Client for Android popup handling
@@ -21,10 +21,32 @@ export const BaseWebChromeClient = isAndroid
         }
       },
 
+      // Native onConsoleMessage is used instead of JS-level console overrides (as on iOS)
+      // because it catches syntax errors in injected plugin code
       onConsoleMessage: function (consoleMessage) {
-        console.log(
-          `[WebView] ${consoleMessage.message()} -- From line ${consoleMessage.lineNumber()} of ${consoleMessage.sourceId()}`
-        );
+        const message = consoleMessage.message();
+        const lineNo = consoleMessage.lineNumber();
+        const sourceId = consoleMessage.sourceId();
+
+        console.log(`[WebView] ${message} -- From line ${lineNo} of ${sourceId}`);
+
+        if (this.component?.onConsoleMessage) {
+          const levelMap = {};
+          const MessageLevel = android.webkit.ConsoleMessage.MessageLevel;
+          levelMap[MessageLevel.DEBUG] = 'debug';
+          levelMap[MessageLevel.LOG] = 'log';
+          levelMap[MessageLevel.WARNING] = 'warn';
+          levelMap[MessageLevel.ERROR] = 'error';
+          levelMap[MessageLevel.TIP] = 'info';
+
+          this.component.onConsoleMessage({
+            type: levelMap[consoleMessage.messageLevel()] || 'log',
+            message: message,
+            timestamp: new Date().toISOString(),
+            source: sourceId ? `${sourceId}:${lineNo}` : 'webview',
+          });
+        }
+
         return true;
       },
 
