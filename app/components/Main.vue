@@ -52,6 +52,22 @@
           class="map-state-bar-overlay"
         />
 
+        <!-- Restore panel button (visible when panel is hidden) -->
+        <MDRipple
+          v-if="isPanelHidden && !isDebugActive"
+          class="restore-panel-button"
+          :style="{ marginBottom: navBarHeight + 16, marginLeft: safeAreaLeftInset + 16 }"
+          @loaded="onRestoreButtonLoaded"
+          @tap="restorePanel"
+        >
+          <Label
+            class="fa"
+            :text="$filters.fonticon('fa-chevron-up')"
+            horizontalAlignment="center"
+            verticalAlignment="center"
+          />
+        </MDRipple>
+
         <!-- Debug Console -->
         <AbsoluteLayout v-show="isDebugActive" class="page">
           <DebugConsole
@@ -262,6 +278,22 @@ export default {
       this.bottomSheetInstance = bottomSheet;
     },
 
+    onRestoreButtonLoaded(args) {
+      const btn = args.object;
+      btn.translateY = 60;
+      btn.opacity = 0;
+      btn.animate({
+        translate: { x: 0, y: 0 },
+        opacity: 1,
+        duration: 300,
+        curve: CoreTypes.AnimationCurve.easeOut,
+      });
+    },
+
+    restorePanel() {
+      this.$store.dispatch('ui/closePanel');
+    },
+
     // Handle console logs from AppWebView
     onConsoleLog(logData) {
       this.$store.dispatch('debug/addLog', logData);
@@ -458,5 +490,23 @@ export default {
 
 .map-state-bar-overlay {
   z-index: 1000;
+}
+
+.restore-panel-button {
+  width: 42;
+  height: 42;
+  border-radius: $radius-full;
+  background-color: rgba(0, 0, 0, 0.4);
+  vertical-alignment: bottom;
+  horizontal-alignment: left;
+  margin-left: 16;
+  z-index: 1000;
+}
+
+.restore-panel-button .fa {
+  color: white;
+  font-size: 16;
+  margin-top: -42;
+  height: 42;
 }
 </style>
