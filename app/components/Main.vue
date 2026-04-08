@@ -40,7 +40,8 @@
 
         <!-- MapStateBar overlay - positioned at bottom, above BottomSheet -->
         <MapStateBar
-          v-show="sliding.isVisible && !isDebugActive"
+          ref="mapStateBar"
+          v-show="!isDebugActive"
           :bottomSheetRef="bottomSheetInstance"
           verticalAlignment="bottom"
           horizontalAlignment="left"
@@ -67,7 +68,14 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, Frame, isAndroid, isIOS } from '@nativescript/core';
+import {
+  AndroidApplication,
+  Application,
+  CoreTypes,
+  Frame,
+  isAndroid,
+  isIOS,
+} from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
@@ -127,6 +135,9 @@ export default {
     isDebugActive() {
       return this.$store.state.ui.isDebugActive;
     },
+    isPanelHidden() {
+      return this.$store.state.ui.panelState.position === 'HIDDEN';
+    },
     safeAreaLeftInset() {
       return this.$store.state.ui.screenSafeArea.left;
     },
@@ -145,11 +156,39 @@ export default {
       if (isAndroid && this.isKeyboardOpen) {
         return this.keyboardHeight;
       }
+      if (this.isPanelHidden) {
+        return 0;
+      }
       return this.layout.bottomPadding + this.navBarHeight;
     },
   },
 
+  watch: {
+    isPanelHidden(hidden) {
+      this.updateMapStateBarVisibility(hidden, true);
+    },
+  },
+
   methods: {
+    updateMapStateBarVisibility(hidden, animate) {
+      const bar = this.$refs.mapStateBar?.$el?.nativeView;
+      if (!bar) return;
+
+      const bottomInset = this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
+      const slideDistance = this.mapStateBarHeight + bottomInset;
+      const y = hidden ? slideDistance : 0;
+
+      if (animate) {
+        bar.animate({
+          translate: { x: 0, y },
+          duration: 200,
+          curve: CoreTypes.AnimationCurve.easeOut,
+        });
+      } else {
+        bar.translateY = y;
+      }
+    },
+
     /**
      * Called when RootLayout changes size
      * This captures real available space including keyboard state
@@ -173,6 +212,11 @@ export default {
      */
     handleLayoutChanged(args) {
       const { dimensions } = args;
+
+      // Re-apply MapStateBar position after layout change
+      if (this.isPanelHidden) {
+        this.$nextTick(() => this.updateMapStateBarVisibility(true, false));
+      }
 
       // Update local layout state
       this.layout = {

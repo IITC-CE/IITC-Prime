@@ -226,7 +226,8 @@ export default {
             break;
           case 'ui/setKeyboardOpen':
           case 'ui/setScreenSafeArea':
-          case 'ui/setLayoutDimensions': {
+          case 'ui/setLayoutDimensions':
+          case 'ui/setPanelPosition': {
             const wsa = this.$store.getters['ui/webviewSafeArea'];
             await webview.executeJavaScript(
               setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
