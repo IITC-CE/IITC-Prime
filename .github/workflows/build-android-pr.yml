@@ -23,8 +23,19 @@ jobs:
       - name: Make test build
         run: npm run build:android:debug
 
+      - name: Prepare artifact with metadata
+        run: |
+          mkdir -p artifact/.metadata artifact/build
+          echo "PR" > artifact/.metadata/build_type
+          echo "${{ github.event.pull_request.head.sha || github.sha }}" > artifact/.metadata/commit
+          echo "${{ github.event.number }}" > artifact/.metadata/pr_number
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk artifact/build/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-app-debug
-          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          include-hidden-files: true
+          path: |
+            artifact/.metadata/
+            artifact/build/

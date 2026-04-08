@@ -1,0 +1,68 @@
+name: Add artifact links to pull request
+
+on:
+  workflow_run:
+    workflows: ["Build Android PR"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  comment-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get artifact list from API
+        id: get-artifacts
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const runId = ${{ github.event.workflow_run.id }};
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+            const artifact = artifacts.data.artifacts[0];
+            core.exportVariable('artifactId', artifact.id);
+            core.exportVariable('artifactName', artifact.name);
+            core.exportVariable('artifactUrl', `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/${artifact.id}`);
+
+      - name: Download artifact
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: ${{ env.artifactId }},
+              archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/build.zip`, Buffer.from(download.data));
+
+      - name: Extract metadata from artifact
+        run: |
+          unzip build.zip
+          if [ -f ".metadata/pr_number" ]; then
+            echo "PR_NUMBER=$(cat .metadata/pr_number)" >> $GITHUB_ENV
+          fi
+          if [ -f ".metadata/commit" ]; then
+            echo "SHA_SHORT=$(cat .metadata/commit | cut -c 1-7)" >> $GITHUB_ENV
+          fi
+
+      - name: Comment with artifact link for PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: ${{ env.PR_NUMBER != '' }}
+        with:
+          header: pr_artifacts
+          number: ${{ env.PR_NUMBER }}
+          message: |
+            🤖 Pull request artifacts
+
+            | File | Commit |
+            | ---- | ------ |
+            | [${{ env.artifactName }}](${{ env.artifactUrl }}) | `${{ env.SHA_SHORT }}` |
+
+            > [!NOTE]
+            > Artifacts are retained for 90 days. The ZIP archive contains the APK file.

@@ -36,7 +36,7 @@ jobs:
           sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
           sentry-dsn-android: ${{ secrets.SENTRY_DSN_ANDROID }}
 
-      - name: Create release for tags
+      - name: Attach APK to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
@@ -93,3 +93,31 @@ jobs:
               },
               "artifact_id": "${{ steps.get-artifact-id.outputs.result }}"
             }
+
+  build-gplay:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build Android AAB (Google Play)
+        uses: ./.github/actions/build-android
+        id: build
+        with:
+          build-script: build:android:gplay-release
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.KEYSTORE_PASSWORD }}
+          keystore-alias: ${{ secrets.KEYSTORE_ALIAS }}
+          keystore-alias-password: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          sentry-org-slug: ${{ secrets.SENTRY_ORG_SLUG }}
+          sentry-project-slug: ${{ secrets.SENTRY_PROJECT_SLUG }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-dsn-android: ${{ secrets.SENTRY_DSN_ANDROID }}
+
+      - name: Attach AAB to release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: ${{ steps.build.outputs.output-path }}
+          token: ${{ secrets.GITHUB_TOKEN }}
