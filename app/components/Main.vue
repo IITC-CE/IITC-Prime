@@ -40,7 +40,8 @@
 
         <!-- MapStateBar overlay - positioned at bottom, above BottomSheet -->
         <MapStateBar
-          v-show="sliding.isVisible && !isDebugActive"
+          ref="mapStateBar"
+          v-show="!isDebugActive"
           :bottomSheetRef="bottomSheetInstance"
           verticalAlignment="bottom"
           horizontalAlignment="left"
@@ -50,6 +51,22 @@
           :safeAreaLeftInset="safeAreaLeftInset"
           class="map-state-bar-overlay"
         />
+
+        <!-- Restore panel button (visible when panel is hidden) -->
+        <MDRipple
+          v-if="isPanelHidden && !isDebugActive"
+          class="fab restore-panel-button"
+          :style="{ marginBottom: navBarHeight + 16, marginLeft: safeAreaLeftInset + 16 }"
+          @loaded="onRestoreButtonLoaded"
+          @tap="restorePanel"
+        >
+          <Label
+            class="fa"
+            :text="$filters.fonticon('fa-chevron-up')"
+            horizontalAlignment="center"
+            verticalAlignment="center"
+          />
+        </MDRipple>
 
         <!-- Debug Console -->
         <AbsoluteLayout v-show="isDebugActive" class="page">
@@ -67,7 +84,14 @@
 </template>
 
 <script>
-import { AndroidApplication, Application, Frame, isAndroid, isIOS } from '@nativescript/core';
+import {
+  AndroidApplication,
+  Application,
+  CoreTypes,
+  Frame,
+  isAndroid,
+  isIOS,
+} from '@nativescript/core';
 import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
@@ -127,6 +151,9 @@ export default {
     isDebugActive() {
       return this.$store.state.ui.isDebugActive;
     },
+    isPanelHidden() {
+      return this.$store.state.ui.panelState.position === 'HIDDEN';
+    },
     safeAreaLeftInset() {
       return this.$store.state.ui.screenSafeArea.left;
     },
@@ -145,11 +172,39 @@ export default {
       if (isAndroid && this.isKeyboardOpen) {
         return this.keyboardHeight;
       }
+      if (this.isPanelHidden) {
+        return 0;
+      }
       return this.layout.bottomPadding + this.navBarHeight;
     },
   },
 
+  watch: {
+    isPanelHidden(hidden) {
+      this.updateMapStateBarVisibility(hidden, true);
+    },
+  },
+
   methods: {
+    updateMapStateBarVisibility(hidden, animate) {
+      const bar = this.$refs.mapStateBar?.$el?.nativeView;
+      if (!bar) return;
+
+      const bottomInset = this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
+      const slideDistance = this.mapStateBarHeight + bottomInset;
+      const y = hidden ? slideDistance : 0;
+
+      if (animate) {
+        bar.animate({
+          translate: { x: 0, y },
+          duration: 200,
+          curve: CoreTypes.AnimationCurve.easeOut,
+        });
+      } else {
+        bar.translateY = y;
+      }
+    },
+
     /**
      * Called when RootLayout changes size
      * This captures real available space including keyboard state
@@ -173,6 +228,11 @@ export default {
      */
     handleLayoutChanged(args) {
       const { dimensions } = args;
+
+      // Re-apply MapStateBar position after layout change
+      if (this.isPanelHidden) {
+        this.$nextTick(() => this.updateMapStateBarVisibility(true, false));
+      }
 
       // Update local layout state
       this.layout = {
@@ -216,6 +276,22 @@ export default {
      */
     handleBottomSheetReady(bottomSheet) {
       this.bottomSheetInstance = bottomSheet;
+    },
+
+    onRestoreButtonLoaded(args) {
+      const btn = args.object;
+      btn.translateY = 60;
+      btn.opacity = 0;
+      btn.animate({
+        translate: { x: 0, y: 0 },
+        opacity: 1,
+        duration: 300,
+        curve: CoreTypes.AnimationCurve.easeOut,
+      });
+    },
+
+    restorePanel() {
+      this.$store.dispatch('ui/closePanel');
     },
 
     // Handle console logs from AppWebView
@@ -277,6 +353,13 @@ export default {
         // If debug is active, exit debug mode instead of navigating back
         if (this.isDebugActive) {
           this.$store.dispatch('ui/toggleDebugMode');
+          args.cancel = true;
+          return;
+        }
+
+        // If panel is hidden, restore it
+        if (this.isPanelHidden) {
+          this.restorePanel();
           args.cancel = true;
           return;
         }
@@ -413,6 +496,11 @@ export default {
 }
 
 .map-state-bar-overlay {
+  z-index: 1000;
+}
+
+.restore-panel-button {
+  horizontal-alignment: left;
   z-index: 1000;
 }
 </style>

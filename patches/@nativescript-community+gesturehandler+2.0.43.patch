@@ -1,0 +1,28 @@
+diff --git a/node_modules/@nativescript-community/gesturehandler/gesturehandler.ios.js b/node_modules/@nativescript-community/gesturehandler/gesturehandler.ios.js
+index 44c96f8..510aedb 100644
+--- a/node_modules/@nativescript-community/gesturehandler/gesturehandler.ios.js
++++ b/node_modules/@nativescript-community/gesturehandler/gesturehandler.ios.js
+@@ -395,6 +395,23 @@ export class Manager extends ManagerBase {
+             dispose: onDispose
+         });
+     }
++    findRootView(view) {
++        if (view instanceof GestureRootView) {
++            return view;
++        }
++        let parent = view.parent;
++        while (parent) {
++            if (parent instanceof GestureRootView) {
++                return parent;
++            }
++            parent = parent.parent;
++        }
++        const page = view.page;
++        return page;
++    }
++    findRegistry(view) {
++        return this.findRootView(view)?.registry;
++    }
+     detachGestureHandler(handlerTag, view) {
+         if (view.nativeView) {
+             this.manager.dropGestureHandler(handlerTag);

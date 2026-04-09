@@ -50,12 +50,23 @@ export const ui = {
 
     // Computed WebView safe area insets: screen insets adjusted for panel layout.
     // When keyboard is open, bottom is 0: WebView is already above keyboard, no panel to avoid.
-    webviewSafeArea: (state, getters) => ({
-      top: state.screenSafeArea.top,
-      bottom: state.isKeyboardOpen ? 0 : getters.webViewBottomInset,
-      left: state.screenSafeArea.left,
-      right: state.screenSafeArea.right,
-    }),
+    // When panel is hidden, bottom equals system nav bar height
+    webviewSafeArea: (state, getters) => {
+      let bottom;
+      if (state.isKeyboardOpen) {
+        bottom = 0;
+      } else if (state.panelState.position === 'HIDDEN') {
+        bottom = state.screenSafeArea.bottom;
+      } else {
+        bottom = getters.webViewBottomInset;
+      }
+      return {
+        top: state.screenSafeArea.top,
+        bottom,
+        left: state.screenSafeArea.left,
+        right: state.screenSafeArea.right,
+      };
+    },
   },
 
   mutations: {
