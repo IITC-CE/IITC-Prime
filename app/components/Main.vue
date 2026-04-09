@@ -357,6 +357,13 @@ export default {
           return;
         }
 
+        // If panel is hidden, restore it
+        if (this.isPanelHidden) {
+          this.restorePanel();
+          args.cancel = true;
+          return;
+        }
+
         this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
