@@ -133,6 +133,25 @@ $radius-full: 9999; // For circular elements
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
 }
 
+// Floating action button
+.fab {
+  width: 50;
+  height: 50;
+  vertical-align: bottom;
+  border-radius: $radius-full;
+  background-color: rgba(255, 255, 255, 0.1);
+  ripple-color: $ripple;
+
+  .fa {
+    color: white;
+    font-size: 18;
+    horizontal-alignment: center;
+    vertical-alignment: center;
+    margin-top: -50;
+    height: 50;
+  }
+}
+
 .btn-text {
   color: $primary;
   font-size: $font-size;

@@ -1,7 +1,11 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout rows="*, auto" class="debug-console" :style="{ 'padding-bottom': keyboardPaddingBottom }">
+  <GridLayout
+    rows="*, auto"
+    class="debug-console"
+    :style="{ 'padding-bottom': keyboardPaddingBottom }"
+  >
     <!-- Logs list -->
     <CollectionView
       ref="logsList"
@@ -42,7 +46,7 @@
 
     <MDRipple
       v-show="!isAtBottom && showControls"
-      class="scroll-bottom-button"
+      class="fab scroll-bottom-button"
       @tap="scrollToBottom"
     >
       <Label
@@ -57,7 +61,11 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import { performanceOptimizationMixin, optimizeMapState, Cache } from '~/utils/performance-optimization';
+import {
+  performanceOptimizationMixin,
+  optimizeMapState,
+  Cache,
+} from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
@@ -65,27 +73,24 @@ import { isAndroid } from '@nativescript/core';
 
 export default {
   components: {
-    ControlsPanel
+    ControlsPanel,
   },
 
-  mixins: [
-    performanceOptimizationMixin,
-    logFormattingMixin
-  ],
+  mixins: [performanceOptimizationMixin, logFormattingMixin],
 
   props: {
     isVisible: {
       type: Boolean,
-      default: false
+      default: false,
     },
     isKeyboardOpen: {
       type: Boolean,
-      default: false
+      default: false,
     },
     keyboardHeight: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
 
   data() {
@@ -93,13 +98,13 @@ export default {
       command: '',
       isAtBottom: true,
       showControls: false, // Controls UI elements visibility
-      logsVisible: false,  // Controls whether logs should be shown or not
+      logsVisible: false, // Controls whether logs should be shown or not
 
       _logFormattingCache: new Cache(200, 600000), // Cache formatted logs for 10 minutes
       _displayLogsCache: null,
       _lastLogsHash: null,
-      _collectionView: null
-    }
+      _collectionView: null,
+    };
   },
 
   computed: {
@@ -117,11 +122,13 @@ export default {
       return Math.max(0, this.keyboardHeight - safeAreaBottom);
     },
 
-    ...mapState(optimizeMapState({
-      logs: 'debug.logs',
-      commandHistory: 'debug.commandHistory',
-      historyPosition: 'debug.historyPosition'
-    })),
+    ...mapState(
+      optimizeMapState({
+        logs: 'debug.logs',
+        commandHistory: 'debug.commandHistory',
+        historyPosition: 'debug.historyPosition',
+      })
+    ),
 
     // Display logs only when both component is visible and logs should be shown
     displayLogs() {
@@ -130,7 +137,12 @@ export default {
       }
 
       // Create hash of logs for cache invalidation
-      const logsHash = this.logs.length + '-' + (this.logs[0]?.timestamp || 0) + '-' + (this.logs[this.logs.length - 1]?.timestamp || 0);
+      const logsHash =
+        this.logs.length +
+        '-' +
+        (this.logs[0]?.timestamp || 0) +
+        '-' +
+        (this.logs[this.logs.length - 1]?.timestamp || 0);
 
       // Return cached result if logs haven't changed
       if (this._lastLogsHash === logsHash && this._displayLogsCache) {
@@ -142,7 +154,7 @@ export default {
       this._lastLogsHash = logsHash;
 
       return this._displayLogsCache;
-    }
+    },
   },
 
   watch: {
@@ -184,15 +196,11 @@ export default {
           this.scrollToBottom();
         });
       }
-    }
+    },
   },
 
   methods: {
-    ...mapActions('debug', [
-      'clearLogs',
-      'addCommand',
-      'navigateHistory'
-    ]),
+    ...mapActions('debug', ['clearLogs', 'addCommand', 'navigateHistory']),
 
     // Handle executed command from ControlsPanel
     onCommandExecuted(cmdString) {
@@ -243,7 +251,7 @@ export default {
 
         this.isAtBottom = isLastVisible || isSecondToLastVisible;
       } catch (e) {
-        console.error("Error checking scroll position:", e);
+        console.error('Error checking scroll position:', e);
         this.isAtBottom = true;
       }
     },
@@ -260,7 +268,7 @@ export default {
         this._collectionView.scrollToIndex(lastIndex, true);
         this.isAtBottom = true;
       } catch (e) {
-        console.error("Error scrolling to bottom:", e);
+        console.error('Error scrolling to bottom:', e);
       }
     },
 
@@ -277,10 +285,10 @@ export default {
     // Copy log text to clipboard on long press
     async copyLogToClipboard(item) {
       const fullText = this.getFullLogText(item);
-      await copyToClipboard(fullText, "Log copied to clipboard");
+      await copyToClipboard(fullText, 'Log copied to clipboard');
     },
   },
-}
+};
 </script>
 
 <style scoped lang="scss">
@@ -358,20 +366,7 @@ export default {
 }
 
 .scroll-bottom-button {
-  width: 50;
-  height: 50;
-  border-radius: $radius-full;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 18;
-  vertical-align: bottom;
   horizontal-align: right;
   margin: $spacing-l $spacing-m;
-  text-align: center;
-}
-
-.scroll-bottom-button .fa {
-  margin-top: -50;
-  height: 50;
 }
 </style>

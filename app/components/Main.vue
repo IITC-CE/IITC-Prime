@@ -55,7 +55,7 @@
         <!-- Restore panel button (visible when panel is hidden) -->
         <MDRipple
           v-if="isPanelHidden && !isDebugActive"
-          class="restore-panel-button"
+          class="fab restore-panel-button"
           :style="{ marginBottom: navBarHeight + 16, marginLeft: safeAreaLeftInset + 16 }"
           @loaded="onRestoreButtonLoaded"
           @tap="restorePanel"
@@ -493,20 +493,7 @@ export default {
 }
 
 .restore-panel-button {
-  width: 42;
-  height: 42;
-  border-radius: $radius-full;
-  background-color: rgba(0, 0, 0, 0.4);
-  vertical-alignment: bottom;
   horizontal-alignment: left;
-  margin-left: 16;
   z-index: 1000;
-}
-
-.restore-panel-button .fa {
-  color: white;
-  font-size: 16;
-  margin-top: -42;
-  height: 42;
 }
 </style>
