@@ -5,8 +5,8 @@
     class="map-state-bar"
     orientation="horizontal"
     rippleColor="#ffffff"
-    :marginLeft="safeAreaLeftInset"
-    :width="panelWidth ? panelWidth - safeAreaLeftInset : '100%'"
+    :marginLeft="effectiveLeftInset"
+    :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
     :style="{ paddingBottom: navBarHeight + 8 }"
     @tap="handleTap"
     @pan="handlePan"
@@ -78,6 +78,17 @@ export default {
       portalStatus: state => state.map.portalStatus,
       isIitcLoaded: state => state.ui.isIitcLoaded,
     }),
+
+    /**
+     * On iOS, RootLayout overlays receive safe area as internal padding.
+     * A 1dp margin prevents iOS from extending the background past the safe area edge.
+     */
+    effectiveLeftInset() {
+      if (__IOS__) {
+        return this.safeAreaLeftInset > 0 ? 1 : 0;
+      }
+      return this.safeAreaLeftInset;
+    },
   },
 
   methods: {
