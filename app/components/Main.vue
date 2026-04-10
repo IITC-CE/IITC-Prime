@@ -56,7 +56,7 @@
         <MDRipple
           v-if="isPanelHidden && !isDebugActive"
           class="fab restore-panel-button"
-          :style="{ marginBottom: navBarHeight + 16, marginLeft: safeAreaLeftInset + 16 }"
+          :style="{ marginBottom: systemBottomInset + 16, marginLeft: safeAreaLeftInset + 16 }"
           @loaded="onRestoreButtonLoaded"
           @tap="restorePanel"
         >
@@ -160,6 +160,12 @@ export default {
     safeAreaRightInset() {
       return this.$store.state.ui.screenSafeArea.right;
     },
+    /**
+     * System bottom inset.
+     */
+    systemBottomInset() {
+      return this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
+    },
 
     /**
      * Bottom spacer height for AppWebView content area.
@@ -190,8 +196,7 @@ export default {
       const bar = this.$refs.mapStateBar?.$el?.nativeView;
       if (!bar) return;
 
-      const bottomInset = this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
-      const slideDistance = this.mapStateBarHeight + bottomInset;
+      const slideDistance = this.mapStateBarHeight + this.systemBottomInset;
       const y = hidden ? slideDistance : 0;
 
       if (animate) {
