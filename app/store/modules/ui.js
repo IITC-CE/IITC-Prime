@@ -38,6 +38,10 @@ export const ui = {
     screenSafeArea: { top: 0, bottom: 0, left: 0, right: 0 },
 
     isKeyboardOpen: false,
+
+    // Pending plugin to install (from file intent or URL)
+    // { type: 'url', value: '...' } or { type: 'file', code: '...', filename: '...' }
+    pendingPlugin: null,
   }),
 
   getters: {
@@ -118,6 +122,10 @@ export const ui = {
 
     SET_KEYBOARD_OPEN(state, isOpen) {
       state.isKeyboardOpen = isOpen;
+    },
+
+    SET_PENDING_PLUGIN(state, plugin) {
+      state.pendingPlugin = plugin;
     },
 
     SET_SCREEN_SAFE_AREA(state, { top, bottom, left, right } = {}) {
@@ -211,6 +219,14 @@ export const ui = {
 
     setKeyboardOpen({ commit }, isOpen) {
       commit('SET_KEYBOARD_OPEN', isOpen);
+    },
+
+    setPendingPlugin({ commit }, plugin) {
+      commit('SET_PENDING_PLUGIN', plugin);
+    },
+
+    clearPendingPlugin({ commit }) {
+      commit('SET_PENDING_PLUGIN', null);
     },
 
     // Update raw OS/screen safe area insets; pass only the values you want to update

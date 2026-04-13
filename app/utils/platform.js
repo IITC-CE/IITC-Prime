@@ -353,6 +353,88 @@ function _readClipboardAndroid(pattern) {
 }
 
 /**
+ * Read file content from a URI string (content://, file://).
+ * Android: handles content:// URIs via ContentResolver.
+ * iOS: handles file:// URLs.
+ * @param {string} uri - The URI to read from
+ * @returns {{ content: string, name: string }} File content and display name
+ */
+export const readFileFromUri = uri => {
+  if (isAndroid && uri.startsWith('content://')) {
+    const context = Utils.android.getApplicationContext();
+    const contentUri = android.net.Uri.parse(uri);
+    const contentResolver = context.getContentResolver();
+
+    // Read content
+    const inputStream = contentResolver.openInputStream(contentUri);
+    const reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream, 'UTF-8'));
+    const sb = new java.lang.StringBuilder();
+    let line;
+    while ((line = reader.readLine()) !== null) {
+      sb.append(line);
+      sb.append('\n');
+    }
+    reader.close();
+    inputStream.close();
+    const content = sb.toString();
+
+    // Get filename from cursor
+    let name = 'plugin.user.js';
+    try {
+      const cursor = contentResolver.query(contentUri, null, null, null, null);
+      if (cursor && cursor.moveToFirst()) {
+        const nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+        if (nameIndex >= 0) {
+          name = cursor.getString(nameIndex);
+        }
+        cursor.close();
+      }
+    } catch (e) {
+      // Fallback filename is fine
+    }
+
+    return { content, name };
+  }
+
+  // iOS: use NSURL with security-scoped access (required for iCloud, Files app, etc.)
+  if (isIOS) {
+    const nsUrl = NSURL.URLWithString(uri);
+    const accessing = nsUrl.startAccessingSecurityScopedResource();
+    try {
+      const data = NSData.dataWithContentsOfURL(nsUrl);
+      if (!data) {
+        throw new Error('Failed to read file data from URL: ' + uri);
+      }
+      const content = NSString.alloc().initWithDataEncoding(data, NSUTF8StringEncoding).toString();
+      const name = nsUrl.lastPathComponent || 'plugin.user.js';
+      return { content, name };
+    } finally {
+      if (accessing) {
+        nsUrl.stopAccessingSecurityScopedResource();
+      }
+    }
+  }
+
+  // file:// URI or plain path (Android fallback)
+  let filePath = uri;
+  if (uri.startsWith('file://')) {
+    filePath = uri.replace('file://', '');
+    try {
+      filePath = decodeURIComponent(filePath);
+    } catch (e) {
+      // Keep as-is if decoding fails
+    }
+  }
+
+  const { File } = require('@nativescript/core');
+  const file = File.fromPath(filePath);
+  const content = file.readTextSync();
+  const name = filePath.split('/').pop() || 'plugin.user.js';
+
+  return { content, name };
+};
+
+/**
  * Get application display name from native resources
  * @returns {string} Application name
  */

@@ -98,12 +98,14 @@ import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
 import { parseAndroidInsets } from '@/utils/platform';
 
+import { $navigateTo } from 'nativescript-vue';
 import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import BottomSheetPanel from './BottomPanel/BottomSheetPanel.vue';
 import MapStateBar from './BottomPanel/MapStateBar/MapStateBar.vue';
 import PopupWebView from './PopupWebView.vue';
 import DebugConsole from './DebugConsole';
+import PluginsView from './Settings/PluginsView.vue';
 
 export default {
   name: 'MainView',
@@ -188,6 +190,11 @@ export default {
   watch: {
     isPanelHidden(hidden) {
       this.updateMapStateBarVisibility(hidden, true);
+    },
+    '$store.state.ui.pendingPlugin'(pending) {
+      if (pending) {
+        this.openPluginsWithPending(pending);
+      }
     },
   },
 
@@ -345,6 +352,14 @@ export default {
       } else {
         console.error('AppWebView reference not found');
       }
+    },
+
+    openPluginsWithPending(pending) {
+      $navigateTo(PluginsView, {
+        props: { pendingPlugin: pending },
+        animated: true,
+        transition: { name: 'slideLeft', duration: 300 },
+      });
     },
 
     async setupManager() {
