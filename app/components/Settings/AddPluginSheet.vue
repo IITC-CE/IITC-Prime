@@ -47,9 +47,7 @@
 
 <script>
 import { isAndroid } from '@nativescript/core';
-import { mapActions } from 'vuex';
-import { ajaxGet, parseMeta } from 'lib-iitc-manager';
-import { confirm } from '@/utils/dialogs';
+import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
 import { getClipboardTextIfMatches, fixTextInputColors } from '@/utils/platform';
 import { selectFiles, readFileContent } from '@/utils/file-manager';
 
@@ -66,7 +64,6 @@ export default {
   },
 
   methods: {
-    ...mapActions('manager', ['addUserScripts']),
     fixTextInputColors,
 
     async checkClipboard() {
@@ -84,17 +81,12 @@ export default {
       this.isLoading = true;
 
       try {
-        const code = await ajaxGet(url);
-        if (!code) {
-          this.errorMessage = 'Failed to download plugin. Check the URL and try again.';
-          return;
-        }
-
-        const filename = url.substr(url.lastIndexOf('/') + 1);
-        await this.confirmAndAdd(code, filename);
+        const { code, filename } = await downloadPlugin(url);
+        const installed = await confirmAndInstallPlugin(code, filename);
+        if (installed) this.$closeBottomSheet();
       } catch (error) {
         console.error('Failed to add plugin:', error);
-        this.errorMessage = `Error: ${error.message || 'Unknown error occurred'}`;
+        this.errorMessage = error.message || 'Unknown error occurred';
       } finally {
         this.isLoading = false;
       }
@@ -121,47 +113,14 @@ export default {
           return;
         }
 
-        await this.confirmAndAdd(code, fileName);
+        const installed = await confirmAndInstallPlugin(code, fileName);
+        if (installed) this.$closeBottomSheet();
       } catch (error) {
         console.error('Failed to add plugin from file:', error);
-        this.errorMessage = `Error: ${error.message || 'Unknown error occurred'}`;
+        this.errorMessage = error.message || 'Unknown error occurred';
       } finally {
         this.isLoading = false;
       }
-    },
-
-    async confirmAndAdd(code, filename) {
-      const meta = parseMeta(code);
-      if (!meta || !meta.name) {
-        this.errorMessage =
-          'Invalid userscript. The file must contain a valid ==UserScript== header.';
-        return;
-      }
-
-      if (filename) {
-        meta.filename = filename;
-      }
-
-      const message = [
-        `Name: ${meta.name}`,
-        meta.description ? `Description: ${meta.description}` : null,
-        meta.version ? `Version: ${meta.version}` : null,
-        `Category: ${meta.category || 'Misc'}`,
-      ]
-        .filter(Boolean)
-        .join('\n');
-
-      const confirmed = await confirm({
-        title: 'Add plugin?',
-        message,
-        okButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-      });
-
-      if (!confirmed) return;
-
-      await this.addUserScripts([{ meta, code }]);
-      this.$closeBottomSheet();
     },
   },
 

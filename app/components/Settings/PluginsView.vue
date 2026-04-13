@@ -54,6 +54,7 @@ import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import { confirm } from '@/utils/dialogs';
+import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
@@ -69,6 +70,13 @@ export default {
   },
 
   mixins: [performanceOptimizationMixin],
+
+  props: {
+    pendingPlugin: {
+      type: Object,
+      default: null,
+    },
+  },
 
   data() {
     return {
@@ -166,6 +174,30 @@ export default {
     onNavigatedTo() {
       // Show plugins after navigation is complete
       this.isPluginsVisible = true;
+
+      // Process pending plugin from intent (file or URL)
+      if (this.pendingPlugin) {
+        const pending = this.pendingPlugin;
+        this.$store.dispatch('ui/clearPendingPlugin');
+        this.installPendingPlugin(pending);
+      }
+    },
+
+    async installPendingPlugin(pending) {
+      try {
+        let code = pending.code;
+        let filename = pending.filename;
+
+        if (pending.type === 'url') {
+          const result = await downloadPlugin(pending.value);
+          code = result.code;
+          filename = result.filename;
+        }
+
+        await confirmAndInstallPlugin(code, filename);
+      } catch (error) {
+        console.error('Failed to install plugin from intent:', error);
+      }
     },
 
     getEmptyMessage() {
