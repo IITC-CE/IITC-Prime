@@ -384,6 +384,13 @@ export default {
           return;
         }
 
+        // If panel is expanded (open), collapse it to BOTTOM
+        if (this.$store.state.ui.panelState.isOpen) {
+          this.$store.dispatch('ui/closePanel');
+          args.cancel = true;
+          return;
+        }
+
         this.$store.dispatch('navigation/setCurrentPane', 'map');
         args.cancel = true;
       });
