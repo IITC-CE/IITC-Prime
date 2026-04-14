@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <AbsoluteLayout class="popup-overlay">
@@ -25,6 +25,7 @@
             @webview-loaded="onWebViewLoaded"
             @page-title-changed="updatePageTitle"
             @external-url="handleExternalUrl"
+            @should-override-url-loading="onShouldOverrideUrlLoading"
             @progress="updateProgress"
             @close-popup="closePopup"
             @load-error="handleLoadError"
@@ -43,11 +44,12 @@
 </template>
 
 <script>
-import BaseWebView from "./BaseWebView.vue";
-import { transportManager } from "@/utils/webview/transport-manager";
+import BaseWebView from './BaseWebView.vue';
+import { transportManager } from '@/utils/webview/transport-manager';
+import { INGRESS_INTEL_MAP } from '@/utils/url-config';
 
 export default {
-  name: "PopupWebView",
+  name: 'PopupWebView',
 
   components: {
     BaseWebView,
@@ -56,7 +58,7 @@ export default {
   props: {
     url: {
       type: String,
-      default: "",
+      default: '',
     },
     transportId: {
       type: String,
@@ -66,10 +68,11 @@ export default {
 
   data() {
     return {
-      pageTitle: "Loading...",
+      pageTitle: 'Loading...',
       isLoading: false,
       loadingProgress: 0,
       hasError: false,
+      isClosing: false,
     };
   },
 
@@ -81,7 +84,7 @@ export default {
 
   methods: {
     updatePageTitle(title) {
-      this.pageTitle = title || "Loading...";
+      this.pageTitle = title || 'Loading...';
     },
 
     updateProgress(progress) {
@@ -90,33 +93,48 @@ export default {
     },
 
     handleExternalUrl(url) {
-      console.debug("External URL in popup:", url);
+      console.debug('External URL in popup:', url);
+    },
+
+    onShouldOverrideUrlLoading(args) {
+      if (this.isClosing) return;
+      console.log('[PopupWebView] shouldOverrideUrlLoading:', args.url);
+
+      try {
+        const uri = new URL(args.url);
+        if (uri.hostname === new URL(INGRESS_INTEL_MAP).hostname) {
+          console.log('[PopupWebView] Intel URL detected, redirecting to main WebView');
+          this.isClosing = true;
+          args.cancel = true;
+          this.$store.dispatch('ui/setCurrentUrl', args.url);
+          this.closePopup();
+        }
+      } catch (e) {
+        // Invalid URL, ignore
+      }
     },
 
     handleLoadError(error) {
       this.hasError = true;
-      console.error("Popup WebView load error:", error);
+      console.error('Popup WebView load error:', error);
     },
 
     closePopup() {
-      console.log("[PopupWebView] Closing popup");
+      console.log('[PopupWebView] Closing popup');
 
       // Cleanup transport (Android)
       if (this.transportId) {
         transportManager.cleanupTransport(this.transportId);
       }
 
-      this.$emit("close");
+      this.$emit('close');
     },
 
     onWebViewLoaded({ webview }) {
       if (this.transportId) {
-        const success = transportManager.initializeTransport(
-          this.transportId,
-          webview
-        );
+        const success = transportManager.initializeTransport(this.transportId, webview);
         if (!success) {
-          console.error("Failed to initialize transport:", this.transportId);
+          console.error('Failed to initialize transport:', this.transportId);
         }
       }
     },
