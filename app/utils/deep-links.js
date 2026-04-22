@@ -70,10 +70,20 @@ export const handleDeepLink = () => {
 };
 
 /**
+ * Check whether a URL can be handled as a deep link.
+ * @param {string} url
+ * @returns {boolean}
+ */
+export const isSupportedDeepLinkUrl = url => {
+  if (!url || typeof url !== 'string') return false;
+  return isPluginUrl(url) || convertDeepLinkToIntelUrl(url) !== null;
+};
+
+/**
  * Process any deep link URL - either a plugin file/URL or an intel map link
  * @param {string} url - The deep link URL
  */
-const processDeepLink = url => {
+export const processDeepLink = url => {
   if (!url) return;
 
   // Check if this is a plugin URL/file

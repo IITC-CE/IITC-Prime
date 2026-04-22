@@ -31,7 +31,7 @@
       </StackLayout>
 
       <!-- Control buttons -->
-      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto">
+      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto, auto">
         <!-- Quick Access Button / Back Button -->
         <MDButton
           col="0"
@@ -48,10 +48,20 @@
         <!-- App Name / Pane Title -->
         <Label col="1" :text="panelTitle" class="panel-title-label" verticalAlignment="center" />
 
+        <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
+        <MDButton
+          v-if="hasClipboardLink"
+          col="3"
+          variant="flat"
+          class="fa app-control-button"
+          :text="$filters.fonticon('fa-paste')"
+          @tap="onPasteClipboard"
+        />
+
         <!-- Location Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="3"
+          col="4"
           variant="flat"
           class="fa app-control-button"
           :text="$filters.fonticon(locationButtonIcon)"
@@ -61,7 +71,7 @@
         <!-- Layers Button -->
         <MDButton
           v-show="isIitcLoaded"
-          col="4"
+          col="5"
           variant="flat"
           class="fa app-control-button"
           :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
@@ -80,9 +90,12 @@
 import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
-import { isIOS } from '@nativescript/core';
+import { Application, isIOS, isAndroid } from '@nativescript/core';
+import { Toasty } from '@triniwiz/nativescript-toasty';
 import { layoutService } from '~/utils/layout-service';
-import { getAppName } from '~/utils/platform';
+import { getAppName, readClipboardText } from '~/utils/platform';
+import { hasClipboardUrl } from '~/utils/clipboard';
+import { isSupportedDeepLinkUrl, processDeepLink } from '~/utils/deep-links';
 
 export default {
   name: 'BottomSheetPanel',
@@ -131,6 +144,8 @@ export default {
       lastStepIndex: 0,
       _activeButton: null,
       removeLayoutListener: null,
+      hasClipboardLink: false,
+      _boundAndroidActivityResumedHandler: null,
       PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
@@ -435,6 +450,90 @@ export default {
       const { dimensions } = event;
       this.screenHeight = dimensions.availableHeight;
     },
+
+    /**
+     * Detect whether the clipboard currently contains a URL
+     */
+    async refreshClipboardLinkState() {
+      try {
+        const result = await hasClipboardUrl();
+        this.hasClipboardLink = result;
+      } catch (error) {
+        console.error('[BottomSheetPanel] Error checking clipboard:', error);
+        this.hasClipboardLink = false;
+      }
+    },
+
+    /**
+     * Handle paste button tap - read clipboard and, if it holds a supported
+     * deep link, process it (navigate to intel URL or install plugin).
+     */
+    async onPasteClipboard() {
+      try {
+        const url = readClipboardText();
+        if (isSupportedDeepLinkUrl(url)) {
+          processDeepLink(url);
+        } else {
+          new Toasty({ text: 'Unsupported or invalid URL in clipboard' }).show();
+        }
+      } catch (error) {
+        console.error('[BottomSheetPanel] Error pasting clipboard URL:', error);
+      } finally {
+        this.hasClipboardLink = false;
+      }
+    },
+
+    /**
+     * App resume handler.
+     * iOS: refresh directly. Android: handled by the activityResumed hook
+     * that schedules a Runnable on the UI thread to wait for window focus.
+     */
+    _onAppResume() {
+      if (!isAndroid) {
+        this.refreshClipboardLinkState();
+      }
+    },
+
+    /**
+     * Clipboard read requires window focus (Android 12+). decorView.post() queues
+     * the callback after onWindowFocusChanged(true), but clipboard access is granted
+     * slightly later - setTimeout(150ms) bridges that gap.
+     */
+    _onAndroidActivityResumed(args) {
+      const activity = args?.activity || Application.android.foregroundActivity;
+      const decorView = activity?.getWindow()?.getDecorView();
+      if (!decorView) return;
+
+      decorView.post(
+        new java.lang.Runnable({
+          run: () => setTimeout(() => this.refreshClipboardLinkState(), 150),
+        })
+      );
+    },
+
+    _setButtonVisible(refName, visible, animated) {
+      const component = this.$refs[refName];
+      if (!component) return;
+      const view = component.nativeView || component.$el?.nativeView || component;
+      if (!view) return;
+
+      const opacity = visible ? 1 : 0.2;
+      const scale = visible ? 1 : 0.8;
+
+      if (!animated) {
+        view.opacity = opacity;
+        view.scaleX = scale;
+        view.scaleY = scale;
+        return;
+      }
+
+      view.animate({
+        opacity,
+        scale: { x: scale, y: scale },
+        duration: 200,
+        curve: CoreTypes.AnimationCurve.easeOut,
+      });
+    },
   },
 
   created() {
@@ -446,12 +545,31 @@ export default {
 
     // Listen for layout changes
     this.removeLayoutListener = layoutService.addLayoutChangeListener(this.handleLayoutChange);
+
+    // Clipboard check lifecycle:
+    // Android: wait for activityResumed -> window focus
+    // iOS: check directly
+    if (isAndroid && Application.android) {
+      this._boundAndroidActivityResumedHandler = this._onAndroidActivityResumed.bind(this);
+      Application.android.on('activityResumed', this._boundAndroidActivityResumedHandler);
+    } else {
+      this.refreshClipboardLinkState();
+    }
+
+    Application.on(Application.resumeEvent, this._onAppResume);
   },
 
   beforeUnmount() {
     if (this.removeLayoutListener) {
       this.removeLayoutListener();
     }
+
+    if (isAndroid && Application.android && this._boundAndroidActivityResumedHandler) {
+      Application.android.off('activityResumed', this._boundAndroidActivityResumedHandler);
+      this._boundAndroidActivityResumedHandler = null;
+    }
+
+    Application.off(Application.resumeEvent, this._onAppResume);
   },
 };
 </script>
@@ -517,3 +635,4 @@ export default {
   }
 }
 </style>
+
