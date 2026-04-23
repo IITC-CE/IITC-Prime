@@ -36,7 +36,7 @@
         <MDButton
           col="0"
           variant="flat"
-          class="fa app-control-button"
+          class="fa app-control-button app-control-button--permanent"
           :class="{
             'app-control-button--active':
               isPanelOpen && (activeButton === 'quick' || activeButton === null),
@@ -50,31 +50,34 @@
 
         <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
         <MDButton
-          v-if="hasClipboardLink"
+          ref="pasteBtn"
           col="3"
           variant="flat"
           class="fa app-control-button"
+          :isUserInteractionEnabled="hasClipboardLink"
           :text="$filters.fonticon('fa-paste')"
           @tap="onPasteClipboard"
         />
 
         <!-- Location Button -->
         <MDButton
-          v-show="isIitcLoaded"
+          ref="locationBtn"
           col="4"
           variant="flat"
           class="fa app-control-button"
+          :isUserInteractionEnabled="isIitcLoaded"
           :text="$filters.fonticon(locationButtonIcon)"
           @tap="onLocate"
         />
 
         <!-- Layers Button -->
         <MDButton
-          v-show="isIitcLoaded"
+          ref="layersBtn"
           col="5"
           variant="flat"
           class="fa app-control-button"
           :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
+          :isUserInteractionEnabled="isIitcLoaded"
           :text="$filters.fonticon('fa-layer-group')"
           @tap="handleControlButtonTap('layers')"
         />
@@ -90,7 +93,7 @@
 import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
-import { Application, isIOS, isAndroid } from '@nativescript/core';
+import { Application, CoreTypes, isIOS, isAndroid } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { layoutService } from '~/utils/layout-service';
 import { getAppName, readClipboardText } from '~/utils/platform';
@@ -322,6 +325,21 @@ export default {
 
       // Panel is open if MIDDLE or TOP
       this.setPanelOpenState(newIndex > 1);
+    },
+
+    /**
+     * Animate paste button visibility on clipboard state change.
+     */
+    hasClipboardLink(newValue) {
+      this._setButtonVisible('pasteBtn', newValue, true);
+    },
+
+    /**
+     * Animate location/layers buttons when IITC finishes loading.
+     */
+    isIitcLoaded(newValue) {
+      this._setButtonVisible('locationBtn', newValue, true);
+      this._setButtonVisible('layersBtn', newValue, true);
     },
 
     /**
@@ -559,6 +577,14 @@ export default {
     Application.on(Application.resumeEvent, this._onAppResume);
   },
 
+  mounted() {
+    this.$nextTick(() => {
+      this._setButtonVisible('pasteBtn', this.hasClipboardLink, false);
+      this._setButtonVisible('locationBtn', this.isIitcLoaded, false);
+      this._setButtonVisible('layersBtn', this.isIitcLoaded, false);
+    });
+  },
+
   beforeUnmount() {
     if (this.removeLayoutListener) {
       this.removeLayoutListener();
@@ -629,10 +655,16 @@ export default {
   ripple-color: $ripple;
   horizontal-alignment: center;
   vertical-alignment: center;
+  opacity: 0.2;
+  transform: scale(0.8, 0.8);
 
   &--active {
     background-color: $surface-bright;
   }
+
+  &--permanent {
+    opacity: 1;
+    transform: scale(1, 1);
+  }
 }
 </style>
-
