@@ -33,15 +33,10 @@
       <!-- Control buttons -->
       <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto, auto">
         <!-- Quick Access Button / Back Button -->
-        <MDButton
+        <ControlButton
           col="0"
-          variant="flat"
-          class="fa app-control-button app-control-button--permanent"
-          :class="{
-            'app-control-button--active':
-              isPanelOpen && (activeButton === 'quick' || activeButton === null),
-          }"
           :text="$filters.fonticon(isMapPane ? 'fa-bars' : 'fa-arrow-left')"
+          :active="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
           @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
 
@@ -49,36 +44,27 @@
         <Label col="1" :text="panelTitle" class="panel-title-label" verticalAlignment="center" />
 
         <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
-        <MDButton
-          ref="pasteBtn"
+        <ControlButton
           col="3"
-          variant="flat"
-          class="fa app-control-button"
-          :isUserInteractionEnabled="hasClipboardLink"
           :text="$filters.fonticon('fa-paste')"
+          :visible="hasClipboardLink"
           @tap="onPasteClipboard"
         />
 
         <!-- Location Button -->
-        <MDButton
-          ref="locationBtn"
+        <ControlButton
           col="4"
-          variant="flat"
-          class="fa app-control-button"
-          :isUserInteractionEnabled="isIitcLoaded"
           :text="$filters.fonticon(locationButtonIcon)"
+          :visible="isIitcLoaded"
           @tap="onLocate"
         />
 
         <!-- Layers Button -->
-        <MDButton
-          ref="layersBtn"
+        <ControlButton
           col="5"
-          variant="flat"
-          class="fa app-control-button"
-          :class="{ 'app-control-button--active': isPanelOpen && activeButton === 'layers' }"
-          :isUserInteractionEnabled="isIitcLoaded"
           :text="$filters.fonticon('fa-layer-group')"
+          :visible="isIitcLoaded"
+          :active="isPanelOpen && activeButton === 'layers'"
           @tap="handleControlButtonTap('layers')"
         />
       </GridLayout>
@@ -92,8 +78,9 @@
 <script>
 import { mapState, mapActions, mapGetters } from 'vuex';
 import AppControlListView from '@/components/BottomPanel/ControlPanel/ControlListView.vue';
+import ControlButton from '@/components/BottomPanel/ControlButton.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
-import { Application, CoreTypes, isIOS, isAndroid } from '@nativescript/core';
+import { Application, isIOS, isAndroid } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { layoutService } from '~/utils/layout-service';
 import { getAppName, readClipboardText } from '~/utils/platform';
@@ -105,6 +92,7 @@ export default {
 
   components: {
     AppControlListView,
+    ControlButton,
   },
 
   emits: ['bottomSheetReady'],
@@ -328,21 +316,6 @@ export default {
     },
 
     /**
-     * Animate paste button visibility on clipboard state change.
-     */
-    hasClipboardLink(newValue) {
-      this._setButtonVisible('pasteBtn', newValue, true);
-    },
-
-    /**
-     * Animate location/layers buttons when IITC finishes loading.
-     */
-    isIitcLoaded(newValue) {
-      this._setButtonVisible('locationBtn', newValue, true);
-      this._setButtonVisible('layersBtn', newValue, true);
-    },
-
-    /**
      * Watch for panel commands from store
      */
     panelCommand: {
@@ -528,30 +501,6 @@ export default {
         })
       );
     },
-
-    _setButtonVisible(refName, visible, animated) {
-      const component = this.$refs[refName];
-      if (!component) return;
-      const view = component.nativeView || component.$el?.nativeView || component;
-      if (!view) return;
-
-      const opacity = visible ? 1 : 0.2;
-      const scale = visible ? 1 : 0.8;
-
-      if (!animated) {
-        view.opacity = opacity;
-        view.scaleX = scale;
-        view.scaleY = scale;
-        return;
-      }
-
-      view.animate({
-        opacity,
-        scale: { x: scale, y: scale },
-        duration: 200,
-        curve: CoreTypes.AnimationCurve.easeOut,
-      });
-    },
   },
 
   created() {
@@ -575,14 +524,6 @@ export default {
     }
 
     Application.on(Application.resumeEvent, this._onAppResume);
-  },
-
-  mounted() {
-    this.$nextTick(() => {
-      this._setButtonVisible('pasteBtn', this.hasClipboardLink, false);
-      this._setButtonVisible('locationBtn', this.isIitcLoaded, false);
-      this._setButtonVisible('layersBtn', this.isIitcLoaded, false);
-    });
   },
 
   beforeUnmount() {
@@ -639,32 +580,5 @@ export default {
   color: $on-surface;
   margin-left: $spacing-s;
   font-weight: bold;
-}
-
-.app-control-button {
-  width: 42;
-  min-width: 42;
-  max-width: 42;
-  height: 42;
-  margin: 0 5;
-  padding: 0;
-  font-size: 18;
-  border-radius: 10;
-  color: rgba(255, 255, 255, 0.7);
-  background-color: transparent;
-  ripple-color: $ripple;
-  horizontal-alignment: center;
-  vertical-alignment: center;
-  opacity: 0.2;
-  transform: scale(0.8, 0.8);
-
-  &--active {
-    background-color: $surface-bright;
-  }
-
-  &--permanent {
-    opacity: 1;
-    transform: scale(1, 1);
-  }
 }
 </style>
