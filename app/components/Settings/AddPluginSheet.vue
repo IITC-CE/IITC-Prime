@@ -48,7 +48,8 @@
 <script>
 import { isAndroid } from '@nativescript/core';
 import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
-import { getClipboardTextIfMatches, fixTextInputColors } from '@/utils/platform';
+import { fixTextInputColors } from '@/utils/platform';
+import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles, readFileContent } from '@/utils/file-manager';
 
 export default {
@@ -67,7 +68,7 @@ export default {
     fixTextInputColors,
 
     async checkClipboard() {
-      const url = await getClipboardTextIfMatches(/\.user\.js/i);
+      const url = await getClipboardURLIfMatches(/\.user\.js/i);
       if (url) {
         this.pluginUrl = url;
       }

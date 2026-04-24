@@ -6,6 +6,11 @@ import { INGRESS_INTEL_MAP } from './url-config';
 // Back button handler management
 let currentBackHandler = null;
 
+// Android TextClassifier confidence threshold for URL detection in clipboard.
+// Empirical: Android does not document the scale, 0.7 leaves enough margin to
+// avoid false positives while still matching plain-text URLs reliably.
+const URL_CONFIDENCE_THRESHOLD = 0.7;
+
 /**
  * Get status bar height in DIP (Android only, fallback for when insets not yet dispatched)
  * @returns {number}
@@ -280,77 +285,119 @@ export const openAppLinkSettings = () => {
 };
 
 /**
- * Read clipboard text if it matches a pattern.
+ * Detect whether the clipboard probably contains a URL WITHOUT reading content
+ * when the OS supports it.
  *
- * iOS 14+: uses UIPasteboard.detectPatterns to check for URL presence
- * Only reads the actual content (which shows the dialog on iOS 16+)
- * if a URL pattern is detected.
+ * Returns:
+ *  - true  - URL definitely detected (no content read)
+ *  - false - no URL present
+ *  - null  - detection unavailable on this OS version; caller must read content
  *
- * Android: reads clipboard directly.
+ * iOS 14+: UIPasteboard.detectPatterns (no paste prompt).
+ * Android 12+ (API 31): ClipDescription.getConfidenceScore(TYPE_URL) (no toast).
  *
- * @param {RegExp} pattern - RegExp to test against clipboard text
- * @returns {Promise<string|null>} Matching clipboard text or null
+ * @returns {Promise<boolean|null>}
  */
-export const getClipboardTextIfMatches = async pattern => {
-  try {
-    if (isIOS) {
-      return await _readClipboardIOS(pattern);
-    } else {
-      return _readClipboardAndroid(pattern);
-    }
-  } catch (e) {
-    console.error('Error reading clipboard:', e);
-    return null;
-  }
-};
-
-function _readClipboardIOS(pattern) {
+export const detectClipboardUrl = () => {
   return new Promise(resolve => {
-    const pasteboard = UIPasteboard.generalPasteboard;
-
-    // iOS 14+: detect patterns without triggering paste permission dialog
-    const osVersion = parseFloat(UIDevice.currentDevice.systemVersion);
-    if (osVersion >= 14.0) {
-      const patterns = NSSet.setWithObject(UIPasteboardDetectionPatternProbableWebURL);
-
-      pasteboard.detectPatternsForPatternsCompletionHandler(patterns, (detected, error) => {
-        if (error || !detected || detected.count === 0) {
+    try {
+      if (isIOS) {
+        const osVersion = parseFloat(UIDevice.currentDevice.systemVersion);
+        if (osVersion < 14.0) {
+          resolve(null);
+          return;
+        }
+        const patterns = NSSet.setWithObject(UIPasteboardDetectionPatternProbableWebURL);
+        UIPasteboard.generalPasteboard.detectPatternsForPatternsCompletionHandler(
+          patterns,
+          (detected, error) => {
+            const result = !error && !!detected && detected.count > 0;
+            resolve(result);
+          }
+        );
+        return;
+      } else if (isAndroid) {
+        const sdk = android.os.Build.VERSION.SDK_INT;
+        if (sdk < 31) {
           resolve(null);
           return;
         }
 
-        // URL detected - now read content
-        const text = pasteboard.string;
-        resolve(text && pattern.test(text) ? text.trim() : null);
-      });
-    } else {
-      // iOS < 14: no paste dialog, read directly
-      const text = pasteboard.string;
-      resolve(text && pattern.test(text) ? text.trim() : null);
+        const context = Utils.android.getApplicationContext();
+        const clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        const description = clipboard?.getPrimaryClipDescription();
+
+        if (!description) {
+          resolve(null);
+          return;
+        }
+
+        const mimePlain = description.hasMimeType(
+          android.content.ClipDescription.MIMETYPE_TEXT_PLAIN
+        );
+        const mimeHtml = description.hasMimeType(
+          android.content.ClipDescription.MIMETYPE_TEXT_HTML
+        );
+
+        if (!mimePlain && !mimeHtml) {
+          resolve(false);
+          return;
+        }
+
+        const status = description.getClassificationStatus();
+        if (status === android.content.ClipDescription.CLASSIFICATION_COMPLETE) {
+          const score = description.getConfidenceScore(
+            android.view.textclassifier.TextClassifier.TYPE_URL
+          );
+          if (__DEV__) {
+            console.log(`[Clipboard] Android URL detection score: ${score}`);
+          }
+          resolve(score > URL_CONFIDENCE_THRESHOLD);
+          return;
+        }
+
+        resolve(null);
+      } else {
+        resolve(null);
+      }
+    } catch (e) {
+      console.error('[Clipboard] Error detecting clipboard URL:', e);
+      resolve(false);
     }
   });
-}
+};
 
-function _readClipboardAndroid(pattern) {
-  const context = Utils.android.getApplicationContext();
-  const clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
-
-  const description = clipboard.getPrimaryClipDescription();
-  if (!description) return null;
-
-  if (
-    !description.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_PLAIN) &&
-    !description.hasMimeType(android.content.ClipDescription.MIMETYPE_TEXT_HTML)
-  ) {
+/**
+ * Read raw and trimmed text from clipboard. On iOS 14+/Android 12+, this is what
+ * triggers the paste banner/toast. Only call after user-initiated action or as
+ * fallback when detection is not available.
+ *
+ * @returns {string|null}
+ */
+export const readClipboardText = () => {
+  try {
+    if (isIOS) {
+      const text = UIPasteboard.generalPasteboard.string;
+      return text ? text.toString().trim() : null;
+    } else if (isAndroid) {
+      const context = Utils.android.getApplicationContext();
+      const clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+      // Try reading directly - works when app has clipboard focus (foreground).
+      // On Android 10+ getPrimaryClip() returns null if access is denied, same as description.
+      const clip = clipboard?.getPrimaryClip();
+      if (!clip || clip.getItemCount() === 0) {
+        return null;
+      }
+      const text = clip.getItemAt(0).getText();
+      return text ? text.toString().trim() : null;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    console.error('[Clipboard] Error reading clipboard:', e);
     return null;
   }
-
-  const clip = clipboard.getPrimaryClip();
-  if (!clip || clip.getItemCount() === 0) return null;
-
-  const text = clip.getItemAt(0).getText()?.toString();
-  return text && pattern.test(text) ? text.trim() : null;
-}
+};
 
 /**
  * Read file content from a URI string (content://, file://).
