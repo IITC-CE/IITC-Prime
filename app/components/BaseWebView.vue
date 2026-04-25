@@ -269,17 +269,11 @@ export default {
           if (isAndroid) {
             const androidWebView = this.webViewInstance.android;
             if (androidWebView) {
-              androidWebView.stopLoading(); // Stop any ongoing loads
-              androidWebView.clearHistory(); // Clear navigation history
-              androidWebView.clearCache(true); // Clear cache
-              androidWebView.clearFormData(); // Clear form data
-              androidWebView.clearMatches(); // Clear search matches
-              androidWebView.loadUrl('about:blank'); // Clear all content
-
               try {
+                androidWebView.stopLoading();
                 androidWebView.setWebViewClient(null);
                 androidWebView.setWebChromeClient(null);
-                androidWebView.destroy(); // Destroy the WebView
+                androidWebView.destroy();
               } catch (destroyError) {
                 console.error('Error during WebView destroy:', destroyError);
               }
