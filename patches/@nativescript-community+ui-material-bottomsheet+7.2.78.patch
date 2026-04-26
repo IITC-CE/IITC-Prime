@@ -1,0 +1,25 @@
+diff --git a/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/java/com/nativescript/material/bottomsheet/BottomSheetDialogFragment.java b/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/java/com/nativescript/material/bottomsheet/BottomSheetDialogFragment.java
+index 50da3f9..e088286 100644
+--- a/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/java/com/nativescript/material/bottomsheet/BottomSheetDialogFragment.java
++++ b/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/java/com/nativescript/material/bottomsheet/BottomSheetDialogFragment.java
+@@ -30,10 +30,13 @@ public class BottomSheetDialogFragment extends com.google.android.material.botto
+ 
+     @Override
+     public android.app.Dialog onCreateDialog(android.os.Bundle savedInstanceState) {
+-        if (listener != null) {
+-            return listener.onCreateDialog(this, savedInstanceState);
++        // Orphaned fragment restored from saved state — no listener means no owner.
++        // Dismiss to avoid leaking native resources on each activity recreation.
++        if (listener == null) {
++            dismissAllowingStateLoss();
++            return super.onCreateDialog(savedInstanceState);
+         }
+-        return super.onCreateDialog(savedInstanceState);
++        return listener.onCreateDialog(this, savedInstanceState);
+     }
+ 
+     @Override
+diff --git a/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/ui_material_bottomsheet.aar b/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/ui_material_bottomsheet.aar
+new file mode 100644
+index 0000000..0a3efc9
+Binary files /dev/null and b/node_modules/@nativescript-community/ui-material-bottomsheet/platforms/android/ui_material_bottomsheet.aar differ
