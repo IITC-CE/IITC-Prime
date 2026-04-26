@@ -16,6 +16,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
+      onPluginsChanged: null,
     };
   }
 
@@ -68,6 +69,11 @@ export class ManagerService {
         plugin_event: event => {
           if (this.callbacks.onPluginEvent) {
             this.callbacks.onPluginEvent(event);
+          }
+        },
+        plugins_changed: plugins => {
+          if (this.callbacks.onPluginsChanged) {
+            this.callbacks.onPluginsChanged(plugins);
           }
         },
         use_fetch_head_method: false,
@@ -234,12 +240,7 @@ export class ManagerService {
    */
   async getPlugins() {
     const manager = await this.initialize();
-    const channel = manager.channel;
-    const storage = manager.storage;
-
-    const key = `${channel}_plugins_flat`;
-    const data = await storage.get([key]);
-    return data[key] || {};
+    return (await manager.getPluginsView()).plugins;
   }
 
   /**
@@ -298,6 +299,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
+      onPluginsChanged: null,
     };
   }
 }
