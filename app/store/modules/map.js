@@ -1,6 +1,6 @@
-// Copyright (C) 2024-2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { INITIAL_INTERNAL_HOSTNAMES } from "@/utils/url-config";
+import { INITIAL_INTERNAL_HOSTNAMES } from '@/utils/url-config';
 
 export const map = {
   namespaced: true,
@@ -8,8 +8,8 @@ export const map = {
     baseLayerSelected: 0,
     baseLayersList: [],
     overlayLayers: [],
-    highlightersList: ["No Highlights"],
-    highlighterSelected: "No Highlights",
+    highlightersList: ['No Highlights'],
+    highlighterSelected: 'No Highlights',
     location: { lat: 0, lng: 0, accuracy: 0 },
     isFollowingUser: false,
     injectPlugin: {},
@@ -28,22 +28,22 @@ export const map = {
       portalLevels: {
         hasPortals: false,
         minLinkLength: 0,
-        formattedLength: '0m'
+        formattedLength: '0m',
       },
       mapStatus: {
         short: null,
         long: null,
         progress: 1,
-        progressPercent: 100
+        progressPercent: 100,
       },
       requests: {
         active: 0,
         failed: 0,
         hasActive: false,
-        hasFailed: false
-      }
+        hasFailed: false,
+      },
     },
-    internalHostnames: [...INITIAL_INTERNAL_HOSTNAMES]
+    internalHostnames: [...INITIAL_INTERNAL_HOSTNAMES],
   }),
   mutations: {
     SET_BASE_LAYER_SELECTED(state, index) {
@@ -113,7 +113,7 @@ export const map = {
       baseLayers.forEach((layer, index) => {
         layers.push({
           name: layer.name,
-          layerId: layer.layerId
+          layerId: layer.layerId,
         });
 
         if (layer.active === true) {
@@ -145,8 +145,10 @@ export const map = {
     addHighlighter({ commit }, name) {
       commit('ADD_HIGHLIGHTER', name);
     },
-    setActiveHighlighter({ commit }, name) {
-      commit('SET_ACTIVE_HIGHLIGHTER', name);
+    setActiveHighlighter({ commit, state }, name) {
+      if (state.highlighterSelected !== name) {
+        commit('SET_ACTIVE_HIGHLIGHTER', name);
+      }
     },
     setPortalStatus({ commit }, data) {
       commit('SET_PORTAL_STATUS', data);
@@ -199,9 +201,9 @@ export const map = {
     /**
      * Execute JavaScript code in WebView
      */
-    async executeJavaScript({ commit }, code) {}
+    async executeJavaScript({ commit }, code) {},
   },
   getters: {
     isFollowingUser: state => state.isFollowingUser,
-  }
+  },
 };

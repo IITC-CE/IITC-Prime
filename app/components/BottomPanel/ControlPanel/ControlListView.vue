@@ -263,7 +263,7 @@ export default {
     },
 
     onHighlighterSelected(args) {
-      if (args.item) {
+      if (args.item && this.$store.state.map.highlighterSelected !== args.item) {
         this.$store.dispatch('map/setActiveHighlighter', args.item);
       }
     },
