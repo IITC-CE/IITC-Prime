@@ -72,7 +72,9 @@ export const addPortalHighlighter = async name => {
  * @param {string} name Highlighter name
  */
 export const setActiveHighlighter = async name => {
-  await store.dispatch('map/setActiveHighlighter', name);
+  if (store.state.map.highlighterSelected !== name) {
+    await store.dispatch('map/setActiveHighlighter', name);
+  }
 };
 
 /**
