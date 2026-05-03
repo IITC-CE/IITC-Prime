@@ -8,7 +8,7 @@ import { transportManager } from './transport-manager';
  * iOS popup handling is done natively by ui-webview patch
  */
 export const BaseWebChromeClient = isAndroid
-  ? android.webkit.WebChromeClient.extend({
+  ? android.webkit.WebChromeClient.extend('IITCBaseWebChromeClient', {
       init: function () {},
 
       initWithComponent: function (component) {
