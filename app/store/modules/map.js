@@ -75,6 +75,10 @@ export const map = {
     SET_ACTIVE_HIGHLIGHTER(state, name) {
       state.highlighterSelected = name;
     },
+    RESET_HIGHLIGHTERS(state) {
+      state.highlightersList = ['No Highlights'];
+      state.highlighterSelected = 'No Highlights';
+    },
     SET_PORTAL_STATUS(state, data) {
       // If no data (or null), reset to default state
       if (!data) {
@@ -149,6 +153,9 @@ export const map = {
       if (state.highlighterSelected !== name) {
         commit('SET_ACTIVE_HIGHLIGHTER', name);
       }
+    },
+    resetHighlighters({ commit }) {
+      commit('RESET_HIGHLIGHTERS');
     },
     setPortalStatus({ commit }, data) {
       commit('SET_PORTAL_STATUS', data);
