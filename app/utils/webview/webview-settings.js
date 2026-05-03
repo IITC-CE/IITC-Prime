@@ -18,6 +18,7 @@ export function applyWebViewSettings(webview, fakeUserAgent = false) {
     settings.setJavaScriptEnabled(true);
     settings.setDomStorageEnabled(true);
     settings.setSupportMultipleWindows(true);
+    settings.setUseWideViewPort(false);
 
     // Additional settings for auth popup
     settings.setAllowFileAccess(true);
