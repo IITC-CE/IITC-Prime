@@ -149,6 +149,7 @@ export const ui = {
         dispatch('setIitcLoaded', false);
         await dispatch('map/setPortalStatus', null, { root: true });
         await dispatch('map/setMapStatus', null, { root: true });
+        await dispatch('map/resetHighlighters', null, { root: true });
       }
       if (status) {
         await dispatch('manager/inject', null, { root: true });
