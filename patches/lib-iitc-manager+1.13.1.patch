@@ -1,0 +1,21 @@
+diff --git a/node_modules/lib-iitc-manager/dist/wrapper.js b/node_modules/lib-iitc-manager/dist/wrapper.js
+index 4e7fb4f..b58cdcc 100644
+--- a/node_modules/lib-iitc-manager/dist/wrapper.js
++++ b/node_modules/lib-iitc-manager/dist/wrapper.js
+@@ -27,12 +27,14 @@ export function wrapPluginCode(plugin, source_url_prefix = '') {
+     const data_key = getPluginHash(uid);
+     const meta = { ...plugin };
+     delete meta.code;
++    // Strip NUL bytes
++    const pluginCode = plugin.code.replaceAll('\x00', '');
+     const code = [
+         '((GM)=>{',
+         GM_V3_BINDINGS,
+         '\n',
+-        plugin.code,
+-        plugin.code.endsWith('\n') ? '' : '\n',
++        pluginCode,
++        pluginCode.endsWith('\n') ? '' : '\n',
+         `})(GM(${JSON.stringify({ data_key, meta })}))`,
+     ].join('');
+     return appendSourceUrl({ code, name: meta.name || uid || 'plugin', prefix: source_url_prefix });
