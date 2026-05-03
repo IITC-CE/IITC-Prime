@@ -26,6 +26,9 @@ export async function downloadPlugin(url) {
  * @throws {Error} if code is not a valid userscript
  */
 export async function confirmAndInstallPlugin(code, filename) {
+  // Strip NUL bytes from FAT32/exFAT cluster-padding when reading files via Android ContentResolver
+  code = code.replaceAll('\x00', '');
+
   const meta = parseMeta(code);
   if (!meta || !meta.name) {
     throw new Error('Invalid userscript. The file must contain a valid ==UserScript== header.');
