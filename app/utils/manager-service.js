@@ -182,41 +182,6 @@ export class ManagerService {
     };
   }
 
-  /**
-   * Validate custom channel URL
-   */
-  async validateCustomChannelUrl(url) {
-    if (!url) return false;
-
-    try {
-      // Ensure URL has http/https prefix
-      let fullUrl = url;
-      if (!/^https?:\/\//i.test(fullUrl)) {
-        fullUrl = 'http://' + fullUrl;
-      }
-
-      // Test if meta.json is accessible
-      const metaUrl = fullUrl.endsWith('/') ? `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
-
-      const metaUrlWithCacheBust = `${metaUrl}?${Date.now()}`;
-
-      const response = await fetch(metaUrlWithCacheBust, {
-        method: 'GET',
-        timeout: 2000,
-        headers: {
-          Accept: '*/*',
-          Range: 'bytes=0-0', // Request only first byte
-        },
-      });
-
-      // Accept both 200 (full response) and 206 (partial content from Range request)
-      return response.status === 200 || response.status === 206;
-    } catch (error) {
-      console.error('[ManagerService] Error checking custom URL:', error);
-      return false;
-    }
-  }
-
   // === Plugin Management ===
 
   /**

@@ -2,6 +2,7 @@
 
 import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
+import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { managerService } from '@/utils/manager-service';
 
 let pendingWebViewReload = null;
@@ -208,7 +209,7 @@ export const manager = {
      * Validate custom channel URL
      */
     async checkCustomChannelUrl(_, url) {
-      return await managerService.validateCustomChannelUrl(url);
+      return await validateCustomChannelUrl(url);
     },
 
     /**
