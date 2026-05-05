@@ -78,7 +78,6 @@ export const manager = {
         commit('SET_RUNNING', data.isRunning);
         commit('SET_CURRENT_CHANNEL', data.currentChannel);
         commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-        commit('SET_PLUGINS', data.plugins);
         commit('SET_INITIALIZED', true);
 
         return data;
@@ -126,7 +125,6 @@ export const manager = {
       try {
         const data = await managerService.setUpdateChannel(channel);
         commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        commit('SET_PLUGINS', data.plugins);
         return data;
       } catch (error) {
         // Revert on error
@@ -186,12 +184,7 @@ export const manager = {
       commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
 
       try {
-        const data = await managerService.managePlugin(uid, action);
-
-        // Update full plugins list
-        commit('SET_PLUGINS', data.plugins);
-
-        return data;
+        await managerService.managePlugin(uid, action);
       } catch (error) {
         // Revert on error
         if (previousStatus) {
@@ -211,10 +204,8 @@ export const manager = {
     /**
      * Add user scripts (external plugins)
      */
-    async addUserScripts({ commit }, scripts) {
-      const data = await managerService.addUserScripts(scripts);
-      commit('SET_PLUGINS', data.plugins);
-      return data;
+    async addUserScripts(_, scripts) {
+      return await managerService.addUserScripts(scripts);
     },
 
     /**

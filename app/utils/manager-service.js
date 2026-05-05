@@ -97,18 +97,15 @@ export class ManagerService {
     const manager = await this.initialize();
     await manager.run();
 
-    // Load all initial data in parallel
-    const [channel, customUrl, plugins] = await Promise.all([
+    const [channel, customUrl] = await Promise.all([
       this.getUpdateChannel(),
       this.getCustomChannelUrl(),
-      this.getPlugins(),
     ]);
 
     return {
       isRunning: true,
       currentChannel: channel,
       customChannelUrl: customUrl,
-      plugins,
     };
   }
 
@@ -146,13 +143,7 @@ export class ManagerService {
   async setUpdateChannel(channel) {
     const manager = await this.initialize();
     await manager.setChannel(channel);
-
-    // Return updated data
-    const plugins = await this.getPlugins();
-    return {
-      currentChannel: channel,
-      plugins,
-    };
+    return { currentChannel: channel };
   }
 
   /**
@@ -250,13 +241,6 @@ export class ManagerService {
   async managePlugin(uid, action) {
     const manager = await this.initialize();
     await manager.managePlugin(uid, action);
-
-    // Return updated plugins
-    const plugins = await this.getPlugins();
-    return {
-      plugins,
-      updatedPlugin: { uid, status: action },
-    };
   }
 
   /**
@@ -264,14 +248,7 @@ export class ManagerService {
    */
   async addUserScripts(scripts) {
     const manager = await this.initialize();
-    const result = await manager.addUserScripts(scripts);
-
-    // Return updated plugins
-    const plugins = await this.getPlugins();
-    return {
-      result,
-      plugins,
-    };
+    return await manager.addUserScripts(scripts);
   }
 
   /**
