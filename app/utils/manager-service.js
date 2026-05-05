@@ -16,7 +16,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
-      onPluginsChanged: null,
+      onPluginsViewChanged: null,
     };
   }
 
@@ -38,8 +38,8 @@ export class ManagerService {
             await storage.set(obj);
           },
         },
-        gm_api: {
-          bridge_adapter_code: `
+        gmApi: {
+          bridgeAdapterCode: `
             window.__iitc_gm_bridge__ = {
               send(data) {
                 window.nsWebViewBridge.emit('gmBridgeRequest', JSON.stringify(data));
@@ -56,28 +56,28 @@ export class ManagerService {
             this.callbacks.onMessage(message, args);
           }
         },
-        progressbar: isShow => {
+        onProgress: isShow => {
           if (this.callbacks.onProgress) {
             this.callbacks.onProgress(isShow);
           }
         },
-        inject_plugin: plugin => {
+        injectPlugin: plugin => {
           if (this.callbacks.onInjectPlugin) {
             this.callbacks.onInjectPlugin(plugin);
           }
         },
-        plugin_event: event => {
+        onPluginEvent: event => {
           if (this.callbacks.onPluginEvent) {
             this.callbacks.onPluginEvent(event);
           }
         },
-        plugins_changed: plugins => {
-          if (this.callbacks.onPluginsChanged) {
-            this.callbacks.onPluginsChanged(plugins);
+        onPluginsViewChanged: view => {
+          if (this.callbacks.onPluginsViewChanged) {
+            this.callbacks.onPluginsViewChanged(view.plugins);
           }
         },
-        use_fetch_head_method: false,
-        is_daemon: false,
+        useFetchHeadMethod: false,
+        isDaemon: false,
       });
 
       this.isInitialized = true;
@@ -299,7 +299,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
-      onPluginsChanged: null,
+      onPluginsViewChanged: null,
     };
   }
 }

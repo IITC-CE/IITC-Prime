@@ -65,7 +65,7 @@ export const manager = {
         onPluginEvent: event => {
           dispatch('handlePluginEvent', event);
         },
-        onPluginsChanged: plugins => {
+        onPluginsViewChanged: plugins => {
           commit('SET_PLUGINS', plugins);
         },
       });
