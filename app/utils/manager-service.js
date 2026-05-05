@@ -177,8 +177,7 @@ export class ManagerService {
    */
   async getCustomChannelUrl() {
     const manager = await this.initialize();
-    const data = await manager.storage.get(['network_host']);
-    return data.network_host && data.network_host.custom ? data.network_host.custom : '';
+    return manager.networkHost?.custom ?? '';
   }
 
   /**
