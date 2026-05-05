@@ -160,13 +160,7 @@ export class ManagerService {
    */
   async getUpdateInterval(channel) {
     const manager = await this.initialize();
-    if (!channel) {
-      channel = manager.channel;
-    }
-
-    const key = `${channel}_update_check_interval`;
-    const data = await manager.storage.get([key]);
-    return data[key] || 86400;
+    return await manager.getUpdateCheckInterval(channel);
   }
 
   /**
