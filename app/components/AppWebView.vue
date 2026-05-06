@@ -82,13 +82,17 @@ export default {
         return;
       }
 
-      // Reset lastInjectedUrl when starting new navigation
-      // This allows bridge re-injection on reload
-      if (arg.url.startsWith('https://intel.ingress.com')) {
-        this.lastInjectedUrl = null;
-      }
+      try {
+        // Reset lastInjectedUrl when starting new navigation
+        // This allows bridge re-injection on reload
+        if (arg.url.startsWith('https://intel.ingress.com')) {
+          this.lastInjectedUrl = null;
+        }
 
-      await this.$store.dispatch('ui/setWebviewLoaded', false);
+        await this.$store.dispatch('ui/setWebviewLoaded', false);
+      } catch (error) {
+        console.error('[AppWebView] onLoadStarted error:', error.message, error.stack);
+      }
     },
 
     async onLoadFinished(arg) {
@@ -143,7 +147,9 @@ export default {
     },
 
     handleBridgeMessage(eventData) {
-      router(eventData);
+      router(eventData).catch(error => {
+        console.error('[AppWebView] Bridge router error:', error.message, error.stack);
+      });
     },
 
     handleConsoleLog(logData) {
@@ -158,11 +164,11 @@ export default {
 
     async injectPlugin(plugin) {
       if (!this.webview || !plugin?.code) return;
-
       try {
         await this.webview.executeJavaScript(plugin.code, false);
+        console.log(`Plugin ${plugin.uid} loaded`);
       } catch (error) {
-        console.error('Plugin injection failed:', error);
+        console.error(`Plugin ${plugin.uid} injection failed:`, error);
       }
     },
   },
