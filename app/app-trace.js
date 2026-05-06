@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { Trace, TraceWriter } from '@nativescript/core';
 import store from './store';
@@ -8,41 +8,49 @@ import store from './store';
  * and should not be displayed in the in-app debug console
  */
 function isDeveloperOnlyLog(message) {
-  return typeof message === 'string' &&
-    (message.startsWith('{NSVue') || message.startsWith('[WebView'));
+  return (
+    typeof message === 'string' && (message.startsWith('{NSVue') || message.startsWith('[WebView'))
+  );
 }
 
 /**
  * Format log arguments to string representation consistently across all log types
  */
 function formatLogArguments(args) {
-  return args.map(arg => {
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
+  return args
+    .map(arg => {
+      if (arg === null) return 'null';
+      if (arg === undefined) return 'undefined';
 
-    // Special handling for Error objects
-    if (arg instanceof Error) {
+      // Special handling for Error objects
+      if (arg instanceof Error) {
+        return String(arg);
+      }
+
+      if (typeof arg === 'object') {
+        try {
+          return JSON.stringify(arg);
+        } catch (e) {
+          return String(arg);
+        }
+      }
       return String(arg);
-    }
-
-    if (typeof arg === 'object') {
-      try { return JSON.stringify(arg); }
-      catch (e) { return String(arg); }
-    }
-    return String(arg);
-  }).join(' ');
+    })
+    .join(' ');
 }
 
 /**
  * Factory function to create console method wrappers
  */
 function createConsoleWrapper(originalMethod, logType) {
-  return function() {
+  return function () {
     const args = Array.from(arguments);
     const message = formatLogArguments(args);
 
     // Call original method to maintain development visibility
-    originalMethod.apply(console, args);
+    if (originalMethod) {
+      originalMethod.apply(console, args);
+    }
 
     // Skip storing developer-only logs
     if (isDeveloperOnlyLog(message)) {
@@ -55,7 +63,7 @@ function createConsoleWrapper(originalMethod, logType) {
       message: message,
       timestamp: Date.now(),
       source: 'app',
-      category: 'console'
+      category: 'console',
     });
   };
 }
@@ -106,9 +114,9 @@ export function initializeTracing() {
         message: message,
         timestamp: Date.now(),
         source: 'app',
-        category: category
+        category: category,
       });
-    }
+    },
   };
 
   // Store original console methods
@@ -117,7 +125,7 @@ export function initializeTracing() {
     warn: console.warn,
     error: console.error,
     info: console.info,
-    debug: console.debug
+    debug: console.debug || console.log,
   };
 
   // Override console methods using factory function
