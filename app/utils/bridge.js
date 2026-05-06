@@ -94,14 +94,14 @@ export const router = async event => {
     case 'gmBridgeRequest':
       await gmBridgeRequest(eventData);
       break;
+    case 'setPermalink':
+      // Intentionally ignored
+      break;
     case 'console:log':
       // This event is handled by direct listeners in BaseWebView
       break;
     default:
-      console.debug('[Bridge Router] Unknown event in JSBridge router');
-      console.debug('[Bridge Router] Unknown event:', event);
-      console.debug('[Bridge Router] Unknown eventName:', eventName);
-      console.debug('[Bridge Router] Unknown eventData:', eventData);
+      console.warn('[Bridge Router] Unknown event:', eventName, eventData);
   }
 };
 
