@@ -1,6 +1,9 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+import { Frame } from '@nativescript/core';
 import { managerService } from '@/utils/manager-service';
+
+let pendingWebViewReload = null;
 
 export const manager = {
   namespaced: true,
@@ -232,6 +235,17 @@ export const manager = {
 
         // Reload full plugins list
         await dispatch('loadPlugins');
+
+        // Reload WebView if user is on settings screen and plugin was changed or removed
+        if (event.event === 'update' || event.event === 'remove') {
+          const frame = Frame.topmost();
+          if (frame?.backStack?.length > 0) {
+            clearTimeout(pendingWebViewReload);
+            pendingWebViewReload = setTimeout(() => {
+              dispatch('ui/reloadWebView', null, { root: true });
+            }, 500);
+          }
+        }
       } catch (error) {
         console.error('Failed to handle plugin state change:', error);
       }
