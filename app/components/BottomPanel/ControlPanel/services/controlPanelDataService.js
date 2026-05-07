@@ -89,7 +89,7 @@ export class ControlPanelDataService {
         type: 'portal-icons-group',
         id: 'portal-icons',
         portals: overlayLayers.slice(0, 9).map((layer, index) => ({
-          ...layer,
+          layerId: layer.layerId,
           index,
         })),
       });
@@ -108,8 +108,12 @@ export class ControlPanelDataService {
   }
 
   static generateSwitchItems(overlayLayers) {
+    // Read only static props (layerId, name) - NOT active.
+    // active is read directly from the store in templates so that
+    // SET_OVERLAY_LAYER_PROPERTY does not invalidate currentListItems
+    // and trigger a full ListView rebind.
     const filteredLayers = overlayLayers
-      .map((layer, index) => ({ ...layer, index }))
+      .map((layer, index) => ({ layerId: layer.layerId, name: layer.name, index }))
       .filter(layer => layer.index > 8);
 
     const items = [];
@@ -127,7 +131,9 @@ export class ControlPanelDataService {
           type: 'switch-pair',
           id: `switch-pair-${pairIndex}`,
           items: pair.map((item, idx) => ({
-            ...item,
+            layerId: item.layerId,
+            name: item.name,
+            index: item.index,
             isTopLeft: pairIndex === 0 && idx === 0,
             isTopRight: pairIndex === 0 && idx === 1,
             isBottomLeft: pairIndex === totalPairs - 1 && idx === 0,
@@ -140,7 +146,7 @@ export class ControlPanelDataService {
         items.push({
           type: 'switch-single',
           id: `switch-single-${pair[0].index}`,
-          item: pair[0],
+          item: { layerId: pair[0].layerId, name: pair[0].name, index: pair[0].index },
         });
       }
     }
@@ -151,7 +157,7 @@ export class ControlPanelDataService {
       items.push({
         type: 'switch-single',
         id: `switch-single-${item.index}`,
-        item,
+        item: { layerId: item.layerId, name: item.name, index: item.index },
         isFirst: index === 0,
         isLast: index === singleItems.length - 1,
       });
