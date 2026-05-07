@@ -53,7 +53,20 @@ export const map = {
       state.baseLayersList = layers;
     },
     SET_OVERLAY_LAYERS(state, layers) {
-      state.overlayLayers = layers;
+      const existing = state.overlayLayers;
+      const sameStructure =
+        existing.length === layers.length &&
+        layers.every((l, i) => l.layerId === existing[i].layerId);
+      if (!sameStructure) {
+        state.overlayLayers = layers;
+        return;
+      }
+      // Same layer set - update only changed properties in-place so that
+      // computed properties depending on the array reference don't invalidate.
+      layers.forEach((layer, i) => {
+        if (existing[i].active !== layer.active) existing[i].active = layer.active;
+        if (existing[i].name !== layer.name) existing[i].name = layer.name;
+      });
     },
     SET_OVERLAY_LAYER_PROPERTY(state, { index, active }) {
       state.overlayLayers[index].active = active;

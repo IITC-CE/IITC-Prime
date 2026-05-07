@@ -103,10 +103,10 @@
           <SVGView
             v-if="index <= 8"
             class="overlay-portal"
-            :class="{ 'overlay-portal--active': portal.active === true }"
+            :class="{ 'overlay-portal--active': $store.state.map.overlayLayers[portal.index]?.active === true }"
             :col="index"
             @tap="onOverlayPortalToggle($event, portal.index)"
-            :src="'~/assets/icons/portals/portal_L' + index + '_' + String(portal.active) + '.svg'"
+            :src="'~/assets/icons/portals/portal_L' + index + '_' + String(!!$store.state.map.overlayLayers[portal.index]?.active) + '.svg'"
             stretch="aspectFit"
           />
         </template>
@@ -140,8 +140,8 @@
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <MDSwitch
             class="switch"
-            :checked="switchItem.active"
             @checkedChange="args => onOverlayToggle(switchItem.index, args.value)"
+            :checked="$store.state.map.overlayLayers[switchItem.index]?.active"
             col="1"
             row="0"
           />
@@ -160,8 +160,8 @@
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <MDSwitch
           class="switch"
-          :checked="item.item.active"
           @checkedChange="args => onOverlayToggle(item.item.index, args.value)"
+          :checked="$store.state.map.overlayLayers[item.item.index]?.active"
           col="1"
           row="0"
         />
@@ -250,7 +250,8 @@ export default {
 
     onOverlayToggle(index, value) {
       if (typeof value === 'boolean') {
-        // Direct value from switch event
+        const currentLayer = this.$store.state.map.overlayLayers[index];
+        if (!currentLayer || currentLayer.active === value) return;
         this.$store.dispatch('map/setOverlayLayerProperty', { index, active: value });
       } else {
         // Label tap - toggle current state
