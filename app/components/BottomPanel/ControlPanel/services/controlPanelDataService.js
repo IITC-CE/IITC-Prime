@@ -51,6 +51,10 @@ export class ControlPanelDataService {
     // Add select fields group if there are highlighters or base layers
     const highlightersList = store.state.map.highlightersList;
     const baseLayersList = store.state.map.baseLayersList;
+    const baseLayerSelected = store.state.map.baseLayerSelected;
+    const baseLayerSelectedIndex = baseLayersList
+      ? baseLayersList.findIndex(l => l.layerId === baseLayerSelected)
+      : -1;
 
     if (
       (highlightersList && highlightersList.length > 0) ||
@@ -71,7 +75,7 @@ export class ControlPanelDataService {
             type: 'base-layer',
             label: 'Base layer',
             items: baseLayersList,
-            selectedIndex: store.state.map.baseLayerSelected,
+            selectedIndex: baseLayerSelectedIndex,
             visible: baseLayersList && baseLayersList.length > 0,
           },
         ],
