@@ -68,6 +68,7 @@
           :items="item.fields[0].items"
           :selectedIndex="item.fields[0].items.indexOf(item.fields[0].selectedValue)"
           title="Select Highlighter"
+          immediateChange
           class="list-item--top-left list-item--bottom-left"
           @change="onHighlighterSelected"
         />
@@ -89,6 +90,7 @@
           idField="layerId"
           textField="name"
           title="Select Base Layer"
+          immediateChange
           class="list-item--top-right list-item--bottom-right"
           @change="onBaseLayerSelected"
         />

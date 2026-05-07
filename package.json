@@ -53,7 +53,7 @@
     "nativescript-clipboard": "^2.1.1",
     "nativescript-compass": "^1.0.1",
     "nativescript-inappbrowser": "^3.2.0",
-    "nativescript-radio-dialog": "^1.0.4",
+    "nativescript-radio-dialog": "^1.1.0",
     "nativescript-vue": "^3.0.1",
     "nativescript-vue-devtools": "^1.5.1",
     "scored-fuzzysearch": "^1.0.5",
