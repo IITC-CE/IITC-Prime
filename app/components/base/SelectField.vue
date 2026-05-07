@@ -36,6 +36,11 @@ export default {
     title: {
       type: String,
       default: 'Select an item'
+    },
+    // Emit change immediately on each tap without waiting for dialog confirmation
+    immediateChange: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -74,14 +79,27 @@ export default {
         // Convert items to string array for radio dialog
         const dialogItems = this.items.map(item => this.getItemText(item));
 
-        const result = await RadioDialog.show({
+        const options = {
           title: this.title,
           items: dialogItems,
           selectedIndex: this.currentSelectedIndex >= 0 ? this.currentSelectedIndex : undefined,
-          cancelButtonText: 'Cancel'
-        });
+          cancelButtonText: this.immediateChange ? 'OK' : 'Cancel'
+        };
 
-        if (!result.cancelled) {
+        if (this.immediateChange) {
+          options.onItemSelect = ({ selectedIndex }) => {
+            this.onSelectionChanged({
+              selectedIndex,
+              selectedId: this.getItemId(this.items[selectedIndex]),
+              item: this.items[selectedIndex]
+            });
+          };
+        }
+
+        const result = await RadioDialog.show(options);
+
+        // liveSelection: onItemSelect already handled each tap; Promise resolves cancelled on Android
+        if (!this.immediateChange && !result.cancelled) {
           this.onSelectionChanged({
             selectedIndex: result.selectedIndex,
             selectedId: this.getItemId(this.items[result.selectedIndex]),
