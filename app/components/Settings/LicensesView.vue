@@ -10,6 +10,7 @@
         class="licenses-list"
         separatorColor="transparent"
         @loaded="onLoaded"
+        @itemLoading="disableListItemHighlight"
         @itemTap="onItemTap"
       >
         <template #default="{ item }">
@@ -32,7 +33,7 @@
 import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
-import { enableListEdgeToEdge } from '@/utils/platform';
+import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform';
 
 export default {
   name: 'LicensesView',
@@ -55,6 +56,8 @@ export default {
     onLoaded(args) {
       enableListEdgeToEdge(args.object);
     },
+
+    disableListItemHighlight,
 
     loadLicenses() {
       let licensesData = null;

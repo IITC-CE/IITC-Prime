@@ -56,6 +56,18 @@ export const enableListEdgeToEdge = listView => {
 };
 
 /**
+ * Disable iOS UITableViewCell selection highlight on list items.
+ * On iOS, cells flash white on tap by default (UITableViewCellSelectionStyleDefault).
+ * Call from the `@itemLoading` event handler of the ListView.
+ * @param {object} args - NativeScript itemLoading event args
+ */
+export const disableListItemHighlight = args => {
+  if (isIOS && args.ios) {
+    args.ios.selectionStyle = 0; // UITableViewCellSelectionStyleNone
+  }
+};
+
+/**
  * Universal sharing function for different content types
  * @param {any} content - Content to share (object for geo, string for text/url)
  * @param {string} contentType - Type of content ('geo', 'text', 'url', 'prime')
