@@ -8,6 +8,7 @@
     :itemTemplateSelector="templateSelector"
     separatorColor="#00000000"
     iosEstimatedRowHeight="44"
+    @itemLoading="disableListItemHighlight"
   >
     <template #default="{ item }">
       <Label text="Unknown item type" />
@@ -103,10 +104,19 @@
           <SVGView
             v-if="index <= 8"
             class="overlay-portal"
-            :class="{ 'overlay-portal--active': $store.state.map.overlayLayers[portal.index]?.active === true }"
+            :class="{
+              'overlay-portal--active':
+                $store.state.map.overlayLayers[portal.index]?.active === true,
+            }"
             :col="index"
             @tap="onOverlayPortalToggle($event, portal.index)"
-            :src="'~/assets/icons/portals/portal_L' + index + '_' + String(!!$store.state.map.overlayLayers[portal.index]?.active) + '.svg'"
+            :src="
+              '~/assets/icons/portals/portal_L' +
+              index +
+              '_' +
+              String(!!$store.state.map.overlayLayers[portal.index]?.active) +
+              '.svg'
+            "
             stretch="aspectFit"
           />
         </template>
@@ -173,6 +183,7 @@
 <script>
 import SelectField from '@/components/base/SelectField.vue';
 import { $navigateTo } from 'nativescript-vue';
+import { disableListItemHighlight } from '@/utils/platform';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -199,6 +210,8 @@ export default {
   },
 
   methods: {
+    disableListItemHighlight,
+
     // Template selector function - determines which template to use
     templateSelector(data) {
       const validTypes = [
