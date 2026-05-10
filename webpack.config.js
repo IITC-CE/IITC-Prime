@@ -2,6 +2,7 @@ const webpack = require('@nativescript/webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const { resolve, join } = require('path');
 const { readFileSync } = require('fs');
+const { execSync } = require('child_process');
 
 require('dotenv').config();
 
@@ -17,7 +18,13 @@ module.exports = env => {
   // https://docs.nativescript.org/webpack
 
   const isStoreBuild = !!env.production;
+  const isReleaseBuild = process.env.BUILD_TYPE === 'release';
   const sentryEnabled = !!env['sentry'];
+
+  let gitCommitHash = '';
+  try {
+    gitCommitHash = execSync('git rev-parse --short HEAD').toString().trim();
+  } catch (_) {}
 
   const platform = webpack.Utils.platform.getPlatformName();
   const projectSlug = `${process.env.SENTRY_PROJECT_SLUG}-${platform}`;
@@ -37,6 +44,8 @@ module.exports = env => {
         __SENTRY_RELEASE__: `'${SENTRY_RELEASE}'`,
         __SENTRY_ENVIRONMENT__: `'${isStoreBuild ? 'production' : 'development'}'`,
         __ENABLE_SENTRY__: sentryEnabled,
+        __GIT_COMMIT_HASH__: JSON.stringify(gitCommitHash),
+        __IS_RELEASE_BUILD__: isReleaseBuild,
         __SENTRY_PREFIX__: `'${SENTRY_PREFIX}'`,
         __SENTRY_DSN_IOS__: JSON.stringify(process.env.SENTRY_DSN_IOS),
         __SENTRY_DSN_ANDROID__: JSON.stringify(process.env.SENTRY_DSN_ANDROID),
