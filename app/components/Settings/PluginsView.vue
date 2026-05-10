@@ -52,7 +52,6 @@ import { isIOS } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
-import { performanceOptimizationMixin, createDebouncer } from '~/utils/performance-optimization';
 import { confirm } from '@/utils/dialogs';
 import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
 import SettingsBase from './SettingsBase';
@@ -69,8 +68,6 @@ export default {
     PluginsList: markRaw(PluginsList),
   },
 
-  mixins: [performanceOptimizationMixin],
-
   props: {
     pendingPlugin: {
       type: Object,
@@ -83,8 +80,6 @@ export default {
       searchQuery: '',
       activeCategory: 'All',
       isPluginsVisible: false,
-
-      _searchDebouncer: createDebouncer(300),
     };
   },
 

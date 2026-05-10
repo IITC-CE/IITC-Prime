@@ -65,7 +65,6 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import { performanceOptimizationMixin, optimizeMapState } from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
@@ -76,7 +75,7 @@ export default {
     ControlsPanel,
   },
 
-  mixins: [performanceOptimizationMixin, logFormattingMixin],
+  mixins: [logFormattingMixin],
 
   props: {
     isVisible: {
@@ -124,13 +123,11 @@ export default {
       return this.$store.state.ui.screenSafeArea.bottom;
     },
 
-    ...mapState(
-      optimizeMapState({
-        logs: 'debug.logs',
-        commandHistory: 'debug.commandHistory',
-        historyPosition: 'debug.historyPosition',
-      })
-    ),
+    ...mapState({
+      logs: state => state.debug.logs,
+      commandHistory: state => state.debug.commandHistory,
+      historyPosition: state => state.debug.historyPosition,
+    }),
 
     // Display logs only when both component is visible and logs should be shown
     displayLogs() {
@@ -150,7 +147,7 @@ export default {
         });
 
         // Add logs with delay to prevent UI freezing
-        this.createTimeout(() => {
+        setTimeout(() => {
           this.logsVisible = true;
         }, 10);
       } else {
@@ -236,7 +233,7 @@ export default {
 
     handleScroll() {
       if (!this.isVisible) return;
-      this.scheduleUpdate(() => this.checkScrollPosition());
+      requestAnimationFrame(() => this.checkScrollPosition());
     },
 
     handleScrollEnd() {
