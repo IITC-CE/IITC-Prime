@@ -142,6 +142,7 @@
 </template>
 
 <script>
+import { isIOS } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import { enableListEdgeToEdge } from '@/utils/platform';
@@ -296,6 +297,10 @@ export default {
     onLoaded(args) {
       this.collectionViewRef = args.object;
       enableListEdgeToEdge(args.object);
+
+      if (isIOS) {
+        args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
+      }
     },
 
     onPluginTap(item) {

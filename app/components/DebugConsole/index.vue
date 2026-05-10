@@ -1,11 +1,7 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout
-    rows="*, auto"
-    class="debug-console"
-    :style="{ 'padding-bottom': keyboardPaddingBottom }"
-  >
+  <GridLayout rows="*, auto" class="debug-console">
     <!-- Logs list -->
     <CollectionView
       ref="logsList"
@@ -13,6 +9,7 @@
       class="logs-list"
       :items="displayLogs"
       @scroll="handleScroll"
+      @scrollStarted="handleScrollStarted"
       @scrollEnd="handleScrollEnd"
       @loaded="onCollectionViewLoaded"
     >
@@ -23,7 +20,7 @@
           @longPress="copyLogToClipboard(item)"
         >
           <!-- Header row with timestamp, log level and source -->
-          <Label :text="formatLogHeader(item)" class="log-header" once="true" />
+          <Label :text="formatLogHeader(item)" once="true" class="log-header" />
 
           <!-- Message content -->
           <Label :text="item.message" textWrap="true" class="log-message" once="true" />
@@ -31,21 +28,28 @@
       </template>
     </CollectionView>
 
-    <!-- Controls panel -->
-    <ControlsPanel
+    <!-- Controls panel wrapper to handle translation -->
+    <StackLayout
+      ref="controlsWrapper"
       row="1"
-      v-model:command="command"
-      :commandHistory="commandHistory"
-      :historyPosition="historyPosition"
-      @clear="clearLogs"
-      @command-executed="onCommandExecuted"
-      @history-navigate="handleHistoryNavigation"
-      @close="closeDebugConsole"
-      ref="controlsPanel"
-    />
+      :paddingBottom="navBarPadding"
+      class="controls-wrapper"
+    >
+      <ControlsPanel
+        v-model:command="command"
+        :commandHistory="commandHistory"
+        :historyPosition="historyPosition"
+        @clear="clearLogs"
+        @command-executed="onCommandExecuted"
+        @history-navigate="handleHistoryNavigation"
+        @close="closeDebugConsole"
+        ref="controlsPanel"
+      />
+    </StackLayout>
 
     <MDRipple
-      v-show="!isAtBottom && showControls"
+      ref="scrollBottomBtn"
+      v-show="!isAtBottom"
       class="fab scroll-bottom-button"
       @tap="scrollToBottom"
     >
@@ -61,15 +65,11 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import {
-  performanceOptimizationMixin,
-  optimizeMapState,
-  Cache,
-} from '~/utils/performance-optimization';
+import { performanceOptimizationMixin, optimizeMapState } from '~/utils/performance-optimization';
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
-import { isAndroid } from '@nativescript/core';
+import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
 
 export default {
   components: {
@@ -97,29 +97,31 @@ export default {
     return {
       command: '',
       isAtBottom: true,
-      showControls: false, // Controls UI elements visibility
+      isUserScrolling: false,
       logsVisible: false, // Controls whether logs should be shown or not
+      localKeyboardHeight: 0,
 
-      _logFormattingCache: new Cache(200, 600000), // Cache formatted logs for 10 minutes
-      _displayLogsCache: null,
-      _lastLogsHash: null,
       _collectionView: null,
+      _keyboardObserver: null,
     };
   },
 
   computed: {
-    isAndroid() {
-      return isAndroid;
+    // Keyboard padding is primarily used by the input panel translation.
+    // On iOS we use real-time localKeyboardHeight; on Android we use the prop.
+    keyboardPaddingBottom() {
+      const height = isIOS ? this.localKeyboardHeight : this.keyboardHeight;
+      if (height <= 0) return 0;
+
+      if (isAndroid) return height;
+
+      const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
+      return Math.max(0, height - safeAreaBottom);
     },
 
-    // On Android: keyboardHeight is exact (imeBottomConsumed = true, no native resize).
-    // On iOS: keyboardHeight from UIKeyboardFrameEndUserInfoKey includes the home indicator
-    // area which the safe area already accounts for, so subtract safeAreaBottom.
-    keyboardPaddingBottom() {
-      if (!this.isKeyboardOpen) return 0;
-      if (isAndroid) return this.keyboardHeight;
-      const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
-      return Math.max(0, this.keyboardHeight - safeAreaBottom);
+    navBarPadding() {
+      if (!isAndroid) return 0;
+      return this.$store.state.ui.screenSafeArea.bottom;
     },
 
     ...mapState(
@@ -132,41 +134,19 @@ export default {
 
     // Display logs only when both component is visible and logs should be shown
     displayLogs() {
-      if (!this.isVisible || !this.logsVisible) {
-        return [];
-      }
-
-      // Create hash of logs for cache invalidation
-      const logsHash =
-        this.logs.length +
-        '-' +
-        (this.logs[0]?.timestamp || 0) +
-        '-' +
-        (this.logs[this.logs.length - 1]?.timestamp || 0);
-
-      // Return cached result if logs haven't changed
-      if (this._lastLogsHash === logsHash && this._displayLogsCache) {
-        return this._displayLogsCache;
-      }
-
-      // Compute new display logs
-      this._displayLogsCache = this.logs.map((log, index) => ({ ...log, index }));
-      this._lastLogsHash = logsHash;
-
-      return this._displayLogsCache;
+      if (!this.isVisible || !this.logsVisible) return [];
+      // Prevent CollectionView from mutating Vuex state
+      return this.logs.map(log => ({ ...log }));
     },
   },
 
   watch: {
     isVisible(newValue) {
       if (newValue) {
-        this.showControls = true;
         this.logsVisible = false;
 
         this.$nextTick(() => {
-          if (this.$refs.controlsPanel) {
-            this.$refs.controlsPanel.focusInput();
-          }
+          this.$refs.controlsPanel?.focusInput();
         });
 
         // Add logs with delay to prevent UI freezing
@@ -174,27 +154,62 @@ export default {
           this.logsVisible = true;
         }, 10);
       } else {
-        // Console being hidden
         this.logsVisible = false;
-        this.showControls = false;
       }
     },
 
-    // When logs change and console is visible, update and scroll
-    displayLogs(newLogs) {
-      if (this.isVisible && this.isAtBottom) {
-        // Use RAF batching for smooth scrolling
-        this.scheduleUpdate(() => {
-          this.scrollToBottom();
-        });
+    displayLogs() {
+      if (this.isVisible && this.isAtBottom && !this.isUserScrolling) {
+        this.scrollToBottom();
       }
     },
 
-    isKeyboardOpen(newValue, oldValue) {
-      if (newValue !== oldValue && this.isVisible && this.logsVisible) {
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
+    isKeyboardOpen(newValue) {
+      if (newValue && this.isAtBottom && this.isVisible && this.logsVisible) {
+        this.scrollToBottom();
+      }
+
+      if (isAndroid) {
+        const targetY = newValue ? -(this.keyboardPaddingBottom - this.navBarPadding) : 0;
+        this._animateAndroidTranslateY(this.$refs.controlsWrapper?.nativeView, targetY, newValue);
+        this._animateAndroidTranslateY(this.$refs.scrollBottomBtn?.nativeView, targetY, newValue);
+      }
+    },
+
+    keyboardPaddingBottom(newVal, oldVal) {
+      if (!this._collectionView) return;
+
+      if (isAndroid) {
+        // Translate list by same amount as controls panel so they stay adjacent
+        const translateY = -Math.max(0, newVal - this.navBarPadding);
+        this._animateAndroidTranslateY(this._collectionView, translateY, newVal > oldVal);
+        return;
+      }
+
+      if (!isIOS) return;
+      const nativeView = this._collectionView.ios;
+
+      // Update insets in real-time
+      const insets = UIEdgeInsetsMake(0, 0, newVal, 0);
+      nativeView.contentInset = insets;
+      nativeView.scrollIndicatorInsets = insets;
+
+      // Offset shift when opening
+      if (newVal > oldVal && oldVal === 0 && !this.isAtBottom) {
+        const current = nativeView.contentOffset;
+        nativeView.setContentOffsetAnimated(CGPointMake(current.x, current.y + newVal), false);
+      }
+
+      // Clamp offset when closing
+      if (newVal === 0 && oldVal > 0) {
+        const maxOffset = Math.max(
+          0,
+          nativeView.contentSize.height - nativeView.bounds.size.height
+        );
+        const current = nativeView.contentOffset;
+        if (current.y > maxOffset) {
+          nativeView.setContentOffsetAnimated(CGPointMake(current.x, maxOffset), true);
+        }
       }
     },
   },
@@ -216,25 +231,21 @@ export default {
 
     async handleHistoryNavigation(params) {
       const result = await this.navigateHistory(params);
-      if (result !== undefined) {
-        this.command = result;
-      }
+      if (result !== undefined) this.command = result;
     },
 
-    // Handle scroll events to detect if we're at the bottom
-    handleScroll(args) {
+    handleScroll() {
       if (!this.isVisible) return;
-
-      // Use RAF batching with debouncing for scroll position checks
-      this.scheduleUpdate(() => {
-        this.checkScrollPosition();
-      });
+      this.scheduleUpdate(() => this.checkScrollPosition());
     },
 
-    // Additional handler for scrollEnd event
-    handleScrollEnd(args) {
-      if (!this.isVisible) return;
-      this.checkScrollPosition();
+    handleScrollEnd() {
+      this.isUserScrolling = false;
+      if (this.isVisible) this.checkScrollPosition();
+    },
+
+    handleScrollStarted() {
+      this.isUserScrolling = true;
     },
 
     // Check if the scroll position is at the bottom
@@ -243,15 +254,12 @@ export default {
 
       try {
         const lastIndex = this.displayLogs.length - 1;
-        const secondToLastIndex = Math.max(0, lastIndex - 1);
-
-        // Check if the last or second-to-last item is visible
         const isLastVisible = this._collectionView.isItemAtIndexVisible(lastIndex);
-        const isSecondToLastVisible = this._collectionView.isItemAtIndexVisible(secondToLastIndex);
-
-        this.isAtBottom = isLastVisible || isSecondToLastVisible;
+        const isNearLastVisible = this._collectionView.isItemAtIndexVisible(
+          Math.max(0, lastIndex - 1)
+        );
+        this.isAtBottom = isLastVisible || isNearLastVisible;
       } catch (e) {
-        console.error('Error checking scroll position:', e);
         this.isAtBottom = true;
       }
     },
@@ -261,25 +269,48 @@ export default {
       // Skip if not visible or no logs
       if (!this.isVisible || !this.displayLogs.length || !this._collectionView) return;
 
-      try {
-        const lastIndex = this.displayLogs.length - 1;
-
-        // scrollToIndex(index, animated)
-        this._collectionView.scrollToIndex(lastIndex, true);
-        this.isAtBottom = true;
-      } catch (e) {
-        console.error('Error scrolling to bottom:', e);
-      }
+      requestAnimationFrame(() => {
+        if (!this._collectionView || !this.displayLogs.length) return;
+        try {
+          const count = this.displayLogs.length;
+          if (isIOS) {
+            const nativeView = this._collectionView.nativeView;
+            if (nativeView && nativeView.numberOfItemsInSection(0) !== count) {
+              setTimeout(() => this.scrollToBottom(), 32);
+              return;
+            }
+          }
+          this._collectionView.scrollToIndex(count - 1, true);
+          this.isAtBottom = true;
+        } catch (e) {}
+      });
     },
 
-    // Close debug console directly
+    // Opening: decelerate (fast start, slow end) - matches Android IME open
+    // Closing: accelerate (slow start, fast end) - matches Android IME close
+    _animateAndroidTranslateY(view, targetY, isOpening) {
+      if (!view) return;
+      view.animate({
+        translate: { x: 0, y: targetY },
+        duration: 200,
+        curve: isOpening
+          ? CoreTypes.AnimationCurve.cubicBezier(0.0, 0.0, 0.2, 1.0)
+          : CoreTypes.AnimationCurve.cubicBezier(0.4, 0.0, 1.0, 1.0),
+      });
+    },
+
     closeDebugConsole() {
-      this.$refs.controlsPanel.blurInput();
+      this.$refs.controlsPanel?.blurInput();
       this.$store.dispatch('ui/toggleDebugMode');
     },
 
     onCollectionViewLoaded(args) {
       this._collectionView = args.object;
+      if (isIOS) {
+        const nativeView = this._collectionView.ios;
+        nativeView.keyboardDismissMode = 1;
+        nativeView.automaticallyAdjustsContentInsets = false;
+      }
     },
 
     // Copy log text to clipboard on long press
@@ -287,6 +318,68 @@ export default {
       const fullText = this.getFullLogText(item);
       await copyToClipboard(fullText, 'Log copied to clipboard');
     },
+  },
+
+  mounted() {
+    if (isIOS) {
+      if (this.isKeyboardOpen) {
+        this.$nextTick(() => {
+          const translateY = -this.keyboardPaddingBottom;
+          const wrapper = this.$refs.controlsWrapper?.nativeView;
+          if (wrapper) wrapper.translateY = translateY;
+          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          if (fab) fab.translateY = translateY;
+        });
+      }
+
+      this._keyboardObserver = Application.ios.addNotificationObserver(
+        UIKeyboardWillChangeFrameNotification,
+        notification => {
+          const userInfo = notification.userInfo;
+          const frame = userInfo.objectForKey(UIKeyboardFrameEndUserInfoKey).CGRectValue;
+          const duration = userInfo.objectForKey(UIKeyboardAnimationDurationUserInfoKey);
+          const curve = userInfo.objectForKey(UIKeyboardAnimationCurveUserInfoKey);
+          const screenHeight = UIScreen.mainScreen.bounds.size.height;
+          const height = Math.max(0, screenHeight - frame.origin.y);
+          this.localKeyboardHeight = height;
+
+          const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
+          const translateY = -Math.max(0, height - safeAreaBottom);
+          const wrapper = this.$refs.controlsWrapper?.nativeView;
+          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          if (duration > 0) {
+            UIView.animateWithDurationDelayOptionsAnimationsCompletion(
+              duration,
+              0,
+              (curve << 16) | UIViewAnimationOptionBeginFromCurrentState,
+              () => {
+                if (wrapper?.ios)
+                  wrapper.ios.transform = CGAffineTransformMakeTranslation(0, translateY);
+                if (fab?.ios) fab.ios.transform = CGAffineTransformMakeTranslation(0, translateY);
+              },
+              null
+            );
+          } else {
+            if (wrapper) wrapper.translateY = translateY;
+            if (fab) fab.translateY = translateY;
+          }
+        }
+      );
+    } else if (isAndroid && this.isKeyboardOpen) {
+      this.$nextTick(() => {
+        const wrapper = this.$refs.controlsWrapper?.nativeView;
+        if (wrapper) wrapper.translateY = -(this.keyboardPaddingBottom - this.navBarPadding);
+      });
+    }
+  },
+
+  beforeUnmount() {
+    if (this._keyboardObserver) {
+      Application.ios.removeNotificationObserver(
+        this._keyboardObserver,
+        UIKeyboardWillChangeFrameNotification
+      );
+    }
   },
 };
 </script>
@@ -363,6 +456,10 @@ export default {
 
 .log-result .log-message {
   color: #69f0ae;
+}
+
+.controls-wrapper {
+  background-color: $surface;
 }
 
 .scroll-bottom-button {
