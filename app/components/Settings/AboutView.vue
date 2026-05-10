@@ -68,7 +68,11 @@ export default {
   methods: {
     loadAppVersion() {
       try {
-        this.appVersion = 'v' + appVersion.getVersionNameSync();
+        let version = 'v' + appVersion.getVersionNameSync();
+        if (!__IS_RELEASE_BUILD__ && __GIT_COMMIT_HASH__) {
+          version += ` (${__GIT_COMMIT_HASH__})`;
+        }
+        this.appVersion = version;
       } catch (error) {
         console.error('Error loading app version:', error);
         this.appVersion = 'Unknown';

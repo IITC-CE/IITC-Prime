@@ -32,6 +32,7 @@
             :plugins="filteredPlugins"
             :showEnabledFirst="activeCategory === 'All'"
             :bottomPadding="bottomPadding"
+            @info="showPluginInfo"
             @toggle="togglePlugin"
             @delete="deletePlugin"
           />
@@ -52,8 +53,12 @@ import { isIOS } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
-import { confirm } from '@/utils/dialogs';
-import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
+import { confirm, alert } from '@/utils/dialogs';
+import {
+  downloadPlugin,
+  confirmAndInstallPlugin,
+  formatPluginInfo,
+} from '@/utils/plugin-installer';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './AddPluginSheet';
 import CategoriesList from './components/plugins/CategoriesList';
@@ -154,6 +159,14 @@ export default {
 
   methods: {
     ...mapActions('manager', ['loadPlugins', 'managePlugin']),
+
+    async showPluginInfo(plugin) {
+      await alert({
+        title: plugin.name,
+        message: formatPluginInfo(plugin),
+        okButtonText: 'Close',
+      });
+    },
 
     openAddPlugin() {
       this.$showBottomSheet(AddPluginSheet, {

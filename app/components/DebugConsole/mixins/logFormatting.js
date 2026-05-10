@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 export default {
   methods: {
@@ -18,7 +18,7 @@ export default {
     formatLogHeader(item) {
       const timestamp = this.formatTimestamp(item.timestamp);
       const type = item.type ? item.type.toUpperCase() : 'LOG';
-      const source = item.source ? item.source.toUpperCase() : 'UNKNOWN';
+      const source = item.source || 'unknown';
       const category = item.category ? `[${item.category}]` : '';
 
       return `${timestamp} ${type} ${source} ${category}`;
@@ -29,6 +29,6 @@ export default {
       const header = this.formatLogHeader(item);
       const message = item.message || '';
       return `${header}\n${message}`;
-    }
-  }
+    },
+  },
 };

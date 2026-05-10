@@ -26,41 +26,44 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="*, 56"
           rows="82"
           width="100%"
-          @tap="onPluginTap(item)"
         >
-          <!-- SVG Plugin icon -->
-          <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
+          <!-- Tappable info area (icon + text) -->
+          <GridLayout col="0" columns="auto, *" @tap="onPluginTap(item)">
+            <!-- SVG Plugin icon -->
+            <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
 
-          <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info">
-            <FlexboxLayout class="plugin-name-row">
-              <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-              <Label
-                v-if="item.user && !item.override"
-                text="user"
-                class="plugin-tag plugin-tag--user"
-                once="true"
-              />
-              <Label
-                v-if="item.override"
-                text="override"
-                class="plugin-tag plugin-tag--override"
-                once="true"
-              />
-            </FlexboxLayout>
-            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
-          </StackLayout>
+            <!-- Plugin info -->
+            <StackLayout col="1" class="plugin-info">
+              <FlexboxLayout class="plugin-name-row">
+                <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+                <Label
+                  v-if="item.user && !item.override"
+                  text="user"
+                  class="plugin-tag plugin-tag--user"
+                  once="true"
+                />
+                <Label
+                  v-if="item.override"
+                  text="override"
+                  class="plugin-tag plugin-tag--override"
+                  once="true"
+                />
+              </FlexboxLayout>
+              <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+            </StackLayout>
+          </GridLayout>
 
-          <!-- Toggle switch -->
-          <MDSwitch
-            col="2"
-            class="switch"
-            :checked="item.status === 'on'"
-            isUserInteractionEnabled="false"
-          />
+          <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
+          <GridLayout col="1" class="switch-area" @tap="onSwitchTap(item)">
+            <MDSwitch
+              class="switch"
+              :checked="item.status === 'on'"
+              isUserInteractionEnabled="false"
+            />
+          </GridLayout>
         </GridLayout>
         <StackLayout
           ~rightDrawer
@@ -88,41 +91,44 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="*, 56"
           rows="82"
           width="100%"
-          @tap="onPluginTap(item)"
         >
-          <!-- Raster Plugin icon -->
-          <AsyncRasterIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
+          <!-- Tappable info area (icon + text) -->
+          <GridLayout col="0" columns="auto, *" @tap="onPluginTap(item)">
+            <!-- Raster Plugin icon -->
+            <AsyncRasterIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
 
-          <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info">
-            <FlexboxLayout class="plugin-name-row">
-              <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-              <Label
-                v-if="item.user && !item.override"
-                text="user"
-                class="plugin-tag plugin-tag--user"
-                once="true"
-              />
-              <Label
-                v-if="item.override"
-                text="override"
-                class="plugin-tag plugin-tag--override"
-                once="true"
-              />
-            </FlexboxLayout>
-            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
-          </StackLayout>
+            <!-- Plugin info -->
+            <StackLayout col="1" class="plugin-info">
+              <FlexboxLayout class="plugin-name-row">
+                <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+                <Label
+                  v-if="item.user && !item.override"
+                  text="user"
+                  class="plugin-tag plugin-tag--user"
+                  once="true"
+                />
+                <Label
+                  v-if="item.override"
+                  text="override"
+                  class="plugin-tag plugin-tag--override"
+                  once="true"
+                />
+              </FlexboxLayout>
+              <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+            </StackLayout>
+          </GridLayout>
 
-          <!-- Toggle switch -->
-          <MDSwitch
-            col="2"
-            class="switch"
-            :checked="item.status === 'on'"
-            isUserInteractionEnabled="false"
-          />
+          <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
+          <GridLayout col="1" class="switch-area" @tap="onSwitchTap(item)">
+            <MDSwitch
+              class="switch"
+              :checked="item.status === 'on'"
+              isUserInteractionEnabled="false"
+            />
+          </GridLayout>
         </GridLayout>
         <StackLayout
           ~rightDrawer
@@ -303,8 +309,12 @@ export default {
       }
     },
 
-    onPluginTap(item) {
+    onSwitchTap(item) {
       this.$emit('toggle', item);
+    },
+
+    onPluginTap(item) {
+      this.$emit('info', item);
     },
   },
 };
@@ -366,9 +376,15 @@ export default {
   height: 20;
 }
 
+.switch-area {
+  width: 56;
+  height: 82;
+}
+
 .switch {
   height: 32;
-  vertical-align: middle;
+  vertical-alignment: center;
+  horizontal-alignment: center;
 }
 
 .swipe-drawer {
