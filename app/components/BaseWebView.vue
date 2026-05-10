@@ -20,13 +20,10 @@ import { AWebView } from '@nativescript-community/ui-webview';
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
 import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
-import { performanceOptimizationMixin } from '~/utils/performance-optimization';
 import { mapState } from 'vuex';
 
 export default {
   name: 'BaseWebView',
-
-  mixins: [performanceOptimizationMixin],
 
   props: {
     src: {
@@ -295,10 +292,6 @@ export default {
   beforeUnmount() {
     try {
       this.cleanupWebView();
-
-      if (this.performanceCleanup) {
-        this.performanceCleanup();
-      }
 
       this._webViewRef = null;
       this.chromeClient = null;
