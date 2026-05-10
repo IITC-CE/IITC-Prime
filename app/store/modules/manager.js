@@ -1,9 +1,19 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { Frame } from '@nativescript/core';
+import { Toasty } from '@triniwiz/nativescript-toasty';
 import { managerService } from '@/utils/manager-service';
 
 let pendingWebViewReload = null;
+
+const MESSAGES = {
+  serverNotAvailableRetry: args => `Server is not available. Retry after ${args} seconds`,
+};
+
+function showManagerMessage(message, args) {
+  const text = MESSAGES[message]?.(args) ?? message;
+  new Toasty({ text }).show();
+}
 
 export const manager = {
   namespaced: true,
@@ -54,7 +64,7 @@ export const manager = {
       // Set callbacks for handling Manager events
       managerService.setCallbacks({
         onMessage: (message, args) => {
-          dispatch('ui/showMessage', message, { root: true });
+          showManagerMessage(message, args);
         },
         onProgress: isShow => {
           commit('SET_PROGRESS', isShow);
