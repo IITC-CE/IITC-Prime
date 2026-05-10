@@ -5,6 +5,22 @@ import { confirm } from '@/utils/dialogs';
 import store from '@/store';
 
 /**
+ * Format plugin metadata into a human-readable message string.
+ * @param {Object} plugin - Plugin metadata object
+ * @returns {string}
+ */
+export function formatPluginInfo(plugin) {
+  return [
+    plugin.description ? `${plugin.description}\n` : null,
+    plugin.version ? `Version: ${plugin.version}` : null,
+    `Category: ${plugin.category || 'Misc'}`,
+    plugin.author ? `Author: ${plugin.author}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
  * Download plugin code from URL
  * @param {string} url - Plugin URL
  * @returns {Promise<{ code: string, filename: string }>}
@@ -38,18 +54,9 @@ export async function confirmAndInstallPlugin(code, filename) {
     meta.filename = filename;
   }
 
-  const message = [
-    `Name: ${meta.name}`,
-    meta.description ? `Description: ${meta.description}` : null,
-    meta.version ? `Version: ${meta.version}` : null,
-    `Category: ${meta.category || 'Misc'}`,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
   const confirmed = await confirm({
-    title: 'Add plugin?',
-    message,
+    title: meta.name,
+    message: formatPluginInfo(meta),
     okButtonText: 'Add',
     cancelButtonText: 'Cancel',
   });
