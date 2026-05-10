@@ -129,7 +129,7 @@ export default {
 }
 
 .controls-panel {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: $surface;
   padding: $spacing-s $spacing-m;
   margin: 0 -4;
 }
@@ -155,8 +155,8 @@ export default {
 }
 
 .command-input-container {
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: $spacing-s $spacing-m $spacing-m $spacing-m;
+  background-color: $surface;
+  padding: $spacing-s $spacing-m $spacing-s $spacing-m;
 }
 
 .command-input {
