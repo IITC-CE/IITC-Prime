@@ -16,6 +16,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
+      onPluginsViewChanged: null,
     };
   }
 
@@ -37,8 +38,8 @@ export class ManagerService {
             await storage.set(obj);
           },
         },
-        gm_api: {
-          bridge_adapter_code: `
+        gmApi: {
+          bridgeAdapterCode: `
             window.__iitc_gm_bridge__ = {
               send(data) {
                 window.nsWebViewBridge.emit('gmBridgeRequest', JSON.stringify(data));
@@ -55,23 +56,28 @@ export class ManagerService {
             this.callbacks.onMessage(message, args);
           }
         },
-        progressbar: isShow => {
+        onProgress: isShow => {
           if (this.callbacks.onProgress) {
             this.callbacks.onProgress(isShow);
           }
         },
-        inject_plugin: plugin => {
+        injectPlugin: plugin => {
           if (this.callbacks.onInjectPlugin) {
             this.callbacks.onInjectPlugin(plugin);
           }
         },
-        plugin_event: event => {
+        onPluginEvent: event => {
           if (this.callbacks.onPluginEvent) {
             this.callbacks.onPluginEvent(event);
           }
         },
-        use_fetch_head_method: false,
-        is_daemon: false,
+        onPluginsViewChanged: view => {
+          if (this.callbacks.onPluginsViewChanged) {
+            this.callbacks.onPluginsViewChanged(view.plugins);
+          }
+        },
+        useFetchHeadMethod: false,
+        isDaemon: false,
       });
 
       this.isInitialized = true;
@@ -91,18 +97,15 @@ export class ManagerService {
     const manager = await this.initialize();
     await manager.run();
 
-    // Load all initial data in parallel
-    const [channel, customUrl, plugins] = await Promise.all([
+    const [channel, customUrl] = await Promise.all([
       this.getUpdateChannel(),
       this.getCustomChannelUrl(),
-      this.getPlugins(),
     ]);
 
     return {
       isRunning: true,
       currentChannel: channel,
       customChannelUrl: customUrl,
-      plugins,
     };
   }
 
@@ -140,13 +143,7 @@ export class ManagerService {
   async setUpdateChannel(channel) {
     const manager = await this.initialize();
     await manager.setChannel(channel);
-
-    // Return updated data
-    const plugins = await this.getPlugins();
-    return {
-      currentChannel: channel,
-      plugins,
-    };
+    return { currentChannel: channel };
   }
 
   /**
@@ -154,13 +151,7 @@ export class ManagerService {
    */
   async getUpdateInterval(channel) {
     const manager = await this.initialize();
-    if (!channel) {
-      channel = manager.channel;
-    }
-
-    const key = `${channel}_update_check_interval`;
-    const data = await manager.storage.get([key]);
-    return data[key] || 86400;
+    return await manager.getUpdateCheckInterval(channel);
   }
 
   /**
@@ -177,8 +168,7 @@ export class ManagerService {
    */
   async getCustomChannelUrl() {
     const manager = await this.initialize();
-    const data = await manager.storage.get(['network_host']);
-    return data.network_host && data.network_host.custom ? data.network_host.custom : '';
+    return manager.networkHost?.custom ?? '';
   }
 
   /**
@@ -192,41 +182,6 @@ export class ManagerService {
     };
   }
 
-  /**
-   * Validate custom channel URL
-   */
-  async validateCustomChannelUrl(url) {
-    if (!url) return false;
-
-    try {
-      // Ensure URL has http/https prefix
-      let fullUrl = url;
-      if (!/^https?:\/\//i.test(fullUrl)) {
-        fullUrl = 'http://' + fullUrl;
-      }
-
-      // Test if meta.json is accessible
-      const metaUrl = fullUrl.endsWith('/') ? `${fullUrl}meta.json` : `${fullUrl}/meta.json`;
-
-      const metaUrlWithCacheBust = `${metaUrl}?${Date.now()}`;
-
-      const response = await fetch(metaUrlWithCacheBust, {
-        method: 'GET',
-        timeout: 2000,
-        headers: {
-          Accept: '*/*',
-          Range: 'bytes=0-0', // Request only first byte
-        },
-      });
-
-      // Accept both 200 (full response) and 206 (partial content from Range request)
-      return response.status === 200 || response.status === 206;
-    } catch (error) {
-      console.error('[ManagerService] Error checking custom URL:', error);
-      return false;
-    }
-  }
-
   // === Plugin Management ===
 
   /**
@@ -234,12 +189,7 @@ export class ManagerService {
    */
   async getPlugins() {
     const manager = await this.initialize();
-    const channel = manager.channel;
-    const storage = manager.storage;
-
-    const key = `${channel}_plugins_flat`;
-    const data = await storage.get([key]);
-    return data[key] || {};
+    return (await manager.getPluginsView()).plugins;
   }
 
   /**
@@ -256,13 +206,6 @@ export class ManagerService {
   async managePlugin(uid, action) {
     const manager = await this.initialize();
     await manager.managePlugin(uid, action);
-
-    // Return updated plugins
-    const plugins = await this.getPlugins();
-    return {
-      plugins,
-      updatedPlugin: { uid, status: action },
-    };
   }
 
   /**
@@ -270,14 +213,7 @@ export class ManagerService {
    */
   async addUserScripts(scripts) {
     const manager = await this.initialize();
-    const result = await manager.addUserScripts(scripts);
-
-    // Return updated plugins
-    const plugins = await this.getPlugins();
-    return {
-      result,
-      plugins,
-    };
+    return await manager.addUserScripts(scripts);
   }
 
   /**
@@ -298,6 +234,7 @@ export class ManagerService {
       onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
+      onPluginsViewChanged: null,
     };
   }
 }

@@ -1,9 +1,20 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { Frame } from '@nativescript/core';
+import { Toasty } from '@triniwiz/nativescript-toasty';
+import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { managerService } from '@/utils/manager-service';
 
 let pendingWebViewReload = null;
+
+const MESSAGES = {
+  serverNotAvailableRetry: args => `Server is not available. Retry after ${args} seconds`,
+};
+
+function showManagerMessage(message, args) {
+  const text = MESSAGES[message]?.(args) ?? message;
+  new Toasty({ text }).show();
+}
 
 export const manager = {
   namespaced: true,
@@ -54,7 +65,7 @@ export const manager = {
       // Set callbacks for handling Manager events
       managerService.setCallbacks({
         onMessage: (message, args) => {
-          dispatch('ui/showMessage', message, { root: true });
+          showManagerMessage(message, args);
         },
         onProgress: isShow => {
           commit('SET_PROGRESS', isShow);
@@ -64,6 +75,9 @@ export const manager = {
         },
         onPluginEvent: event => {
           dispatch('handlePluginEvent', event);
+        },
+        onPluginsViewChanged: plugins => {
+          commit('SET_PLUGINS', plugins);
         },
       });
 
@@ -75,7 +89,6 @@ export const manager = {
         commit('SET_RUNNING', data.isRunning);
         commit('SET_CURRENT_CHANNEL', data.currentChannel);
         commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-        commit('SET_PLUGINS', data.plugins);
         commit('SET_INITIALIZED', true);
 
         return data;
@@ -123,7 +136,6 @@ export const manager = {
       try {
         const data = await managerService.setUpdateChannel(channel);
         commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        commit('SET_PLUGINS', data.plugins);
         return data;
       } catch (error) {
         // Revert on error
@@ -183,12 +195,7 @@ export const manager = {
       commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
 
       try {
-        const data = await managerService.managePlugin(uid, action);
-
-        // Update full plugins list
-        commit('SET_PLUGINS', data.plugins);
-
-        return data;
+        await managerService.managePlugin(uid, action);
       } catch (error) {
         // Revert on error
         if (previousStatus) {
@@ -202,16 +209,14 @@ export const manager = {
      * Validate custom channel URL
      */
     async checkCustomChannelUrl(_, url) {
-      return await managerService.validateCustomChannelUrl(url);
+      return await validateCustomChannelUrl(url);
     },
 
     /**
      * Add user scripts (external plugins)
      */
-    async addUserScripts({ commit }, scripts) {
-      const data = await managerService.addUserScripts(scripts);
-      commit('SET_PLUGINS', data.plugins);
-      return data;
+    async addUserScripts(_, scripts) {
+      return await managerService.addUserScripts(scripts);
     },
 
     /**
