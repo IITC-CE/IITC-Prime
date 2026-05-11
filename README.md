@@ -47,8 +47,8 @@ The app uses [Sentry](https://sentry.io/) to collect app crash and error reports
 
 ## Environment Variables
 
-- `BUILD_TYPE`: Set build variant (`debug` (default), `beta`, `release`)
-- `APP_ID_SUFFIX`: Add custom suffix to application ID (e.g., `fdroid`)
+- `BUILD_TYPE`: Set build variant (`debug` (default), `beta`, `release`). Controls resources, app name, and whether the git hash is shown in About.
+- `APP_ID_SUFFIX`: Override the App ID postfix. When unset, the postfix is derived from `BUILD_TYPE` (`.beta`, `.debug`, empty for `release`). When explicitly set - even to an empty string - it fully replaces the auto-derived postfix. Examples: `APP_ID_SUFFIX=fdroid` -> `org.exarhteam.iitcprime.fdroid`; `APP_ID_SUFFIX=` -> no postfix (same App ID as release, used for Google Play beta track).
 
 ## Development
 
