@@ -20,6 +20,8 @@
     <string>????</string>
     <key>CFBundleVersion</key>
     <string>175353347</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>IITC Prime can show your current position on the Ingress intel map. Location access is optional.</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchStoryboardName</key>
