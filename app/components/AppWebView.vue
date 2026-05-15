@@ -45,8 +45,9 @@ export default {
   data() {
     return {
       store_unsubscribe: () => {},
-      lastInjectedUrl: null, // Track last URL we injected bridge into
-      injectionInProgress: false, // Prevent concurrent injections
+      lastInjectedUrl: null, // URL (without hash) for which bridge was last injected
+      pendingInjectionUrl: null, // URL set by onLoadStarted; onLoadFinished only injects for this URL
+      injectionInProgress: false,
     };
   },
 
@@ -77,15 +78,19 @@ export default {
     },
 
     async onLoadStarted(arg) {
+      // onLoadStarted fires only for top-level page navigation,
+      // not for subresources - use it to mark which URL needs bridge injection.
       // Ignore internal navigations (about:blank, file://) - they don't require webview reset
       if (!arg?.url || arg.url === 'about:blank' || arg.url.startsWith('file://')) {
         return;
       }
 
+      console.log('[AppWebView] onLoadStarted:', arg.url);
+
       try {
-        // Reset lastInjectedUrl when starting new navigation
-        // This allows bridge re-injection on reload
         if (arg.url.startsWith('https://intel.ingress.com')) {
+          // Mark this URL as pending injection; onLoadFinished will inject only for this URL
+          this.pendingInjectionUrl = arg.url.split('#')[0];
           this.lastInjectedUrl = null;
         }
 
@@ -101,8 +106,11 @@ export default {
         return;
       }
 
-      // Deduplication: check if we already processed this exact URL
-      if (this.lastInjectedUrl === arg.url) {
+      const urlWithoutHash = arg.url.split('#')[0];
+
+      // Skip subresources (/r/*, *.js, etc.) and hash-only changes:
+      // only inject for the exact URL that triggered onLoadStarted
+      if (urlWithoutHash !== this.pendingInjectionUrl) {
         return;
       }
 
@@ -122,8 +130,8 @@ export default {
         // Inject early so styles are active before IITC rewrites document.head
         await injectCustomStyles(this.webview);
 
-        // Mark this URL as processed
-        this.lastInjectedUrl = arg.url;
+        this.lastInjectedUrl = urlWithoutHash;
+        this.pendingInjectionUrl = null;
 
         // Then trigger plugin injection
         await this.$store.dispatch('ui/setWebviewLoaded', true);
