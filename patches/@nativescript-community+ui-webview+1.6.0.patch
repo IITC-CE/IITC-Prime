@@ -1,5 +1,5 @@
 diff --git a/node_modules/@nativescript-community/ui-webview/index.android.js b/node_modules/@nativescript-community/ui-webview/index.android.js
-index ced902a..45fc3ad 100644
+index ced902a..6925164 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.android.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.android.js
 @@ -98,6 +98,10 @@ function initializeWebViewClient() {
@@ -23,6 +23,35 @@ index ced902a..45fc3ad 100644
      };
      WebViewExtClientImpl.prototype.onPageStarted = function (view, url, favicon) {
          _super.prototype.onPageStarted.call(this, view, url, favicon);
+@@ -521,15 +528,20 @@ function initializeWebViewClient() {
+             }
+             return;
+         }
+-        try {
+-            return owner.onWebViewEvent(eventName, JSON.parse(data));
+-        }
+-        catch (err) {
+-            if (Trace.isEnabled()) {
+-                Trace.write("WebViewExtClientImpl.emitEventToNativeScript(\"".concat(eventName, "\") - couldn't parse data: ").concat(data, " err: ").concat(err), WebViewTraceCategory, Trace.messageType.info);
++        // Dispatch asynchronously so the JavaBridge thread returns immediately,
++        // unblocking the WebView's JS thread without waiting for NativeScript to
++        // finish processing the event
++        setTimeout(function () {
++            try {
++                owner.onWebViewEvent(eventName, JSON.parse(data));
+             }
+-        }
+-        owner.onWebViewEvent(eventName, data);
++            catch (err) {
++                if (Trace.isEnabled()) {
++                    Trace.write("WebViewExtClientImpl.emitEventToNativeScript(\"".concat(eventName, "\") - couldn't parse data: ").concat(data, " err: ").concat(err), WebViewTraceCategory, Trace.messageType.info);
++                }
++                owner.onWebViewEvent(eventName, data);
++            }
++        }, 0);
+     };
+     return WebViewBridgeInterfaceImpl;
+ }(com.nativescript.webviewinterface.WebViewBridgeInterface));
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
 index 794f42a..c08d393 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
