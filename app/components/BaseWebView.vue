@@ -230,9 +230,9 @@ export default {
       return this.webViewInstance?.executeJavaScript(code);
     },
 
-    reload() {
+    reload(url) {
       this.webViewInstance.loadUrl('about:blank');
-      this.webViewInstance.loadUrl(this.src);
+      this.webViewInstance.loadUrl(url ?? this.src);
     },
 
     // Cleanup

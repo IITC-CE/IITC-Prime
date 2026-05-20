@@ -103,10 +103,10 @@ export default {
       try {
         const uri = new URL(args.url);
         if (uri.hostname === new URL(INGRESS_INTEL_MAP).hostname) {
-          console.log('[PopupWebView] Intel URL detected, redirecting to main WebView');
+          console.log('[PopupWebView] Intel URL detected, reloading main WebView');
           this.isClosing = true;
           args.cancel = true;
-          this.$store.dispatch('ui/setCurrentUrl', args.url);
+          this.$store.dispatch('ui/reloadWebView', args.url);
           this.closePopup();
         }
       } catch (e) {
