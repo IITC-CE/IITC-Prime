@@ -21,7 +21,7 @@ import { injectBridgeIITC, router } from '@/utils/bridge';
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
-import { addViewportParam } from '@/utils/url-config';
+import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS } from '@nativescript/core';
 
 import {
@@ -48,6 +48,7 @@ export default {
       lastInjectedUrl: null, // URL (without hash) for which bridge was last injected
       pendingInjectionUrl: null, // URL set by onLoadStarted; onLoadFinished only injects for this URL
       injectionInProgress: false,
+      pendingReloadUrl: null, // OAuth callback URL waiting for about:blank step to finish
     };
   },
 
@@ -85,12 +86,20 @@ export default {
         return;
       }
 
+      const urlWithoutHash = arg.url.split('#')[0];
+
+      // iOS fires loadStarted for same-document hash navigation but never fires loadFinished.
+      // Only skip if the URL actually contains a hash - a plain URL reload must proceed normally.
+      if (arg.url.includes('#') && urlWithoutHash === this.lastInjectedUrl) {
+        return;
+      }
+
       console.log('[AppWebView] onLoadStarted:', arg.url);
 
       try {
-        if (arg.url.startsWith('https://intel.ingress.com')) {
+        if (arg.url.startsWith(INGRESS_INTEL_MAP)) {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
-          this.pendingInjectionUrl = arg.url.split('#')[0];
+          this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
         }
 
@@ -101,8 +110,18 @@ export default {
     },
 
     async onLoadFinished(arg) {
+      // Two-step reload: wait for about:blank before loading the OAuth callback URL.
+      // Ensures the hash causes a full cross-document load instead of a same-document navigation.
+      if (this.pendingReloadUrl && !arg?.url?.startsWith(INGRESS_INTEL_MAP)) {
+        const url = this.pendingReloadUrl;
+        this.pendingReloadUrl = null;
+        this.lastInjectedUrl = null; // OAuth URL has a hash; reset so the check above won't skip it
+        this.webview?.loadUrl(url);
+        return;
+      }
+
       // Only process Intel pages
-      if (!arg?.url || !arg.url.startsWith('https://intel.ingress.com')) {
+      if (!arg?.url || !arg.url.startsWith(INGRESS_INTEL_MAP)) {
         return;
       }
 
@@ -189,7 +208,12 @@ export default {
 
         switch (action.type) {
           case 'ui/reloadWebView':
-            await this.$refs.baseWebView.reload();
+            if (action.payload) {
+              this.pendingReloadUrl = addViewportParam(action.payload);
+              webview.loadUrl('about:blank');
+            } else {
+              await this.$refs.baseWebView.reload();
+            }
             break;
           case 'ui/iitcBootFinished': {
             await installFileChooserOverride(webview);
