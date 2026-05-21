@@ -53,6 +53,14 @@
 
     <SettingsItem
       type="switch"
+      title="Show zoom controls"
+      description="Show +/- buttons on the map"
+      :value="zoomControl"
+      @change="updateZoomControl"
+    />
+
+    <SettingsItem
+      type="switch"
       title="Fake User Agent"
       description="Appear as a desktop browser"
       :value="fakeUserAgent"
@@ -126,6 +134,7 @@ export default {
   computed: {
     ...mapGetters('settings', [
       'isDesktopMode',
+      'isZoomControl',
       'isFakeUserAgent',
       'isPersistentZoom',
       'isShowLocation',
@@ -134,6 +143,10 @@ export default {
 
     desktopMode() {
       return this.isDesktopMode;
+    },
+
+    zoomControl() {
+      return this.isZoomControl;
     },
 
     fakeUserAgent() {
@@ -164,6 +177,10 @@ export default {
 
     async updateDesktopMode(value) {
       await this.setSetting({ key: 'desktopMode', value });
+    },
+
+    async updateZoomControl(value) {
+      await this.setSetting({ key: 'zoomControl', value });
     },
 
     async updateFakeUserAgent(value) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import storage from '@/utils/storage';
 
@@ -8,6 +8,7 @@ export const settings = {
   state: () => ({
     // UI settings
     desktopMode: false,
+    zoomControl: false,
     fakeUserAgent: false,
 
     // Location settings
@@ -27,7 +28,7 @@ export const settings = {
           state[key] = settings[key];
         }
       });
-    }
+    },
   },
 
   actions: {
@@ -76,6 +77,10 @@ export const settings = {
       if (changedKeys.length === 0 || changedKeys.includes('showLocation')) {
         await dispatch('map/setLocationTracking', state.showLocation, { root: true });
       }
+      // Zoom control changed - reload WebView
+      if (changedKeys.includes('zoomControl')) {
+        await dispatch('ui/reloadWebView', null, { root: true });
+      }
     },
 
     /**
@@ -84,6 +89,7 @@ export const settings = {
     async resetSettings({ commit, dispatch }) {
       const defaultSettings = {
         desktopMode: false,
+        zoomControl: false,
         fakeUserAgent: false,
         persistentZoom: false,
         showLocation: false,
@@ -105,14 +111,15 @@ export const settings = {
       } catch (error) {
         console.error('Failed to update showLocation setting from plugin:', error);
       }
-    }
+    },
   },
 
   getters: {
     // Quick access getters
     isDesktopMode: state => state.desktopMode,
+    isZoomControl: state => state.zoomControl,
     isFakeUserAgent: state => state.fakeUserAgent,
     isPersistentZoom: state => state.persistentZoom,
     isShowLocation: state => state.showLocation,
-  }
+  },
 };

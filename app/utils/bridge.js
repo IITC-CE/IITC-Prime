@@ -5,6 +5,7 @@ import {
   switchToPane,
   bootFinished,
   getVersionName,
+  getZoomControl,
   setLayers,
   addPane,
   setPortalStatus,
@@ -162,6 +163,8 @@ export const injectBridgeIITC = async webview => {
   });
   bridge +=
     "window.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};\n";
+  bridge +=
+    'window.nsWebViewBridge.showZoom = function() {return ' + getZoomControl() + ';};\n';
 
   // async callback-based bridge functions
   Object.entries(asyncEvents).forEach(entry => {
