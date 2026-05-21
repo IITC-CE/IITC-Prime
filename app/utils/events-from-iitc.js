@@ -33,6 +33,14 @@ export const getVersionName = () => {
 };
 
 /**
+ * Returns whether zoom control buttons should be shown
+ * @returns {boolean}
+ */
+export const getZoomControl = () => {
+  return store.getters['settings/isZoomControl'];
+};
+
+/**
  * Fires when IITC completes its initialization process
  */
 export const bootFinished = async name => {
