@@ -10,6 +10,7 @@ import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebViewX from '@modos189/nativescript-webview-x/vue';
+import { WebViewX as WebViewXClass } from '@modos189/nativescript-webview-x';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
 import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
@@ -22,6 +23,7 @@ import Main from '~/components/Main';
 import store from './store';
 import { initializeTracing } from './app-trace';
 import { getStatusBarHeight } from '@/utils/platform';
+import { getAndroidUserAgent, getIOSUserAgent } from '~/utils/webview/user-agent';
 
 // Initialize app logging
 initializeTracing();
@@ -77,5 +79,12 @@ app.use(RipplePlugin);
 app.use(BottomSheetPlugin);
 app.use(PersistentBottomSheetPlugin);
 app.use(SwipeMenuPlugin);
+
+WebViewXClass.userAgentTransform = defaultUA => {
+  if (defaultUA !== null) {
+    return getAndroidUserAgent(defaultUA);
+  }
+  return getIOSUserAgent();
+};
 
 app.start();
