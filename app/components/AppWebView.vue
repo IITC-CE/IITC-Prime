@@ -8,8 +8,8 @@
     @webview-loaded="onWebViewLoaded"
     @load-started="onLoadStarted"
     @load-finished="onLoadFinished"
+    @popup-navigate="handlePopupNavigate"
     @external-url="handleExternalUrl"
-    @show-popup="handleShowPopup"
     @load-error="handleLoadError"
     @bridge-message="handleBridgeMessage"
     @console-log="handleConsoleLog"
@@ -22,7 +22,7 @@ import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-pri
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
-import { isIOS } from '@nativescript/core';
+import { isIOS, Utils } from '@nativescript/core';
 
 import {
   changePortalHighlights,
@@ -66,12 +66,14 @@ export default {
   },
 
   methods: {
-    handleShowPopup(data) {
-      this.$emit('show-popup', data);
+    handlePopupNavigate(url) {
+      if (url && url.startsWith(INGRESS_INTEL_MAP)) {
+        this.$store.dispatch('ui/reloadWebView', url);
+      }
     },
 
     handleExternalUrl(url) {
-      this.$emit('show-popup', { url });
+      if (url) Utils.openUrl(url);
     },
 
     handleLoadError(error) {
