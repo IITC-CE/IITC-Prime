@@ -26,7 +26,6 @@
                 ref="appWebView"
                 row="0"
                 col="0"
-                @show-popup="handlePopup"
                 @console-log="onConsoleLog"
               />
               <label row="1" col="0" :height="contentBottomPadding" />
@@ -35,8 +34,6 @@
             <ProgressBar class="progress-bar" />
           </AbsoluteLayout>
         </BottomSheetPanel>
-
-        <PopupWebView v-if="popup.isVisible" v-bind="popup.props" @close="handlePopupClose" />
 
         <!-- MapStateBar overlay - positioned at bottom, above BottomSheet -->
         <MapStateBar
@@ -103,7 +100,6 @@ import AppWebView from './AppWebView';
 import ProgressBar from './ProgressBar';
 import BottomSheetPanel from './BottomPanel/BottomSheetPanel.vue';
 import MapStateBar from './BottomPanel/MapStateBar/MapStateBar.vue';
-import PopupWebView from './PopupWebView.vue';
 import DebugConsole from './DebugConsole';
 import PluginsView from './Settings/PluginsView.vue';
 
@@ -115,7 +111,6 @@ export default {
     ProgressBar,
     BottomSheetPanel,
     MapStateBar,
-    PopupWebView,
     DebugConsole,
   },
 
@@ -126,13 +121,6 @@ export default {
         bottomPadding: 0,
         panelWidth: 0,
         contentHeight: 0,
-      },
-      popup: {
-        isVisible: false,
-        props: {
-          url: null,
-          transportId: null,
-        },
       },
       sliding: {
         isVisible: true,
@@ -266,20 +254,6 @@ export default {
         panelWidth: dimensions.panelWidth,
         availableWidth: dimensions.availableWidth,
       });
-    },
-
-    handlePopup(data) {
-      this.popup = {
-        isVisible: true,
-        props: data,
-      };
-    },
-
-    handlePopupClose() {
-      this.popup = {
-        isVisible: false,
-        props: { url: null, transportId: null },
-      };
     },
 
     /**

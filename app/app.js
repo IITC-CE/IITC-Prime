@@ -9,7 +9,7 @@ import { install as installBottomSheet } from '@nativescript-community/ui-materi
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
-import WebView from '@nativescript-community/ui-webview/vue';
+import WebViewX from '@modos189/nativescript-webview-x/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
 import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
@@ -68,7 +68,7 @@ app.config.globalProperties.$filters = {
 };
 
 app.use(store);
-app.use(WebView);
+app.use(WebViewX);
 app.use(CollectionView);
 app.use(CanvasSVG);
 app.use(ButtonPlugin);

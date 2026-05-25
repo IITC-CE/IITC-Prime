@@ -1,7 +1,7 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <AWebView
+  <WebViewX
     ref="webview"
     :src="src"
     :viewPortSize="viewPortSize"
@@ -16,14 +16,14 @@
 </template>
 
 <script>
-import { AWebView } from '@nativescript-community/ui-webview';
+import { WebViewX } from '@modos189/nativescript-webview-x';
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
-import { BaseWebChromeClient } from '@/utils/webview/base-chrome-client';
 import { mapState } from 'vuex';
 
 export default {
   name: 'BaseWebView',
+  inheritAttrs: false,
 
   props: {
     src: {
@@ -47,7 +47,6 @@ export default {
   data() {
     return {
       webViewInstance: null,
-      chromeClient: null,
 
       _webViewRef: null,
       isLoading: false,
@@ -78,34 +77,6 @@ export default {
   },
 
   methods: {
-    // Chrome Client Management
-    createWebChromeClient() {
-      const client = new BaseWebChromeClient();
-      client.initWithComponent({
-        setProgress: progress => {
-          this.$emit('progress', progress);
-        },
-        showPopup: popupData => {
-          this.$emit('show-popup', popupData);
-        },
-        closePopup: () => {
-          this.$emit('close-popup');
-        },
-        onConsoleMessage: logData => {
-          this.$emit('console-log', logData);
-        },
-      });
-      this.chromeClient = client;
-      return client;
-    },
-
-    setupWebChromeClient() {
-      if (isAndroid && this.webViewInstance) {
-        const chromeClient = this.createWebChromeClient();
-        this.webViewInstance.android.setWebChromeClient(chromeClient);
-      }
-    },
-
     // WebView State Management
     onWebViewLoaded(args) {
       this.webViewInstance = args.object;
@@ -128,7 +99,6 @@ export default {
       if (!this.webViewInstance) return;
 
       applyWebViewSettings(this.webViewInstance, this.fakeUserAgent);
-      this.setupWebChromeClient();
 
       // Setup console log event handlers
       this.setupDebugEventHandlers();
@@ -142,14 +112,35 @@ export default {
       this.webViewInstance.on('gmBridgeRequest', msg => {
         this.$emit('bridge-message', ['gmBridgeRequest', msg.data]);
       });
+
+      // Intercept popup navigations: cancel (close popup) only for internal hostnames
+      // so OAuth flows navigate freely and only the callback redirect is handed to the host.
+      this.webViewInstance.on('popupNavigate', args => {
+        const url = args.url;
+        if (url && url !== 'about:blank' && !url.startsWith('file://') && this.isUrlAllowed(url)) {
+          args.cancel = true;
+          this.$emit('popup-navigate', url);
+        }
+      });
     },
 
     // Setup event handlers for console bridge
     setupDebugEventHandlers() {
       if (!this.webViewInstance) return;
 
+      // iOS: JS-level bridge overrides console methods and emits this event
       this.webViewInstance.on('console:log', event => {
         this.$emit('console-log', event.data);
+      });
+
+      // Android: native onConsoleMessage callback — catches syntax errors that JS bridge can't
+      this.webViewInstance.on('webConsole', event => {
+        this.$emit('console-log', {
+          type: event.data.level,
+          message: event.data.message,
+          timestamp: new Date().toISOString(),
+          source: 'webview',
+        });
       });
     },
 
@@ -193,7 +184,7 @@ export default {
 
     /**
      * Check if URL should be handled by the main WebView
-     * URLs not allowed here will be opened in a popup WebView instead
+     * URLs not allowed here will be opened in the system browser instead
      */
     isUrlAllowed(url) {
       if (!this.internalHostnames.length) return true;
@@ -239,12 +230,6 @@ export default {
     cleanupWebView() {
       if (this.webViewInstance) {
         try {
-          if (this.chromeClient && isAndroid) {
-            this.chromeClient.cleanup();
-            this.webViewInstance.android?.setWebChromeClient(null);
-            this.chromeClient = null;
-          }
-
           const events = [
             'loaded',
             'loadStarted',
@@ -252,8 +237,10 @@ export default {
             'loadError',
             'shouldOverrideUrlLoading',
             'console:log',
+            'webConsole',
             'JSBridge',
             'gmBridgeRequest',
+            'popupNavigate',
           ];
           events.forEach(event => {
             try {
@@ -294,7 +281,6 @@ export default {
       this.cleanupWebView();
 
       this._webViewRef = null;
-      this.chromeClient = null;
     } catch (error) {
       console.error('Error during BaseWebView cleanup:', error);
     }
