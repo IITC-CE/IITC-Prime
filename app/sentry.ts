@@ -27,9 +27,6 @@ export function initSentry() {
     environment: __SENTRY_ENVIRONMENT__,
     appPrefix: __SENTRY_PREFIX__,
     beforeSend: event => {
-      // Strip IP address for privacy
-      event.user = { ...event.user, ip_address: '0.0.0.0' };
-
       // debugsymbolicator.js sets platform='android' for .mjs files (NativeScript uses .mjs, not .js).
       // Fix: override to 'javascript' so Sentry's JS symbolication engine processes these frames.
       if (!__APPLE__ && event.exception?.values) {
@@ -46,6 +43,9 @@ export function initSentry() {
       return event;
     },
   });
+
+  // Mask IP address for privacy
+  Sentry.setUser({ ip_address: '0.0.0.0' });
 
   Page.on('navigatedTo', event => {
     const page = event.object as Page;
