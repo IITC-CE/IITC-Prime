@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { Frame, Screen } from '@nativescript/core';
+import { Frame, Screen, Utils } from '@nativescript/core';
 
 const ANIMATION_DURATION = 300;
 
@@ -101,6 +101,7 @@ export default {
 
   methods: {
     goBack() {
+      Utils.dismissSoftInput();
       Frame.topmost().goBack();
     },
 
@@ -134,7 +135,7 @@ export default {
       if (hide) this.slotOriginalWidth = currentWidth;
 
       const fromWidth = currentWidth;
-      const toWidth = hide ? 0 : (this.slotOriginalWidth || 0);
+      const toWidth = hide ? 0 : this.slotOriginalWidth || 0;
       const fromOpacity = hide ? 1 : 0;
       const toOpacity = hide ? 0 : 1;
       const startTime = Date.now();
@@ -160,13 +161,21 @@ export default {
 @import '@/app';
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .action-bar-wrapper {
