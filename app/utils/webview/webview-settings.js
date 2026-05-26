@@ -1,23 +1,8 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { isAndroid, isIOS } from '@nativescript/core';
-import {
-  getAndroidUserAgent,
-  getIOSUserAgent,
-  getFakeDesktopUserAgent,
-} from '~/utils/webview/user-agent';
 
-export function applyWebViewSettings(webview, fakeUserAgent = false) {
-  let ua;
-  if (fakeUserAgent) {
-    ua = getFakeDesktopUserAgent();
-  } else if (isAndroid) {
-    ua = getAndroidUserAgent(webview.getDefaultUserAgent());
-  } else {
-    ua = getIOSUserAgent();
-  }
-  webview.setUserAgentOverride(ua);
-
+export function applyWebViewSettings(webview) {
   if (isAndroid) {
     const settings = webview.android.getSettings();
 

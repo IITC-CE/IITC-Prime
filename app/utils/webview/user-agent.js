@@ -1,6 +1,17 @@
-// Copyright (C) 2024 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { isIOS } from '@nativescript/core';
+import { isAndroid, isIOS } from '@nativescript/core';
+
+let _androidDefaultUA = null;
+
+export function setAndroidDefaultUA(ua) {
+  _androidDefaultUA = ua;
+}
+
+export function getBaseUserAgent() {
+  if (isAndroid) return getAndroidUserAgent(_androidDefaultUA || '');
+  return getIOSUserAgent();
+}
 
 export function getAndroidUserAgent(userAgent) {
   // Remove WebView marker

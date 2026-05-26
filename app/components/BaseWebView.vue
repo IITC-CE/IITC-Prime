@@ -4,6 +4,7 @@
   <WebViewX
     ref="webview"
     :src="src"
+    :userAgent="currentUA"
     :viewPortSize="viewPortSize"
     :debugMode="debugMode"
     @loaded="onWebViewLoaded"
@@ -16,9 +17,9 @@
 </template>
 
 <script>
-import { WebViewX } from '@modos189/nativescript-webview-x';
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
+import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
 import { mapState } from 'vuex';
 
 export default {
@@ -64,13 +65,15 @@ export default {
     webview() {
       return this.webViewInstance;
     },
+
+    currentUA() {
+      return this.fakeUserAgent ? getFakeDesktopUserAgent() : getBaseUserAgent();
+    },
   },
 
   watch: {
-    fakeUserAgent(newValue) {
-      // Reapply WebView settings and reload when fake user agent setting changes
+    fakeUserAgent() {
       if (this.webViewInstance) {
-        applyWebViewSettings(this.webViewInstance, newValue);
         this.webViewInstance.reload();
       }
     },
@@ -98,7 +101,7 @@ export default {
     setupWebView() {
       if (!this.webViewInstance) return;
 
-      applyWebViewSettings(this.webViewInstance, this.fakeUserAgent);
+      applyWebViewSettings(this.webViewInstance);
 
       // Setup console log event handlers
       this.setupDebugEventHandlers();
