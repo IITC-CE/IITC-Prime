@@ -1,0 +1,47 @@
+diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
+index ddb35cd..c6d6a30 100644
+--- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
++++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
+@@ -404,15 +404,23 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+         }
+         else if (event.action === 'up' || event.action === 'cancel') {
+             this.vt?.addMovement(p.getX(), p.getY());
+-            // If we were dragging the panel, animate to nearest step
+-            // BUT: ignore 'cancel' events from tap handlers (they shouldn't trigger animation)
+-            if (this.wasDraggingPanel && event.action === 'up') {
+-                this.vt?.computeCurrentVelocity(1000);
+-                const velocityY = -(this.vt?.getYVelocity() ?? 0);
+-                this.vt?.recycle();
+-                const y = touchY - (this.lastTouchY || touchY);
+-                const totalDelta = this.translationY + y + this.dragToss * velocityY;
+-                this.computeAndAnimateEndGestureAnimation(-totalDelta);
++            // If we were dragging the panel, animate to nearest step.
++            // On iOS a button tap during swipe fires 'cancel' on the scrollView - we must snap
++            // to the nearest step position in that case too.
++            if (this.wasDraggingPanel) {
++                if (event.action === 'up') {
++                    this.vt?.computeCurrentVelocity(1000);
++                    const velocityY = -(this.vt?.getYVelocity() ?? 0);
++                    this.vt?.recycle();
++                    const y = touchY - (this.lastTouchY || touchY);
++                    const totalDelta = this.translationY + y + this.dragToss * velocityY;
++                    this.computeAndAnimateEndGestureAnimation(-totalDelta);
++                } else {
++                    // cancel during drag (e.g. iOS button tap interrupts swipe) — snap to
++                    // nearest step based on current position, no velocity
++                    this.vt?.recycle();
++                    this.computeAndAnimateEndGestureAnimation(-this.translationY);
++                }
+                 this.wasDraggingPanel = false;
+             }
+             // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
+@@ -592,6 +600,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+     async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
+         if (this.animation) {
+             this.animation.cancel();
++            // Reset synchronously so the guard below does not block the new animation.
++            // The previous call's finally block will run later but animating is already false.
++            this.animating = false;
+         }
+         if (this.animating) {
+             return;
