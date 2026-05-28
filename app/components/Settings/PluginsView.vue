@@ -53,14 +53,12 @@ import { isIOS } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
-import { confirm, alert } from '@/utils/dialogs';
-import {
-  downloadPlugin,
-  confirmAndInstallPlugin,
-  formatPluginInfo,
-} from '@/utils/plugin-installer';
+import { Toasty } from '@triniwiz/nativescript-toasty';
+import { confirm } from '@/utils/dialogs';
+import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
 import SettingsBase from './SettingsBase';
-import AddPluginSheet from './AddPluginSheet';
+import AddPluginSheet from './components/AddPluginSheet';
+import PluginInfoSheet from './components/PluginInfoSheet';
 import CategoriesList from './components/plugins/CategoriesList';
 import PluginsList from './components/plugins/PluginsList';
 
@@ -161,11 +159,19 @@ export default {
     ...mapActions('manager', ['loadPlugins', 'managePlugin']),
 
     async showPluginInfo(plugin) {
-      await alert({
-        title: plugin.name,
-        message: formatPluginInfo(plugin),
-        okButtonText: 'Close',
+      const result = await this.$showBottomSheet(PluginInfoSheet, {
+        props: { plugin },
+        dismissOnBackgroundTap: true,
+        dismissOnDraggingDownSheet: true,
+        skipCollapsedState: true,
+        ignoreBottomSafeArea: true,
+        transparent: isIOS,
+        trackingScrollView: 'mainScrollView',
       });
+
+      if (result?.[0] === 'delete') {
+        await this.deletePlugin(plugin);
+      }
     },
 
     openAddPlugin() {
@@ -297,6 +303,7 @@ export default {
         });
       } catch (error) {
         console.error('Failed to delete plugin:', error);
+        new Toasty({ text: 'Failed to delete plugin' }).show();
         await this.loadPlugins();
       }
     },

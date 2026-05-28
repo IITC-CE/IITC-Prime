@@ -148,8 +148,11 @@ export const shareContent = (content, contentType, title = '') => {
           null
         );
 
-      const rootController = UIApplication.sharedApplication.keyWindow.rootViewController;
-      rootController.presentViewControllerAnimatedCompletion(controller, true, null);
+      let topController = UIApplication.sharedApplication.keyWindow.rootViewController;
+      while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+      }
+      topController.presentViewControllerAnimatedCompletion(controller, true, null);
 
       return true;
     }
