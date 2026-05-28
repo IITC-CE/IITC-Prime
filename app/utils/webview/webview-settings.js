@@ -16,6 +16,16 @@ export function applyWebViewSettings(webview) {
     settings.setAllowFileAccess(true);
     settings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
+    // Enable third-party cookies so cross-origin OAuth iframes (e.g. Google gapi) can
+    // access their own cookies without needing requestStorageAccess, which Android WebView
+    // denies by default in API 33+
+    try {
+      const CookieManager = android.webkit.CookieManager.getInstance();
+      CookieManager.setAcceptThirdPartyCookies(webview.android, true);
+    } catch (error) {
+      console.log('[Android] Could not enable third-party cookies:', error.message);
+    }
+
     // Set _ncc cookie to disable Niantic's cookie consent banner
     try {
       const CookieManager = android.webkit.CookieManager.getInstance();
