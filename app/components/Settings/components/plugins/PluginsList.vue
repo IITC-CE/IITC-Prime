@@ -8,6 +8,7 @@
     :items="combinedItems"
     :itemTemplateSelector="templateSelector"
     :style="{ paddingBottom: bottomPadding }"
+    iosOverflowSafeArea="true"
     @loaded="onLoaded"
   >
     <!-- Template for section headers -->
@@ -275,6 +276,9 @@ export default {
       enableListEdgeToEdge(args.object);
 
       if (isIOS) {
+        // CollectionView maps paddingBottom -> contentInset.bottom; disable UIKit auto-adding
+        // safe-area inset on top of our manual paddingBottom to avoid double-counting
+        args.object.ios.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
         args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
       }
     },
