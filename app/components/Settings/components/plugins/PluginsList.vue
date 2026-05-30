@@ -281,7 +281,7 @@ export default {
     },
 
     getPluginIcon(plugin) {
-      return plugin.icon || plugin.icon64 || this.placeholderImageSource;
+      return plugin.icon || plugin.icon64 || '~/assets/icons/userscript-no-icon.png';
     },
 
     drawerTranslationFunction(side, width, value, delta, progress) {
