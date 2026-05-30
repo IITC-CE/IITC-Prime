@@ -22,6 +22,7 @@
         :startingSide="item.startingSide"
         :translationFunction="drawerTranslationFunction"
         :rightSwipeDistance="0"
+        backDropEnabled="false"
       >
         <GridLayout
           ~mainContent
@@ -72,6 +73,7 @@
         :startingSide="item.startingSide"
         :translationFunction="drawerTranslationFunction"
         :rightSwipeDistance="0"
+        backDropEnabled="false"
       >
         <GridLayout
           ~mainContent
