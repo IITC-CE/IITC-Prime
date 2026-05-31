@@ -1,8 +1,15 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="sheet-root" androidOverflowEdge="always">
-    <FlexboxLayout class="sheet-content" androidOverflowEdge="always">
+  <StackLayout
+    class="sheet-root"
+    androidOverflowEdge="dont-apply"
+    @loaded="onSheetLoaded"
+    @androidOverflowInset="onAndroidInset"
+    :paddingTop="insetTop"
+    :paddingBottom="insetBottom"
+  >
+    <FlexboxLayout class="sheet-content">
       <Label text="Add Plugin" class="sheet-title" />
 
       <!-- URL input -->
@@ -45,7 +52,7 @@
 
 <script>
 import { isAndroid, isIOS } from '@nativescript/core';
-import { fixTextInputColors } from '@/utils/platform';
+import { fixTextInputColors, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
 
@@ -57,11 +64,25 @@ export default {
       isAndroid,
       pluginUrl: '',
       errorMessage: '',
+      insetTop: 0,
+      insetBottom: 0,
     };
   },
 
   methods: {
     fixTextInputColors,
+
+    onSheetLoaded(args) {
+      this._insetRefs = getBottomSheetInsetRefs(args);
+    },
+
+    onAndroidInset(args) {
+      const result = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
+      if (result) {
+        this.insetTop = result.insetTop;
+        this.insetBottom = result.insetBottom;
+      }
+    },
 
     async checkClipboard() {
       const url = await getClipboardURLIfMatches(/\.user\.js/i);
@@ -103,6 +124,10 @@ export default {
 
   mounted() {
     this.checkClipboard();
+  },
+
+  beforeUnmount() {
+    this._insetRefs = null;
   },
 };
 </script>

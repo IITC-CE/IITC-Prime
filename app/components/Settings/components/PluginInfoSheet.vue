@@ -1,8 +1,8 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="sheet-root" androidOverflowEdge="always">
-    <ScrollView id="mainScrollView" androidOverflowEdge="always">
+  <StackLayout class="sheet-root" androidOverflowEdge="dont-apply" @loaded="onSheetLoaded" @androidOverflowInset="onAndroidInset" :paddingTop="insetTop" :paddingBottom="insetBottom">
+    <ScrollView id="mainScrollView">
       <FlexboxLayout class="sheet-content">
         <!-- Header: icon + name / category -->
         <FlexboxLayout class="plugin-header">
@@ -105,7 +105,7 @@
 
 <script>
 import { Utils } from '@nativescript/core';
-import { shareContent } from '@/utils/platform';
+import { shareContent, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
 import AsyncRasterIcon from './plugins/AsyncRasterIcon.vue';
 
@@ -126,6 +126,13 @@ export default {
       type: Boolean,
       default: false,
     },
+  },
+
+  data() {
+    return {
+      insetTop: 0,
+      insetBottom: 0,
+    };
   },
 
   computed: {
@@ -161,6 +168,18 @@ export default {
   },
 
   methods: {
+    onSheetLoaded(args) {
+      this._insetRefs = getBottomSheetInsetRefs(args);
+    },
+
+    onAndroidInset(args) {
+      const result = applyBottomSheetInsets(args, this._insetRefs);
+      if (result) {
+        this.insetTop = result.insetTop;
+        this.insetBottom = result.insetBottom;
+      }
+    },
+
     onOpenHomepage() {
       Utils.openUrl(this.plugin.homepageURL);
     },
@@ -184,6 +203,10 @@ export default {
     onDelete() {
       this.$closeBottomSheet('delete');
     },
+  },
+
+  beforeUnmount() {
+    this._insetRefs = null;
   },
 };
 </script>

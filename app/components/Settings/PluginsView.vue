@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { isIOS } from '@nativescript/core';
+import { isIOS, isAndroid } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { reactive, markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
@@ -182,6 +182,11 @@ export default {
         ignoreBottomSafeArea: true,
         ignoreKeyboardHeight: false,
         transparent: isIOS,
+        // On Android the dialog inherits adjustNothing from the activity;
+        // override so the sheet resizes above the keyboard when the URL text field is focused.
+        windowSoftInputMode: isAndroid
+          ? android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+          : undefined,
       });
 
       const pending = result?.[0];
