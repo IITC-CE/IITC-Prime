@@ -177,6 +177,7 @@ export default {
             ...enabledPlugins.map((plugin, index) => ({
               ...plugin,
               type: 'plugin',
+              sectionId: 'enabled',
               isFirst: index === 0,
               isLast: index === enabledPlugins.length - 1,
             }))
@@ -190,8 +191,8 @@ export default {
         });
       }
 
-      // Add all plugins (sorted)
-      const sortedPlugins = this.plugins.sort((a, b) =>
+      // Add all plugins (sorted), including already-enabled ones
+      const sortedPlugins = [...this.plugins].sort((a, b) =>
         this.getPluginName(a).localeCompare(this.getPluginName(b))
       );
 
@@ -199,6 +200,7 @@ export default {
         ...sortedPlugins.map((plugin, index) => ({
           ...plugin,
           type: 'plugin',
+          sectionId: 'all',
           isFirst: index === 0,
           isLast: index === sortedPlugins.length - 1,
         }))
