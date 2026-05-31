@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import { isIOS } from '@nativescript/core';
+import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import { enableListEdgeToEdge } from '@/utils/platform';
@@ -287,8 +287,45 @@ export default {
       }
     },
 
-    onSwitchTap(item) {
+    async onSwitchTap(item) {
+      if (!this.showEnabledFirst) {
+        this.$emit('toggle', item);
+        return;
+      }
+
+      const scrollBefore = this.collectionViewRef?.scrollOffset ?? 0;
+      const enabledBefore = this.combinedItems.filter(i => i.sectionId === 'enabled').length;
+
       this.$emit('toggle', item);
+
+      await this.$nextTick();
+
+      const enabledAfter = this.combinedItems.filter(i => i.sectionId === 'enabled').length;
+      const itemsDelta = enabledAfter - enabledBefore;
+      if (itemsDelta === 0 || !this.collectionViewRef) return;
+
+      // item height matches .plugin-item { height: 82 }
+      // header height matches .section-header { padding: 12 + 8; font-size: 14 } = 38dp
+      const ITEM_H = 82;
+      const HEADER_H = 38;
+
+      let heightDelta = itemsDelta * ITEM_H;
+      if (enabledBefore === 0 && itemsDelta > 0) heightDelta += HEADER_H;
+      if (enabledAfter === 0 && itemsDelta < 0) heightDelta -= HEADER_H;
+
+      // only compensate when the Enabled section items are fully above the viewport
+      const enabledSectionEndY = enabledBefore > 0 ? HEADER_H + enabledBefore * ITEM_H : 0;
+      if (scrollBefore <= enabledSectionEndY) return;
+
+      if (isIOS) {
+        this.collectionViewRef.ios.contentOffset = {
+          x: 0,
+          y: Math.max(0, scrollBefore + heightDelta),
+        };
+      } else {
+        // scrollToOffset calls RecyclerView.scrollBy() which takes pixels, not dp
+        this.collectionViewRef.scrollToOffset(Utils.layout.toDevicePixels(heightDelta));
+      }
     },
 
     onPluginTap(item) {
