@@ -23,7 +23,7 @@
       <MDButton
         class="btn-primary btn-load"
         text="Load from URL"
-        :isEnabled="!!pluginUrl.trim() && !isLoading"
+        :isEnabled="!!pluginUrl.trim()"
         @tap="loadPlugin"
       />
 
@@ -36,9 +36,6 @@
       <!-- Choose file -->
       <MDButton class="btn-primary btn-file" text="Choose from files" @tap="chooseFile" />
 
-      <!-- Loading indicator -->
-      <ActivityIndicator v-if="isLoading" busy="true" class="loading-indicator" />
-
       <!-- Error message -->
       <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
     </FlexboxLayout>
@@ -47,10 +44,9 @@
 
 <script>
 import { isAndroid } from '@nativescript/core';
-import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
 import { fixTextInputColors } from '@/utils/platform';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
-import { selectFiles, readFileContent } from '@/utils/file-manager';
+import { selectFiles } from '@/utils/file-manager';
 
 export default {
   name: 'AddPluginSheet',
@@ -59,7 +55,6 @@ export default {
     return {
       isAndroid,
       pluginUrl: '',
-      isLoading: false,
       errorMessage: '',
     };
   },
@@ -74,28 +69,13 @@ export default {
       }
     },
 
-    async loadPlugin() {
+    loadPlugin() {
       const url = this.pluginUrl.trim();
-      if (!url || this.isLoading) return;
-
-      this.errorMessage = '';
-      this.isLoading = true;
-
-      try {
-        const { code, filename } = await downloadPlugin(url);
-        const installed = await confirmAndInstallPlugin(code, filename);
-        if (installed) this.$closeBottomSheet();
-      } catch (error) {
-        console.error('Failed to add plugin:', error);
-        this.errorMessage = error.message || 'Unknown error occurred';
-      } finally {
-        this.isLoading = false;
-      }
+      if (!url) return;
+      this.$closeBottomSheet({ type: 'url', url });
     },
 
     async chooseFile() {
-      if (this.isLoading) return;
-
       this.errorMessage = '';
 
       try {
@@ -106,21 +86,10 @@ export default {
 
         if (!files.length) return;
 
-        this.isLoading = true;
-
-        const { content: code, name: fileName } = await readFileContent(files[0].path);
-        if (!code) {
-          this.errorMessage = 'Failed to read file. The file may be empty or inaccessible.';
-          return;
-        }
-
-        const installed = await confirmAndInstallPlugin(code, fileName);
-        if (installed) this.$closeBottomSheet();
+        this.$closeBottomSheet({ type: 'file', path: files[0].path });
       } catch (error) {
-        console.error('Failed to add plugin from file:', error);
+        console.error('Failed to choose file:', error);
         this.errorMessage = error.message || 'Unknown error occurred';
-      } finally {
-        this.isLoading = false;
       }
     },
   },
@@ -188,13 +157,6 @@ export default {
 
 .btn-file {
   margin-top: $spacing-s;
-}
-
-.loading-indicator {
-  color: $primary;
-  width: 40;
-  height: 40;
-  margin: $spacing-m 0;
 }
 
 .error-message {

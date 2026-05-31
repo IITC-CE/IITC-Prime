@@ -10,19 +10,34 @@
           <AsyncRasterIcon v-else :src="pluginIcon" icon-class="plugin-icon" />
 
           <StackLayout class="header-info">
-            <Label :text="plugin.name || 'Unknown Plugin'" class="plugin-name" textWrap="true" />
-            <Label :text="plugin.category || 'Misc'" class="plugin-category" />
+            <Label :text="displayName" class="plugin-name" textWrap="true" />
+            <Label v-if="!isLoading" :text="plugin.category || 'Misc'" class="plugin-category" />
           </StackLayout>
         </FlexboxLayout>
 
-        <!-- User / override notice -->
-        <FlexboxLayout v-if="plugin.user || plugin.override" class="notice-block">
+        <!-- Loading indicator -->
+        <ActivityIndicator v-if="isLoading" busy="true" class="sheet-loading" />
+
+        <!-- Load error notice -->
+        <GridLayout v-if="hasLoadError" columns="auto, *" rows="auto" class="notice-block">
           <Label
+            col="0" row="0"
+            :text="$filters.fonticon('fa-exclamation-circle')"
+            class="fa notice-icon notice-icon--error"
+          />
+          <Label col="1" row="0" :text="plugin.loadError" class="notice-text" textWrap="true" />
+        </GridLayout>
+
+        <!-- User / override notice -->
+        <GridLayout v-if="plugin.user || plugin.override" columns="auto, *" rows="auto" class="notice-block">
+          <Label
+            col="0" row="0"
             :text="$filters.fonticon('fa-info-circle')"
             class="fa notice-icon"
             :class="plugin.override ? 'notice-icon--warning' : 'notice-icon--user'"
           />
           <Label
+            col="1" row="0"
             :text="
               plugin.override
                 ? 'This user plugin overrides an official plugin'
@@ -31,7 +46,7 @@
             class="notice-text"
             textWrap="true"
           />
-        </FlexboxLayout>
+        </GridLayout>
 
         <!-- Details section -->
         <StackLayout v-if="hasDetails" class="details">
@@ -52,6 +67,12 @@
         </StackLayout>
 
         <!-- Action buttons -->
+        <MDButton
+          v-if="installMode && !isLoading && !hasLoadError"
+          text="Install"
+          class="btn-install"
+          @tap="onInstall"
+        />
         <MDButton
           v-if="plugin.homepageURL"
           text="Open homepage"
@@ -101,9 +122,26 @@ export default {
       type: Object,
       required: true,
     },
+    installMode: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   computed: {
+    isLoading() {
+      return !!this.plugin.loading;
+    },
+
+    hasLoadError() {
+      return !!this.plugin.loadError;
+    },
+
+    displayName() {
+      if (this.isLoading) return 'Loading...';
+      return this.plugin.name || 'Unknown Plugin';
+    },
+
     pluginIcon() {
       return this.plugin.icon64 || this.plugin.icon || '~/assets/icons/userscript-no-icon.svg';
     },
@@ -137,6 +175,10 @@ export default {
 
     onShareUpdate() {
       shareContent(this.plugin.updateURL, 'url', this.plugin.name || 'Plugin');
+    },
+
+    onInstall() {
+      this.$closeBottomSheet('install');
     },
 
     onDelete() {
@@ -191,9 +233,15 @@ export default {
   margin-top: $spacing-xxs;
 }
 
+.sheet-loading {
+  color: $primary;
+  width: 40;
+  height: 40;
+  margin: $spacing-m auto;
+  horizontal-alignment: center;
+}
+
 .notice-block {
-  flex-direction: row;
-  align-items: center;
   background-color: $surface-container;
   border-radius: $radius-medium;
   padding: $spacing-s $spacing-m;
@@ -203,6 +251,7 @@ export default {
 .notice-icon {
   font-size: 16;
   margin-right: $spacing-s;
+  vertical-alignment: center;
   flex-shrink: 0;
 
   &--user {
@@ -212,12 +261,15 @@ export default {
   &--warning {
     color: $state-warning;
   }
+
+  &--error {
+    color: $state-error;
+  }
 }
 
 .notice-text {
   color: $on-surface-dark;
   font-size: $font-size-small;
-  flex-grow: 1;
 }
 
 .details {
@@ -250,6 +302,15 @@ export default {
   color: $on-surface;
   font-size: $font-size-small;
   flex-grow: 1;
+}
+
+.btn-install {
+  background-color: $primary;
+  border-radius: $radius-small;
+  margin: 0 0 $spacing-m 0;
+  color: #ffffff;
+  font-size: $font-size;
+  ripple-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-action {

@@ -51,11 +51,11 @@
 <script>
 import { isIOS } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
-import { markRaw } from 'vue';
+import { reactive, markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { Toasty } from '@triniwiz/nativescript-toasty';
-import { confirm } from '@/utils/dialogs';
-import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
+import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/plugin-installer';
+import { readFileContent } from '@/utils/file-manager';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './components/AddPluginSheet';
 import PluginInfoSheet from './components/PluginInfoSheet';
@@ -174,8 +174,8 @@ export default {
       }
     },
 
-    openAddPlugin() {
-      this.$showBottomSheet(AddPluginSheet, {
+    async openAddPlugin() {
+      const result = await this.$showBottomSheet(AddPluginSheet, {
         dismissOnBackgroundTap: true,
         dismissOnDraggingDownSheet: true,
         skipCollapsedState: true,
@@ -183,6 +183,60 @@ export default {
         ignoreKeyboardHeight: false,
         transparent: isIOS,
       });
+
+      const pending = result?.[0];
+      if (!pending) return;
+
+      let loaderFn;
+      if (pending.type === 'url') {
+        loaderFn = async () => {
+          const { code, filename } = await downloadPlugin(pending.url);
+          return parsePlugin(code, filename);
+        };
+      } else if (pending.type === 'file') {
+        loaderFn = async () => {
+          const { content: code, name: filename } = await readFileContent(pending.path);
+          if (!code) throw new Error('Failed to read file. The file may be empty or inaccessible.');
+          return parsePlugin(code, filename);
+        };
+      }
+
+      if (loaderFn) await this.confirmInstallPlugin(loaderFn);
+    },
+
+    async confirmInstallPlugin(loaderFn) {
+      const pluginState = reactive({ loading: true });
+
+      const sheetPromise = this.$showBottomSheet(PluginInfoSheet, {
+        props: { plugin: pluginState, installMode: true },
+        dismissOnBackgroundTap: true,
+        dismissOnDraggingDownSheet: true,
+        skipCollapsedState: true,
+        ignoreBottomSafeArea: true,
+        transparent: isIOS,
+        trackingScrollView: 'mainScrollView',
+      });
+
+      let resolvedCode = null;
+      try {
+        const { meta, code } = await loaderFn();
+        resolvedCode = code;
+        Object.assign(pluginState, meta);
+        pluginState.loading = false;
+      } catch (error) {
+        pluginState.loading = false;
+        pluginState.loadError = error.message;
+      }
+
+      const sheetResult = await sheetPromise;
+      if (sheetResult?.[0] === 'install' && resolvedCode) {
+        try {
+          await installPlugin(pluginState, resolvedCode);
+        } catch (error) {
+          console.error('Failed to install plugin:', error);
+          new Toasty({ text: 'Failed to install plugin' }).show();
+        }
+      }
     },
 
     onNavigatedTo() {
@@ -197,21 +251,15 @@ export default {
       }
     },
 
-    async installPendingPlugin(pending) {
-      try {
-        let code = pending.code;
-        let filename = pending.filename;
-
+    installPendingPlugin(pending) {
+      const loaderFn = async () => {
         if (pending.type === 'url') {
-          const result = await downloadPlugin(pending.value);
-          code = result.code;
-          filename = result.filename;
+          const { code, filename } = await downloadPlugin(pending.value);
+          return parsePlugin(code, filename);
         }
-
-        await confirmAndInstallPlugin(code, filename);
-      } catch (error) {
-        console.error('Failed to install plugin from intent:', error);
-      }
+        return parsePlugin(pending.code, pending.filename);
+      };
+      this.confirmInstallPlugin(loaderFn);
     },
 
     getEmptyMessage() {
