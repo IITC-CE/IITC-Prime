@@ -24,6 +24,7 @@
         class="btn-primary btn-load"
         text="Load from URL"
         :isEnabled="!!pluginUrl.trim()"
+        @loaded="onLoadButtonLoaded"
         @tap="loadPlugin"
       />
 
@@ -43,7 +44,7 @@
 </template>
 
 <script>
-import { isAndroid } from '@nativescript/core';
+import { isAndroid, isIOS } from '@nativescript/core';
 import { fixTextInputColors } from '@/utils/platform';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
@@ -66,6 +67,12 @@ export default {
       const url = await getClipboardURLIfMatches(/\.user\.js/i);
       if (url) {
         this.pluginUrl = url;
+      }
+    },
+
+    onLoadButtonLoaded(args) {
+      if (isIOS) {
+        args.object.ios.setTitleColorForState(UIColor.whiteColor, UIControlState.Disabled);
       }
     },
 
