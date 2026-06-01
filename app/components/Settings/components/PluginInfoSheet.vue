@@ -1,7 +1,14 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="sheet-root" androidOverflowEdge="dont-apply" @loaded="onSheetLoaded" @androidOverflowInset="onAndroidInset" :paddingTop="insetTop" :paddingBottom="insetBottom">
+  <StackLayout
+    class="sheet-root"
+    androidOverflowEdge="dont-apply"
+    @loaded="onSheetLoaded"
+    @androidOverflowInset="onAndroidInset"
+    :paddingTop="insetTop"
+    :paddingBottom="insetBottom"
+  >
     <ScrollView id="mainScrollView">
       <FlexboxLayout class="sheet-content">
         <!-- Header: icon + name / category -->
@@ -21,7 +28,8 @@
         <!-- Load error notice -->
         <GridLayout v-if="hasLoadError" columns="auto, *" rows="auto" class="notice-block">
           <Label
-            col="0" row="0"
+            col="0"
+            row="0"
             :text="$filters.fonticon('fa-exclamation-circle')"
             class="fa notice-icon notice-icon--error"
           />
@@ -29,15 +37,22 @@
         </GridLayout>
 
         <!-- User / override notice -->
-        <GridLayout v-if="plugin.user || plugin.override" columns="auto, *" rows="auto" class="notice-block">
+        <GridLayout
+          v-if="plugin.user || plugin.override"
+          columns="auto, *"
+          rows="auto"
+          class="notice-block"
+        >
           <Label
-            col="0" row="0"
+            col="0"
+            row="0"
             :text="$filters.fonticon('fa-info-circle')"
             class="fa notice-icon"
             :class="plugin.override ? 'notice-icon--warning' : 'notice-icon--user'"
           />
           <Label
-            col="1" row="0"
+            col="1"
+            row="0"
             :text="
               plugin.override
                 ? 'This user plugin overrides an official plugin'

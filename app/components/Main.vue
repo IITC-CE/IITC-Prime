@@ -22,12 +22,7 @@
           <AbsoluteLayout class="page">
             <!-- Main content with WebView (hidden when debug is active) -->
             <GridLayout rows="*, auto" columns="*" class="main-content">
-              <AppWebView
-                ref="appWebView"
-                row="0"
-                col="0"
-                @console-log="onConsoleLog"
-              />
+              <AppWebView ref="appWebView" row="0" col="0" @console-log="onConsoleLog" />
               <label row="1" col="0" :height="contentBottomPadding" />
             </GridLayout>
 
@@ -344,6 +339,9 @@ export default {
       if (!Application.android) return;
 
       Application.android.on(AndroidApplication.activityBackPressedEvent, args => {
+        // Settings pages register their own handler via attachBackHandler - skip here
+        if (!this.isMainPageActive()) return;
+
         // If debug is active, exit debug mode instead of navigating back
         if (this.isDebugActive) {
           this.$store.dispatch('ui/toggleDebugMode');
