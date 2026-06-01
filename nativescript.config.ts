@@ -28,6 +28,7 @@ export default {
   android: {
     v8Flags: '--expose_gc',
     markingMode: 'none',
+    discardUncaughtJsExceptions: true,
   },
   ios: {
     deploymentTarget: '13.0',
