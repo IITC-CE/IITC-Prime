@@ -35,13 +35,18 @@ const convertDeepLinkToIntelUrl = url => {
     return null;
   }
 
-  if (url.includes('://intel.ingress.com')) {
-    return url;
-  }
+  // new URL() validates and normalizes; returns null on parse failure
+  // to avoid storing an unparseable URL in the store
+  try {
+    if (url.includes('://intel.ingress.com')) {
+      return new URL(url).toString();
+    }
 
-  // For iitc:// scheme, convert to ingress intel map page
-  if (url.startsWith('iitc://')) {
-    return url.replace('iitc://', INGRESS_INTEL_MAP);
+    if (url.startsWith('iitc://')) {
+      return new URL(url.replace('iitc://', INGRESS_INTEL_MAP)).toString();
+    }
+  } catch {
+    return null;
   }
 
   return null;
