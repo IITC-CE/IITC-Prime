@@ -122,6 +122,10 @@ $radius-full: 9999; // For circular elements
 }
 
 // Buttons
+MDButton {
+  text-transform: none;
+}
+
 .btn-primary {
   background-color: $surface-bright;
   border-radius: $radius-small;

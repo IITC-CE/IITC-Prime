@@ -3,7 +3,7 @@
 import { Application, Utils, isAndroid, isIOS } from '@nativescript/core';
 import { INGRESS_INTEL_MAP } from './url-config';
 
-// Back button handler management
+// Back-press handler registered by attachBackHandler; null when no screen is active
 let currentBackHandler = null;
 
 // Android TextClassifier confidence threshold for URL detection in clipboard.
@@ -148,8 +148,11 @@ export const shareContent = (content, contentType, title = '') => {
           null
         );
 
-      const rootController = UIApplication.sharedApplication.keyWindow.rootViewController;
-      rootController.presentViewControllerAnimatedCompletion(controller, true, null);
+      let topController = UIApplication.sharedApplication.keyWindow.rootViewController;
+      while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+      }
+      topController.presentViewControllerAnimatedCompletion(controller, true, null);
 
       return true;
     }
@@ -162,20 +165,46 @@ export const shareContent = (content, contentType, title = '') => {
 };
 
 /**
- * Attach back button handler (Android only)
- * @param {Function} callback - Function to call when back button is pressed
- * @returns {boolean} Success status
+ * Dismiss the topmost visible DialogFragment (e.g. a bottom sheet opened via $showBottomSheet).
+ * Returns true when a dialog was found and dismissed, false otherwise.
+ *
+ * On Android <=15 (API <=35), activityBackPressedEvent fires before the dialog's own
+ * OnBackPressedCallback, so the dialog never gets a chance to close itself. Callers must
+ * invoke this explicitly and cancel the event - relying on super.onBackPressed() is not enough.
+ * @returns {boolean}
+ */
+export const dismissVisibleDialog = () => {
+  if (!isAndroid) return false;
+  const activity = Application.android.foregroundActivity;
+  if (!activity) return false;
+  const fm = activity.getSupportFragmentManager();
+  const frags = fm.getFragments();
+  for (let i = 0; i < frags.size(); i++) {
+    const f = frags.get(i);
+    if (f instanceof androidx.fragment.app.DialogFragment && f.isVisible()) {
+      f.dismiss();
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Register a back-press handler for the current screen (Android only).
+ * Replaces any previously registered handler to prevent accumulation.
+ * If a DialogFragment is visible when back is pressed, it is dismissed and
+ * callback is not called - the dialog takes priority.
+ * @param {Function} callback
+ * @returns {boolean}
  */
 export const attachBackHandler = callback => {
   if (!isAndroid) return false;
 
-  // Remove existing handler first to prevent accumulation
   detachBackHandler();
 
-  // Create and store new handler
   currentBackHandler = args => {
     args.cancel = true;
-    callback();
+    if (!dismissVisibleDialog()) callback();
   };
 
   Application.android.on(Application.android.activityBackPressedEvent, currentBackHandler);
@@ -184,8 +213,8 @@ export const attachBackHandler = callback => {
 };
 
 /**
- * Detach current back button handler
- * @returns {boolean} Success status
+ * Remove the handler registered by attachBackHandler.
+ * @returns {boolean}
  */
 export const detachBackHandler = () => {
   if (!isAndroid || !currentBackHandler) return false;
@@ -228,6 +257,89 @@ export const parseAndroidInsets = inset => {
     // Horizontal insets include display cutout (camera notch in landscape)
     left: toDIP(Math.max(inset.left ?? 0, inset.cutoutLeft ?? 0)),
     right: toDIP(Math.max(inset.right ?? 0, inset.cutoutRight ?? 0)),
+  };
+};
+
+/**
+ * Collect the native view references needed for bottom sheet inset handling on Android 15+.
+ * Returns null on API < 35 or when the expected hierarchy is not present.
+ *
+ * View hierarchy inside BottomSheetDialogFragment:
+ *   StackLayout  ->  design_bottom_sheet (FrameLayout)  ->  CoordinatorLayout
+ *
+ * @param {object} args - NativeScript @loaded event args
+ * @returns {{ coordinator: object, designBottomSheet: object, nativeView: object } | null}
+ */
+export const getBottomSheetInsetRefs = args => {
+  if (!isAndroid || android.os.Build.VERSION.SDK_INT < 35) return null;
+  const nativeView = args.object.android;
+  if (!nativeView) return null;
+  const designBottomSheet = nativeView.getParent();
+  const coordinator = designBottomSheet ? designBottomSheet.getParent() : null;
+  if (!coordinator) return null;
+  return { coordinator, designBottomSheet, nativeView };
+};
+
+/**
+ * Apply safe-zone insets to a bottom sheet panel on Android 15+.
+ *
+ * On Android 15+ edge-to-edge is mandatory and BottomSheetBehavior 1.8.0 no longer
+ * applies system-bar padding to design_bottom_sheet. This function handles it manually:
+ *
+ * - Consumes all insets so inner views receive Insets.NONE and apply no padding themselves.
+ * - Narrows design_bottom_sheet via CoordinatorLayout.LayoutParams margins (pixels) so the
+ *   panel background does not extend behind camera notches or side nav bars.
+ * - Optionally translates the CoordinatorLayout up when the keyboard is visible.
+ *   SOFT_INPUT_ADJUST_RESIZE is broken on Android 15+ edge-to-edge; translating the
+ *   coordinator (not design_bottom_sheet) avoids conflicting with BottomSheetBehavior which
+ *   owns design_bottom_sheet.translationY.
+ *
+ * @param {object} args - NativeScript @androidOverflowInset event args
+ * @param {{ coordinator, designBottomSheet, nativeView } | null} refs - from getBottomSheetInsetRefs
+ * @param {{ translateForIme?: boolean }} [options]
+ * @returns {{ insetTop: number, insetBottom: number } | null} DIP padding values for Vue reactive bindings
+ */
+export const applyBottomSheetInsets = (args, refs, options = {}) => {
+  if (!isAndroid || !refs || android.os.Build.VERSION.SDK_INT < 35) return null;
+
+  // Prevent inner views from auto-applying insets on top of ours.
+  args.inset.topConsumed = true;
+  args.inset.bottomConsumed = true;
+  args.inset.leftConsumed = true;
+  args.inset.rightConsumed = true;
+  args.inset.imeBottomConsumed = true;
+  args.inset.cutoutLeftConsumed = true;
+  args.inset.cutoutTopConsumed = true;
+  args.inset.cutoutRightConsumed = true;
+  args.inset.cutoutBottomConsumed = true;
+
+  if (options.translateForIme) {
+    refs.coordinator.setTranslationY(-(args.inset.imeBottom || 0));
+  }
+
+  // Narrow design_bottom_sheet via layout param margins (pixels) so its background
+  // does not bleed behind camera notches or side nav bars.
+  const padLeftPx = Math.max(args.inset.left ?? 0, args.inset.cutoutLeft ?? 0);
+  const padRightPx = Math.max(args.inset.right ?? 0, args.inset.cutoutRight ?? 0);
+  const lp = refs.designBottomSheet.getLayoutParams();
+  if (lp) {
+    lp.leftMargin = padLeftPx;
+    lp.rightMargin = padRightPx;
+    refs.designBottomSheet.setLayoutParams(lp);
+  }
+
+  // Top padding only needed in landscape when the sheet fills the full coordinator
+  // height and its upper edge overlaps the status bar.
+  const sheetTopPx = refs.coordinator.getHeight() - refs.nativeView.getHeight();
+  const topPad = Math.max(0, (args.inset.top ?? 0) - sheetTopPx);
+
+  // When keyboard is visible the nav bar sits behind it - no bottom padding needed.
+  const padBottom =
+    options.translateForIme && args.inset.imeBottom > 0 ? 0 : (args.inset.bottom ?? 0);
+
+  return {
+    insetTop: Utils.layout.toDeviceIndependentPixels(topPad),
+    insetBottom: Utils.layout.toDeviceIndependentPixels(padBottom),
   };
 };
 

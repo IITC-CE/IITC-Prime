@@ -8,6 +8,7 @@
     :items="combinedItems"
     :itemTemplateSelector="templateSelector"
     :style="{ paddingBottom: bottomPadding }"
+    iosOverflowSafeArea="true"
     @loaded="onLoaded"
   >
     <!-- Template for section headers -->
@@ -21,43 +22,32 @@
         :startingSide="item.startingSide"
         :translationFunction="drawerTranslationFunction"
         :rightSwipeDistance="0"
+        backDropEnabled="false"
       >
         <GridLayout
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="*, 56"
+          columns="auto, *, 56"
           rows="82"
           width="100%"
         >
-          <!-- Tappable info area (icon + text) -->
-          <GridLayout col="0" columns="auto, *" @tap="onPluginTap(item)">
-            <!-- SVG Plugin icon -->
-            <AsyncSVGIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
-
-            <!-- Plugin info -->
-            <StackLayout col="1" class="plugin-info">
-              <FlexboxLayout class="plugin-name-row">
-                <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-                <Label
-                  v-if="item.user && !item.override"
-                  text="user"
-                  class="plugin-tag plugin-tag--user"
-                  once="true"
-                />
-                <Label
-                  v-if="item.override"
-                  text="override"
-                  class="plugin-tag plugin-tag--override"
-                  once="true"
-                />
-              </FlexboxLayout>
-              <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
-            </StackLayout>
+          <!-- SVG Plugin icon with badge -->
+          <GridLayout col="0" class="plugin-icon-wrapper" @tap="onPluginTap(item)">
+            <AsyncSVGIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
+            <Label
+              v-if="item.user || item.override"
+              class="plugin-badge"
+              :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
+            />
           </GridLayout>
-
+          <!-- Plugin info -->
+          <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
+            <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="1" class="switch-area" @tap="onSwitchTap(item)">
+          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -65,18 +55,15 @@
             />
           </GridLayout>
         </GridLayout>
-        <StackLayout
+        <Label
           ~rightDrawer
           :class="
             item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
           "
+          :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+          class="fa"
           @tap="onSwipeAction(item)"
-        >
-          <Label
-            :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
-            class="fa swipe-drawer-icon"
-          />
-        </StackLayout>
+        />
       </SwipeMenu>
     </template>
 
@@ -86,43 +73,32 @@
         :startingSide="item.startingSide"
         :translationFunction="drawerTranslationFunction"
         :rightSwipeDistance="0"
+        backDropEnabled="false"
       >
         <GridLayout
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="*, 56"
+          columns="auto, *, 56"
           rows="82"
           width="100%"
         >
-          <!-- Tappable info area (icon + text) -->
-          <GridLayout col="0" columns="auto, *" @tap="onPluginTap(item)">
-            <!-- Raster Plugin icon -->
-            <AsyncRasterIcon col="0" :src="getPluginIcon(item)" icon-class="plugin-icon" />
-
-            <!-- Plugin info -->
-            <StackLayout col="1" class="plugin-info">
-              <FlexboxLayout class="plugin-name-row">
-                <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-                <Label
-                  v-if="item.user && !item.override"
-                  text="user"
-                  class="plugin-tag plugin-tag--user"
-                  once="true"
-                />
-                <Label
-                  v-if="item.override"
-                  text="override"
-                  class="plugin-tag plugin-tag--override"
-                  once="true"
-                />
-              </FlexboxLayout>
-              <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
-            </StackLayout>
+          <!-- Raster Plugin icon with badge -->
+          <GridLayout col="0" class="plugin-icon-wrapper" @tap="onPluginTap(item)">
+            <AsyncRasterIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
+            <Label
+              v-if="item.user || item.override"
+              class="plugin-badge"
+              :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
+            />
           </GridLayout>
-
+          <!-- Plugin info -->
+          <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
+            <Label :text="getPluginName(item)" class="plugin-name" once="true" />
+            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+          </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="1" class="switch-area" @tap="onSwitchTap(item)">
+          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -130,25 +106,22 @@
             />
           </GridLayout>
         </GridLayout>
-        <StackLayout
+        <Label
           ~rightDrawer
           :class="
             item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
           "
+          :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+          class="fa"
           @tap="onSwipeAction(item)"
-        >
-          <Label
-            :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
-            class="fa swipe-drawer-icon"
-          />
-        </StackLayout>
+        />
       </SwipeMenu>
     </template>
   </CollectionView>
 </template>
 
 <script>
-import { isIOS } from '@nativescript/core';
+import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import { enableListEdgeToEdge } from '@/utils/platform';
@@ -204,6 +177,7 @@ export default {
             ...enabledPlugins.map((plugin, index) => ({
               ...plugin,
               type: 'plugin',
+              sectionId: 'enabled',
               isFirst: index === 0,
               isLast: index === enabledPlugins.length - 1,
             }))
@@ -217,8 +191,8 @@ export default {
         });
       }
 
-      // Add all plugins (sorted)
-      const sortedPlugins = this.plugins.sort((a, b) =>
+      // Add all plugins (sorted), including already-enabled ones
+      const sortedPlugins = [...this.plugins].sort((a, b) =>
         this.getPluginName(a).localeCompare(this.getPluginName(b))
       );
 
@@ -226,6 +200,7 @@ export default {
         ...sortedPlugins.map((plugin, index) => ({
           ...plugin,
           type: 'plugin',
+          sectionId: 'all',
           isFirst: index === 0,
           isLast: index === sortedPlugins.length - 1,
         }))
@@ -251,7 +226,7 @@ export default {
     },
 
     isPluginIconSVG(plugin) {
-      const icon = plugin.icon || plugin.icon64;
+      const icon = plugin.icon64 || plugin.icon;
       if (!icon) return false;
 
       // Check if it's a data URL with SVG content
@@ -281,7 +256,7 @@ export default {
     },
 
     getPluginIcon(plugin) {
-      return plugin.icon || plugin.icon64 || this.placeholderImageSource;
+      return plugin.icon64 || plugin.icon || '~/assets/icons/userscript-no-icon.png';
     },
 
     drawerTranslationFunction(side, width, value, delta, progress) {
@@ -305,12 +280,52 @@ export default {
       enableListEdgeToEdge(args.object);
 
       if (isIOS) {
+        // CollectionView maps paddingBottom -> contentInset.bottom; disable UIKit auto-adding
+        // safe-area inset on top of our manual paddingBottom to avoid double-counting
+        args.object.ios.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
         args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
       }
     },
 
-    onSwitchTap(item) {
+    async onSwitchTap(item) {
+      if (!this.showEnabledFirst) {
+        this.$emit('toggle', item);
+        return;
+      }
+
+      const scrollBefore = this.collectionViewRef?.scrollOffset ?? 0;
+      const enabledBefore = this.combinedItems.filter(i => i.sectionId === 'enabled').length;
+
       this.$emit('toggle', item);
+
+      await this.$nextTick();
+
+      const enabledAfter = this.combinedItems.filter(i => i.sectionId === 'enabled').length;
+      const itemsDelta = enabledAfter - enabledBefore;
+      if (itemsDelta === 0 || !this.collectionViewRef) return;
+
+      // item height matches .plugin-item { height: 82 }
+      // header height matches .section-header { padding: 12 + 8; font-size: 14 } = 38dp
+      const ITEM_H = 82;
+      const HEADER_H = 38;
+
+      let heightDelta = itemsDelta * ITEM_H;
+      if (enabledBefore === 0 && itemsDelta > 0) heightDelta += HEADER_H;
+      if (enabledAfter === 0 && itemsDelta < 0) heightDelta -= HEADER_H;
+
+      // only compensate when the Enabled section items are fully above the viewport
+      const enabledSectionEndY = enabledBefore > 0 ? HEADER_H + enabledBefore * ITEM_H : 0;
+      if (scrollBefore <= enabledSectionEndY) return;
+
+      if (isIOS) {
+        this.collectionViewRef.ios.contentOffset = {
+          x: 0,
+          y: Math.max(0, scrollBefore + heightDelta),
+        };
+      } else {
+        // scrollToOffset calls RecyclerView.scrollBy() which takes pixels, not dp
+        this.collectionViewRef.scrollToOffset(Utils.layout.toDevicePixels(heightDelta));
+      }
     },
 
     onPluginTap(item) {
@@ -333,32 +348,26 @@ export default {
   vertical-alignment: center;
 }
 
-.plugin-icon {
-  width: 32;
-  height: 32;
-  margin-right: 12;
-}
-
-.plugin-info {
+.plugin-icon-wrapper {
+  width: 34;
+  height: 34;
+  margin-right: 10;
   vertical-alignment: center;
 }
 
-.plugin-name-row {
-  align-items: center;
+.plugin-icon {
+  width: 32;
+  height: 32;
+  horizontal-alignment: left;
+  vertical-alignment: top;
 }
 
-.plugin-name {
-  color: $on-surface;
-  font-size: $font-size;
-  font-weight: 500;
-}
-
-.plugin-tag {
-  font-size: 10;
-  padding: 1 6;
-  margin-left: 6;
-  border-radius: 3;
-  color: #ffffff;
+.plugin-badge {
+  width: 10;
+  height: 10;
+  border-radius: 5;
+  horizontal-alignment: right;
+  vertical-alignment: bottom;
 
   &--user {
     background-color: #6b7c3a;
@@ -367,6 +376,17 @@ export default {
   &--override {
     background-color: $state-warning;
   }
+}
+
+.plugin-info {
+  vertical-alignment: center;
+  margin-right: $spacing-xxs;
+}
+
+.plugin-name {
+  color: $on-surface;
+  font-size: $font-size;
+  font-weight: 500;
 }
 
 .plugin-description {
@@ -390,6 +410,10 @@ export default {
 .swipe-drawer {
   width: 82;
   height: 82;
+  color: #ffffff;
+  font-size: 22;
+  text-alignment: center;
+  vertical-alignment: center;
 
   &--delete {
     background-color: $state-error;
@@ -398,13 +422,5 @@ export default {
   &--disable {
     background-color: #666666;
   }
-}
-
-.swipe-drawer-icon {
-  color: #ffffff;
-  font-size: 22;
-  text-alignment: center;
-  vertical-alignment: center;
-  height: 100%;
 }
 </style>

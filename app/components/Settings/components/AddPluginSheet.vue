@@ -1,8 +1,15 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="sheet-root" androidOverflowEdge="always">
-    <FlexboxLayout class="sheet-content" androidOverflowEdge="always">
+  <StackLayout
+    class="sheet-root"
+    androidOverflowEdge="dont-apply"
+    @loaded="onSheetLoaded"
+    @androidOverflowInset="onAndroidInset"
+    :paddingTop="insetTop"
+    :paddingBottom="insetBottom"
+  >
+    <FlexboxLayout class="sheet-content">
       <Label text="Add Plugin" class="sheet-title" />
 
       <!-- URL input -->
@@ -23,7 +30,8 @@
       <MDButton
         class="btn-primary btn-load"
         text="Load from URL"
-        :isEnabled="!!pluginUrl.trim() && !isLoading"
+        :isEnabled="!!pluginUrl.trim()"
+        @loaded="onLoadButtonLoaded"
         @tap="loadPlugin"
       />
 
@@ -36,9 +44,6 @@
       <!-- Choose file -->
       <MDButton class="btn-primary btn-file" text="Choose from files" @tap="chooseFile" />
 
-      <!-- Loading indicator -->
-      <ActivityIndicator v-if="isLoading" busy="true" class="loading-indicator" />
-
       <!-- Error message -->
       <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
     </FlexboxLayout>
@@ -46,11 +51,10 @@
 </template>
 
 <script>
-import { isAndroid } from '@nativescript/core';
-import { downloadPlugin, confirmAndInstallPlugin } from '@/utils/plugin-installer';
-import { fixTextInputColors } from '@/utils/platform';
+import { isAndroid, isIOS } from '@nativescript/core';
+import { fixTextInputColors, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
-import { selectFiles, readFileContent } from '@/utils/file-manager';
+import { selectFiles } from '@/utils/file-manager';
 
 export default {
   name: 'AddPluginSheet',
@@ -59,13 +63,26 @@ export default {
     return {
       isAndroid,
       pluginUrl: '',
-      isLoading: false,
       errorMessage: '',
+      insetTop: 0,
+      insetBottom: 0,
     };
   },
 
   methods: {
     fixTextInputColors,
+
+    onSheetLoaded(args) {
+      this._insetRefs = getBottomSheetInsetRefs(args);
+    },
+
+    onAndroidInset(args) {
+      const result = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
+      if (result) {
+        this.insetTop = result.insetTop;
+        this.insetBottom = result.insetBottom;
+      }
+    },
 
     async checkClipboard() {
       const url = await getClipboardURLIfMatches(/\.user\.js/i);
@@ -74,28 +91,19 @@ export default {
       }
     },
 
-    async loadPlugin() {
-      const url = this.pluginUrl.trim();
-      if (!url || this.isLoading) return;
-
-      this.errorMessage = '';
-      this.isLoading = true;
-
-      try {
-        const { code, filename } = await downloadPlugin(url);
-        const installed = await confirmAndInstallPlugin(code, filename);
-        if (installed) this.$closeBottomSheet();
-      } catch (error) {
-        console.error('Failed to add plugin:', error);
-        this.errorMessage = error.message || 'Unknown error occurred';
-      } finally {
-        this.isLoading = false;
+    onLoadButtonLoaded(args) {
+      if (isIOS) {
+        args.object.ios.setTitleColorForState(UIColor.whiteColor, UIControlState.Disabled);
       }
     },
 
-    async chooseFile() {
-      if (this.isLoading) return;
+    loadPlugin() {
+      const url = this.pluginUrl.trim();
+      if (!url) return;
+      this.$closeBottomSheet({ type: 'url', url });
+    },
 
+    async chooseFile() {
       this.errorMessage = '';
 
       try {
@@ -106,27 +114,20 @@ export default {
 
         if (!files.length) return;
 
-        this.isLoading = true;
-
-        const { content: code, name: fileName } = await readFileContent(files[0].path);
-        if (!code) {
-          this.errorMessage = 'Failed to read file. The file may be empty or inaccessible.';
-          return;
-        }
-
-        const installed = await confirmAndInstallPlugin(code, fileName);
-        if (installed) this.$closeBottomSheet();
+        this.$closeBottomSheet({ type: 'file', path: files[0].path });
       } catch (error) {
-        console.error('Failed to add plugin from file:', error);
+        console.error('Failed to choose file:', error);
         this.errorMessage = error.message || 'Unknown error occurred';
-      } finally {
-        this.isLoading = false;
       }
     },
   },
 
   mounted() {
     this.checkClipboard();
+  },
+
+  beforeUnmount() {
+    this._insetRefs = null;
   },
 };
 </script>
@@ -188,13 +189,6 @@ export default {
 
 .btn-file {
   margin-top: $spacing-s;
-}
-
-.loading-indicator {
-  color: $primary;
-  width: 40;
-  height: 40;
-  margin: $spacing-m 0;
 }
 
 .error-message {

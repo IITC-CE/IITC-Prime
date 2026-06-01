@@ -15,6 +15,7 @@
           :hint="searchHint"
           :text="searchText"
           @textChange="$emit('update:searchText', $event.value)"
+          @loaded="fixTextInputColors"
           @focus="onSearchFocus"
           @blur="onSearchBlur"
           @tap="onSearchFocus"
@@ -54,6 +55,7 @@
 
 <script>
 import { Frame, Screen, Utils } from '@nativescript/core';
+import { fixTextInputColors } from '@/utils/platform';
 
 const ANIMATION_DURATION = 300;
 
@@ -100,6 +102,8 @@ export default {
   },
 
   methods: {
+    fixTextInputColors,
+
     goBack() {
       Utils.dismissSoftInput();
       Frame.topmost().goBack();
