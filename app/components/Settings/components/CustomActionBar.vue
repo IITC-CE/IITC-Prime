@@ -54,8 +54,8 @@
 </template>
 
 <script>
-import { Frame, Screen, Utils } from '@nativescript/core';
-import { fixTextInputColors } from '@/utils/platform';
+import { Screen } from '@nativescript/core';
+import { fixTextInputColors, goBack } from '@/utils/platform';
 
 const ANIMATION_DURATION = 300;
 
@@ -103,11 +103,7 @@ export default {
 
   methods: {
     fixTextInputColors,
-
-    goBack() {
-      Utils.dismissSoftInput();
-      Frame.topmost().goBack();
-    },
+    goBack,
 
     onSearchFocus() {
       this.searchFocused = true;

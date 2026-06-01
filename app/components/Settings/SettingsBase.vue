@@ -37,11 +37,12 @@
 </template>
 
 <script>
-import { Frame, isIOS, isAndroid } from '@nativescript/core';
+import { isIOS, isAndroid } from '@nativescript/core';
 import { markRaw } from 'vue';
 import {
   attachBackHandler,
   detachBackHandler,
+  goBack,
   parseAndroidInsets,
   getStatusBarHeight,
   getNavigationBarHeight,
@@ -134,7 +135,7 @@ export default {
     },
 
     onNavigatedTo(event) {
-      attachBackHandler(() => Frame.topmost().goBack());
+      attachBackHandler(goBack);
       this.$emit('navigatedTo', event);
     },
 

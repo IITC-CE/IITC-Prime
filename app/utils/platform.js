@@ -1,6 +1,6 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { Application, Utils, isAndroid, isIOS } from '@nativescript/core';
+import { Application, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
 import { INGRESS_INTEL_MAP } from './url-config';
 
 // Back-press handler registered by attachBackHandler; null when no screen is active
@@ -210,6 +210,17 @@ export const attachBackHandler = callback => {
   Application.android.on(Application.android.activityBackPressedEvent, currentBackHandler);
 
   return true;
+};
+
+/**
+ * Navigate back in the topmost frame, guarding against double-triggers
+ */
+export const goBack = () => {
+  Utils.dismissSoftInput();
+  const frame = Frame.topmost();
+  if (frame?.canGoBack() && frame.navigationQueueIsEmpty()) {
+    frame.goBack();
+  }
 };
 
 /**
