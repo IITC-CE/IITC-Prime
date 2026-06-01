@@ -46,7 +46,13 @@ registerElement('CheckBox', () => CheckBox, {
 });
 
 if (isAndroid) {
-  setAndroidDefaultUA(android.webkit.WebSettings.getDefaultUserAgent(Application.android.context));
+  try {
+    setAndroidDefaultUA(
+      android.webkit.WebSettings.getDefaultUserAgent(Application.android.context)
+    );
+  } catch (e) {
+    console.error('Failed to read default WebView UA:', e);
+  }
 
   Application.android.on('activityCreated', args => {
     const activity = args.activity;

@@ -112,6 +112,7 @@ import AboutView from './AboutView';
 import LicensesView from './LicensesView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
 import { confirm, alert } from '~/utils/dialogs';
+import { goBack } from '~/utils/platform';
 
 export default {
   name: 'SettingsView',
@@ -220,7 +221,7 @@ export default {
 
       if (success) {
         await this.$store.dispatch('ui/reloadWebView');
-        this.$navigateBack();
+        goBack();
       } else {
         await alert({
           title: 'Error',
