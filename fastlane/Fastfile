@@ -77,12 +77,13 @@ platform :ios do
     next unless app_id
 
     UI.message("Fetching recent builds...")
-    builds = Spaceship::ConnectAPI.get_builds(
+    response = Spaceship::ConnectAPI.get_builds(
       filter: { app: app_id },
       includes: "betaAppReviewSubmission",
       sort: "-uploadedDate",
-      limit: 10
+      limit: 50
     )
+    builds = response.to_models
     UI.message("Found #{builds.size} builds")
 
     builds.each do |build|
