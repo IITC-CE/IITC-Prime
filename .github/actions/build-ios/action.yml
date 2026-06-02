@@ -103,3 +103,10 @@ runs:
         SENTRY_AUTH_TOKEN: ${{ inputs.sentry-auth-token }}
         SENTRY_DSN_IOS: ${{ inputs.sentry-dsn-ios }}
       run: npm run ${{ inputs.prepare-script }}
+
+    - name: Find Xcode workspace
+      shell: bash
+      run: |
+        WORKSPACE=$(find platforms/ios -name "*.xcworkspace" -maxdepth 2 | head -1)
+        echo "Found workspace: $WORKSPACE"
+        echo "IOS_WORKSPACE=$WORKSPACE" >> $GITHUB_ENV

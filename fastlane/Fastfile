@@ -57,8 +57,8 @@ platform :ios do
   end
 
   private_lane :build_ios_ipa do
-    workspace = Dir.glob("platforms/ios/*.xcworkspace").first
-    UI.user_error!("Xcode workspace not found in platforms/ios/") unless workspace
+    workspace = ENV['IOS_WORKSPACE']
+    UI.user_error!("IOS_WORKSPACE env var not set - did the prepare step run?") unless workspace
 
     build_app(
       workspace: workspace,
