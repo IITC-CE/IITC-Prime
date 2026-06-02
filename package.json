@@ -13,6 +13,8 @@
     "run:ios": "ns run ios",
     "build:ios:release": "BUILD_TYPE=release ns build ios --release --env.uglify --env.sentry",
     "build:ios:beta": "BUILD_TYPE=beta APP_ID_SUFFIX= ns build ios --env.sentry",
+    "prepare:ios:appstore-beta": "BUILD_TYPE=beta APP_ID_SUFFIX= ns prepare ios --release --env.sentry",
+    "prepare:ios:appstore-release": "BUILD_TYPE=release APP_ID_SUFFIX= ns prepare ios --release --env.uglify --env.sentry",
     "clean": "ns clean",
     "lint": "ns build android --no-copy && echo 'Syntax check passed'",
     "format": "prettier --write .",

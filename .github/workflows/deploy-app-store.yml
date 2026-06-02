@@ -1,0 +1,51 @@
+name: Deploy to App Store / TestFlight
+
+on:
+  push:
+    branches: [master]
+    tags: ['*']
+
+jobs:
+  deploy:
+    runs-on: macos-15
+    if: vars.APP_STORE_ENABLED != ''
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set prepare script and lane
+        run: |
+          if [[ $GITHUB_REF == refs/heads/master ]]; then
+            echo "PREPARE_SCRIPT=prepare:ios:appstore-beta" >> $GITHUB_ENV
+            echo "FASTLANE_LANE=deploy_testflight" >> $GITHUB_ENV
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "PREPARE_SCRIPT=prepare:ios:appstore-release" >> $GITHUB_ENV
+            echo "FASTLANE_LANE=deploy_appstore" >> $GITHUB_ENV
+          fi
+
+      - name: Prepare iOS Xcode project
+        uses: ./.github/actions/build-ios
+        with:
+          prepare-script: ${{ env.PREPARE_SCRIPT }}
+          apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
+          certificate-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+          sentry-org-slug: ${{ secrets.SENTRY_ORG_SLUG }}
+          sentry-project-slug: ${{ secrets.SENTRY_PROJECT_SLUG }}
+          sentry-auth-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-dsn-ios: ${{ secrets.SENTRY_DSN_IOS }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Deploy
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT_BASE64: ${{ secrets.ASC_KEY_CONTENT_BASE64 }}
+        run: bundle exec fastlane ios ${{ env.FASTLANE_LANE }}
