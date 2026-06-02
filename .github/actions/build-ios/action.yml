@@ -44,7 +44,7 @@ runs:
       shell: bash
       run: sudo xcode-select -s /Applications/Xcode_26.0.app/Contents/Developer
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: '20'
 
