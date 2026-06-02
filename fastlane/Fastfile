@@ -29,10 +29,6 @@ platform :ios do
     groups = ENV['TESTFLIGHT_GROUPS']&.split(',')&.map(&:strip)&.reject(&:empty?)
     has_groups = groups && !groups.empty?
 
-    if has_groups
-      cancel_pending_beta_review(api_key: api_key)
-    end
-
     begin
       upload_to_testflight(
         api_key: api_key,
@@ -68,36 +64,6 @@ platform :ios do
       automatic_release: false,
       force: true,
     )
-  end
-
-  private_lane :cancel_pending_beta_review do |options|
-    api_key = options[:api_key]
-    app_id = ENV['ASC_APP_ID']
-    UI.message("cancel_pending_beta_review: app_id=#{app_id.inspect}")
-    next unless app_id
-
-    UI.message("Fetching recent builds...")
-    response = Spaceship::ConnectAPI.get_builds(
-      filter: { app: app_id },
-      includes: "betaAppReviewSubmission",
-      sort: "-uploadedDate",
-      limit: 50
-    )
-    builds = response.to_models
-    UI.message("Found #{builds.size} builds")
-
-    builds.each do |build|
-      submission = build.beta_app_review_submission
-      UI.message("Build #{build.version}: submission state=#{submission&.beta_review_state.inspect}")
-      next unless ["WAITING_FOR_REVIEW", "IN_REVIEW"].include?(submission&.beta_review_state)
-
-      UI.message("Cancelling beta review for build #{build.version}...")
-      submission.delete!
-      UI.message("Cancelled successfully")
-    end
-  rescue => e
-    UI.important("Could not cancel beta review: #{e.message}")
-    UI.important(e.backtrace.first(3).join("\n"))
   end
 
   private_lane :build_ios_ipa do
