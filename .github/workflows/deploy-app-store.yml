@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: macos-15
+    runs-on: macos-latest
     if: vars.APP_STORE_ENABLED != ''
 
     steps:
