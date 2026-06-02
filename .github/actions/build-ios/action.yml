@@ -87,6 +87,10 @@ runs:
         echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
         echo "APPLE_TEAM_ID=${{ inputs.apple-team-id }}" >> $GITHUB_ENV
 
+    - name: Install CocoaPods plugins
+      shell: bash
+      run: gem install cocoapods-acknowledgements
+
     - name: Sync iOS version from git timestamp
       shell: bash
       run: npm run version:sync-ios
