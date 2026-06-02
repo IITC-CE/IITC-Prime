@@ -26,11 +26,15 @@ platform :ios do
 
     ipa_path = build_ios_ipa
 
+    groups = ENV['TESTFLIGHT_GROUPS']&.split(',')&.map(&:strip)&.reject(&:empty?)
+
     upload_to_testflight(
       api_key: api_key,
       ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
       changelog: changelog.to_s[0, 4000],
+      distribute_external: groups && !groups.empty?,
+      notify_external_testers: groups && !groups.empty?,
+      groups: groups,
     )
   end
 
