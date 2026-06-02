@@ -88,10 +88,10 @@ platform :ios do
 
     builds.each do |build|
       submission = build.beta_app_review_submission
-      UI.message("Build #{build.version} (#{build.build_version}): submission=#{submission.inspect}")
+      UI.message("Build #{build.version} (#{build.version}): submission=#{submission.inspect}")
       next unless submission&.beta_review_state == "IN_BETA_REVIEW"
 
-      UI.message("Cancelling beta review for build #{build.version} (#{build.build_version})...")
+      UI.message("Cancelling beta review for build #{build.version} (#{build.version})...")
       submission.delete!
       UI.message("Cancelled successfully")
     end
