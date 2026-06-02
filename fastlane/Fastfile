@@ -75,14 +75,18 @@ platform :ios do
     app_id = ENV['ASC_APP_ID']
     next unless app_id
 
-    submissions = Spaceship::ConnectAPI.get_beta_app_review_submissions(
-      filter: { app: app_id }
+    builds = Spaceship::ConnectAPI.get_builds(
+      filter: { app: app_id },
+      includes: "betaAppReviewSubmission",
+      sort: "-uploadedDate",
+      limit: 10
     )
-    submissions.each do |s|
-      UI.message("Cancelling beta review submission #{s.id}...")
-      Spaceship::ConnectAPI.delete_beta_app_review_submission(
-        beta_app_review_submission_id: s.id
-      )
+    builds.each do |build|
+      submission = build.beta_app_review_submission
+      next unless submission&.beta_review_state == "IN_BETA_REVIEW"
+
+      UI.message("Cancelling beta review for build #{build.version} (#{build.build_version})...")
+      submission.delete!
     end
   rescue => e
     UI.important("Could not cancel beta review: #{e.message}")
