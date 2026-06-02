@@ -63,6 +63,7 @@ platform :ios do
     build_app(
       workspace: workspace,
       export_method: "app-store",
+      xcargs: "DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER=#{ENV['PP_UUID']} CODE_SIGN_IDENTITY='Apple Distribution'",
       export_options: {
         signingStyle: "manual",
         teamID: ENV['APPLE_TEAM_ID'],

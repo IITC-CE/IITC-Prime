@@ -72,9 +72,9 @@ runs:
         echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/certificate.p12
         security import /tmp/certificate.p12 -k "$KEYCHAIN_PATH" \
           -P "$CERTIFICATE_PASSWORD" \
-          -T /usr/bin/codesign -T /usr/bin/xcodebuild
+          -T /usr/bin/codesign -T /usr/bin/xcodebuild > /dev/null
         security set-key-partition-list \
-          -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" > /dev/null
 
         PP_PATH="$RUNNER_TEMP/profile.mobileprovision"
         echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PP_PATH"
@@ -104,9 +104,6 @@ runs:
         SENTRY_DSN_IOS: ${{ inputs.sentry-dsn-ios }}
       run: npm run ${{ inputs.prepare-script }}
 
-    - name: Find Xcode workspace
+    - name: Set Xcode workspace path
       shell: bash
-      run: |
-        WORKSPACE=$(find platforms/ios -name "*.xcworkspace" -maxdepth 2 | head -1)
-        echo "Found workspace: $WORKSPACE"
-        echo "IOS_WORKSPACE=$WORKSPACE" >> $GITHUB_ENV
+      run: echo "IOS_WORKSPACE=platforms/ios/IITCPrime.xcworkspace" >> $GITHUB_ENV
