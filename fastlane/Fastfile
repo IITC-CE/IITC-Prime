@@ -27,15 +27,25 @@ platform :ios do
     ipa_path = build_ios_ipa
 
     groups = ENV['TESTFLIGHT_GROUPS']&.split(',')&.map(&:strip)&.reject(&:empty?)
+    has_groups = groups && !groups.empty?
 
-    upload_to_testflight(
-      api_key: api_key,
-      ipa: ipa_path,
-      changelog: changelog.to_s[0, 4000],
-      distribute_external: groups && !groups.empty?,
-      notify_external_testers: groups && !groups.empty?,
-      groups: groups,
-    )
+    if has_groups
+      cancel_pending_beta_review(api_key: api_key)
+    end
+
+    begin
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: ipa_path,
+        changelog: changelog.to_s[0, 4000],
+        distribute_external: has_groups,
+        notify_external_testers: has_groups,
+        groups: groups,
+      )
+    rescue => e
+      raise e unless e.message.include?("Another build is in review")
+      UI.important("Another build is in beta review - uploaded but skipped external distribution")
+    end
   end
 
   desc "Upload release build to App Store (tags)"
@@ -58,6 +68,22 @@ platform :ios do
       automatic_release: false,
       force: true,
     )
+  end
+
+  private_lane :cancel_pending_beta_review do |options|
+    api_key = options[:api_key]
+    app_id = ENV['ASC_APP_ID']
+    next unless app_id
+
+    submissions = Spaceship::ConnectAPI::BetaAppReviewSubmission.all(
+      filter: { app: app_id }
+    )
+    submissions.each do |s|
+      UI.message("Cancelling beta review submission #{s.id}...")
+      s.delete!
+    end
+  rescue => e
+    UI.important("Could not cancel beta review: #{e.message}")
   end
 
   private_lane :build_ios_ipa do
