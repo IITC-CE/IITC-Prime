@@ -73,23 +73,30 @@ platform :ios do
   private_lane :cancel_pending_beta_review do |options|
     api_key = options[:api_key]
     app_id = ENV['ASC_APP_ID']
+    UI.message("cancel_pending_beta_review: app_id=#{app_id.inspect}")
     next unless app_id
 
+    UI.message("Fetching recent builds...")
     builds = Spaceship::ConnectAPI.get_builds(
       filter: { app: app_id },
       includes: "betaAppReviewSubmission",
       sort: "-uploadedDate",
       limit: 10
     )
+    UI.message("Found #{builds.size} builds")
+
     builds.each do |build|
       submission = build.beta_app_review_submission
+      UI.message("Build #{build.version} (#{build.build_version}): submission=#{submission.inspect}")
       next unless submission&.beta_review_state == "IN_BETA_REVIEW"
 
       UI.message("Cancelling beta review for build #{build.version} (#{build.build_version})...")
       submission.delete!
+      UI.message("Cancelled successfully")
     end
   rescue => e
     UI.important("Could not cancel beta review: #{e.message}")
+    UI.important(e.backtrace.first(3).join("\n"))
   end
 
   private_lane :build_ios_ipa do
