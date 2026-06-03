@@ -1,5 +1,5 @@
 diff --git a/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js b/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
-index e1e906c..6e99001 100644
+index e1e906c..67d97d9 100644
 --- a/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
 +++ b/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
 @@ -99,7 +99,7 @@ function layoutView(controller, owner) {
@@ -19,22 +19,30 @@ index e1e906c..6e99001 100644
          }
          if (orientation === 4 /* UIDeviceOrientation.LandscapeRight */ || orientation === 3 /* UIDeviceOrientation.LandscapeLeft */) {
              const key = 'left';
-@@ -372,7 +373,18 @@ export class ViewWithBottomSheet extends ViewWithBottomSheetBase {
+@@ -260,6 +261,15 @@ var MDLayoutViewController = /** @class */ (function (_super) {
+         if (owner) {
+             layoutView(this, owner);
+         }
++        // safeAreaInsetsDidChange inflates contentInset.bottom on this layout pass, floating
++        // the sheet above the home indicator; reset it so the sheet stays at preferredSheetHeight
++        var trackingScrollView = this._trackingScrollView;
++        if (trackingScrollView) {
++            var inset = trackingScrollView.contentInset;
++            if (inset.bottom > 0) {
++                trackingScrollView.contentInset = UIEdgeInsetsMake(inset.top, inset.left, 0, inset.right);
++            }
++        }
+     };
+     MDLayoutViewController.prototype.viewWillAppear = function (animated) {
+         var _a;
+@@ -372,7 +382,10 @@ export class ViewWithBottomSheet extends ViewWithBottomSheetBase {
          if (options.trackingScrollView) {
              const scrollView = this.getViewById(options.trackingScrollView);
              if (scrollView && scrollView.nativeViewProtected instanceof UIScrollView) {
 +                scrollView.nativeViewProtected.alwaysBounceVertical = true; // required for MDC scroll/dismiss gesture coordination
                  presentationController.trackingScrollView = scrollView.nativeViewProtected;
-+                // safeAreaInsetsDidChange sets contentInset.bottom = safeAreaInsets.bottom after presentation,
-+                // which makes scrollViewContentHeight > preferredSheetHeight and enables the Extended snap state.
-+                // reset it on the next tick (after UIKit layout pass) to keep the sheet at preferredSheetHeight.
-+                const nativeSV = scrollView.nativeViewProtected;
-+                setTimeout(() => {
-+                    const inset = nativeSV.contentInset;
-+                    if (inset.bottom > 0) {
-+                        nativeSV.contentInset = UIEdgeInsetsMake(inset.top, inset.left, 0, inset.right);
-+                    }
-+                }, 0);
++                // reset by MDLayoutViewController.viewDidLayoutSubviews after presentation
++                controller._trackingScrollView = scrollView.nativeViewProtected;
              }
          }
          controller.nsAnimated = true;
