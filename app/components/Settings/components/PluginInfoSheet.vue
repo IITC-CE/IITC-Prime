@@ -12,15 +12,15 @@
     <ScrollView id="mainScrollView">
       <FlexboxLayout class="sheet-content">
         <!-- Header: icon + name / category -->
-        <FlexboxLayout class="plugin-header">
-          <AsyncSVGIcon v-if="isIconSVG" :src="pluginIcon" icon-class="plugin-icon" />
-          <AsyncRasterIcon v-else :src="pluginIcon" icon-class="plugin-icon" />
+        <GridLayout class="plugin-header" columns="64, *" rows="auto">
+          <AsyncSVGIcon v-if="isIconSVG" col="0" :src="pluginIcon" icon-class="plugin-icon" />
+          <AsyncRasterIcon v-else col="0" :src="pluginIcon" icon-class="plugin-icon" />
 
-          <StackLayout class="header-info">
+          <StackLayout col="1" class="header-info">
             <Label :text="displayName" class="plugin-name" textWrap="true" />
             <Label v-if="!isLoading" :text="plugin.category || 'Misc'" class="plugin-category" />
           </StackLayout>
-        </FlexboxLayout>
+        </GridLayout>
 
         <!-- Loading indicator -->
         <ActivityIndicator v-if="isLoading" busy="true" class="sheet-loading" />
@@ -243,16 +243,14 @@ export default {
 }
 
 .plugin-header {
-  flex-direction: row;
-  align-items: center;
   margin-bottom: $spacing-m;
 }
 
 .plugin-icon {
   width: 48;
   height: 48;
-  margin-right: $spacing-m;
-  flex-shrink: 0;
+  horizontal-alignment: left;
+  vertical-alignment: center;
 }
 
 .header-info {
