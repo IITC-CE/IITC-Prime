@@ -59,9 +59,11 @@
         <Label
           ~rightDrawer
           :class="
-            item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
+            item.user || item.override
+              ? 'swipe-drawer swipe-drawer--delete'
+              : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+          :text="$filters.fonticon(item.user || item.override ? 'fa-trash-alt' : 'fa-ban')"
           class="fa"
           @tap="onSwipeAction(item)"
         />
@@ -111,9 +113,11 @@
         <Label
           ~rightDrawer
           :class="
-            item.user ? 'swipe-drawer swipe-drawer--delete' : 'swipe-drawer swipe-drawer--disable'
+            item.user || item.override
+              ? 'swipe-drawer swipe-drawer--delete'
+              : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user ? 'fa-trash-alt' : 'fa-ban')"
+          :text="$filters.fonticon(item.user || item.override ? 'fa-trash-alt' : 'fa-ban')"
           class="fa"
           @tap="onSwipeAction(item)"
         />
@@ -231,6 +235,12 @@ export default {
     },
   },
 
+  watch: {
+    combinedItems() {
+      this.collectionViewRef?.closeCurrentMenu();
+    },
+  },
+
   methods: {
     // Template selector function - determines which template to use
     templateSelector(item, index, items) {
@@ -289,7 +299,7 @@ export default {
     },
 
     onSwipeAction(item) {
-      if (item.user) {
+      if (item.user || item.override) {
         this.$emit('delete', item);
       } else {
         this.collectionViewRef?.closeCurrentMenu();

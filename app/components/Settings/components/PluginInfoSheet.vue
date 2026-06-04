@@ -112,7 +112,12 @@
           class="btn-primary btn-action"
           @tap="onShareUpdate"
         />
-        <MDButton v-if="plugin.user" text="Delete plugin" class="btn-delete" @tap="onDelete" />
+        <MDButton
+          v-if="plugin.user || plugin.override"
+          :text="plugin.override ? 'Remove override' : 'Delete plugin'"
+          class="btn-delete"
+          @tap="onDelete"
+        />
       </FlexboxLayout>
     </ScrollView>
   </StackLayout>
