@@ -24,6 +24,7 @@ export const manager = {
     isRunning: false,
     inProgress: false,
     plugins: {},
+    core: null,
     lastPluginUpdate: null,
     currentChannel: 'release',
     customChannelUrl: '',
@@ -42,6 +43,9 @@ export const manager = {
     SET_PLUGINS(state, plugins) {
       state.plugins = plugins;
       state.lastPluginUpdate = Date.now();
+    },
+    SET_CORE(state, core) {
+      state.core = core;
     },
     UPDATE_PLUGIN_STATUS(state, { uid, status }) {
       if (state.plugins[uid]) {
@@ -76,8 +80,9 @@ export const manager = {
         onPluginEvent: event => {
           dispatch('handlePluginEvent', event);
         },
-        onPluginsViewChanged: plugins => {
+        onPluginsViewChanged: (plugins, core) => {
           commit('SET_PLUGINS', plugins);
+          commit('SET_CORE', core);
         },
       });
 
@@ -181,8 +186,9 @@ export const manager = {
      * Load plugins into state
      */
     async loadPlugins({ commit }) {
-      const plugins = await managerService.getPlugins();
+      const { plugins, core } = await managerService.getPlugins();
       commit('SET_PLUGINS', plugins);
+      commit('SET_CORE', core);
       return plugins;
     },
 
@@ -277,6 +283,11 @@ export const manager = {
      * Get all plugins from Vuex state
      */
     plugins: state => state.plugins,
+
+    /**
+     * Get IITC core script
+     */
+    core: state => state.core,
 
     /**
      * Timestamp of last plugins update

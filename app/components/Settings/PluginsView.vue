@@ -28,8 +28,9 @@
         <!-- Plugins container -->
         <GridLayout row="2" class="plugins-container" v-if="isPluginsVisible">
           <PluginsList
-            v-if="filteredPlugins.length > 0"
+            v-if="filteredPlugins.length > 0 || iitcCore"
             :plugins="filteredPlugins"
+            :iitcCore="iitcCore"
             :showEnabledFirst="activeCategory === 'All'"
             :bottomPadding="bottomPadding"
             @info="showPluginInfo"
@@ -37,7 +38,7 @@
             @delete="deletePlugin"
           />
           <Label
-            v-if="filteredPlugins.length === 0"
+            v-if="filteredPlugins.length === 0 && !iitcCore"
             :text="getEmptyMessage()"
             class="no-plugins"
             once="true"
@@ -87,10 +88,15 @@ export default {
   },
 
   computed: {
-    ...mapGetters('manager', ['plugins', 'lastPluginUpdate']),
+    ...mapGetters('manager', ['plugins', 'core', 'lastPluginUpdate']),
 
     allPlugins() {
       return this.plugins;
+    },
+
+    iitcCore() {
+      if (this.activeCategory !== 'All' || this.searchQuery.trim()) return null;
+      return this.core || null;
     },
 
     // Check if data is available

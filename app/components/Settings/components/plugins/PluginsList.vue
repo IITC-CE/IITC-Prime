@@ -51,6 +51,7 @@
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
+              :isEnabled="!item.isCore"
               isUserInteractionEnabled="false"
             />
           </GridLayout>
@@ -102,6 +103,7 @@
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
+              :isEnabled="!item.isCore"
               isUserInteractionEnabled="false"
             />
           </GridLayout>
@@ -145,6 +147,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    // IITC core script object (shown first in Enabled section when in All category)
+    iitcCore: {
+      type: Object,
+      default: null,
+    },
     // Optional section title
     title: {
       type: String,
@@ -167,18 +174,32 @@ export default {
           .filter(p => p.status === 'on')
           .sort((a, b) => this.getPluginName(a).localeCompare(this.getPluginName(b)));
 
-        // Add enabled plugins section if there are any enabled plugins
-        if (enabledPlugins.length > 0) {
+        // Enabled section always visible when core is present or there are enabled plugins
+        if (this.iitcCore || enabledPlugins.length > 0) {
           items.push({
             type: 'section-header',
             title: 'Enabled',
           });
+
+          // Core is always first in the Enabled section
+          if (this.iitcCore) {
+            items.push({
+              ...this.iitcCore,
+              type: 'plugin',
+              sectionId: 'enabled',
+              isCore: true,
+              status: 'on',
+              isFirst: true,
+              isLast: enabledPlugins.length === 0,
+            });
+          }
+
           items.push(
             ...enabledPlugins.map((plugin, index) => ({
               ...plugin,
               type: 'plugin',
               sectionId: 'enabled',
-              isFirst: index === 0,
+              isFirst: !this.iitcCore && index === 0,
               isLast: index === enabledPlugins.length - 1,
             }))
           );
@@ -288,6 +309,8 @@ export default {
     },
 
     async onSwitchTap(item) {
+      if (item.isCore) return;
+
       if (!this.showEnabledFirst) {
         this.$emit('toggle', item);
         return;

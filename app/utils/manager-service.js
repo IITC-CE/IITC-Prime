@@ -73,7 +73,7 @@ export class ManagerService {
         },
         onPluginsViewChanged: view => {
           if (this.callbacks.onPluginsViewChanged) {
-            this.callbacks.onPluginsViewChanged(view.plugins);
+            this.callbacks.onPluginsViewChanged(view.plugins, view.core || null);
           }
         },
         useFetchHeadMethod: false,
@@ -189,7 +189,8 @@ export class ManagerService {
    */
   async getPlugins() {
     const manager = await this.initialize();
-    return (await manager.getPluginsView()).plugins;
+    const view = await manager.getPluginsView();
+    return { plugins: view.plugins, core: view.core || null };
   }
 
   /**
