@@ -4,7 +4,7 @@
  * ManagerService - a service for working with lib-iitc-manager.
  */
 
-import { Manager } from 'lib-iitc-manager';
+import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
 import storage from '@/utils/storage';
 
 export class ManagerService {
@@ -125,6 +125,25 @@ export class ManagerService {
     const manager = await this.initialize();
     await manager.inject();
     return { success: true };
+  }
+
+  /**
+   * Returns the ordered plugin scripts (GM API, core, plugins) with final
+   * wrapped code, mirroring inject() but without invoking the callback.
+   * @returns {Promise<Array<{uid: string, code: string}>>}
+   */
+  async getEnabledPluginScripts() {
+    const manager = await this.initialize();
+    const plugins = await manager.getEnabledPlugins();
+    const scripts = [];
+    for (const uid in plugins) {
+      const plugin = plugins[uid];
+      if (!plugin || !plugin.code) continue;
+      // GM API component is injected as-is; everything else gets GM bindings.
+      const code = uid === GM_API_UID ? plugin.code : wrapPluginCode(plugin, manager.sourceUrlPrefix);
+      scripts.push({ uid, code });
+    }
+    return scripts;
   }
 
   // === Channel Management ===

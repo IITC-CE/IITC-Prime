@@ -122,6 +122,10 @@ export const manager = {
       return await managerService.inject();
     },
 
+    async getEnabledPluginScripts() {
+      return await managerService.getEnabledPluginScripts();
+    },
+
     /**
      * Load update channel into state
      */

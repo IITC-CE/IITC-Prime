@@ -163,8 +163,9 @@ const buildBridgeScript = () => {
       '};\n';
   });
   bridge +=
-    "window.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};\n";
-  bridge += 'window.nsWebViewBridge.showZoom = function() {return ' + getZoomControl() + ';};\n';
+    'window.nsWebViewBridge.getVersionName = function() {return window.__iitcVersionName;};\n';
+  bridge +=
+    'window.nsWebViewBridge.showZoom = function() {return window.__iitcShowZoom === true;};\n';
 
   // async callback-based bridge functions
   Object.entries(asyncEvents).forEach(entry => {
@@ -222,4 +223,22 @@ export const writeBridgeScriptFile = async () => {
  */
 export const injectBridgeIITC = async webview => {
   await webview.executeJavaScript(buildBridgeScript());
+};
+
+const PRIME_PARAMS_FILENAME = 'prime-params.js';
+
+// Native -> web parameters. Separate from the bridge so the bridge stays static.
+// Add new parameters here; re-registration order is irrelevant for this script.
+const buildPrimeParamsScript = () =>
+  `window.__iitcVersionName = '${getVersionName()}';\n` +
+  `window.__iitcShowZoom = ${getZoomControl()};`;
+
+export const writePrimeParamsFile = async () => {
+  const filePath = path.join(knownFolders.documents().path, PRIME_PARAMS_FILENAME);
+  await File.fromPath(filePath).writeText(buildPrimeParamsScript());
+  return filePath;
+};
+
+export const injectPrimeParams = async webview => {
+  await webview.executeJavaScript(buildPrimeParamsScript());
 };
