@@ -19,7 +19,7 @@
 <script>
 import { injectBridgeIITC, writeBridgeScriptFile, router } from '@/utils/bridge';
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
-import { injectDebugBridge } from '@/utils/debug-bridge';
+import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, Utils } from '@nativescript/core';
@@ -35,8 +35,27 @@ import {
   setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
 
-// Resource name for the pre-registered bridge script
-const BRIDGE_SCRIPT_NAME = 'iitcBridge';
+// Scripts pre-registered to run at atDocumentEnd (iOS) so they are available
+// before the page finishes loading. `check` is evaluated at load finish to decide
+// whether the fallback `inject` is needed - always the case on Android, where
+// auto-injected scripts load asynchronously after the load event.
+const PRELOAD_SCRIPTS = [
+  {
+    name: 'iitcBridge',
+    write: writeBridgeScriptFile,
+    inject: injectBridgeIITC,
+    check: 'typeof window.app !== "undefined"',
+    // Content depends on runtime settings (zoom control), so it must be
+    // re-registered on reload. The other scripts are static.
+    dynamic: true,
+  },
+  {
+    name: 'iitcDebugBridge',
+    write: writeDebugBridgeFile,
+    inject: injectDebugBridge,
+    check: 'window.__debugBridgeInstalled === true',
+  },
+];
 
 export default {
   name: 'AppWebView',
@@ -147,17 +166,15 @@ export default {
       this.injectionInProgress = true;
 
       try {
-        // The bridge is normally provided by the pre-registered atDocumentEnd
-        // script. Inject it here only if it is not available yet - the case on
-        // Android, where the auto-injected script loads asynchronously after load.
-        const hasBridge = await this.webview.executeJavaScript('typeof window.app !== "undefined"');
-        if (hasBridge !== true) {
-          await injectBridgeIITC(this.webview);
+        // These are normally provided by the pre-registered atDocumentEnd scripts.
+        // Inject each here only if not available yet - the case on Android, where
+        // auto-injected scripts load asynchronously after the load event.
+        for (const script of PRELOAD_SCRIPTS) {
+          const present = await this.webview.executeJavaScript(script.check);
+          if (present !== true) {
+            await script.inject(this.webview);
+          }
         }
-        await injectDebugBridge(this.webview);
-
-        // Inject early so styles are active before IITC rewrites document.head
-        await injectCustomStyles(this.webview);
 
         this.lastInjectedUrl = urlWithoutHash;
         this.pendingInjectionUrl = null;
@@ -181,21 +198,24 @@ export default {
         }
       }
 
-      // Register the bridge as an atDocumentEnd script so it is available before
-      // the page finishes loading (iOS), instead of injecting it after load.
-      await this.registerBridgeScript(webview);
+      // Register the scripts as atDocumentEnd scripts so they are available before
+      // the page finishes loading (iOS), instead of injecting them after load.
+      await this.registerPreloadScripts(webview);
 
       this.$emit('webview-loaded', { webview });
     },
 
-    async registerBridgeScript(webview) {
+    async registerPreloadScripts(webview, { dynamicOnly = false } = {}) {
       if (!webview) return;
-      try {
-        const filePath = await writeBridgeScriptFile();
-        webview.removeAutoLoadJavaScriptFile(BRIDGE_SCRIPT_NAME);
-        await webview.autoLoadJavaScriptFile(BRIDGE_SCRIPT_NAME, filePath);
-      } catch (error) {
-        console.error('[AppWebView] Failed to register bridge script:', error);
+      for (const script of PRELOAD_SCRIPTS) {
+        if (dynamicOnly && !script.dynamic) continue;
+        try {
+          const filePath = await script.write();
+          webview.removeAutoLoadJavaScriptFile(script.name);
+          await webview.autoLoadJavaScriptFile(script.name, filePath);
+        } catch (error) {
+          console.error(`[AppWebView] Failed to register ${script.name}:`, error);
+        }
       }
     },
 
@@ -238,9 +258,10 @@ export default {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
             } else {
-              // Re-register so settings changes are reflected
-              // in the bridge on the next load.
-              await this.registerBridgeScript(webview);
+              // Re-register only the settings-dependent script (bridge) so changes
+              // (e.g. zoom control) are reflected on the next load. Static scripts
+              // stay registered from the initial load.
+              await this.registerPreloadScripts(webview, { dynamicOnly: true });
               await this.$refs.baseWebView.reload();
             }
             break;

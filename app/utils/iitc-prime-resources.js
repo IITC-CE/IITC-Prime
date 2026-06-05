@@ -18,15 +18,15 @@ const getResourceContent = async filepath => {
 };
 
 /**
- * Inject custom CSS styles for IITC Prime
- * @remarks Page load (onLoadFinished), before IITC boot
+ * Inject custom CSS styles for IITC Prime.
+ * @remarks Injected after IITC boot - IITC replaces document.head on boot
  */
 export const injectCustomStyles = async webview => {
   try {
     const cssContent = await getResourceContent('~/assets/css/iitc-prime.css');
 
-    // Use nsWebViewBridge.injectStyleSheet directly
-    // loadStyleSheetFile doesn't work reliably, so we call the bridge method directly
+    // Use nsWebViewBridge.injectStyleSheet directly: loadStyleSheetFile doesn't
+    // work reliably, so we call the bridge method (idempotent by element id).
     const injectCssCode = `window.nsWebViewBridge.injectStyleSheet('iitcprimecss', ${JSON.stringify(cssContent)}, false);`;
 
     await webview.executeJavaScript(injectCssCode);
