@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { injectBridgeIITC, router } from '@/utils/bridge';
+import { injectBridgeIITC, writeBridgeScriptFile, router } from '@/utils/bridge';
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge } from '@/utils/debug-bridge';
 import BaseWebView from './BaseWebView.vue';
@@ -34,6 +34,9 @@ import {
   userLocationOrientation,
   setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
+
+// Resource name for the pre-registered bridge script
+const BRIDGE_SCRIPT_NAME = 'iitcBridge';
 
 export default {
   name: 'AppWebView',
@@ -144,8 +147,13 @@ export default {
       this.injectionInProgress = true;
 
       try {
-        // Inject bridges first
-        await injectBridgeIITC(this.webview);
+        // The bridge is normally provided by the pre-registered atDocumentEnd
+        // script. Inject it here only if it is not available yet - the case on
+        // Android, where the auto-injected script loads asynchronously after load.
+        const hasBridge = await this.webview.executeJavaScript('typeof window.app !== "undefined"');
+        if (hasBridge !== true) {
+          await injectBridgeIITC(this.webview);
+        }
         await injectDebugBridge(this.webview);
 
         // Inject early so styles are active before IITC rewrites document.head
@@ -172,7 +180,23 @@ export default {
           nativeView.scrollView.contentInsetAdjustmentBehavior = 2;
         }
       }
+
+      // Register the bridge as an atDocumentEnd script so it is available before
+      // the page finishes loading (iOS), instead of injecting it after load.
+      await this.registerBridgeScript(webview);
+
       this.$emit('webview-loaded', { webview });
+    },
+
+    async registerBridgeScript(webview) {
+      if (!webview) return;
+      try {
+        const filePath = await writeBridgeScriptFile();
+        webview.removeAutoLoadJavaScriptFile(BRIDGE_SCRIPT_NAME);
+        await webview.autoLoadJavaScriptFile(BRIDGE_SCRIPT_NAME, filePath);
+      } catch (error) {
+        console.error('[AppWebView] Failed to register bridge script:', error);
+      }
     },
 
     handleBridgeMessage(eventData) {
@@ -214,6 +238,9 @@ export default {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
             } else {
+              // Re-register so settings changes are reflected
+              // in the bridge on the next load.
+              await this.registerBridgeScript(webview);
               await this.$refs.baseWebView.reload();
             }
             break;

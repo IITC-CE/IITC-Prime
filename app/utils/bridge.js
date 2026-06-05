@@ -21,6 +21,7 @@ import {
   shareString,
   gmBridgeRequest,
 } from '@/utils/events-from-iitc';
+import { File, knownFolders, path } from '@nativescript/core';
 
 export const router = async event => {
   const [eventName, eventData] = event;
@@ -106,7 +107,7 @@ export const router = async event => {
   }
 };
 
-export const injectBridgeIITC = async webview => {
+const buildBridgeScript = () => {
   let bridge = '';
 
   const events = {
@@ -163,8 +164,7 @@ export const injectBridgeIITC = async webview => {
   });
   bridge +=
     "window.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};\n";
-  bridge +=
-    'window.nsWebViewBridge.showZoom = function() {return ' + getZoomControl() + ';};\n';
+  bridge += 'window.nsWebViewBridge.showZoom = function() {return ' + getZoomControl() + ';};\n';
 
   // async callback-based bridge functions
   Object.entries(asyncEvents).forEach(entry => {
@@ -201,5 +201,25 @@ export const injectBridgeIITC = async webview => {
   // Set window.app at the END, after all functions are defined
   bridge += 'window.app = window.nsWebViewBridge;\n';
 
-  await webview.executeJavaScript(bridge);
+  return bridge;
+};
+
+const BRIDGE_SCRIPT_FILENAME = 'iitc-bridge.js';
+
+/**
+ * Write the bridge script to a file for registration via autoLoadJavaScriptFile
+ * @returns {Promise<string>} Absolute path to the written file
+ */
+export const writeBridgeScriptFile = async () => {
+  const filePath = path.join(knownFolders.documents().path, BRIDGE_SCRIPT_FILENAME);
+  await File.fromPath(filePath).writeText(buildBridgeScript());
+  return filePath;
+};
+
+/**
+ * Inject the bridge directly via executeJavaScript.
+ * Fallback for when the pre-registered script is not yet available at load finish.
+ */
+export const injectBridgeIITC = async webview => {
+  await webview.executeJavaScript(buildBridgeScript());
 };
