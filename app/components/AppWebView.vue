@@ -36,7 +36,7 @@ import {
 } from '@/utils/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
-import { isIOS, Utils } from '@nativescript/core';
+import { isIOS, isAndroid, Utils } from '@nativescript/core';
 
 import {
   changePortalHighlights,
@@ -49,9 +49,9 @@ import {
   setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
 
-// Scripts run as atDocumentEnd user scripts (iOS) before the page finishes loading.
-// On Android they load asynchronously, so `check` decides whether the fallback
-// `inject` is needed at load finish.
+// Scripts pre-registered to run at DOMContentLoaded on every navigation (iOS: WKUserScript
+// atDocumentEnd; Android: addDocumentStartJavaScript wrapped in a DOMContentLoaded guard).
+// The `check` expression detects cold-start absence so the fallback `inject` can run.
 const PRELOAD_SCRIPTS = [
   {
     name: 'iitcBridge',
@@ -137,8 +137,6 @@ export default {
         return;
       }
 
-      console.log('[AppWebView] onLoadStarted:', arg.url);
-
       try {
         if (arg.url.startsWith(INGRESS_INTEL_MAP)) {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
@@ -193,7 +191,7 @@ export default {
         }
 
         // Flag is set by the trailing marker user script after all plugins ran.
-        // Not set on iOS cold start (manager not ready yet) and never on Android.
+        // Not set on cold start (manager not ready yet before first load).
         const pluginsReady = await this.webview.executeJavaScript(
           `window.${PLUGINS_READY_FLAG} === true`
         );
@@ -246,11 +244,25 @@ export default {
       }
     },
 
-    // iOS only: on Android auto-injected scripts load asynchronously and would
-    // double-inject the non-idempotent IITC core alongside the live fallback.
+    // Pre-register plugins as document-start scripts. On Android this requires
+    // addDocumentStartJavaScript support; without it the x-local async fallback would arrive
+    // after onLoadFinished and double-inject the non-idempotent IITC core.
     async registerPluginScripts() {
       const webview = this.webview;
-      if (!isIOS || !webview) return;
+      if (!webview) return;
+      if (!isIOS) {
+        if (!isAndroid) return;
+        try {
+          if (
+            !androidx.webkit.WebViewFeature.isFeatureSupported(
+              androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT
+            )
+          )
+            return;
+        } catch {
+          return;
+        }
+      }
 
       // manager/run and handlePluginEvent can overlap.
       if (this.pluginRegistrationInProgress) {
