@@ -37,7 +37,7 @@ android {
   def buildingBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains('bundle') }
 
   defaultConfig {
-    minSdkVersion 23
+    minSdkVersion 24
     compileSdkVersion 36
     targetSdkVersion 36
     versionCode = getVersionCodeTimeStamps()

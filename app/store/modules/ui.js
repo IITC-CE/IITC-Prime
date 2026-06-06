@@ -151,9 +151,6 @@ export const ui = {
         await dispatch('map/setMapStatus', null, { root: true });
         await dispatch('map/resetHighlighters', null, { root: true });
       }
-      if (status) {
-        await dispatch('manager/inject', null, { root: true });
-      }
     },
     setProgress({ commit }, progress) {
       commit('SET_PROGRESS', progress);

@@ -17,12 +17,26 @@
 </template>
 
 <script>
-import { injectBridgeIITC, router } from '@/utils/bridge';
+import {
+  injectBridgeIITC,
+  writeBridgeScriptFile,
+  injectPrimeParams,
+  writePrimeParamsFile,
+  router,
+} from '@/utils/bridge';
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
-import { injectDebugBridge } from '@/utils/debug-bridge';
+import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
+import {
+  writePluginScriptFile,
+  deletePluginScriptFile,
+  writePluginsMarkerFile,
+  pluginScriptName,
+  PLUGINS_MARKER_NAME,
+  PLUGINS_READY_FLAG,
+} from '@/utils/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
-import { isIOS, Utils } from '@nativescript/core';
+import { isIOS, isAndroid, Utils } from '@nativescript/core';
 
 import {
   changePortalHighlights,
@@ -34,6 +48,33 @@ import {
   userLocationOrientation,
   setSafeAreaInsets,
 } from '@/utils/events-to-iitc';
+
+// Scripts pre-registered to run at DOMContentLoaded on every navigation (iOS: WKUserScript
+// atDocumentEnd; Android: addDocumentStartJavaScript wrapped in a DOMContentLoaded guard).
+// The `check` expression detects cold-start absence so the fallback `inject` can run.
+const PRELOAD_SCRIPTS = [
+  {
+    name: 'iitcBridge',
+    write: writeBridgeScriptFile,
+    inject: injectBridgeIITC,
+    check: 'typeof window.app !== "undefined"',
+  },
+  {
+    name: 'iitcDebugBridge',
+    write: writeDebugBridgeFile,
+    inject: injectDebugBridge,
+    check: 'window.__debugBridgeInstalled === true',
+  },
+  {
+    name: 'iitcPrimeParams',
+    write: writePrimeParamsFile,
+    inject: injectPrimeParams,
+    check: 'typeof window.__iitcShowZoom !== "undefined"',
+    // Re-registered on reload; re-registration moves a script to the end of the
+    // WKUserScript list, so only this settings-dependent entry is dynamic.
+    dynamic: true,
+  },
+];
 
 export default {
   name: 'AppWebView',
@@ -96,8 +137,6 @@ export default {
         return;
       }
 
-      console.log('[AppWebView] onLoadStarted:', arg.url);
-
       try {
         if (arg.url.startsWith(INGRESS_INTEL_MAP)) {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
@@ -144,17 +183,25 @@ export default {
       this.injectionInProgress = true;
 
       try {
-        // Inject bridges first
-        await injectBridgeIITC(this.webview);
-        await injectDebugBridge(this.webview);
+        for (const script of PRELOAD_SCRIPTS) {
+          const present = await this.webview.executeJavaScript(script.check);
+          if (present !== true) {
+            await script.inject(this.webview);
+          }
+        }
 
-        // Inject early so styles are active before IITC rewrites document.head
-        await injectCustomStyles(this.webview);
+        // Flag is set by the trailing marker user script after all plugins ran.
+        // Not set on cold start (manager not ready yet before first load).
+        const pluginsReady = await this.webview.executeJavaScript(
+          `window.${PLUGINS_READY_FLAG} === true`
+        );
+        if (pluginsReady !== true) {
+          await this.$store.dispatch('manager/inject');
+        }
 
         this.lastInjectedUrl = urlWithoutHash;
         this.pendingInjectionUrl = null;
 
-        // Then trigger plugin injection
         await this.$store.dispatch('ui/setWebviewLoaded', true);
       } catch (error) {
         console.error('[AppWebView] Bridge injection failed:', error);
@@ -172,7 +219,91 @@ export default {
           nativeView.scrollView.contentInsetAdjustmentBehavior = 2;
         }
       }
+
+      await this.registerPreloadScripts(webview);
+
+      // Manager may have finished before the webview was ready.
+      if (this.$store.state.manager.isInitialized) {
+        await this.registerPluginScripts();
+      }
+
       this.$emit('webview-loaded', { webview });
+    },
+
+    async registerPreloadScripts(webview, { dynamicOnly = false } = {}) {
+      if (!webview) return;
+      for (const script of PRELOAD_SCRIPTS) {
+        if (dynamicOnly && !script.dynamic) continue;
+        try {
+          const filePath = await script.write();
+          webview.removeAutoLoadJavaScriptFile(script.name);
+          await webview.autoLoadJavaScriptFile(script.name, filePath);
+        } catch (error) {
+          console.error(`[AppWebView] Failed to register ${script.name}:`, error);
+        }
+      }
+    },
+
+    // Pre-register plugins as document-start scripts. On Android this requires
+    // addDocumentStartJavaScript support; without it the x-local async fallback would arrive
+    // after onLoadFinished and double-inject the non-idempotent IITC core.
+    async registerPluginScripts() {
+      const webview = this.webview;
+      if (!webview) return;
+      if (!isIOS) {
+        if (!isAndroid) return;
+        try {
+          if (
+            !androidx.webkit.WebViewFeature.isFeatureSupported(
+              androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT
+            )
+          )
+            return;
+        } catch {
+          return;
+        }
+      }
+
+      // manager/run and handlePluginEvent can overlap.
+      if (this.pluginRegistrationInProgress) {
+        this.pluginRegistrationPending = true;
+        return;
+      }
+      this.pluginRegistrationInProgress = true;
+
+      try {
+        const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
+        const newUids = scripts.map(s => s.uid);
+        const newUidSet = new Set(newUids);
+
+        for (const uid of this.registeredPluginUids) {
+          if (!newUidSet.has(uid)) {
+            webview.removeAutoLoadJavaScriptFile(pluginScriptName(uid));
+            await deletePluginScriptFile(uid);
+          }
+        }
+
+        for (const { uid, code } of scripts) {
+          const filePath = await writePluginScriptFile(uid, code);
+          webview.removeAutoLoadJavaScriptFile(pluginScriptName(uid));
+          await webview.autoLoadJavaScriptFile(pluginScriptName(uid), filePath);
+        }
+
+        // Marker last, so it runs after every plugin.
+        const markerPath = await writePluginsMarkerFile();
+        webview.removeAutoLoadJavaScriptFile(PLUGINS_MARKER_NAME);
+        await webview.autoLoadJavaScriptFile(PLUGINS_MARKER_NAME, markerPath);
+
+        this.registeredPluginUids = newUids;
+      } catch (error) {
+        console.error('[AppWebView] Failed to register plugin scripts:', error);
+      } finally {
+        this.pluginRegistrationInProgress = false;
+        if (this.pluginRegistrationPending) {
+          this.pluginRegistrationPending = false;
+          await this.registerPluginScripts();
+        }
+      }
     },
 
     handleBridgeMessage(eventData) {
@@ -185,7 +316,6 @@ export default {
       this.$emit('console-log', logData);
     },
 
-    // Public method to execute debug command
     executeDebugCommand(command) {
       if (!this.$refs.baseWebView || !command) return;
       this.$refs.baseWebView.executeCommand(command);
@@ -203,17 +333,28 @@ export default {
   },
 
   created() {
+    // Non-reactive: avoid Vue observing large plugin code strings.
+    this.registeredPluginUids = [];
+    this.pluginRegistrationInProgress = false;
+    this.pluginRegistrationPending = false;
+
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
         const webview = this.webview;
         if (!webview) return;
 
         switch (action.type) {
+          case 'manager/run':
+          case 'manager/handlePluginEvent':
+            await this.registerPluginScripts();
+            break;
           case 'ui/reloadWebView':
             if (action.payload) {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
             } else {
+              // Only re-register the dynamic script: static ones stay ordered before plugins.
+              await this.registerPreloadScripts(webview, { dynamicOnly: true });
               await this.$refs.baseWebView.reload();
             }
             break;

@@ -21,6 +21,7 @@ import {
   shareString,
   gmBridgeRequest,
 } from '@/utils/events-from-iitc';
+import { File, knownFolders, path } from '@nativescript/core';
 
 export const router = async event => {
   const [eventName, eventData] = event;
@@ -106,7 +107,7 @@ export const router = async event => {
   }
 };
 
-export const injectBridgeIITC = async webview => {
+const buildBridgeScript = () => {
   let bridge = '';
 
   const events = {
@@ -162,9 +163,9 @@ export const injectBridgeIITC = async webview => {
       '};\n';
   });
   bridge +=
-    "window.nsWebViewBridge.getVersionName = function() {return '" + getVersionName() + "'};\n";
+    'window.nsWebViewBridge.getVersionName = function() {return window.__iitcVersionName;};\n';
   bridge +=
-    'window.nsWebViewBridge.showZoom = function() {return ' + getZoomControl() + ';};\n';
+    'window.nsWebViewBridge.showZoom = function() {return window.__iitcShowZoom === true;};\n';
 
   // async callback-based bridge functions
   Object.entries(asyncEvents).forEach(entry => {
@@ -201,5 +202,43 @@ export const injectBridgeIITC = async webview => {
   // Set window.app at the END, after all functions are defined
   bridge += 'window.app = window.nsWebViewBridge;\n';
 
-  await webview.executeJavaScript(bridge);
+  return bridge;
+};
+
+const BRIDGE_SCRIPT_FILENAME = 'iitc-bridge.js';
+
+/**
+ * Write the bridge script to a file for registration via autoLoadJavaScriptFile
+ * @returns {Promise<string>} Absolute path to the written file
+ */
+export const writeBridgeScriptFile = async () => {
+  const filePath = path.join(knownFolders.documents().path, BRIDGE_SCRIPT_FILENAME);
+  await File.fromPath(filePath).writeText(buildBridgeScript());
+  return filePath;
+};
+
+/**
+ * Inject the bridge directly via executeJavaScript.
+ * Fallback for when the pre-registered script is not yet available at load finish.
+ */
+export const injectBridgeIITC = async webview => {
+  await webview.executeJavaScript(buildBridgeScript());
+};
+
+const PRIME_PARAMS_FILENAME = 'prime-params.js';
+
+// Native -> web parameters. Separate from the bridge so the bridge stays static.
+// Add new parameters here; re-registration order is irrelevant for this script.
+const buildPrimeParamsScript = () =>
+  `window.__iitcVersionName = '${getVersionName()}';\n` +
+  `window.__iitcShowZoom = ${getZoomControl()};`;
+
+export const writePrimeParamsFile = async () => {
+  const filePath = path.join(knownFolders.documents().path, PRIME_PARAMS_FILENAME);
+  await File.fromPath(filePath).writeText(buildPrimeParamsScript());
+  return filePath;
+};
+
+export const injectPrimeParams = async webview => {
+  await webview.executeJavaScript(buildPrimeParamsScript());
 };

@@ -1,11 +1,13 @@
 // Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+import { File, knownFolders, path } from '@nativescript/core';
+
 /**
  * Debug bridge for WebView console interception
  * Provides console logging and JavaScript execution capabilities
  */
-export const injectDebugBridge = async webview => {
-  const script = `
+const buildDebugBridgeScript = () => {
+  return `
   (function() {
     function debugBridge() {
       if (window.__debugBridgeInstalled) return;
@@ -96,6 +98,24 @@ export const injectDebugBridge = async webview => {
     }
   })();
   `;
+};
 
-  await webview.executeJavaScript(script);
+const DEBUG_BRIDGE_SCRIPT_FILENAME = 'iitc-debug-bridge.js';
+
+/**
+ * Write the debug bridge script to a file for registration via autoLoadJavaScriptFile
+ * @returns {Promise<string>} Absolute path to the written file
+ */
+export const writeDebugBridgeFile = async () => {
+  const filePath = path.join(knownFolders.documents().path, DEBUG_BRIDGE_SCRIPT_FILENAME);
+  await File.fromPath(filePath).writeText(buildDebugBridgeScript());
+  return filePath;
+};
+
+/**
+ * Inject the debug bridge directly via executeJavaScript.
+ * Fallback for when the pre-registered script is not yet available at load finish.
+ */
+export const injectDebugBridge = async webview => {
+  await webview.executeJavaScript(buildDebugBridgeScript());
 };
