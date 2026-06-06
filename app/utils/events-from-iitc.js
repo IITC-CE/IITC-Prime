@@ -53,7 +53,7 @@ export const bootFinished = async name => {
  */
 export const switchToPane = async name => {
   if (store.state.navigation.currentPane !== name) {
-    await store.dispatch('navigation/setCurrentPane', name);
+    store.commit('navigation/SET_CURRENT_PANE', name);
   }
 };
 
