@@ -101,7 +101,7 @@ export class ManagerService {
     return this._call('inject');
   }
 
-  /** @returns {Promise<Array<{uid: string, code: string}>>} */
+  /** @returns {Promise<Array<{uid: string, filePath: string}>>} */
   async getEnabledPluginScripts() {
     return this._call('getEnabledPluginScripts');
   }
@@ -132,10 +132,6 @@ export class ManagerService {
 
   async getPlugins() {
     return this._call('getPlugins');
-  }
-
-  async getEnabledPlugins() {
-    return this._call('getEnabledPlugins');
   }
 
   async managePlugin(uid, action) {

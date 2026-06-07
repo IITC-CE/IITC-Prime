@@ -27,7 +27,6 @@ import {
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
 import {
-  writePluginScriptFile,
   deletePluginScriptFile,
   writePluginsMarkerFile,
   pluginScriptName,
@@ -283,8 +282,7 @@ export default {
           }
         }
 
-        for (const { uid, code } of scripts) {
-          const filePath = await writePluginScriptFile(uid, code);
+        for (const { uid, filePath } of scripts) {
           webview.removeAutoLoadJavaScriptFile(pluginScriptName(uid));
           await webview.autoLoadJavaScriptFile(pluginScriptName(uid), filePath);
         }

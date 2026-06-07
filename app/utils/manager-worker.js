@@ -12,18 +12,33 @@
  *                    { id, error }                 (rejects the RPC promise)
  *                    { callback, args }            (a Manager callback fired)
  *
- * Note: NativeScript workers pass JSON-serializable data by copy only -
- * no shared memory, no ArrayBuffer transfer.
+ * Note: NativeScript workers pass JSON-serializable data by copy only.
+ * Plugin code never crosses the boundary: getEnabledPluginScripts writes
+ * scripts to disk and returns paths; getPlugins / onPluginsViewChanged strip
+ * `code` from metadata. Only onInjectPlugin (cold-start fallback) carries code.
  */
 
 import '@nativescript/core/globals';
 import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
 import storage from '@/utils/storage';
+import { writePluginScriptFile } from '@/utils/plugin-scripts';
 
 // Worker global scope (NativeScript exposes onmessage/postMessage on global).
 const ctx = global;
 
 let manager = null;
+
+const stripCode = plugin => {
+  if (!plugin) return plugin;
+  const { code, ...meta } = plugin;
+  return meta;
+};
+
+const stripCodeMap = plugins => {
+  const out = {};
+  for (const uid in plugins) out[uid] = stripCode(plugins[uid]);
+  return out;
+};
 
 const emitCallback = (callback, args) => {
   ctx.postMessage({ callback, args });
@@ -68,7 +83,10 @@ const getManager = () => {
       emitCallback('onPluginEvent', [event]);
     },
     onPluginsViewChanged: view => {
-      emitCallback('onPluginsViewChanged', [view.plugins, view.core || null]);
+      emitCallback('onPluginsViewChanged', [
+        stripCodeMap(view.plugins),
+        stripCode(view.core) || null,
+      ]);
     },
     useFetchHeadMethod: false,
     isDaemon: false,
@@ -105,7 +123,8 @@ const handlers = {
       if (!plugin || !plugin.code) continue;
       // GM API component is injected as-is; everything else gets GM bindings.
       const code = uid === GM_API_UID ? plugin.code : wrapPluginCode(plugin, m.sourceUrlPrefix);
-      scripts.push({ uid, code });
+      const filePath = await writePluginScriptFile(uid, code);
+      scripts.push({ uid, filePath });
     }
     return scripts;
   },
@@ -139,11 +158,7 @@ const handlers = {
 
   async getPlugins() {
     const view = await getManager().getPluginsView();
-    return { plugins: view.plugins, core: view.core || null };
-  },
-
-  async getEnabledPlugins() {
-    return await getManager().getEnabledPlugins();
+    return { plugins: stripCodeMap(view.plugins), core: stripCode(view.core) || null };
   },
 
   async managePlugin(uid, action) {
