@@ -2,15 +2,18 @@
 
 /**
  * ManagerService - a service for working with lib-iitc-manager.
+ *
+ * Runs lib-iitc-manager on a background Worker (manager-worker.js) and exposes
+ * the same async API. Heavy work (plugin parsing, update fetching) runs off the
+ * UI thread.
  */
-
-import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
-import storage from '@/utils/storage';
 
 export class ManagerService {
   constructor() {
-    this.manager = null;
-    this.isInitialized = false;
+    this.worker = null;
+    this.nextId = 1;
+    // id -> { resolve, reject } for in-flight RPC calls
+    this.pending = new Map();
     this.callbacks = {
       onMessage: null,
       onProgress: null,
@@ -20,235 +23,139 @@ export class ManagerService {
     };
   }
 
-  /**
-   * Initialize Manager instance
-   */
-  async initialize() {
-    if (this.isInitialized && this.manager) {
-      return this.manager;
-    }
+  _ensureWorker() {
+    if (this.worker) return this.worker;
 
-    try {
-      this.manager = new Manager({
-        storage: {
-          async get(keys) {
-            return await storage.get(keys);
-          },
-          async set(obj) {
-            await storage.set(obj);
-          },
-        },
-        gmApi: {
-          bridgeAdapterCode: `
-            window.__iitc_gm_bridge__ = {
-              send(data) {
-                window.nsWebViewBridge.emit('gmBridgeRequest', JSON.stringify(data));
-              },
-              onResponse(cb) {
-                window.addEventListener('gmBridgeResponse', function(e) { cb(e.detail); });
-              }
-            };
-          `,
-        },
-        message: (message, args) => {
-          console.log(`[ManagerService] message: ${message}`, args);
-          if (this.callbacks.onMessage) {
-            this.callbacks.onMessage(message, args);
-          }
-        },
-        onProgress: isShow => {
-          if (this.callbacks.onProgress) {
-            this.callbacks.onProgress(isShow);
-          }
-        },
-        injectPlugin: plugin => {
-          if (this.callbacks.onInjectPlugin) {
-            this.callbacks.onInjectPlugin(plugin);
-          }
-        },
-        onPluginEvent: event => {
-          if (this.callbacks.onPluginEvent) {
-            this.callbacks.onPluginEvent(event);
-          }
-        },
-        onPluginsViewChanged: view => {
-          if (this.callbacks.onPluginsViewChanged) {
-            this.callbacks.onPluginsViewChanged(view.plugins, view.core || null);
-          }
-        },
-        useFetchHeadMethod: false,
-        isDaemon: false,
-      });
+    // String literal is required: nativescript-worker-loader rewrites it into a
+    // bundled worker chunk at build time.
+    this.worker = new Worker('./manager-worker.js');
 
-      this.isInitialized = true;
-      return this.manager;
-    } catch (error) {
-      console.error('[ManagerService] Failed to initialize Manager:', error);
-      throw error;
-    }
+    this.worker.onmessage = msg => {
+      const data = msg.data || {};
+
+      // Manager callback forwarded from the worker
+      if (data.callback) {
+        this._dispatchCallback(data.callback, data.args || []);
+        return;
+      }
+
+      // RPC response
+      const entry = this.pending.get(data.id);
+      if (!entry) return;
+      this.pending.delete(data.id);
+
+      if (data.error) {
+        const error = new Error(data.error.message);
+        if (data.error.name) error.name = data.error.name;
+        if (data.error.stack) error.stack = data.error.stack;
+        entry.reject(error);
+      } else {
+        entry.resolve(data.result);
+      }
+    };
+
+    this.worker.onerror = error => {
+      console.error('[ManagerService] Worker error:', error);
+      // A fatal worker error means in-flight RPCs will never get a response;
+      // reject them so callers don't hang. (Per-call errors are reported as
+      // { id, error } messages and handled above, not here.)
+      this._rejectAllPending(new Error(`Manager worker error: ${error?.message || error}`));
+    };
+
+    return this.worker;
   }
 
-  // === Core Operations ===
+  _rejectAllPending(error) {
+    for (const entry of this.pending.values()) {
+      entry.reject(error);
+    }
+    this.pending.clear();
+  }
 
-  /**
-   * Start Manager and load initial data
-   */
+  _call(method, ...args) {
+    const worker = this._ensureWorker();
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      worker.postMessage({ id, method, args });
+    });
+  }
+
+  _dispatchCallback(name, args) {
+    const cb = this.callbacks[name];
+    if (name === 'onMessage') {
+      console.log(`[ManagerService] message: ${args[0]}`, args[1]);
+    }
+    if (cb) cb(...args);
+  }
+
   async startup() {
-    const manager = await this.initialize();
-    await manager.run();
-
-    const [channel, customUrl] = await Promise.all([
-      this.getUpdateChannel(),
-      this.getCustomChannelUrl(),
-    ]);
-
-    return {
-      isRunning: true,
-      currentChannel: channel,
-      customChannelUrl: customUrl,
-    };
+    return this._call('startup');
   }
 
-  /**
-   * Update check
-   */
   async checkUpdates(force = false) {
-    const manager = await this.initialize();
-    await manager.checkUpdates(force);
-    return { success: true };
+    return this._call('checkUpdates', force);
   }
 
-  /**
-   * Inject plugins
-   */
   async inject() {
-    const manager = await this.initialize();
-    await manager.inject();
-    return { success: true };
+    return this._call('inject');
   }
 
-  /**
-   * Returns the ordered plugin scripts (GM API, core, plugins) with final
-   * wrapped code, mirroring inject() but without invoking the callback.
-   * @returns {Promise<Array<{uid: string, code: string}>>}
-   */
+  /** @returns {Promise<Array<{uid: string, code: string}>>} */
   async getEnabledPluginScripts() {
-    const manager = await this.initialize();
-    const plugins = await manager.getEnabledPlugins();
-    const scripts = [];
-    for (const uid in plugins) {
-      const plugin = plugins[uid];
-      if (!plugin || !plugin.code) continue;
-      // GM API component is injected as-is; everything else gets GM bindings.
-      const code = uid === GM_API_UID ? plugin.code : wrapPluginCode(plugin, manager.sourceUrlPrefix);
-      scripts.push({ uid, code });
-    }
-    return scripts;
+    return this._call('getEnabledPluginScripts');
   }
 
-  // === Channel Management ===
-
-  /**
-   * Get current update channel
-   */
   async getUpdateChannel() {
-    const manager = await this.initialize();
-    return manager.channel;
+    return this._call('getUpdateChannel');
   }
 
-  /**
-   * Set update channel and reload plugins
-   */
   async setUpdateChannel(channel) {
-    const manager = await this.initialize();
-    await manager.setChannel(channel);
-    return { currentChannel: channel };
+    return this._call('setUpdateChannel', channel);
   }
 
-  /**
-   * Get update check interval
-   */
   async getUpdateInterval(channel) {
-    const manager = await this.initialize();
-    return await manager.getUpdateCheckInterval(channel);
+    return this._call('getUpdateInterval', channel);
   }
 
-  /**
-   * Set update check interval
-   */
   async setUpdateInterval(interval, channel) {
-    const manager = await this.initialize();
-    await manager.setUpdateCheckInterval(interval, channel);
-    return { success: true };
+    return this._call('setUpdateInterval', interval, channel);
   }
 
-  /**
-   * Get custom channel URL
-   */
   async getCustomChannelUrl() {
-    const manager = await this.initialize();
-    return manager.networkHost?.custom ?? '';
+    return this._call('getCustomChannelUrl');
   }
 
-  /**
-   * Set custom channel URL
-   */
   async setCustomChannelUrl(url) {
-    const manager = await this.initialize();
-    await manager.setCustomChannelUrl(url);
-    return {
-      customChannelUrl: url,
-    };
+    return this._call('setCustomChannelUrl', url);
   }
 
-  // === Plugin Management ===
-
-  /**
-   * Get all plugins
-   */
   async getPlugins() {
-    const manager = await this.initialize();
-    const view = await manager.getPluginsView();
-    return { plugins: view.plugins, core: view.core || null };
+    return this._call('getPlugins');
   }
 
-  /**
-   * Get only enabled plugins
-   */
   async getEnabledPlugins() {
-    const manager = await this.initialize();
-    return await manager.getEnabledPlugins();
+    return this._call('getEnabledPlugins');
   }
 
-  /**
-   * Enable/disable plugin
-   */
   async managePlugin(uid, action) {
-    const manager = await this.initialize();
-    await manager.managePlugin(uid, action);
+    await this._call('managePlugin', uid, action);
   }
 
-  /**
-   * Add user scripts
-   */
   async addUserScripts(scripts) {
-    const manager = await this.initialize();
-    return await manager.addUserScripts(scripts);
+    return this._call('addUserScripts', scripts);
   }
 
-  /**
-   * Set callback functions for handling Manager events
-   */
   setCallbacks(callbacks) {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
-  /**
-   * Cleanup resources
-   */
   cleanup() {
-    this.manager = null;
-    this.isInitialized = false;
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this._rejectAllPending(new Error('ManagerService cleaned up'));
     this.callbacks = {
       onMessage: null,
       onProgress: null,
