@@ -246,7 +246,7 @@ export default {
     // Pre-register plugins as document-start scripts. On Android this requires
     // addDocumentStartJavaScript support; without it the x-local async fallback would arrive
     // after onLoadFinished and double-inject the non-idempotent IITC core.
-    async registerPluginScripts() {
+    registerPluginScripts() {
       const webview = this.webview;
       if (!webview) return;
       if (!isIOS) {
@@ -263,12 +263,27 @@ export default {
         }
       }
 
-      // manager/run and handlePluginEvent can overlap.
-      if (this.pluginRegistrationInProgress) {
+      // manager/run and handlePluginEvent can overlap; coalesce into one run.
+      if (this.pluginRegistrationPromise) {
         this.pluginRegistrationPending = true;
-        return;
+        return this.pluginRegistrationPromise;
       }
-      this.pluginRegistrationInProgress = true;
+      this.pluginRegistrationPromise = this._runPluginRegistration().finally(() => {
+        this.pluginRegistrationPromise = null;
+      });
+      return this.pluginRegistrationPromise;
+    },
+
+    async _runPluginRegistration() {
+      do {
+        this.pluginRegistrationPending = false;
+        await this._registerPluginScriptsOnce();
+      } while (this.pluginRegistrationPending);
+    },
+
+    async _registerPluginScriptsOnce() {
+      const webview = this.webview;
+      if (!webview) return;
 
       try {
         const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
@@ -295,12 +310,6 @@ export default {
         this.registeredPluginUids = newUids;
       } catch (error) {
         console.error('[AppWebView] Failed to register plugin scripts:', error);
-      } finally {
-        this.pluginRegistrationInProgress = false;
-        if (this.pluginRegistrationPending) {
-          this.pluginRegistrationPending = false;
-          await this.registerPluginScripts();
-        }
       }
     },
 
@@ -333,7 +342,7 @@ export default {
   created() {
     // Non-reactive: avoid Vue observing large plugin code strings.
     this.registeredPluginUids = [];
-    this.pluginRegistrationInProgress = false;
+    this.pluginRegistrationPromise = null;
     this.pluginRegistrationPending = false;
 
     this.store_unsubscribe = this.$store.subscribeAction({
@@ -351,6 +360,8 @@ export default {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
             } else {
+              // Await in-flight registration so the page reloads with current scripts.
+              if (this.pluginRegistrationPromise) await this.pluginRegistrationPromise;
               // Only re-register the dynamic script: static ones stay ordered before plugins.
               await this.registerPreloadScripts(webview, { dynamicOnly: true });
               await this.$refs.baseWebView.reload();
