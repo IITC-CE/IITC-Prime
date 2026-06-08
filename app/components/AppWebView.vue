@@ -337,6 +337,15 @@ export default {
         console.error(`Plugin ${plugin.uid} injection failed:`, error);
       }
     },
+
+    async performReload() {
+      const webview = this.webview;
+      if (!webview) return;
+      if (this.pluginRegistrationPromise) await this.pluginRegistrationPromise;
+      // Only re-register the dynamic script: static ones stay ordered before plugins.
+      await this.registerPreloadScripts(webview, { dynamicOnly: true });
+      await this.$refs.baseWebView.reload();
+    },
   },
 
   created() {
@@ -344,6 +353,19 @@ export default {
     this.registeredPluginUids = [];
     this.pluginRegistrationPromise = null;
     this.pluginRegistrationPending = false;
+    this.reloadPending = false;
+
+    this.mainPageActive_unwatch = this.$watch(
+      () => this.$store.state.ui.isMainPageFocused,
+      active => {
+        if (active && this.reloadPending) {
+          this.reloadPending = false;
+          this.performReload().catch(error => {
+            console.error('[AppWebView] Deferred reload failed:', error);
+          });
+        }
+      }
+    );
 
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
@@ -359,12 +381,10 @@ export default {
             if (action.payload) {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
+            } else if (this.$store.state.ui.isMainPageFocused) {
+              await this.performReload();
             } else {
-              // Await in-flight registration so the page reloads with current scripts.
-              if (this.pluginRegistrationPromise) await this.pluginRegistrationPromise;
-              // Only re-register the dynamic script: static ones stay ordered before plugins.
-              await this.registerPreloadScripts(webview, { dynamicOnly: true });
-              await this.$refs.baseWebView.reload();
+              this.reloadPending = true;
             }
             break;
           case 'ui/iitcBootFinished': {
@@ -435,6 +455,7 @@ export default {
 
   beforeUnmount() {
     this.store_unsubscribe();
+    this.mainPageActive_unwatch?.();
   },
 };
 </script>

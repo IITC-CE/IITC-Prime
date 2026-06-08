@@ -6,6 +6,8 @@
       actionBarHidden="true"
       androidOverflowEdge="dont-apply"
       @androidOverflowInset="onAndroidInset"
+      @navigatedTo="onMainPageNavigatedTo"
+      @navigatingFrom="onMainPageNavigatingFrom"
     >
       <RootLayout ref="rootLayout" height="100%" width="100%" @layoutChanged="onRootLayoutChanged">
         <BottomSheetPanel
@@ -371,6 +373,14 @@ export default {
     isMainPageActive() {
       const frame = Frame.topmost();
       return !frame?.backStack?.length;
+    },
+
+    onMainPageNavigatedTo() {
+      this.$store.dispatch('ui/setMainPageFocused', true);
+    },
+
+    onMainPageNavigatingFrom() {
+      this.$store.dispatch('ui/setMainPageFocused', false);
     },
 
     onKeyboardOpened(args) {
