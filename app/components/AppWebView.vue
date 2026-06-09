@@ -24,7 +24,7 @@ import {
   writePrimeParamsFile,
   router,
 } from '@/utils/bridge';
-import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
+import { injectCustomStyles } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
 import {
   deletePluginScriptFile,
@@ -396,7 +396,6 @@ export default {
             }
             break;
           case 'ui/iitcBootFinished': {
-            await installFileChooserOverride(webview);
             // Re-inject after IITC boot since document.head was replaced
             await injectCustomStyles(webview);
             // Set initial safe area insets after IITC loads
