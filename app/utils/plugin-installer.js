@@ -1,6 +1,7 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { fetchResource, parseMeta } from 'lib-iitc-manager';
+import { toRaw } from 'vue';
 import store from '@/store';
 
 /**
@@ -46,5 +47,5 @@ export function parsePlugin(code, filename) {
  * @param {string} code - Plugin source code from parsePlugin
  */
 export async function installPlugin(meta, code) {
-  await store.dispatch('manager/addUserScripts', [{ meta, code }]);
+  await store.dispatch('manager/addUserScripts', [{ meta: toRaw(meta), code }]);
 }
