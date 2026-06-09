@@ -22,6 +22,12 @@
     <string>175353347</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>IITC Prime can show your current position on the Ingress intel map. Location access is optional.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Lets you take a photo when a map page asks to import a file</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Lets you record a video when a map page asks to import a file</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Lets you attach a photo from your library when a map page asks to import a file</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchStoryboardName</key>

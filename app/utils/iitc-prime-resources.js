@@ -34,31 +34,3 @@ export const injectCustomStyles = async webview => {
     console.error('[injectCustomStyles] Failed to inject CSS:', error);
   }
 };
-
-/**
- * Override IITC's file chooser to use native file picker
- * @remarks After IITC boot (ui/iitcBootFinished)
- */
-export const installFileChooserOverride = async webview => {
-  const fileImportOverride = `(function() {
-  if (typeof L !== 'undefined' && L.FileReader && L.FileReader._chooseFiles) {
-    var originalChooseFiles = L.FileReader._chooseFiles;
-    L.FileReader._chooseFiles = function(callback, options) {
-      try {
-        window.app.chooseFiles(
-          options.multiple || false,
-          options.accept ? [options.accept] : ['*/*'],
-          callback
-        );
-      } catch (error) {
-        console.error('IITC-Prime: File chooser error', error);
-        if (callback) callback([]);
-      }
-    };
-  } else {
-    console.log('IITC-Prime: L.FileReader._chooseFiles not available yet');
-  }
-})();`;
-
-  await webview.executeJavaScript(fileImportOverride);
-};
