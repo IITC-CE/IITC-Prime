@@ -115,13 +115,6 @@ export const manager = {
       }
     },
 
-    /**
-     * Inject plugins
-     */
-    async inject() {
-      return await managerService.inject();
-    },
-
     async getEnabledPluginScripts() {
       return await managerService.getEnabledPluginScripts();
     },

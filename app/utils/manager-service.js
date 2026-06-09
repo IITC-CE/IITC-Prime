@@ -97,10 +97,6 @@ export class ManagerService {
     return this._call('checkUpdates', force);
   }
 
-  async inject() {
-    return this._call('inject');
-  }
-
   /** @returns {Promise<Array<{uid: string, filePath: string}>>} */
   async getEnabledPluginScripts() {
     return this._call('getEnabledPluginScripts');

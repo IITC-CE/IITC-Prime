@@ -13,9 +13,9 @@
  *                    { callback, args }            (a Manager callback fired)
  *
  * Note: NativeScript workers pass JSON-serializable data by copy only.
- * Plugin code never crosses the boundary: getEnabledPluginScripts writes
- * scripts to disk and returns paths; getPlugins / onPluginsViewChanged strip
- * `code` from metadata. Only onInjectPlugin (cold-start fallback) carries code.
+ * Plugin code never crosses the boundary: getEnabledPluginScripts and the
+ * injectPlugin callback both write scripts to disk and return paths; getPlugins
+ * / onPluginsViewChanged strip `code` from metadata.
  */
 
 import '@nativescript/core/globals';
@@ -76,8 +76,11 @@ const getManager = () => {
     onProgress: isShow => {
       emitCallback('onProgress', [isShow]);
     },
-    injectPlugin: plugin => {
-      emitCallback('onInjectPlugin', [plugin]);
+    injectPlugin: async plugin => {
+      // Write to disk so plugin code never crosses the worker boundary via postMessage
+      if (!plugin || !plugin.code) return;
+      const filePath = await writePluginScriptFile(plugin.uid, plugin.code);
+      emitCallback('onInjectPlugin', [{ uid: plugin.uid, filePath }]);
     },
     onPluginEvent: event => {
       emitCallback('onPluginEvent', [event]);
@@ -106,11 +109,6 @@ const handlers = {
 
   async checkUpdates(force = false) {
     await getManager().checkUpdates(force);
-    return { success: true };
-  },
-
-  async inject() {
-    await getManager().inject();
     return { success: true };
   },
 

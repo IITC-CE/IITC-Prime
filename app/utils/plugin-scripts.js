@@ -23,6 +23,8 @@ export const writePluginScriptFile = async (uid, code) => {
   return filePath;
 };
 
+export const readPluginScriptCode = async filePath => File.fromPath(filePath).readText();
+
 export const deletePluginScriptFile = async uid => {
   const filePath = pluginFilePath(uid);
   if (File.exists(filePath)) {

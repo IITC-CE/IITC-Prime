@@ -29,6 +29,7 @@ import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
 import {
   deletePluginScriptFile,
   writePluginsMarkerFile,
+  readPluginScriptCode,
   pluginScriptName,
   PLUGINS_MARKER_NAME,
   PLUGINS_READY_FLAG,
@@ -195,7 +196,7 @@ export default {
           `window.${PLUGINS_READY_FLAG} === true`
         );
         if (pluginsReady !== true) {
-          await this.$store.dispatch('manager/inject');
+          await this.injectEnabledPlugins();
         }
 
         this.lastInjectedUrl = urlWithoutHash;
@@ -328,13 +329,20 @@ export default {
       this.$refs.baseWebView.executeCommand(command);
     },
 
+    async injectEnabledPlugins() {
+      const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
+      for (const script of scripts) {
+        await this.injectPlugin(script);
+      }
+    },
+
     async injectPlugin(plugin) {
-      if (!this.webview || !plugin?.code) return;
+      if (!this.webview || !plugin?.filePath) return;
       try {
-        await this.webview.executeJavaScript(plugin.code, false);
-        console.log(`Plugin ${plugin.uid} loaded`);
+        const code = await readPluginScriptCode(plugin.filePath);
+        await this.webview.executeJavaScript(code, false);
       } catch (error) {
-        console.error(`Plugin ${plugin.uid} injection failed:`, error);
+        console.error(`[AppWebView] Plugin ${plugin.uid} injection failed:`, error);
       }
     },
 
