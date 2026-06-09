@@ -39,6 +39,8 @@ export const ui = {
 
     isKeyboardOpen: false,
 
+    isMainPageFocused: true,
+
     // Pending plugin to install (from file intent or URL)
     // { type: 'url', value: '...' } or { type: 'file', code: '...', filename: '...' }
     pendingPlugin: null,
@@ -128,6 +130,10 @@ export const ui = {
       state.pendingPlugin = plugin;
     },
 
+    SET_MAIN_PAGE_FOCUSED(state, active) {
+      state.isMainPageFocused = active;
+    },
+
     SET_SCREEN_SAFE_AREA(state, { top, bottom, left, right } = {}) {
       if (top !== undefined) state.screenSafeArea.top = top;
       if (bottom !== undefined) state.screenSafeArea.bottom = bottom;
@@ -156,6 +162,9 @@ export const ui = {
       commit('SET_PROGRESS', progress);
     },
     reloadWebView() {},
+    setMainPageFocused({ commit }, active) {
+      commit('SET_MAIN_PAGE_FOCUSED', active);
+    },
     setIitcLoaded({ commit }, status) {
       commit('SET_IITC_LOADED', status);
     },

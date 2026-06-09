@@ -27,9 +27,9 @@ import {
 import { injectCustomStyles, installFileChooserOverride } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
 import {
-  writePluginScriptFile,
   deletePluginScriptFile,
   writePluginsMarkerFile,
+  readPluginScriptCode,
   pluginScriptName,
   PLUGINS_MARKER_NAME,
   PLUGINS_READY_FLAG,
@@ -196,7 +196,7 @@ export default {
           `window.${PLUGINS_READY_FLAG} === true`
         );
         if (pluginsReady !== true) {
-          await this.$store.dispatch('manager/inject');
+          await this.injectEnabledPlugins();
         }
 
         this.lastInjectedUrl = urlWithoutHash;
@@ -247,7 +247,7 @@ export default {
     // Pre-register plugins as document-start scripts. On Android this requires
     // addDocumentStartJavaScript support; without it the x-local async fallback would arrive
     // after onLoadFinished and double-inject the non-idempotent IITC core.
-    async registerPluginScripts() {
+    registerPluginScripts() {
       const webview = this.webview;
       if (!webview) return;
       if (!isIOS) {
@@ -264,12 +264,27 @@ export default {
         }
       }
 
-      // manager/run and handlePluginEvent can overlap.
-      if (this.pluginRegistrationInProgress) {
+      // manager/run and handlePluginEvent can overlap; coalesce into one run.
+      if (this.pluginRegistrationPromise) {
         this.pluginRegistrationPending = true;
-        return;
+        return this.pluginRegistrationPromise;
       }
-      this.pluginRegistrationInProgress = true;
+      this.pluginRegistrationPromise = this._runPluginRegistration().finally(() => {
+        this.pluginRegistrationPromise = null;
+      });
+      return this.pluginRegistrationPromise;
+    },
+
+    async _runPluginRegistration() {
+      do {
+        this.pluginRegistrationPending = false;
+        await this._registerPluginScriptsOnce();
+      } while (this.pluginRegistrationPending);
+    },
+
+    async _registerPluginScriptsOnce() {
+      const webview = this.webview;
+      if (!webview) return;
 
       try {
         const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
@@ -283,8 +298,7 @@ export default {
           }
         }
 
-        for (const { uid, code } of scripts) {
-          const filePath = await writePluginScriptFile(uid, code);
+        for (const { uid, filePath } of scripts) {
           webview.removeAutoLoadJavaScriptFile(pluginScriptName(uid));
           await webview.autoLoadJavaScriptFile(pluginScriptName(uid), filePath);
         }
@@ -297,12 +311,6 @@ export default {
         this.registeredPluginUids = newUids;
       } catch (error) {
         console.error('[AppWebView] Failed to register plugin scripts:', error);
-      } finally {
-        this.pluginRegistrationInProgress = false;
-        if (this.pluginRegistrationPending) {
-          this.pluginRegistrationPending = false;
-          await this.registerPluginScripts();
-        }
       }
     },
 
@@ -321,22 +329,51 @@ export default {
       this.$refs.baseWebView.executeCommand(command);
     },
 
-    async injectPlugin(plugin) {
-      if (!this.webview || !plugin?.code) return;
-      try {
-        await this.webview.executeJavaScript(plugin.code, false);
-        console.log(`Plugin ${plugin.uid} loaded`);
-      } catch (error) {
-        console.error(`Plugin ${plugin.uid} injection failed:`, error);
+    async injectEnabledPlugins() {
+      const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
+      for (const script of scripts) {
+        await this.injectPlugin(script);
       }
+    },
+
+    async injectPlugin(plugin) {
+      if (!this.webview || !plugin?.filePath) return;
+      try {
+        const code = await readPluginScriptCode(plugin.filePath);
+        await this.webview.executeJavaScript(code, false);
+      } catch (error) {
+        console.error(`[AppWebView] Plugin ${plugin.uid} injection failed:`, error);
+      }
+    },
+
+    async performReload() {
+      const webview = this.webview;
+      if (!webview) return;
+      if (this.pluginRegistrationPromise) await this.pluginRegistrationPromise;
+      // Only re-register the dynamic script: static ones stay ordered before plugins.
+      await this.registerPreloadScripts(webview, { dynamicOnly: true });
+      await this.$refs.baseWebView.reload();
     },
   },
 
   created() {
     // Non-reactive: avoid Vue observing large plugin code strings.
     this.registeredPluginUids = [];
-    this.pluginRegistrationInProgress = false;
+    this.pluginRegistrationPromise = null;
     this.pluginRegistrationPending = false;
+    this.reloadPending = false;
+
+    this.mainPageActive_unwatch = this.$watch(
+      () => this.$store.state.ui.isMainPageFocused,
+      active => {
+        if (active && this.reloadPending) {
+          this.reloadPending = false;
+          this.performReload().catch(error => {
+            console.error('[AppWebView] Deferred reload failed:', error);
+          });
+        }
+      }
+    );
 
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
@@ -352,10 +389,10 @@ export default {
             if (action.payload) {
               this.pendingReloadUrl = addViewportParam(action.payload);
               webview.loadUrl('about:blank');
+            } else if (this.$store.state.ui.isMainPageFocused) {
+              await this.performReload();
             } else {
-              // Only re-register the dynamic script: static ones stay ordered before plugins.
-              await this.registerPreloadScripts(webview, { dynamicOnly: true });
-              await this.$refs.baseWebView.reload();
+              this.reloadPending = true;
             }
             break;
           case 'ui/iitcBootFinished': {
@@ -426,6 +463,7 @@ export default {
 
   beforeUnmount() {
     this.store_unsubscribe();
+    this.mainPageActive_unwatch?.();
   },
 };
 </script>
