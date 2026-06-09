@@ -12,6 +12,12 @@
 
 default_platform(:android)
 
+before_all do
+  # Work around a regression in Xcode 26's new altool upload path (error 259
+  # "incorrect format"). The legacy path does not have this bug.
+  ENV["DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS"] = "--use-old-altool"
+end
+
 platform :ios do
   desc "Upload beta build to TestFlight (master branch)"
   lane :deploy_testflight do

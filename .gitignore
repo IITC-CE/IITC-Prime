@@ -36,3 +36,4 @@ typings/
 
 package-lock.json
 .env
+Gemfile.lock
