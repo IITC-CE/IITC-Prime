@@ -223,6 +223,28 @@ export const manager = {
     },
 
     /**
+     * Build a backup zip (settings/data/external selected by params).
+     * Returns the temp file path and filename for sharing.
+     */
+    async exportBackup(_, params) {
+      return await managerService.exportBackup(params);
+    },
+
+    /**
+     * Inspect a backup zip and report which sections it contains.
+     */
+    async inspectBackup(_, path) {
+      return await managerService.inspectBackup(path);
+    },
+
+    /**
+     * Restore a backup zip into storage according to params.
+     */
+    async importBackup(_, { path, params }) {
+      return await managerService.importBackup(path, params);
+    },
+
+    /**
      * Handle plugin state changes from manager
      */
     async handlePluginEvent({ commit, dispatch }, event) {
