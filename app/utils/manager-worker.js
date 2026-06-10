@@ -19,9 +19,12 @@
  */
 
 import '@nativescript/core/globals';
+import '@/utils/worker-polyfills';
+import { knownFolders, path as fsPath, getFileAccess, isAndroid } from '@nativescript/core';
 import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
 import storage from '@/utils/storage';
 import { writePluginScriptFile } from '@/utils/plugin-scripts';
+import { createBackupZip, parseBackupZip, getBackupInfo, backupFilename } from '@/utils/backup';
 
 // Worker global scope (NativeScript exposes onmessage/postMessage on global).
 const ctx = global;
@@ -70,6 +73,7 @@ const getManager = () => {
         };
       `,
     },
+    appName: 'IITC Prime',
     message: (message, args) => {
       emitCallback('onMessage', [message, args]);
     },
@@ -96,6 +100,13 @@ const getManager = () => {
   });
 
   return manager;
+};
+
+// Reads a file as an ArrayBuffer for JSZip. Android's content:// read resolves
+// a native ByteBuffer rather than an ArrayBuffer, so normalize it.
+const readBackupBuffer = async path => {
+  const buffer = await getFileAccess().readBufferAsync(path);
+  return buffer instanceof ArrayBuffer ? buffer : ArrayBuffer.from(buffer);
 };
 
 const handlers = {
@@ -166,6 +177,53 @@ const handlers = {
 
   async addUserScripts(scripts) {
     return await getManager().addUserScripts(scripts);
+  },
+
+  /**
+   * Builds a backup zip and writes it to a temp file.
+   * Plugin code stays inside the worker; only the file path crosses back.
+   * @returns {Promise<{ path: string, filename: string }>}
+   */
+  async exportBackup(params) {
+    const backup = await getManager().getBackupData(params);
+    const base64 = await createBackupZip(backup);
+
+    const filename = backupFilename();
+    const filePath = fsPath.join(knownFolders.temp().path, filename);
+    const fileAccess = getFileAccess();
+
+    // The native file write needs a real byte[]/NSData, which we get by decoding
+    // base64. Handing it the zip as an ArrayBuffer instead would marshal to a
+    // DirectByteBuffer and crash the native byte[] write on Android.
+    if (isAndroid) {
+      const bytes = android.util.Base64.decode(base64, android.util.Base64.NO_WRAP);
+      await fileAccess.writeAsync(filePath, bytes);
+    } else {
+      const data = NSData.alloc().initWithBase64EncodedStringOptions(base64, 0);
+      await fileAccess.writeAsync(filePath, data);
+    }
+
+    return { path: filePath, filename };
+  },
+
+  /**
+   * Reads a backup zip and reports which sections it contains, so the UI can
+   * enable only the relevant import options.
+   * @returns {Promise<{ has_settings: boolean, has_data: boolean, has_external: boolean }>}
+   */
+  async inspectBackup(path) {
+    const backup = await parseBackupZip(await readBackupBuffer(path));
+    return getBackupInfo(backup);
+  },
+
+  /**
+   * Restores a backup zip into storage according to the given params.
+   * Plugin code is unpacked and applied entirely inside the worker.
+   */
+  async importBackup(path, params) {
+    const backup = await parseBackupZip(await readBackupBuffer(path));
+    await getManager().setBackupData(params, backup);
+    return { success: true };
   },
 };
 

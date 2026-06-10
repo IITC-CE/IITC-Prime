@@ -71,11 +71,18 @@
     <!-- Data Management section -->
     <SettingsSection title="Data management" />
     <SettingsItem
+      type="nav"
+      title="Backup &amp; Restore"
+      description="Export or import your data"
+      :targetScreen="backupScreen"
+      :isFirst="true"
+    />
+
+    <SettingsItem
       type="action"
       title="Clear cookies"
       description="Remove all stored cookies and session data"
       @action="clearCookies"
-      :isFirst="true"
       :isLast="true"
     />
 
@@ -110,6 +117,7 @@ import PluginsView from './PluginsView';
 import UpdateChannelView from './UpdateChannelView';
 import AboutView from './AboutView';
 import LicensesView from './LicensesView';
+import BackupView from './BackupView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
 import { confirm, alert } from '~/utils/dialogs';
 import { goBack } from '~/utils/platform';
@@ -129,6 +137,7 @@ export default {
       updateChannelScreen: UpdateChannelView,
       aboutScreen: AboutView,
       licensesScreen: LicensesView,
+      backupScreen: BackupView,
     };
   },
 

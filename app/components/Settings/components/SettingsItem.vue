@@ -3,13 +3,17 @@
 <template>
   <GridLayout
     class="list-item list-item--big"
-    :class="{ 'list-item--first': isFirst, 'list-item--last': isLast }"
+    :class="{ 'list-item--first': isFirst, 'list-item--last': isLast, 'list-item--spaced': spaced }"
     columns="*, 56"
     rows="auto"
     @tap="onTap"
   >
     <StackLayout class="stack" col="0" verticalAlignment="center">
-      <Label :text="title" class="settings-item-title" once="true" />
+      <Label
+        :text="title"
+        :class="['settings-item-title', { 'settings-item-title--bold': bold }]"
+        once="true"
+      />
       <Label
         v-if="description"
         :text="description"
@@ -98,6 +102,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    bold: {
+      type: Boolean,
+      default: false,
+    },
+    spaced: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   methods: {
@@ -138,6 +150,14 @@ export default {
   color: $on-surface;
   font-size: $font-size;
   font-weight: 500;
+}
+
+.settings-item-title--bold {
+  font-weight: 700;
+}
+
+.list-item--spaced {
+  margin-top: 12;
 }
 
 .settings-item-description {

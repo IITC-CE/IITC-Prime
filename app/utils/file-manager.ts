@@ -15,6 +15,7 @@ export interface FileInfo {
 export interface FileChooserParams {
   allowsMultipleSelection?: boolean;
   acceptTypes?: string[];
+  extensions?: string[];
 }
 
 export async function selectFiles(params: FileChooserParams): Promise<FileInfo[]> {
@@ -26,6 +27,10 @@ export async function selectFiles(params: FileChooserParams): Promise<FileInfo[]
 
     if (params.acceptTypes?.length && !params.acceptTypes.includes('*/*')) {
       options.mimeTypes = params.acceptTypes;
+    }
+
+    if (params.extensions?.length) {
+      options.extensions = params.extensions;
     }
 
     const result = await openFilePicker(options);
@@ -100,6 +105,21 @@ export async function shareFile(filename: string, content: string): Promise<void
     console.error('Share file error:', error);
     throw error;
   }
+}
+
+/**
+ * Opens the native share sheet for a file that already exists on disk.
+ * Unlike shareFile(), this does not write content - the file is produced
+ * elsewhere (e.g. the manager worker writing a backup zip).
+ */
+export async function shareFilePath(filePath: string, title?: string): Promise<void> {
+  const share = new ShareFile();
+  await share.open({
+    path: filePath,
+    title: title || 'Share file',
+    options: true,
+    animated: true,
+  });
 }
 
 function sanitizeFilename(filename: string): string {

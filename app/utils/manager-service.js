@@ -138,6 +138,20 @@ export class ManagerService {
     return this._call('addUserScripts', scripts);
   }
 
+  /** @returns {Promise<{ path: string, filename: string }>} */
+  async exportBackup(params) {
+    return this._call('exportBackup', params);
+  }
+
+  /** @returns {Promise<{ has_settings: boolean, has_data: boolean, has_external: boolean }>} */
+  async inspectBackup(path) {
+    return this._call('inspectBackup', path);
+  }
+
+  async importBackup(path, params) {
+    return this._call('importBackup', path, params);
+  }
+
   setCallbacks(callbacks) {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }

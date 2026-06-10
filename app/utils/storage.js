@@ -1,4 +1,4 @@
-// Copyright (C) 2021 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { ApplicationSettings } from '@nativescript/core';
 
@@ -14,7 +14,7 @@ export default {
 
     try {
       return JSON.parse(value);
-    } catch(e) {
+    } catch (e) {
       return value;
     }
   },
@@ -26,6 +26,9 @@ export default {
   },
 
   async get(keys) {
+    if (keys === null || keys === undefined) {
+      keys = ApplicationSettings.getAllKeys();
+    }
     keys = this._one_to_array(keys);
     if (Array.isArray(keys)) {
       const data = {};
@@ -38,13 +41,13 @@ export default {
     }
   },
   async set(obj) {
-    if (typeof obj === "object") {
+    if (typeof obj === 'object') {
       Object.entries(obj).forEach(entry => {
         const [key, value] = entry;
-        this._set_one(key, value)
+        this._set_one(key, value);
       });
     } else {
       console.error('Unexpected type of key when trying to set storage value: ' + typeof obj);
     }
-  }
-}
+  },
+};
