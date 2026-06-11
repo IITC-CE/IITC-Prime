@@ -142,6 +142,7 @@ export default {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
+          await this.$store.dispatch('navigation/resetPanes');
         }
 
         await this.$store.dispatch('ui/setWebviewLoaded', false);
