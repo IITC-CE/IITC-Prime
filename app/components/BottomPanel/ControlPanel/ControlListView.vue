@@ -244,7 +244,14 @@ export default {
     },
 
     onNavigationItemTap(paneName) {
-      this.switchToPane(paneName);
+      if (this.$store.getters['settings/isDesktopMode']) {
+        this.$store.dispatch(
+          'map/executeJavaScript',
+          `window.chat.chooseTab('${paneName}'); window.chat.toggle(); true`
+        );
+      } else {
+        this.switchToPane(paneName);
+      }
     },
 
     onBaseLayerSelected(args) {

@@ -191,7 +191,14 @@ export default {
         return;
       }
 
-      this.setCurrentPane('info');
+      if (this.$store.getters['settings/isDesktopMode']) {
+        this.$store.dispatch(
+          'map/executeJavaScript',
+          "document.getElementById('sidebartoggle').click(); true"
+        );
+      } else {
+        this.setCurrentPane('info');
+      }
     },
   },
 };
