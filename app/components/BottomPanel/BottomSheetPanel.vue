@@ -31,7 +31,7 @@
       </StackLayout>
 
       <!-- Control buttons -->
-      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto, auto">
+      <GridLayout row="1" class="panel-buttons" columns="auto, *, auto, auto, auto">
         <!-- Quick Access Button / Back Button -->
         <ControlButton
           col="0"
@@ -45,7 +45,7 @@
 
         <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
         <ControlButton
-          col="3"
+          col="2"
           :text="$filters.fonticon('fa-paste')"
           :visible="hasClipboardLink"
           @tap="onPasteClipboard"
@@ -53,7 +53,7 @@
 
         <!-- Location Button -->
         <ControlButton
-          col="4"
+          col="3"
           :text="$filters.fonticon(locationButtonIcon)"
           :visible="isIitcLoaded"
           @tap="onLocate"
@@ -61,7 +61,7 @@
 
         <!-- Layers Button -->
         <ControlButton
-          col="5"
+          col="4"
           :text="$filters.fonticon('fa-layer-group')"
           :visible="isIitcLoaded"
           :active="isPanelOpen && activeButton === 'layers'"
