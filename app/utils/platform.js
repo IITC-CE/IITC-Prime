@@ -623,10 +623,8 @@ export const readFileFromUri = uri => {
 export const getAppName = () => {
   try {
     if (isAndroid) {
-      const context = Application.android.context;
-      const appInfo = context.getApplicationInfo();
-      const packageManager = context.getPackageManager();
-      return appInfo.loadLabel(packageManager).toString();
+      const context = Utils.android.getApplicationContext();
+      return context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
     } else if (isIOS) {
       return (
         NSBundle.mainBundle.objectForInfoDictionaryKey('CFBundleDisplayName') ||

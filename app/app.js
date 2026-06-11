@@ -1,7 +1,7 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { createApp, registerElement } from 'nativescript-vue';
-import { Application, isAndroid } from '@nativescript/core';
+import { Application, Utils, isAndroid } from '@nativescript/core';
 
 import { FontIcon, fonticon } from '@nativescript-community/fonticon';
 import { BottomSheetPlugin } from '@nativescript-community/ui-material-bottomsheet/vue3';
@@ -48,7 +48,7 @@ registerElement('CheckBox', () => CheckBox, {
 if (isAndroid) {
   try {
     setAndroidDefaultUA(
-      android.webkit.WebSettings.getDefaultUserAgent(Application.android.context)
+      android.webkit.WebSettings.getDefaultUserAgent(Utils.android.getApplicationContext())
     );
   } catch (e) {
     console.error('Failed to read default WebView UA:', e);

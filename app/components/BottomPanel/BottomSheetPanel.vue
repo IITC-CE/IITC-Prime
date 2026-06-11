@@ -137,6 +137,7 @@ export default {
       removeLayoutListener: null,
       hasClipboardLink: false,
       _boundAndroidActivityResumedHandler: null,
+      appName: getAppName(),
       PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
@@ -174,7 +175,7 @@ export default {
      */
     panelTitle() {
       if (this.isMapPane) {
-        return getAppName();
+        return this.appName;
       }
 
       const pane = this.panes.find(p => p.name === this.currentPane);
