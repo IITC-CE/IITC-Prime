@@ -37,6 +37,7 @@ import {
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
+import { webviewService } from '@/utils/webview-service';
 
 import {
   changePortalHighlights,
@@ -214,6 +215,8 @@ export default {
     },
 
     async onWebViewLoaded({ webview }) {
+      webviewService.register(js => webview.executeJavaScript(js));
+
       if (isIOS) {
         // Prevent iOS from auto-shifting web content into safe area.
         // 2 = UIScrollViewContentInsetAdjustmentBehavior.never
@@ -466,6 +469,7 @@ export default {
   beforeUnmount() {
     this.store_unsubscribe();
     this.mainPageActive_unwatch?.();
+    webviewService.unregister();
   },
 };
 </script>

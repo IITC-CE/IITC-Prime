@@ -4,6 +4,7 @@ import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { managerService } from '@/utils/manager-service';
+import { webviewService } from '@/utils/webview-service';
 
 let pendingWebViewReload = null;
 
@@ -227,7 +228,18 @@ export const manager = {
      * Returns the temp file path and filename for sharing.
      */
     async exportBackup(_, params) {
-      return await managerService.exportBackup(params);
+      let webviewStorage = {};
+      if (params.data) {
+        try {
+          const json = await webviewService.evaluate(
+            '(function(){try{return JSON.stringify(Object.fromEntries(Object.entries(localStorage)))}catch(e){return "{}"}})()'
+          );
+          webviewStorage = JSON.parse(json || '{}');
+        } catch (e) {
+          // WebView not available - skip WebView localStorage
+        }
+      }
+      return await managerService.exportBackup({ ...params, webviewStorage });
     },
 
     /**
@@ -241,7 +253,20 @@ export const manager = {
      * Restore a backup zip into storage according to params.
      */
     async importBackup(_, { path, params }) {
-      return await managerService.importBackup(path, params);
+      const result = await managerService.importBackup(path, params);
+
+      if (result.webviewStorage && Object.keys(result.webviewStorage).length) {
+        try {
+          const entries = JSON.stringify(result.webviewStorage);
+          await webviewService.evaluate(
+            `(function(d){for(var k in d)localStorage.setItem(k,d[k])})(${entries})`
+          );
+        } catch (e) {
+          // WebView not available - skip WebView localStorage restore
+        }
+      }
+
+      return result;
     },
 
     /**

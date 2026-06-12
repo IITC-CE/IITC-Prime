@@ -105,7 +105,7 @@ export const getBackupInfo = backup => {
 
   return {
     has_settings: isNonEmptyObject(data.iitc_settings),
-    has_data: isNonEmptyObject(data.plugins_data),
+    has_data: isNonEmptyObject(data.plugins_data) || isNonEmptyObject(data.webview_storage),
     has_external: Object.keys(external).some(group => isNonEmptyObject(external[group])),
   };
 };
