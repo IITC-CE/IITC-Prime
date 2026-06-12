@@ -83,6 +83,8 @@ export default {
     BaseWebView,
   },
 
+  emits: ['console-log', 'webview-loaded'],
+
   data() {
     return {
       store_unsubscribe: () => {},

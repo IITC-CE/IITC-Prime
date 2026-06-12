@@ -78,11 +78,17 @@ export function initializeTracing() {
   Trace.addCategories(Trace.categories.Binding);
   Trace.addCategories(Trace.categories.BindingError);
 
+  const originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+    info: console.info,
+    debug: console.debug || console.log,
+  };
+
   // Create custom trace writer that will forward logs to our store
   const DebugConsoleTraceWriter = {
     write(message, category, type) {
-      // Original console logging to maintain visibility during development
-      const originalConsole = console;
       let logType = 'debug';
 
       switch (type) {
@@ -117,15 +123,6 @@ export function initializeTracing() {
         category: category,
       });
     },
-  };
-
-  // Store original console methods
-  const originalConsole = {
-    log: console.log,
-    warn: console.warn,
-    error: console.error,
-    info: console.info,
-    debug: console.debug || console.log,
   };
 
   // Override console methods using factory function

@@ -43,7 +43,7 @@ const convertDeepLinkToIntelUrl = url => {
     }
 
     if (url.startsWith('iitc://')) {
-      return new URL(url.replace('iitc://', INGRESS_INTEL_MAP)).toString();
+      return new URL(url.replace('iitc://intel', INGRESS_INTEL_MAP)).toString();
     }
   } catch {
     return null;

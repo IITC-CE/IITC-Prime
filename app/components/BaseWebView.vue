@@ -106,6 +106,10 @@ export default {
       // Setup console log event handlers
       this.setupDebugEventHandlers();
 
+      this.webViewInstance.off('JSBridge');
+      this.webViewInstance.off('gmBridgeRequest');
+      this.webViewInstance.off('popupNavigate');
+
       // Setup JSBridge event handler
       this.webViewInstance.on('JSBridge', msg => {
         this.$emit('bridge-message', msg.data);
@@ -131,12 +135,13 @@ export default {
     setupDebugEventHandlers() {
       if (!this.webViewInstance) return;
 
-      // iOS: JS-level bridge overrides console methods and emits this event
+      this.webViewInstance.off('console:log');
+      this.webViewInstance.off('webConsole');
+
       this.webViewInstance.on('console:log', event => {
         this.$emit('console-log', event.data);
       });
 
-      // Android: native onConsoleMessage callback — catches syntax errors that JS bridge can't
       this.webViewInstance.on('webConsole', event => {
         this.$emit('console-log', {
           type: event.data.level,
