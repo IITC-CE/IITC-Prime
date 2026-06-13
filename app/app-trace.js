@@ -9,7 +9,11 @@ import store from './store';
  */
 function isDeveloperOnlyLog(message) {
   return (
-    typeof message === 'string' && (message.startsWith('{NSVue') || message.startsWith('[WebView'))
+    typeof message === 'string' &&
+    (message.startsWith('{NSVue') ||
+      message.startsWith('[WebView') ||
+      // NativeScript default ConsoleTraceWriter pipes trace output as "Category: message"
+      /^(?:Debug|Info|Warning|Error): /.test(message))
   );
 }
 

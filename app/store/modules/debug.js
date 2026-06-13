@@ -7,7 +7,7 @@ export const debug = {
     commandHistory: [],     // Array of commands with newest at the end (index length-1)
     historyPosition: -1,    // -1 means "input mode", 0-N represent history positions
     tempCommand: "",        // Stores current input when navigating through history
-    maxLogEntries: 1000,
+    maxLogEntries: 100,
     maxHistoryEntries: 50
   }),
   mutations: {
