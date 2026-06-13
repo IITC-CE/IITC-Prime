@@ -2,7 +2,13 @@
 
 <template>
   <GridLayout columns="*, auto" class="list-item select-field" @tap="showSelectDialog">
-    <Label col="0" :text="selectedText" class="select-text" verticalAlignment="center" />
+    <Label
+      col="0"
+      :text="selectedText"
+      class="select-text"
+      verticalAlignment="center"
+      textWrap="true"
+    />
     <Label col="1" text="▼" class="select-icon" verticalAlignment="center" />
   </GridLayout>
 </template>
@@ -156,7 +162,7 @@ export default {
 @import '@/app';
 
 .select-field {
-  height: 52;
+  height: 56;
 }
 
 .select-field:active {
@@ -166,7 +172,6 @@ export default {
 .select-text {
   color: $on-surface;
   font-size: $font-size;
-  text-overflow: ellipsis;
 }
 
 .select-icon {
