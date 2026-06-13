@@ -95,8 +95,8 @@ export default {
 
 .app-version {
   font-size: $font-size;
-  color: $on-primary;
-  background-color: $primary-light;
+  color: $on-surface;
+  background-color: $accent;
   border-radius: $radius-large;
   padding: $spacing-s $spacing-m;
   margin-bottom: $spacing-l;

@@ -185,7 +185,7 @@ export default {
 }
 
 .divider-text {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin: 0 $spacing-m;
   height: 24;

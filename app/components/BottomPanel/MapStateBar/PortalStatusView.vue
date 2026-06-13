@@ -169,7 +169,7 @@ export default {
 
 .status-message {
   text-align: center;
-  color: $text;
+  color: $on-surface;
   font-style: italic;
 }
 
@@ -181,7 +181,7 @@ export default {
   height: 10;
   width: 100%;
   border-width: 1;
-  border-color: $primary-dark;
+  border-color: $accent;
   border-radius: 2;
   overflow: hidden;
 }
@@ -227,12 +227,12 @@ export default {
 }
 
 .health-percentage {
-  color: $text;
+  color: $on-surface;
   margin-right: $spacing-xs;
 }
 
 .portal-title {
-  color: $text;
+  color: $on-surface;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: bold;

@@ -1,4 +1,4 @@
-// Copyright (C) 20252-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <GridLayout rows="auto" columns="*, *, *" class="channel-selector">
@@ -63,8 +63,8 @@ export default {
   text-align: center;
 
   &.active {
-    background-color: $primary;
-    color: $on-primary;
+    background-color: $accent;
+    color: $on-surface;
   }
 }
 

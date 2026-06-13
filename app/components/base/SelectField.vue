@@ -173,6 +173,6 @@ export default {
   width: 24;
   font-size: 14;
   text-align: center;
-  color: $primary-light;
+  color: $accent;
 }
 </style>

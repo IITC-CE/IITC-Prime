@@ -423,7 +423,7 @@ export default {
 }
 
 .plugin-description {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
   height: 20;

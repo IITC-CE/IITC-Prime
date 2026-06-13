@@ -64,7 +64,7 @@ export default {
 }
 
 .interval-label {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   margin-bottom: 8;
   font-size: 14;
 }

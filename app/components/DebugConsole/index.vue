@@ -385,13 +385,13 @@ export default {
 @import '@/app';
 
 .debug-console {
-  background-color: $accent;
+  background-color: $surface;
   width: 100%;
   height: 100%;
 }
 
 .logs-list {
-  background-color: $accent;
+  background-color: $surface;
 }
 
 .log-item {

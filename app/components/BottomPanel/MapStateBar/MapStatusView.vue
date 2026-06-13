@@ -75,13 +75,13 @@ export default {
 }
 
 .portal-levels {
-  color: $text;
+  color: $on-surface;
   font-weight: bold;
   margin-top: 4;
   margin-bottom: 1;
 }
 
 .map-status-line {
-  color: $text;
+  color: $on-surface;
 }
 </style>

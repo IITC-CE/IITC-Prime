@@ -357,7 +357,7 @@ export default {
   width: 54;
   height: 54;
   border-radius: $radius-large;
-  background-color: $surface-bright;
+  background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
   ripple-color: $ripple;
   vertical-alignment: center;
@@ -365,11 +365,11 @@ export default {
 
 .btn-quick .btn-quick-icon {
   font-size: $font-size-headline;
-  color: $on-primary;
+  color: $on-surface;
 }
 
 .btn-quick .btn-quick-text {
-  color: $text;
+  color: $on-surface;
 }
 
 .icon {
@@ -385,8 +385,8 @@ export default {
 }
 
 .select-label {
-  font-size: $font-small-size;
-  color: $on-surface-dark;
+  font-size: $font-size-small;
+  color: $on-surface-variant;
 }
 
 .overlay-portal {
@@ -395,7 +395,7 @@ export default {
   vertical-align: middle;
 
   &--active {
-    background-color: $surface-bright;
+    background-color: $surface-container;
     box-shadow: 0 2 5 rgba(0, 0, 0, 0.1);
   }
 }

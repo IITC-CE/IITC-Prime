@@ -406,7 +406,7 @@ export default {
 }
 
 .loading-indicator {
-  color: $primary;
+  color: $accent;
   width: 40;
   height: 40;
   margin: 10 0;

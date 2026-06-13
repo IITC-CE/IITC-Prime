@@ -167,7 +167,7 @@ export default {
 }
 
 .send-button {
-  background-color: $primary;
+  background-color: $accent;
   color: white;
   margin-left: $spacing-s;
   font-size: 16;

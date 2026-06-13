@@ -547,9 +547,9 @@ export default {
 
 .panel-container {
   background-color: $surface;
-  color: $text;
+  color: $on-surface;
   border-radius: $radius-medium $radius-medium 0 0;
-  border-color: $primary;
+  border-color: $accent-border;
   border-top-width: 1;
 }
 
@@ -559,7 +559,7 @@ export default {
 }
 
 .panel-header-line {
-  background-color: $primary;
+  background-color: $accent-border;
   width: $spacing-xl;
   height: $spacing-xs;
   margin: 5 0;

@@ -274,13 +274,13 @@ export default {
 }
 
 .plugin-category {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }
 
 .sheet-loading {
-  color: $primary;
+  color: $accent;
   width: 40;
   height: 40;
   margin: $spacing-m auto;
@@ -314,7 +314,7 @@ export default {
 }
 
 .notice-text {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
 }
 
@@ -338,7 +338,7 @@ export default {
 }
 
 .detail-label {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   font-weight: 500;
   width: 60;
@@ -351,7 +351,7 @@ export default {
 }
 
 .btn-install {
-  background-color: $primary;
+  background-color: $accent;
   border-radius: $radius-small;
   margin: 0 0 $spacing-m 0;
   color: #ffffff;

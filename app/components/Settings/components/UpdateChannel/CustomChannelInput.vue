@@ -147,9 +147,9 @@ export default {
 
 .url-input-container {
   border-width: 1;
-  border-color: $surface-variant;
+  border-color: $surface;
   border-radius: 4;
-  background-color: $surface-bright;
+  background-color: $surface-container;
   margin-bottom: $spacing-s;
 }
 
@@ -188,7 +188,7 @@ export default {
 .examples-label {
   margin: 4 0;
   font-size: 14;
-  color: $on-surface-dark;
+  color: $on-surface-variant;
 }
 
 .examples-container {
@@ -196,7 +196,7 @@ export default {
 }
 
 .example-button {
-  background-color: $primary;
+  background-color: $accent;
   color: $on-surface;
   margin: 4;
   padding: 8;

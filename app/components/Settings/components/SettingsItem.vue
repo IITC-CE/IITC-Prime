@@ -161,13 +161,13 @@ export default {
 }
 
 .settings-item-description {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: 4;
 }
 
 .settings-nav-icon {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: 16;
   margin-right: 4;
   text-align: right;
@@ -175,7 +175,7 @@ export default {
 }
 
 .settings-value-text {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-right: 4;
   vertical-alignment: center;

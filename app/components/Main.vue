@@ -473,7 +473,7 @@ export default {
 @import '../app';
 
 .page {
-  background-color: $accent;
+  background-color: $surface;
 }
 
 .main-content {

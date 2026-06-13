@@ -310,7 +310,7 @@ export default {
 }
 
 .backup-indicator {
-  color: $primary;
+  color: $accent;
   width: 24;
   height: 24;
   margin-top: 16;

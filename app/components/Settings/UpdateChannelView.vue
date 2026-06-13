@@ -226,12 +226,12 @@ export default {
 
 .last-check-label {
   font-size: 14;
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   margin-bottom: 8;
 }
 
 .update-indicator {
-  color: $primary;
+  color: $accent;
   width: 24;
   height: 24;
   horizontal-align: center;

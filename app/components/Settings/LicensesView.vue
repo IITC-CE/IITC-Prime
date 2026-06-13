@@ -125,7 +125,7 @@ export default {
 }
 
 .license-url {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }
