@@ -504,10 +504,6 @@ export default {
   z-index: 100;
 }
 
-.map-state-bar-overlay {
-  z-index: 1000;
-}
-
 .restore-panel-button {
   horizontal-alignment: left;
   z-index: 1000;
