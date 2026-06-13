@@ -55,7 +55,8 @@
 
 <script>
 import { Screen } from '@nativescript/core';
-import { fixTextInputColors, goBack } from '@/utils/platform';
+import { fixTextInputColors } from '@/utils/platform/ui';
+import { goBack } from '@/utils/platform/navigation';
 
 const ANIMATION_DURATION = 300;
 

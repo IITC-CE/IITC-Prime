@@ -3,7 +3,7 @@
 import * as Clipboard from 'nativescript-clipboard';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { l } from '@nativescript-community/l';
-import { detectClipboardUrl, readClipboardText } from './platform';
+import { detectClipboardUrl, readClipboardText } from './platform/system';
 
 /**
  * General function to copy text to clipboard with toast notification

@@ -39,14 +39,12 @@
 <script>
 import { isIOS, isAndroid } from '@nativescript/core';
 import { markRaw } from 'vue';
+import { attachBackHandler, detachBackHandler, goBack } from '@/utils/platform/navigation';
 import {
-  attachBackHandler,
-  detachBackHandler,
-  goBack,
   parseAndroidInsets,
   getStatusBarHeight,
   getNavigationBarHeight,
-} from '@/utils/platform';
+} from '@/utils/platform/ui';
 import CustomActionBar from './components/CustomActionBar';
 
 export default {

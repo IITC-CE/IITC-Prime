@@ -37,7 +37,7 @@ import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import SettingsItem from './components/SettingsItem';
 import * as appVersion from '@nativescript/appversion';
-import { getAppName } from '~/utils/platform';
+import { getAppName } from '~/utils/platform/system';
 
 export default {
   name: 'AboutView',

@@ -56,7 +56,7 @@ import { reactive, markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { confirm } from '@/utils/dialogs';
-import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/plugin-installer';
+import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/manager/plugin-installer';
 import { readFileContent } from '@/utils/file-manager';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './components/AddPluginSheet';

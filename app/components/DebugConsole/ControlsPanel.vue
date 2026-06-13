@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { fixTextInputColors } from '@/utils/platform';
+import { fixTextInputColors } from '@/utils/platform/ui';
 
 export default {
   props: {

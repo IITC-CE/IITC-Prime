@@ -130,7 +130,7 @@
 import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
-import { enableListEdgeToEdge } from '@/utils/platform';
+import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 export default {
   name: 'PluginsList',

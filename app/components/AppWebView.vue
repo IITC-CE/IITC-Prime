@@ -25,7 +25,7 @@ import {
   router,
 } from '@/utils/bridge';
 import { injectCustomStyles } from '~/utils/iitc-prime-resources';
-import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
+import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/bridge/debug-bridge';
 import {
   deletePluginScriptFile,
   writePluginsMarkerFile,
@@ -33,11 +33,11 @@ import {
   pluginScriptName,
   PLUGINS_MARKER_NAME,
   PLUGINS_READY_FLAG,
-} from '@/utils/plugin-scripts';
+} from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
-import { webviewService } from '@/utils/webview-service';
+import { webviewService } from '@/utils/webview/webview-service';
 
 import {
   changePortalHighlights,
@@ -48,7 +48,7 @@ import {
   userLocationUpdate,
   userLocationOrientation,
   setSafeAreaInsets,
-} from '@/utils/events-to-iitc';
+} from '@/utils/bridge/events-to-iitc';
 
 // Scripts pre-registered to run at DOMContentLoaded on every navigation (iOS: WKUserScript
 // atDocumentEnd; Android: addDocumentStartJavaScript wrapped in a DOMContentLoaded guard).

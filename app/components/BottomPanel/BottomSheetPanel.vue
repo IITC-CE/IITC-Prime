@@ -83,7 +83,7 @@ import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/s
 import { Application, isIOS, isAndroid } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { layoutService } from '~/utils/layout-service';
-import { getAppName, readClipboardText } from '~/utils/platform';
+import { getAppName, readClipboardText } from '~/utils/platform/system';
 import { hasClipboardUrl } from '~/utils/clipboard';
 import { isSupportedDeepLinkUrl, processDeepLink } from '~/utils/deep-links';
 

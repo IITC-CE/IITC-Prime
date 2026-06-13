@@ -4,8 +4,8 @@ import {
   registerUniversalLinkCallback,
   getUniversalLink,
 } from '@nativescript-community/universal-links';
-import { INGRESS_INTEL_MAP } from './url-config';
-import { readFileFromUri } from './platform';
+import { INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { readFileFromUri } from '@/utils/platform/system';
 import store from '@/store';
 
 /**

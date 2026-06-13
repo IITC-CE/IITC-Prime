@@ -183,7 +183,7 @@
 <script>
 import SelectField from '@/components/base/SelectField.vue';
 import { $navigateTo } from 'nativescript-vue';
-import { disableListItemHighlight } from '@/utils/platform';
+import { disableListItemHighlight } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 

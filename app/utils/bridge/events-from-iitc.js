@@ -3,11 +3,11 @@
 import store from '@/store';
 import { ApplicationSettings } from '@nativescript/core';
 import { strToBase64 } from 'lib-iitc-manager';
-import { showLocationShareOptions } from './share';
+import { showLocationShareOptions } from '@/utils/share';
 import { shareFile } from '@/utils/file-manager';
 import { copyToClipboard } from '@/utils/clipboard';
-import { shareContent } from '~/utils/platform';
-import { mapIcon } from './pane-icon-compat';
+import { shareContent } from '~/utils/platform/system';
+import { mapIcon } from '@/utils/pane-icon-compat';
 
 /**
  * Handles request to share geographic position

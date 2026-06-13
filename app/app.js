@@ -22,7 +22,7 @@ import { initSentry, setupVueErrorHandler } from './sentry';
 import Main from '~/components/Main';
 import store from './store';
 import { initializeTracing } from './app-trace';
-import { getStatusBarHeight } from '@/utils/platform';
+import { getStatusBarHeight } from '@/utils/platform/ui';
 import { setAndroidDefaultUA } from '~/utils/webview/user-agent';
 
 // Initialize app logging

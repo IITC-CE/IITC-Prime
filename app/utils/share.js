@@ -2,7 +2,7 @@
 
 import { action } from '~/utils/dialogs';
 import { l } from '@nativescript-community/l';
-import { shareContent } from '~/utils/platform';
+import { shareContent } from '~/utils/platform/system';
 
 /**
  * Creates a link to open a specific portal in Ingress Prime.

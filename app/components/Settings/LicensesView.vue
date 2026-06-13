@@ -33,7 +33,7 @@
 import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
-import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform';
+import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform/ui';
 
 export default {
   name: 'LicensesView',

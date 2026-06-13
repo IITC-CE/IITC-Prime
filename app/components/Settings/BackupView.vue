@@ -115,7 +115,7 @@ import SettingsSection from './components/SettingsSection';
 import SettingsItem from './components/SettingsItem';
 import { selectFiles, shareFilePath } from '~/utils/file-manager';
 import { alert } from '~/utils/dialogs';
-import { goBack } from '~/utils/platform';
+import { goBack } from '~/utils/platform/navigation';
 
 export default {
   name: 'BackupView',

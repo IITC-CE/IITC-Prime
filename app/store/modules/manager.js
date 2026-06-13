@@ -4,8 +4,8 @@ import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { l } from '@nativescript-community/l';
-import { managerService } from '@/utils/manager-service';
-import { webviewService } from '@/utils/webview-service';
+import { managerService } from '@/utils/manager/manager-service';
+import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
 

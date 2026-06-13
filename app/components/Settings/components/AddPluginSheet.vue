@@ -60,7 +60,7 @@ import {
   fixTextInputColors,
   getBottomSheetInsetRefs,
   applyBottomSheetInsets,
-} from '@/utils/platform';
+} from '@/utils/platform/ui';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
 

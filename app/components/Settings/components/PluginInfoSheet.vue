@@ -129,7 +129,8 @@
 
 <script>
 import { Utils } from '@nativescript/core';
-import { shareContent, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
+import { shareContent } from '@/utils/platform/system';
+import { getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform/ui';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
 import AsyncRasterIcon from './plugins/AsyncRasterIcon.vue';
 

@@ -120,7 +120,7 @@ import LicensesView from './LicensesView';
 import BackupView from './BackupView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
 import { confirm, alert } from '~/utils/dialogs';
-import { goBack } from '~/utils/platform';
+import { goBack } from '~/utils/platform/navigation';
 
 export default {
   name: 'SettingsView',

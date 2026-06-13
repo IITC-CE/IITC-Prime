@@ -19,11 +19,11 @@
  */
 
 import '@nativescript/core/globals';
-import '@/utils/worker-polyfills';
+import './worker-polyfills';
 import { knownFolders, path as fsPath, getFileAccess, isAndroid } from '@nativescript/core';
 import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
 import storage from '@/utils/storage';
-import { writePluginScriptFile } from '@/utils/plugin-scripts';
+import { writePluginScriptFile } from './plugin-scripts';
 import { createBackupZip, parseBackupZip, getBackupInfo, backupFilename } from '@/utils/backup';
 
 // Worker global scope (NativeScript exposes onmessage/postMessage on global).

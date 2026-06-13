@@ -90,7 +90,7 @@ import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
-import { parseAndroidInsets } from '@/utils/platform';
+import { parseAndroidInsets } from '@/utils/platform/ui';
 
 import { $navigateTo } from 'nativescript-vue';
 import AppWebView from './AppWebView';
