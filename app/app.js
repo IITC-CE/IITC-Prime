@@ -4,6 +4,7 @@ import { createApp, registerElement } from 'nativescript-vue';
 import { Application, Utils, isAndroid } from '@nativescript/core';
 
 import { FontIcon, fonticon } from '@nativescript-community/fonticon';
+import { l, loadLocaleJSON } from '@nativescript-community/l';
 import { BottomSheetPlugin } from '@nativescript-community/ui-material-bottomsheet/vue3';
 import { install as installBottomSheet } from '@nativescript-community/ui-material-bottomsheet';
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
@@ -27,6 +28,8 @@ import { setAndroidDefaultUA } from '~/utils/webview/user-agent';
 // Initialize app logging
 initializeTracing();
 initSentry();
+
+loadLocaleJSON(require('./i18n/en.default.json'));
 
 // Install BottomSheet plugins
 installBottomSheet();
@@ -75,6 +78,7 @@ setupVueErrorHandler(app);
 app.config.globalProperties.$filters = {
   fonticon: fonticon,
 };
+app.config.globalProperties.$L = l;
 
 app.use(store);
 app.use(WebViewX);

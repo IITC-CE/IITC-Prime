@@ -2,6 +2,7 @@
 
 import * as Clipboard from 'nativescript-clipboard';
 import { Toasty } from '@triniwiz/nativescript-toasty';
+import { l } from '@nativescript-community/l';
 import { detectClipboardUrl, readClipboardText } from './platform';
 
 /**
@@ -19,7 +20,7 @@ export const copyToClipboard = async (text: string, toastMessage?: string): Prom
   } catch (error) {
     console.error('Error copying to clipboard:', error);
     if (toastMessage) {
-      const toast = new Toasty({ text: 'Failed to copy to clipboard' });
+      const toast = new Toasty({ text: l('clipboard.copy_failed') });
       toast.show();
     }
   }

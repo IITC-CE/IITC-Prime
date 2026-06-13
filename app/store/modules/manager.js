@@ -3,13 +3,14 @@
 import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { validateCustomChannelUrl } from 'lib-iitc-manager';
+import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager-service';
 import { webviewService } from '@/utils/webview-service';
 
 let pendingWebViewReload = null;
 
 const MESSAGES = {
-  serverNotAvailableRetry: args => `Server is not available. Retry after ${args} seconds`,
+  serverNotAvailableRetry: args => l('manager.server_not_available', args),
 };
 
 function showManagerMessage(message, args) {

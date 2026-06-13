@@ -12,7 +12,7 @@
           ref="searchField"
           col="1"
           class="search-input"
-          :hint="searchHint"
+          :hint="searchHint || $L('search.hint')"
           :text="searchText"
           @textChange="$emit('update:searchText', $event.value)"
           @loaded="fixTextInputColors"
@@ -77,7 +77,7 @@ export default {
     },
     searchHint: {
       type: String,
-      default: 'Search...',
+      default: null,
     },
   },
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <StackLayout class="custom-url-container">
@@ -7,7 +7,7 @@
         col="0"
         class="url-input"
         v-model="url"
-        hint="Enter custom channel URL"
+        :hint="$L('custom_channel.hint')"
         returnKeyType="done"
       />
       <Label
@@ -18,7 +18,7 @@
       />
     </GridLayout>
 
-    <Label text="Examples:" class="examples-label" once="true" />
+    <Label :text="$L('custom_channel.examples')" class="examples-label" once="true" />
     <WrapLayout class="examples-container">
       <MDButton
         text="localhost:8000"
@@ -44,14 +44,14 @@ export default {
   name: 'CustomChannelInput',
 
   components: {
-    MDButton
+    MDButton,
   },
 
   props: {
     customUrl: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
 
   data() {
@@ -73,15 +73,15 @@ export default {
       return {
         'status-success': this.urlStatus === 'success',
         'status-error': this.urlStatus === 'error',
-        'status-unknown': this.urlStatus === 'unknown'
+        'status-unknown': this.urlStatus === 'unknown',
       };
-    }
+    },
   },
 
   watch: {
     url(newValue) {
       this.checkCustomUrl();
-    }
+    },
   },
 
   methods: {
@@ -128,13 +128,13 @@ export default {
      */
     setExampleUrl(url) {
       this.url = url;
-    }
+    },
   },
 
   mounted() {
     // Check URL status on mount
     this.checkCustomUrl();
-  }
+  },
 };
 </script>
 

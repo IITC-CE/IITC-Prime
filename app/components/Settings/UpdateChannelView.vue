@@ -1,10 +1,10 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Update Channel">
+  <SettingsBase :title="$L('update_channel.title')">
     <template #headerRight>
       <Label
-        text="Update now"
+        :text="$L('update_channel.update_now')"
         @tap="runForceUpdate"
         :isEnabled="!isUpdating"
         class="header-action"
@@ -12,14 +12,14 @@
     </template>
 
     <!-- Channel selection -->
-    <SettingsSection title="Channel" />
-    <UpdateChannelSelector
-      :currentChannel="currentChannel"
-      @channelSelected="selectChannel"
-    />
+    <SettingsSection :title="$L('update_channel.section.channel')" />
+    <UpdateChannelSelector :currentChannel="currentChannel" @channelSelected="selectChannel" />
 
     <!-- Custom Channel URL -->
-    <SettingsSection title="Custom URL" v-show="currentChannel === 'custom'" />
+    <SettingsSection
+      :title="$L('update_channel.section.custom_url')"
+      v-show="currentChannel === 'custom'"
+    />
     <CustomChannelInput
       v-show="currentChannel === 'custom'"
       :customUrl="customUrl"
@@ -27,7 +27,7 @@
     />
 
     <!-- Update frequency -->
-    <SettingsSection title="Update frequency" />
+    <SettingsSection :title="$L('update_channel.section.frequency')" />
     <UpdateIntervalSelector
       :currentChannel="currentChannel"
       :selectedInterval="selectedIntervalValue"
@@ -44,7 +44,7 @@
     <StackLayout class="update-status">
       <Label
         v-if="formattedLastCheckTime"
-        :text="`Last check: ${formattedLastCheckTime}`"
+        :text="$L('update_channel.last_check', formattedLastCheckTime)"
         class="last-check-label"
       />
       <ActivityIndicator v-if="isUpdating" busy="true" class="update-indicator" />
@@ -54,7 +54,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import {markRaw} from "vue";
+import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
@@ -79,7 +79,7 @@ export default {
       selectedIntervalValue: '86400',
       externalIntervalValue: '86400',
       isUpdating: false,
-      lastCheckTime: null
+      lastCheckTime: null,
     };
   },
 
@@ -96,7 +96,7 @@ export default {
 
       const date = new Date(this.lastCheckTime);
       return date.toLocaleString();
-    }
+    },
   },
 
   methods: {
@@ -107,7 +107,7 @@ export default {
       'setUpdateInterval',
       'loadCustomChannelUrl',
       'setCustomChannelUrl',
-      'forceUpdate'
+      'forceUpdate',
     ]),
 
     /**
@@ -151,7 +151,7 @@ export default {
 
       await this.setUpdateInterval({
         interval: Number(interval),
-        channel: this.currentChannel
+        channel: this.currentChannel,
       });
     },
 
@@ -162,7 +162,7 @@ export default {
       this.externalIntervalValue = interval;
       await this.setUpdateInterval({
         interval: Number(interval),
-        channel: 'external'
+        channel: 'external',
       });
     },
 
@@ -184,7 +184,7 @@ export default {
      * Run force update
      */
     async runForceUpdate() {
-      console.log("runForceUpdate called in UpdateChannelView");
+      console.log('runForceUpdate called in UpdateChannelView');
       this.isUpdating = true;
 
       try {
@@ -195,7 +195,7 @@ export default {
       } finally {
         this.isUpdating = false;
       }
-    }
+    },
   },
 
   async mounted() {
@@ -212,7 +212,7 @@ export default {
     if (this.currentChannel === 'custom') {
       await this.loadCustomUrl();
     }
-  }
+  },
 };
 </script>
 

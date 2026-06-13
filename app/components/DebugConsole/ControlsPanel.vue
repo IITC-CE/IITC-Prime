@@ -27,7 +27,7 @@
         v-model="commandText"
         @returnPress="executeCommand"
         @loaded="fixTextInputColors"
-        hint="Enter JavaScript command..."
+        :hint="$L('debug.command_hint')"
         autocorrect="false"
         maxLines="10"
       />

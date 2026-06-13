@@ -10,13 +10,13 @@
     :paddingBottom="insetBottom"
   >
     <FlexboxLayout class="sheet-content">
-      <Label text="Add Plugin" class="sheet-title" />
+      <Label :text="$L('add_plugin.title')" class="sheet-title" />
 
       <!-- URL input -->
       <TextField
         ref="urlField"
         class="text-input url-field"
-        hint="https://example.com/plugin.user.js"
+        :hint="$L('add_plugin.url_hint')"
         v-model="pluginUrl"
         autocorrect="false"
         autocapitalizationType="none"
@@ -29,7 +29,7 @@
       <!-- Load button -->
       <MDButton
         class="btn-primary btn-load"
-        text="Load from URL"
+        :text="$L('add_plugin.load_url')"
         :isEnabled="!!pluginUrl.trim()"
         @loaded="onLoadButtonLoaded"
         @tap="loadPlugin"
@@ -38,11 +38,15 @@
       <!-- Divider -->
       <FlexboxLayout class="divider-row" clipToBounds="true">
         <StackLayout class="divider-line" />
-        <Label text="or" :class="['divider-text', { android: isAndroid }]" />
+        <Label :text="$L('add_plugin.or')" :class="['divider-text', { android: isAndroid }]" />
         <StackLayout class="divider-line" />
       </FlexboxLayout>
       <!-- Choose file -->
-      <MDButton class="btn-primary btn-file" text="Choose from files" @tap="chooseFile" />
+      <MDButton
+        class="btn-primary btn-file"
+        :text="$L('add_plugin.choose_file')"
+        @tap="chooseFile"
+      />
 
       <!-- Error message -->
       <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
@@ -52,7 +56,11 @@
 
 <script>
 import { isAndroid, isIOS } from '@nativescript/core';
-import { fixTextInputColors, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
+import {
+  fixTextInputColors,
+  getBottomSheetInsetRefs,
+  applyBottomSheetInsets,
+} from '@/utils/platform';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
 
@@ -117,7 +125,7 @@ export default {
         this.$closeBottomSheet({ type: 'file', path: files[0].path });
       } catch (error) {
         console.error('Failed to choose file:', error);
-        this.errorMessage = error.message || 'Unknown error occurred';
+        this.errorMessage = error.message || this.$L('add_plugin.unknown_error');
       }
     },
   },

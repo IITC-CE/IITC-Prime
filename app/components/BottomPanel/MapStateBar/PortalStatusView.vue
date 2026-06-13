@@ -93,12 +93,12 @@ export default {
 
     statusMessage() {
       if (!this.isWebviewLoaded) {
-        return 'Loading...';
+        return this.$L('portal_status.loading');
       }
       if (!this.isIitcLoaded) {
-        return 'Sign in required';
+        return this.$L('portal_status.sign_in_required');
       }
-      return 'No portal selected';
+      return this.$L('portal_status.no_portal_selected');
     },
 
     // Prepare array of 8 resonators
@@ -199,10 +199,18 @@ export default {
   border-radius: 2;
   margin-right: $spacing-xs;
 
-  &--enlightened { background-color: $team-enlightened; }
-  &--resistance  { background-color: $team-resistance; }
-  &--machina     { background-color: $team-machina; }
-  &--neutral     { background-color: $team-neutral; }
+  &--enlightened {
+    background-color: $team-enlightened;
+  }
+  &--resistance {
+    background-color: $team-resistance;
+  }
+  &--machina {
+    background-color: $team-machina;
+  }
+  &--neutral {
+    background-color: $team-neutral;
+  }
 }
 
 .portal-info {

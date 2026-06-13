@@ -1,7 +1,7 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Open Source Licenses" use-scroll="false" v-slot="{ bottomPadding }">
+  <SettingsBase :title="$L('licenses.title')" use-scroll="false" v-slot="{ bottomPadding }">
     <GridLayout rows="*" class="licenses-list-container">
       <ListView
         row="0"

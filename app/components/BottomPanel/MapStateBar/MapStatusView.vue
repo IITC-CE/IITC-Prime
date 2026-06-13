@@ -1,19 +1,12 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout
-    class="map-status-view"
-    horizontalAlignment="right">
-
+  <StackLayout class="map-status-view" horizontalAlignment="right">
     <!-- Portal levels info -->
-    <HTMLLabel
-      class="portal-levels"
-      :html="portalLevelsText" />
+    <HTMLLabel class="portal-levels" :html="portalLevelsText" />
 
     <!-- Map status and requests info -->
-    <HTMLLabel
-      class="map-status-line"
-      :html="fullMapStatusText" />
+    <HTMLLabel class="map-status-line" :html="fullMapStatusText" />
   </StackLayout>
 </template>
 
@@ -23,24 +16,19 @@ export default {
   props: {
     mapStatus: {
       type: Object,
-      required: true
-    }
-  },
-  data() {
-    return {
-      text_loading: 'Loading...',
-    };
+      required: true,
+    },
   },
   computed: {
     // Portal levels display text
     portalLevelsText() {
       const portalLevels = this.mapStatus?.portalLevels;
-      if (!portalLevels) return this.text_loading;
+      if (!portalLevels) return this.$L('common.loading');
 
       if (portalLevels.hasPortals) {
-        return 'portals';
+        return this.$L('map_status.portals');
       } else {
-        let content = 'all links';
+        let content = this.$L('map_status.all_links');
         if (portalLevels.minLinkLength > 0) {
           content = `>${portalLevels.formattedLength}`;
         }
@@ -51,9 +39,9 @@ export default {
     // Generate HTML-formatted status text
     fullMapStatusText() {
       const status = this.mapStatus?.mapStatus;
-      if (!status) return this.text_loading;
+      if (!status) return this.$L('common.loading');
 
-      let result = `${status.short || this.text_loading}`;
+      let result = `${status.short || this.$L('common.loading')}`;
 
       // Add progress if available
       if (status.progressPercent !== null) {
@@ -73,9 +61,9 @@ export default {
       }
 
       return result;
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped lang="scss">

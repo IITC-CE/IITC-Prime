@@ -1,6 +1,7 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { Application, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
+import { l } from '@nativescript-community/l';
 import { INGRESS_INTEL_MAP } from './url-config';
 
 // Back-press handler registered by attachBackHandler; null when no screen is active
@@ -107,11 +108,11 @@ export const shareContent = (content, contentType, title = '') => {
       // Show app chooser dialog
       const chooserTitle =
         {
-          geo: 'Open in maps',
-          url: 'Open URL',
-          text: 'Share text',
-          prime: 'Open in Ingress Prime',
-        }[contentType] || 'Share via';
+          geo: l('share.action.maps'),
+          url: l('share.chooser.open_url'),
+          text: l('share.chooser.share_text'),
+          prime: l('share.action.ingress_prime'),
+        }[contentType] || l('share.chooser.fallback');
 
       const chooser = android.content.Intent.createChooser(intent, chooserTitle);
       activity.startActivity(chooser);

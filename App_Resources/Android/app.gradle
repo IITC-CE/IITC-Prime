@@ -78,6 +78,12 @@ android {
     includeInApk = false
   }
 
+  bundle {
+    language {
+      enableSplit = false
+    }
+  }
+
   sourceSets {
     main {
       res.srcDirs += "src/${buildTypeFromEnv}/res"

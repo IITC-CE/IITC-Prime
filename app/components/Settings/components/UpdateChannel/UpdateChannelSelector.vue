@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 20252-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <GridLayout rows="auto" columns="*, *, *" class="channel-selector">
@@ -8,7 +8,7 @@
       :class="{ active: currentChannel === 'release' }"
       @tap="$emit('channelSelected', 'release')"
     >
-      <Label text="Release" once="true" class="channel-button-text" />
+      <Label :text="$L('update_channel.release')" once="true" class="channel-button-text" />
     </MDRipple>
     <MDRipple
       col="1"
@@ -16,7 +16,7 @@
       :class="{ active: currentChannel === 'beta' }"
       @tap="$emit('channelSelected', 'beta')"
     >
-      <Label text="Beta" once="true" class="channel-button-text" />
+      <Label :text="$L('update_channel.beta')" once="true" class="channel-button-text" />
     </MDRipple>
     <MDRipple
       col="2"
@@ -24,7 +24,7 @@
       :class="{ active: currentChannel === 'custom' }"
       @tap="$emit('channelSelected', 'custom')"
     >
-      <Label text="Custom" once="true" class="channel-button-text" />
+      <Label :text="$L('update_channel.custom')" once="true" class="channel-button-text" />
     </MDRipple>
   </GridLayout>
 </template>
@@ -36,15 +36,15 @@ export default {
   name: 'UpdateChannelSelector',
 
   components: {
-    MDButton
+    MDButton,
   },
 
   props: {
     currentChannel: {
       type: String,
-      required: true
-    }
-  }
+      required: true,
+    },
+  },
 };
 </script>
 

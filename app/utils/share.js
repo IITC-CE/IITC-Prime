@@ -1,6 +1,7 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { action } from '~/utils/dialogs';
+import { l } from '@nativescript-community/l';
 import { shareContent } from '~/utils/platform';
 
 /**
@@ -57,15 +58,15 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
   try {
     // Prepare options for the dialog
     const options = {
-      title: 'Share Location',
-      message: 'Choose how to share',
-      cancelButtonText: 'Cancel',
-      actions: ['Share as text', 'Open in maps', 'Share link'],
+      title: l('share.title'),
+      message: l('share.message'),
+      cancelButtonText: l('dialog.cancel'),
+      actions: [l('share.action.text'), l('share.action.maps'), l('share.action.link')],
     };
 
     // Add Ingress Prime option if it's a portal or has guid
     if (isPortal || guid) {
-      options.actions.push('Open in Ingress Prime');
+      options.actions.push(l('share.action.ingress_prime'));
     }
 
     // Show dialog with options
