@@ -570,7 +570,7 @@ export default {
 .panel-buttons {
   height: 42;
   min-height: 42;
-  margin: $spacing-panel;
+  margin: calc($spacing-panel - 5);
   margin-top: 0;
   margin-bottom: 8;
   background-color: $surface;

@@ -349,8 +349,8 @@ export default {
 @import '@/app';
 
 .list-view {
-  margin-left: $spacing-m;
-  margin-right: $spacing-m;
+  margin-left: $spacing-panel;
+  margin-right: $spacing-panel;
 }
 
 .block {
