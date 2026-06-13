@@ -15,28 +15,28 @@
     </template>
 
     <template #action-buttons-group="{ item }">
-      <GridLayout columns="*, *, *, *" class="block action-buttons-block">
-        <StackLayout
+      <GridLayout columns="*, 8, *, 8, *, 8, *" class="block action-buttons-block">
+        <MDRipple
           v-for="(button, index) in item.buttons"
           :key="button.id"
-          :col="index"
+          :col="index * 2"
           class="btn-quick"
           @tap="onActionButtonTap(button.id)"
         >
-          <MDRipple class="btn-quick-btn-icon">
+          <StackLayout>
             <Label
               class="fa btn-quick-icon"
               :text="$filters.fonticon(button.icon)"
               horizontalAlignment="center"
             />
-          </MDRipple>
-          <Label
-            class="btn-quick-text"
-            :text="button.text"
-            horizontalAlignment="center"
-            textWrap="true"
-          />
-        </StackLayout>
+            <Label
+              class="btn-quick-text"
+              :text="button.text"
+              horizontalAlignment="center"
+              textWrap="true"
+            />
+          </StackLayout>
+        </MDRipple>
       </GridLayout>
     </template>
 
@@ -366,29 +366,24 @@ export default {
 }
 
 .btn-quick {
-  font-size: $font-size;
-  text-align: center;
-  padding: 0 $spacing-s;
-}
-
-.btn-quick .btn-quick-btn-icon {
-  margin: 0 0 $spacing-xs 0;
-  width: 54;
-  height: 54;
+  padding: $spacing-s $spacing-xs;
   border-radius: $radius-large;
   background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
   ripple-color: $ripple;
-  vertical-alignment: center;
 }
 
-.btn-quick .btn-quick-icon {
+.btn-quick-icon {
   font-size: $font-size-headline;
   color: $on-surface;
+  text-align: center;
+  margin-bottom: $spacing-xs;
 }
 
-.btn-quick .btn-quick-text {
+.btn-quick-text {
+  font-size: $font-size-small;
   color: $on-surface;
+  text-align: center;
 }
 
 .icon {

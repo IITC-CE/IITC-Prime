@@ -159,7 +159,7 @@
   "nav.settings": "Settings",
   "nav.plugins": "Plugins",
   "nav.debug": "Debug",
-  "nav.reload_iitc": "Reload IITC",
+  "nav.reload_iitc": "Reload",
 
   "layers.highlighter": "Highlighter",
   "layers.base_layer": "Base layer",
