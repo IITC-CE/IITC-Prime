@@ -1,48 +1,61 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout rows="auto" columns="*, *, *" class="channel-selector">
+  <StackLayout class="channel-selector">
     <MDRipple
-      col="0"
-      class="list-item list-item--top-left list-item--bottom-left channel-button"
-      :class="{ active: currentChannel === 'release' }"
-      @tap="$emit('channelSelected', 'release')"
+      v-for="option in channelOptions"
+      :key="option.id"
+      class="channel-card"
+      :class="{ 'channel-card--active': currentChannel === option.id }"
+      @tap="$emit('channelSelected', option.id)"
     >
-      <Label :text="$L('update_channel.release')" once="true" class="channel-button-text" />
+      <GridLayout columns="auto, *">
+        <GridLayout
+          col="0"
+          class="radio-circle"
+          :class="{ 'radio-circle--active': currentChannel === option.id }"
+        >
+          <StackLayout v-if="currentChannel === option.id" class="radio-dot" />
+        </GridLayout>
+        <StackLayout col="1">
+          <Label :text="option.title" class="channel-title" />
+          <Label :text="option.subtitle" class="channel-subtitle" textWrap="true" />
+        </StackLayout>
+      </GridLayout>
     </MDRipple>
-    <MDRipple
-      col="1"
-      class="list-item channel-button"
-      :class="{ active: currentChannel === 'beta' }"
-      @tap="$emit('channelSelected', 'beta')"
-    >
-      <Label :text="$L('update_channel.beta')" once="true" class="channel-button-text" />
-    </MDRipple>
-    <MDRipple
-      col="2"
-      class="list-item list-item--top-right list-item--bottom-right channel-button"
-      :class="{ active: currentChannel === 'custom' }"
-      @tap="$emit('channelSelected', 'custom')"
-    >
-      <Label :text="$L('update_channel.custom')" once="true" class="channel-button-text" />
-    </MDRipple>
-  </GridLayout>
+  </StackLayout>
 </template>
 
 <script>
-import { MDButton } from '@nativescript-community/ui-material-button';
-
 export default {
   name: 'UpdateChannelSelector',
-
-  components: {
-    MDButton,
-  },
 
   props: {
     currentChannel: {
       type: String,
       required: true,
+    },
+  },
+
+  computed: {
+    channelOptions() {
+      return [
+        {
+          id: 'release',
+          title: this.$L('update_channel.release'),
+          subtitle: this.$L('update_channel.release_sub'),
+        },
+        {
+          id: 'beta',
+          title: this.$L('update_channel.beta'),
+          subtitle: this.$L('update_channel.beta_sub'),
+        },
+        {
+          id: 'custom',
+          title: this.$L('update_channel.custom'),
+          subtitle: this.$L('update_channel.custom_sub'),
+        },
+      ];
     },
   },
 };
@@ -55,21 +68,55 @@ export default {
   padding-bottom: $spacing-m;
 }
 
-.channel-button {
-  margin: 0;
-  background-color: $elevation-level1;
-  color: $on-surface;
-  vertical-align: center;
-  text-align: center;
+.channel-card {
+  border-radius: $radius-large;
+  border-width: 1;
+  border-color: transparent;
+  background-color: $surface-container;
+  padding: $spacing-m;
+  margin-bottom: $spacing-s;
+  ripple-color: $ripple;
 
-  &.active {
-    background-color: $accent;
-    color: $on-surface;
+  &--active {
+    background-color: $accent-container;
+    border-color: $accent-border;
   }
 }
 
-.channel-button-text {
-  text-transform: uppercase;
-  padding-bottom: 4;
+.radio-circle {
+  width: 20;
+  height: 20;
+  border-radius: 10;
+  border-width: 1.5;
+  border-color: $on-surface-variant;
+  vertical-alignment: center;
+  margin-right: $spacing-m;
+
+  &--active {
+    background-color: $accent;
+    border-color: $accent;
+  }
+}
+
+.radio-dot {
+  width: 7;
+  height: 7;
+  border-radius: 4;
+  background-color: $surface;
+  horizontal-alignment: center;
+  vertical-alignment: center;
+}
+
+.channel-title {
+  font-size: $font-size-title;
+  font-weight: bold;
+  color: $on-surface;
+  vertical-alignment: center;
+}
+
+.channel-subtitle {
+  font-size: $font-size-small;
+  color: $on-surface-variant;
+  margin-top: $spacing-xxs;
 }
 </style>

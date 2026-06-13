@@ -133,18 +133,17 @@ export const manager = {
     /**
      * Set update channel
      */
-    async setUpdateChannel({ commit }, channel) {
-      // Optimistic UI update
+    async setUpdateChannel({ commit, state }, channel) {
       commit('SET_CURRENT_CHANNEL', channel);
 
       try {
-        const data = await managerService.setUpdateChannel(channel);
-        commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        return data;
+        return await managerService.setUpdateChannel(channel);
       } catch (error) {
-        // Revert on error
-        const currentData = await managerService.getUpdateChannel();
-        commit('SET_CURRENT_CHANNEL', currentData);
+        // Only revert if a newer selection hasn't already changed the channel
+        if (state.currentChannel === channel) {
+          const currentData = await managerService.getUpdateChannel();
+          commit('SET_CURRENT_CHANNEL', currentData);
+        }
         throw error;
       }
     },
@@ -154,6 +153,13 @@ export const manager = {
      */
     async getUpdateInterval(_, channel) {
       return await managerService.getUpdateInterval(channel);
+    },
+
+    /**
+     * Get last check timestamp (seconds) from storage
+     */
+    async getLastCheckTime() {
+      return await managerService.getLastCheckTime();
     },
 
     /**

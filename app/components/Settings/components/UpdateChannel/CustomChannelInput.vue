@@ -9,6 +9,7 @@
         v-model="url"
         :hint="$L('custom_channel.hint')"
         returnKeyType="done"
+        @loaded="fixTextInputColors"
       />
       <Label
         col="1"
@@ -39,6 +40,7 @@
 <script>
 import { MDButton } from '@nativescript-community/ui-material-button';
 import { mapActions } from 'vuex';
+import { fixTextInputColors } from '@/utils/platform/ui';
 
 export default {
   name: 'CustomChannelInput',
@@ -85,6 +87,7 @@ export default {
   },
 
   methods: {
+    fixTextInputColors,
     ...mapActions('manager', ['checkCustomChannelUrl']),
 
     /**
@@ -157,11 +160,13 @@ export default {
   margin: 0;
   width: 100%;
   border-radius: 0;
+  border-bottom-width: 0;
+  border-color: transparent;
   padding: $spacing-s;
   font-size: 14;
   height: 50;
-  color: #ffffff;
-  placeholder-color: #aaaaaa;
+  color: $on-surface;
+  placeholder-color: $on-surface-variant;
 }
 
 .url-status-icon {

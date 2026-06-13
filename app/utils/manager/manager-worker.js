@@ -144,11 +144,17 @@ const handlers = {
 
   async setUpdateChannel(channel) {
     await getManager().setChannel(channel);
-    return { currentChannel: channel };
+    const interval = await getManager().getUpdateCheckInterval(channel);
+    return { currentChannel: channel, interval };
   },
 
   async getUpdateInterval(channel) {
     return await getManager().getUpdateCheckInterval(channel);
+  },
+
+  async getLastCheckTime() {
+    const data = await storage.get(['last_check_update']);
+    return data.last_check_update ?? null;
   },
 
   async setUpdateInterval(interval, channel) {

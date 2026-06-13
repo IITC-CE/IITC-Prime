@@ -90,12 +90,14 @@ export default {
       return this.customChannelUrl;
     },
 
-    // Formatted last check date
     formattedLastCheckTime() {
       if (!this.lastCheckTime) return '';
 
-      const date = new Date(this.lastCheckTime);
-      return date.toLocaleString();
+      const diff = Math.floor((Date.now() - this.lastCheckTime) / 1000);
+      if (diff < 60) return this.$L('update_channel.time.just_now');
+      if (diff < 3600) return this.$L('update_channel.time.minutes_ago', Math.floor(diff / 60));
+      if (diff < 86400) return this.$L('update_channel.time.hours_ago', Math.floor(diff / 3600));
+      return this.$L('update_channel.time.days_ago', Math.floor(diff / 86400));
     },
   },
 
@@ -108,6 +110,7 @@ export default {
       'loadCustomChannelUrl',
       'setCustomChannelUrl',
       'forceUpdate',
+      'getLastCheckTime',
     ]),
 
     /**
@@ -116,12 +119,13 @@ export default {
     async selectChannel(channel) {
       if (this.currentChannel === channel) return;
 
-      await this.setUpdateChannel(channel);
+      const data = await this.setUpdateChannel(channel);
 
-      // Load interval for this channel
-      await this.loadChannelInterval();
+      // Discard result if a newer tap already changed the channel
+      if (this.currentChannel !== channel) return;
 
-      // Load custom URL if needed
+      this.selectedIntervalValue = String(data.interval);
+
       if (channel === 'custom') {
         await this.loadCustomUrl();
       }
@@ -184,7 +188,6 @@ export default {
      * Run force update
      */
     async runForceUpdate() {
-      console.log('runForceUpdate called in UpdateChannelView');
       this.isUpdating = true;
 
       try {
@@ -196,22 +199,21 @@ export default {
         this.isUpdating = false;
       }
     },
+
+    async loadLastCheckTime() {
+      const seconds = await this.getLastCheckTime();
+      if (seconds) this.lastCheckTime = seconds * 1000;
+    },
   },
 
   async mounted() {
-    // Load current channel
     await this.loadUpdateChannel();
-
-    // Load interval for current channel
-    await this.loadChannelInterval();
-
-    // Load external plugins interval
-    await this.loadExternalInterval();
-
-    // Load custom URL if needed
-    if (this.currentChannel === 'custom') {
-      await this.loadCustomUrl();
-    }
+    await Promise.all([
+      this.loadChannelInterval(),
+      this.loadExternalInterval(),
+      this.loadLastCheckTime(),
+      ...(this.currentChannel === 'custom' ? [this.loadCustomUrl()] : []),
+    ]);
   },
 };
 </script>
