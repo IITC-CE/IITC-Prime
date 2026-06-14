@@ -48,6 +48,8 @@ import {
   userLocationUpdate,
   userLocationOrientation,
   setSafeAreaInsets,
+  applyPaneSafeAreaInsets,
+  removePaneSafeAreaInsets,
 } from '@/utils/bridge/events-to-iitc';
 
 // Scripts pre-registered to run at DOMContentLoaded on every navigation (iOS: WKUserScript
@@ -430,9 +432,15 @@ export default {
           case 'map/setActiveHighlighter':
             await webview.executeJavaScript(changePortalHighlights(action.payload));
             break;
-          case 'navigation/setCurrentPane':
+          case 'navigation/setCurrentPane': {
             await webview.executeJavaScript(switchToPane(action.payload));
+            if (action.payload === 'map') {
+              await webview.executeJavaScript(removePaneSafeAreaInsets());
+            } else {
+              await webview.executeJavaScript(applyPaneSafeAreaInsets());
+            }
             break;
+          }
           case 'map/locateMapOnce':
             await webview.executeJavaScript(
               setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
