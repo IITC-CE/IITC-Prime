@@ -1,5 +1,7 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+import { l } from '@nativescript-community/l';
+
 export class ControlPanelDataService {
   static generateListData(activeButton, store) {
     switch (activeButton) {
@@ -21,10 +23,10 @@ export class ControlPanelDataService {
         type: 'action-buttons-group',
         id: 'action-buttons',
         buttons: [
-          { id: 'settings', icon: 'fa-tools', text: 'Settings' },
-          { id: 'plugins', icon: 'fa-toolbox', text: 'Plugins' },
-          { id: 'debug', icon: 'fa-terminal', text: 'Debug' },
-          { id: 'reload', icon: 'fa-redo', text: 'Reload IITC' },
+          { id: 'settings', icon: 'fa-tools', text: l('nav.settings') },
+          { id: 'plugins', icon: 'fa-toolbox', text: l('nav.plugins') },
+          { id: 'debug', icon: 'fa-terminal', text: l('nav.debug') },
+          { id: 'reload', icon: 'fa-redo', text: l('nav.reload_iitc') },
         ],
       },
     ];
@@ -36,7 +38,7 @@ export class ControlPanelDataService {
         type: 'navigation-item',
         id: pane.name,
         icon: pane.icon,
-        text: pane.label,
+        text: l(pane.label),
         isFirst: index === 0,
         isLast: index === filteredPanes.length - 1,
       });
@@ -66,14 +68,14 @@ export class ControlPanelDataService {
         fields: [
           {
             type: 'highlighter',
-            label: 'Highlighter',
+            label: l('layers.highlighter'),
             items: highlightersList,
             selectedValue: store.state.map.highlighterSelected,
             visible: highlightersList && highlightersList.length > 0,
           },
           {
             type: 'base-layer',
-            label: 'Base layer',
+            label: l('layers.base_layer'),
             items: baseLayersList,
             selectedIndex: baseLayerSelectedIndex,
             visible: baseLayersList && baseLayersList.length > 0,

@@ -21,7 +21,7 @@
     <key>CFBundleVersion</key>
     <string>175353347</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>IITC Prime can show your current position on the Ingress intel map. Location access is optional.</string>
+    <string>IITC Prime can show your current position on the Ingress Intel map. Location access is optional.</string>
     <key>NSCameraUsageDescription</key>
     <string>Lets you take a photo when a map page asks to import a file</string>
     <key>NSMicrophoneUsageDescription</key>
@@ -78,6 +78,8 @@
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
         <key>CFBundleURLName</key>
         <string>iitc</string>
         <key>CFBundleURLSchemes</key>

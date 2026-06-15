@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { File, knownFolders, path } from '@nativescript/core';
 

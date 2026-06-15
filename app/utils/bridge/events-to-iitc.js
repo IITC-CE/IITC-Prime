@@ -81,3 +81,27 @@ export const setSafeAreaInsets = (top = 0, bottom = 0, left = 0, right = 0) => {
     true
   `;
 };
+
+// Skip elements that already manage their own top offset
+export const applyPaneSafeAreaInsets = () => `
+(function() {
+  if (!window.__paneSafeAreaEls) window.__paneSafeAreaEls = [];
+  document.querySelectorAll('body > div').forEach(function(el) {
+    var cs = getComputedStyle(el);
+    if (!el.classList.contains('safe-area-insets') &&
+        cs.display !== 'none' &&
+        parseFloat(cs.paddingTop) === 0 &&
+        parseFloat(cs.marginTop) === 0) {
+      el.classList.add('safe-area-insets');
+      window.__paneSafeAreaEls.push(el);
+    }
+  });
+})(); true`;
+
+export const removePaneSafeAreaInsets = () => `
+(function() {
+  (window.__paneSafeAreaEls || []).forEach(function(el) {
+    el.classList.remove('safe-area-insets');
+  });
+  window.__paneSafeAreaEls = [];
+})(); true`;

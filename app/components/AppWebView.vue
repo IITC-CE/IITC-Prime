@@ -25,7 +25,7 @@ import {
   router,
 } from '@/utils/bridge';
 import { injectCustomStyles } from '~/utils/iitc-prime-resources';
-import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/debug-bridge';
+import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/bridge/debug-bridge';
 import {
   deletePluginScriptFile,
   writePluginsMarkerFile,
@@ -33,10 +33,11 @@ import {
   pluginScriptName,
   PLUGINS_MARKER_NAME,
   PLUGINS_READY_FLAG,
-} from '@/utils/plugin-scripts';
+} from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
+import { webviewService } from '@/utils/webview/webview-service';
 
 import {
   changePortalHighlights,
@@ -47,7 +48,9 @@ import {
   userLocationUpdate,
   userLocationOrientation,
   setSafeAreaInsets,
-} from '@/utils/events-to-iitc';
+  applyPaneSafeAreaInsets,
+  removePaneSafeAreaInsets,
+} from '@/utils/bridge/events-to-iitc';
 
 // Scripts pre-registered to run at DOMContentLoaded on every navigation (iOS: WKUserScript
 // atDocumentEnd; Android: addDocumentStartJavaScript wrapped in a DOMContentLoaded guard).
@@ -82,6 +85,8 @@ export default {
   components: {
     BaseWebView,
   },
+
+  emits: ['console-log', 'webview-loaded'],
 
   data() {
     return {
@@ -142,6 +147,7 @@ export default {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
+          await this.$store.dispatch('navigation/resetPanes');
         }
 
         await this.$store.dispatch('ui/setWebviewLoaded', false);
@@ -211,6 +217,8 @@ export default {
     },
 
     async onWebViewLoaded({ webview }) {
+      webviewService.register(js => webview.executeJavaScript(js));
+
       if (isIOS) {
         // Prevent iOS from auto-shifting web content into safe area.
         // 2 = UIScrollViewContentInsetAdjustmentBehavior.never
@@ -424,9 +432,15 @@ export default {
           case 'map/setActiveHighlighter':
             await webview.executeJavaScript(changePortalHighlights(action.payload));
             break;
-          case 'navigation/setCurrentPane':
+          case 'navigation/setCurrentPane': {
             await webview.executeJavaScript(switchToPane(action.payload));
+            if (action.payload === 'map') {
+              await webview.executeJavaScript(removePaneSafeAreaInsets());
+            } else {
+              await webview.executeJavaScript(applyPaneSafeAreaInsets());
+            }
             break;
+          }
           case 'map/locateMapOnce':
             await webview.executeJavaScript(
               setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
@@ -463,6 +477,7 @@ export default {
   beforeUnmount() {
     this.store_unsubscribe();
     this.mainPageActive_unwatch?.();
+    webviewService.unregister();
   },
 };
 </script>

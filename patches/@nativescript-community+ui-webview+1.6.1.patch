@@ -37,7 +37,7 @@ index 82fedc2..afaa805 100644
          const args = {
              eventName: WebViewExtBase_1.shouldOverrideUrlLoadingEvent,
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index 828f395..d2da074 100644
+index 828f395..bbc3aba 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
 @@ -523,12 +523,20 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
@@ -73,7 +73,7 @@ index 828f395..d2da074 100644
                      while (currentVC && currentVC.presentedViewController) {
                          currentVC = currentVC.presentedViewController;
                      }
-@@ -734,6 +744,7 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -734,13 +744,16 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                          var handler = CloseHandler.alloc().init();
                          var closeButton = UIBarButtonItem.alloc().initWithBarButtonSystemItemTargetAction(UIBarButtonSystemItem.Done, handler, 'onCloseButtonTap:');
                          popupVC.navigationItem.leftBarButtonItem = closeButton;
@@ -81,7 +81,8 @@ index 828f395..d2da074 100644
                          var simpleUIDelegate_1 = NSObject
                              .extend({
                              webViewDidClose: function (webView) {
-@@ -741,6 +752,7 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
++                                if (!navController_1) return;
+                                 navController_1.dismissViewControllerAnimatedCompletion(true, function () {
                                      popupWebView_1 = null;
                                      navController_1 = null;
                                      simpleUIDelegate_1 = null;
@@ -89,7 +90,7 @@ index 828f395..d2da074 100644
                                  });
                              }
                          }, {
-@@ -749,6 +761,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -749,6 +762,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                              .alloc()
                              .init();
                          popupWebView_1.UIDelegate = simpleUIDelegate_1;

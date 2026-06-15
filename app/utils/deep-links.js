@@ -4,8 +4,8 @@ import {
   registerUniversalLinkCallback,
   getUniversalLink,
 } from '@nativescript-community/universal-links';
-import { INGRESS_INTEL_MAP } from './url-config';
-import { readFileFromUri } from './platform';
+import { INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { readFileFromUri } from '@/utils/platform/system';
 import store from '@/store';
 
 /**
@@ -43,7 +43,7 @@ const convertDeepLinkToIntelUrl = url => {
     }
 
     if (url.startsWith('iitc://')) {
-      return new URL(url.replace('iitc://', INGRESS_INTEL_MAP)).toString();
+      return new URL(url.replace('iitc://intel', INGRESS_INTEL_MAP)).toString();
     }
   } catch {
     return null;

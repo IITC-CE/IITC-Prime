@@ -19,11 +19,11 @@
  */
 
 import '@nativescript/core/globals';
-import '@/utils/worker-polyfills';
+import './worker-polyfills';
 import { knownFolders, path as fsPath, getFileAccess, isAndroid } from '@nativescript/core';
 import { Manager, wrapPluginCode, GM_API_UID } from 'lib-iitc-manager';
 import storage from '@/utils/storage';
-import { writePluginScriptFile } from '@/utils/plugin-scripts';
+import { writePluginScriptFile } from './plugin-scripts';
 import { createBackupZip, parseBackupZip, getBackupInfo, backupFilename } from '@/utils/backup';
 
 // Worker global scope (NativeScript exposes onmessage/postMessage on global).
@@ -144,11 +144,17 @@ const handlers = {
 
   async setUpdateChannel(channel) {
     await getManager().setChannel(channel);
-    return { currentChannel: channel };
+    const interval = await getManager().getUpdateCheckInterval(channel);
+    return { currentChannel: channel, interval };
   },
 
   async getUpdateInterval(channel) {
     return await getManager().getUpdateCheckInterval(channel);
+  },
+
+  async getLastCheckTime() {
+    const data = await storage.get(['last_check_update']);
+    return data.last_check_update ?? null;
   },
 
   async setUpdateInterval(interval, channel) {
@@ -186,6 +192,11 @@ const handlers = {
    */
   async exportBackup(params) {
     const backup = await getManager().getBackupData(params);
+
+    if (params.data && params.webviewStorage && Object.keys(params.webviewStorage).length) {
+      backup.data.webview_storage = params.webviewStorage;
+    }
+
     const base64 = await createBackupZip(backup);
 
     const filename = backupFilename();
@@ -217,13 +228,18 @@ const handlers = {
   },
 
   /**
-   * Restores a backup zip into storage according to the given params.
-   * Plugin code is unpacked and applied entirely inside the worker.
+   * Restores manager-owned backup data (settings, plugin data, external plugin files)
+   * according to the given params. Returns webview_storage so the main thread can
+   * apply it to WebView localStorage.
    */
   async importBackup(path, params) {
     const backup = await parseBackupZip(await readBackupBuffer(path));
     await getManager().setBackupData(params, backup);
-    return { success: true };
+
+    const webviewStorage =
+      params.data && backup.data?.webview_storage ? backup.data.webview_storage : null;
+
+    return { success: true, webviewStorage };
   },
 };
 

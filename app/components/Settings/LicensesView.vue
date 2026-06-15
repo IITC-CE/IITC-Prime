@@ -1,7 +1,7 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Open Source Licenses" use-scroll="false" v-slot="{ bottomPadding }">
+  <SettingsBase :title="$L('licenses.title')" use-scroll="false" v-slot="{ bottomPadding }">
     <GridLayout rows="*" class="licenses-list-container">
       <ListView
         row="0"
@@ -33,7 +33,7 @@
 import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
-import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform';
+import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform/ui';
 
 export default {
   name: 'LicensesView',
@@ -125,7 +125,7 @@ export default {
 }
 
 .license-url {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }

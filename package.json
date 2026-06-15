@@ -1,7 +1,7 @@
 {
   "name": "iitc-prime",
   "main": "app/app.js",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "private": true,
   "scripts": {
     "run:android": "ns run android",

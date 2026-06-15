@@ -1,9 +1,10 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { createApp, registerElement } from 'nativescript-vue';
-import { Application, isAndroid } from '@nativescript/core';
+import { Application, Utils, isAndroid } from '@nativescript/core';
 
 import { FontIcon, fonticon } from '@nativescript-community/fonticon';
+import { l, loadLocaleJSON } from '@nativescript-community/l';
 import { BottomSheetPlugin } from '@nativescript-community/ui-material-bottomsheet/vue3';
 import { install as installBottomSheet } from '@nativescript-community/ui-material-bottomsheet';
 import CanvasSVG from '@nativescript-community/ui-svg/vue';
@@ -21,12 +22,14 @@ import { initSentry, setupVueErrorHandler } from './sentry';
 import Main from '~/components/Main';
 import store from './store';
 import { initializeTracing } from './app-trace';
-import { getStatusBarHeight } from '@/utils/platform';
+import { getStatusBarHeight } from '@/utils/platform/ui';
 import { setAndroidDefaultUA } from '~/utils/webview/user-agent';
 
 // Initialize app logging
 initializeTracing();
 initSentry();
+
+loadLocaleJSON(require('./i18n/en.default.json'));
 
 // Install BottomSheet plugins
 installBottomSheet();
@@ -48,7 +51,7 @@ registerElement('CheckBox', () => CheckBox, {
 if (isAndroid) {
   try {
     setAndroidDefaultUA(
-      android.webkit.WebSettings.getDefaultUserAgent(Application.android.context)
+      android.webkit.WebSettings.getDefaultUserAgent(Utils.android.getApplicationContext())
     );
   } catch (e) {
     console.error('Failed to read default WebView UA:', e);
@@ -75,6 +78,7 @@ setupVueErrorHandler(app);
 app.config.globalProperties.$filters = {
   fonticon: fonticon,
 };
+app.config.globalProperties.$L = l;
 
 app.use(store);
 app.use(WebViewX);

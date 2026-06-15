@@ -129,11 +129,13 @@ export default {
       historyPosition: state => state.debug.historyPosition,
     }),
 
-    // Display logs only when both component is visible and logs should be shown
+    // Display logs only when both component is visible and logs should be shown.
+    // Filter out app-level debug noise (framework internals like Frame/ListView traces).
     displayLogs() {
       if (!this.isVisible || !this.logsVisible) return [];
-      // Prevent CollectionView from mutating Vuex state
-      return this.logs.map(log => ({ ...log }));
+      return this.logs
+        .filter(log => !(log.source === 'app' && log.type === 'debug'))
+        .map(log => ({ ...log }));
     },
   },
 
@@ -385,13 +387,13 @@ export default {
 @import '@/app';
 
 .debug-console {
-  background-color: $accent;
+  background-color: $surface;
   width: 100%;
   height: 100%;
 }
 
 .logs-list {
-  background-color: $accent;
+  background-color: $surface;
 }
 
 .log-item {

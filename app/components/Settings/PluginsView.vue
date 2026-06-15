@@ -4,12 +4,12 @@
   <SettingsBase
     search
     v-model:searchText="searchQuery"
-    searchHint="Search plugins..."
+    :searchHint="$L('plugins.search_hint')"
     use-scroll="false"
     @navigatedTo="onNavigatedTo"
   >
     <template #headerRight>
-      <Label text="Add plugin" @tap="openAddPlugin" class="header-action" />
+      <Label :text="$L('plugins.add_plugin')" @tap="openAddPlugin" class="header-action" />
     </template>
 
     <template #default="{ bottomPadding }">
@@ -56,7 +56,7 @@ import { reactive, markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { confirm } from '@/utils/dialogs';
-import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/plugin-installer';
+import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/manager/plugin-installer';
 import { readFileContent } from '@/utils/file-manager';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './components/AddPluginSheet';
@@ -246,7 +246,7 @@ export default {
           await installPlugin(pluginState, resolvedCode);
         } catch (error) {
           console.error('Failed to install plugin:', error);
-          new Toasty({ text: 'Failed to install plugin' }).show();
+          new Toasty({ text: this.$L('plugins.toast.install_failed') }).show();
         }
       }
     },
@@ -276,9 +276,9 @@ export default {
 
     getEmptyMessage() {
       if (this.activeCategory === 'All') {
-        return 'No plugins';
+        return this.$L('plugins.no_plugins');
       }
-      return `No plugins in ${this.activeCategory} category`;
+      return this.$L('plugins.no_plugins_in_category', this.activeCategory);
     },
 
     searchPlugins(query, plugins) {
@@ -349,12 +349,16 @@ export default {
     async deletePlugin(plugin) {
       const isOverride = !!plugin.override;
       const confirmed = await confirm({
-        title: isOverride ? 'Remove override' : 'Delete plugin',
+        title: isOverride
+          ? this.$L('plugins.delete.title_override')
+          : this.$L('plugins.delete.title_plugin'),
         message: isOverride
-          ? `Remove the user override for "${plugin.name}"? The official version will be used instead.`
-          : `Are you sure you want to delete "${plugin.name}"?`,
-        okButtonText: isOverride ? 'Remove' : 'Delete',
-        cancelButtonText: 'Cancel',
+          ? this.$L('plugins.delete.message_override', plugin.name)
+          : this.$L('plugins.delete.message_plugin', plugin.name),
+        okButtonText: isOverride
+          ? this.$L('plugins.delete.ok_override')
+          : this.$L('plugins.delete.ok_plugin'),
+        cancelButtonText: this.$L('dialog.cancel'),
       });
 
       if (!confirmed) return;
@@ -366,7 +370,7 @@ export default {
         });
       } catch (error) {
         console.error('Failed to delete plugin:', error);
-        new Toasty({ text: 'Failed to delete plugin' }).show();
+        new Toasty({ text: this.$L('plugins.toast.delete_failed') }).show();
         await this.loadPlugins();
       }
     },
@@ -402,7 +406,7 @@ export default {
 }
 
 .loading-indicator {
-  color: $primary;
+  color: $accent;
   width: 40;
   height: 40;
   margin: 10 0;

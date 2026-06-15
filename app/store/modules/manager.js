@@ -3,12 +3,14 @@
 import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { validateCustomChannelUrl } from 'lib-iitc-manager';
-import { managerService } from '@/utils/manager-service';
+import { l } from '@nativescript-community/l';
+import { managerService } from '@/utils/manager/manager-service';
+import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
 
 const MESSAGES = {
-  serverNotAvailableRetry: args => `Server is not available. Retry after ${args} seconds`,
+  serverNotAvailableRetry: args => l('manager.server_not_available', args),
 };
 
 function showManagerMessage(message, args) {
@@ -131,18 +133,17 @@ export const manager = {
     /**
      * Set update channel
      */
-    async setUpdateChannel({ commit }, channel) {
-      // Optimistic UI update
+    async setUpdateChannel({ commit, state }, channel) {
       commit('SET_CURRENT_CHANNEL', channel);
 
       try {
-        const data = await managerService.setUpdateChannel(channel);
-        commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        return data;
+        return await managerService.setUpdateChannel(channel);
       } catch (error) {
-        // Revert on error
-        const currentData = await managerService.getUpdateChannel();
-        commit('SET_CURRENT_CHANNEL', currentData);
+        // Only revert if a newer selection hasn't already changed the channel
+        if (state.currentChannel === channel) {
+          const currentData = await managerService.getUpdateChannel();
+          commit('SET_CURRENT_CHANNEL', currentData);
+        }
         throw error;
       }
     },
@@ -152,6 +153,13 @@ export const manager = {
      */
     async getUpdateInterval(_, channel) {
       return await managerService.getUpdateInterval(channel);
+    },
+
+    /**
+     * Get last check timestamp (seconds) from storage
+     */
+    async getLastCheckTime() {
+      return await managerService.getLastCheckTime();
     },
 
     /**
@@ -227,7 +235,18 @@ export const manager = {
      * Returns the temp file path and filename for sharing.
      */
     async exportBackup(_, params) {
-      return await managerService.exportBackup(params);
+      let webviewStorage = {};
+      if (params.data) {
+        try {
+          const json = await webviewService.evaluate(
+            '(function(){try{return JSON.stringify(Object.fromEntries(Object.entries(localStorage)))}catch(e){return "{}"}})()'
+          );
+          webviewStorage = JSON.parse(json || '{}');
+        } catch (e) {
+          // WebView not available - skip WebView localStorage
+        }
+      }
+      return await managerService.exportBackup({ ...params, webviewStorage });
     },
 
     /**
@@ -241,7 +260,20 @@ export const manager = {
      * Restore a backup zip into storage according to params.
      */
     async importBackup(_, { path, params }) {
-      return await managerService.importBackup(path, params);
+      const result = await managerService.importBackup(path, params);
+
+      if (result.webviewStorage && Object.keys(result.webviewStorage).length) {
+        try {
+          const entries = JSON.stringify(result.webviewStorage);
+          await webviewService.evaluate(
+            `(function(d){for(var k in d)localStorage.setItem(k,d[k])})(${entries})`
+          );
+        } catch (e) {
+          // WebView not available - skip WebView localStorage restore
+        }
+      }
+
+      return result;
     },
 
     /**

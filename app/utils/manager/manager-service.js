@@ -114,6 +114,10 @@ export class ManagerService {
     return this._call('getUpdateInterval', channel);
   }
 
+  async getLastCheckTime() {
+    return this._call('getLastCheckTime');
+  }
+
   async setUpdateInterval(interval, channel) {
     return this._call('setUpdateInterval', interval, channel);
   }

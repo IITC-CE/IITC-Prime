@@ -1,12 +1,12 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <StackLayout class="update-interval-container">
-    <Label text="External plugins update frequency:" class="interval-label" />
+    <Label :text="$L('update_interval.external_label')" class="interval-label" />
     <SelectField
       :items="updateIntervals"
       :selectedIndex="selectedIntervalIndex"
-      title="Select Update Interval"
+      :title="$L('update_interval.select_title')"
       textField="name"
       idField="value"
       class="list-item--first list-item--last"
@@ -22,41 +22,37 @@ export default {
   name: 'ExternalPluginsIntervalSelector',
 
   components: {
-    SelectField
+    SelectField,
   },
 
   props: {
     selectedInterval: {
       type: String,
-      default: '86400'
-    }
-  },
-
-  data() {
-    return {
-      updateIntervals: [
-        { name: 'Every 6 hours', value: '21600' },
-        { name: 'Every 12 hours', value: '43200' },
-        { name: 'Every day', value: '86400' },
-        { name: 'Every week', value: '604800' }
-      ]
-    };
+      default: '86400',
+    },
   },
 
   computed: {
+    updateIntervals() {
+      return [
+        { name: this.$L('update_interval.every_6h'), value: '21600' },
+        { name: this.$L('update_interval.every_12h'), value: '43200' },
+        { name: this.$L('update_interval.every_day'), value: '86400' },
+        { name: this.$L('update_interval.every_week'), value: '604800' },
+      ];
+    },
+
     selectedIntervalIndex() {
-      return this.updateIntervals.findIndex(
-        item => item.value === this.selectedInterval
-      );
-    }
+      return this.updateIntervals.findIndex(item => item.value === this.selectedInterval);
+    },
   },
 
   methods: {
     onIntervalSelected(args) {
       if (!args.selectedId) return;
       this.$emit('intervalSelected', args.selectedId);
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -68,7 +64,7 @@ export default {
 }
 
 .interval-label {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   margin-bottom: 8;
   font-size: 14;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <WrapLayout orientation="horizontal" class="categories">
@@ -20,12 +20,12 @@ export default {
   props: {
     categories: {
       type: Object,
-      required: true
+      required: true,
     },
     activeCategory: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
 
   methods: {
@@ -37,9 +37,9 @@ export default {
     // Emit category selection event to parent
     onCategoryTap(categoryName) {
       this.$emit('categorySelected', categoryName);
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped lang="scss">
@@ -53,15 +53,15 @@ export default {
   margin: $spacing-xxs;
   padding: 6 12;
   border-radius: $radius-large;
-  background-color: $surface-bright;
+  background-color: $surface-container;
   color: $on-surface;
   font-size: $font-size-small;
   text-align: center;
 }
 
 .category-tag.active {
-  background-color: $primary-light;
-  color: $on-primary;
+  background-color: $accent;
+  color: $on-surface;
   font-weight: bold;
 }
 </style>

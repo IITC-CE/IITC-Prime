@@ -1,13 +1,13 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Backup & Restore">
+  <SettingsBase :title="$L('backup.title')">
     <!-- Import -->
-    <SettingsSection title="Import" />
+    <SettingsSection :title="$L('backup.section.import')" />
     <SettingsItem
       type="action"
-      title="Choose backup file"
-      description="Restore from a previously exported .zip"
+      :title="$L('backup.choose_file.title')"
+      :description="$L('backup.choose_file.description')"
       @action="chooseFile"
       :isFirst="true"
       :isLast="true"
@@ -15,7 +15,7 @@
 
     <Label
       v-if="isInvalidBackup"
-      text="This file is not a valid IITC backup"
+      :text="$L('backup.invalid')"
       class="hint hint--error"
       textWrap="true"
     />
@@ -24,8 +24,8 @@
       <SettingsItem
         v-if="available.has_settings"
         type="switch"
-        title="Import settings"
-        description="Update channel and plugin on/off state"
+        :title="$L('backup.import_settings.title')"
+        :description="$L('backup.import_settings.description')"
         :value="importSettings"
         @change="importSettings = $event"
         :spaced="firstImportSection === 'settings'"
@@ -35,8 +35,8 @@
       <SettingsItem
         v-if="available.has_data"
         type="switch"
-        title="Import plugin data"
-        description="Stored data of installed plugins"
+        :title="$L('backup.import_data.title')"
+        :description="$L('backup.import_data.description')"
         :value="importData"
         @change="importData = $event"
         :spaced="firstImportSection === 'data'"
@@ -46,8 +46,8 @@
       <SettingsItem
         v-if="available.has_external"
         type="switch"
-        title="Import external plugins"
-        description="User scripts not from the official repository"
+        :title="$L('backup.import_external.title')"
+        :description="$L('backup.import_external.description')"
         :value="importExternal"
         @change="importExternal = $event"
         :spaced="firstImportSection === 'external'"
@@ -56,8 +56,8 @@
       />
       <SettingsItem
         type="action"
-        title="Restore backup"
-        description="Apply the selected items"
+        :title="$L('backup.restore.title')"
+        :description="$L('backup.restore.description')"
         @action="restore"
         :bold="true"
         :spaced="true"
@@ -67,34 +67,34 @@
     </template>
 
     <!-- Export -->
-    <SettingsSection title="Export" />
+    <SettingsSection :title="$L('backup.section.export')" />
     <SettingsItem
       type="switch"
-      title="Export settings"
-      description="Update channel and plugin on/off state"
+      :title="$L('backup.export_settings.title')"
+      :description="$L('backup.export_settings.description')"
       :value="exportSettings"
       @change="exportSettings = $event"
       :isFirst="true"
     />
     <SettingsItem
       type="switch"
-      title="Export plugin data"
-      description="Stored data of installed plugins"
+      :title="$L('backup.export_data.title')"
+      :description="$L('backup.export_data.description')"
       :value="exportData"
       @change="exportData = $event"
     />
     <SettingsItem
       type="switch"
-      title="Export external plugins"
-      description="User scripts not from the official repository"
+      :title="$L('backup.export_external.title')"
+      :description="$L('backup.export_external.description')"
       :value="exportExternal"
       @change="exportExternal = $event"
       :isLast="true"
     />
     <SettingsItem
       type="action"
-      title="Export backup"
-      description="Save a backup file you can share"
+      :title="$L('backup.export_file.title')"
+      :description="$L('backup.export_file.description')"
       @action="exportBackupFile"
       :bold="true"
       :spaced="true"
@@ -115,7 +115,7 @@ import SettingsSection from './components/SettingsSection';
 import SettingsItem from './components/SettingsItem';
 import { selectFiles, shareFilePath } from '~/utils/file-manager';
 import { alert } from '~/utils/dialogs';
-import { goBack } from '~/utils/platform';
+import { goBack } from '~/utils/platform/navigation';
 
 export default {
   name: 'BackupView',
@@ -221,9 +221,9 @@ export default {
 
       if (!params.settings && !params.data && !params.external) {
         await alert({
-          title: 'Nothing to restore',
-          message: 'Select at least one item to restore',
-          okButtonText: 'OK',
+          title: this.$L('backup.dialog.nothing_to_restore.title'),
+          message: this.$L('backup.dialog.nothing_to_restore.message'),
+          okButtonText: this.$L('dialog.ok'),
         });
         return;
       }
@@ -236,9 +236,9 @@ export default {
         this.resetImport();
 
         await alert({
-          title: 'Backup restored',
-          message: 'The backup has been restored',
-          okButtonText: 'OK',
+          title: this.$L('backup.dialog.restored.title'),
+          message: this.$L('backup.dialog.restored.message'),
+          okButtonText: this.$L('dialog.ok'),
         });
 
         await this.$store.dispatch('ui/reloadWebView');
@@ -246,9 +246,9 @@ export default {
       } catch (error) {
         console.error('Restore backup failed:', error);
         await alert({
-          title: 'Error',
-          message: 'Failed to restore the backup. Please try again.',
-          okButtonText: 'OK',
+          title: this.$L('dialog.error.title'),
+          message: this.$L('backup.dialog.restore_error.message'),
+          okButtonText: this.$L('dialog.ok'),
         });
       } finally {
         this.isWorking = false;
@@ -260,9 +260,9 @@ export default {
 
       if (!this.exportSettings && !this.exportData && !this.exportExternal) {
         await alert({
-          title: 'Nothing to export',
-          message: 'Select at least one item to export',
-          okButtonText: 'OK',
+          title: this.$L('backup.dialog.nothing_to_export.title'),
+          message: this.$L('backup.dialog.nothing_to_export.message'),
+          okButtonText: this.$L('dialog.ok'),
         });
         return;
       }
@@ -279,9 +279,9 @@ export default {
       } catch (error) {
         console.error('Export backup failed:', error);
         await alert({
-          title: 'Error',
-          message: 'Failed to create the backup. Please try again.',
-          okButtonText: 'OK',
+          title: this.$L('dialog.error.title'),
+          message: this.$L('backup.dialog.export_error.message'),
+          okButtonText: this.$L('dialog.ok'),
         });
       } finally {
         this.isWorking = false;
@@ -310,7 +310,7 @@ export default {
 }
 
 .backup-indicator {
-  color: $primary;
+  color: $accent;
   width: 24;
   height: 24;
   margin-top: 16;

@@ -1,4 +1,4 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
   <StackLayout class="custom-url-container">
@@ -7,8 +7,9 @@
         col="0"
         class="url-input"
         v-model="url"
-        hint="Enter custom channel URL"
+        :hint="$L('custom_channel.hint')"
         returnKeyType="done"
+        @loaded="fixTextInputColors"
       />
       <Label
         col="1"
@@ -18,7 +19,7 @@
       />
     </GridLayout>
 
-    <Label text="Examples:" class="examples-label" once="true" />
+    <Label :text="$L('custom_channel.examples')" class="examples-label" once="true" />
     <WrapLayout class="examples-container">
       <MDButton
         text="localhost:8000"
@@ -39,19 +40,20 @@
 <script>
 import { MDButton } from '@nativescript-community/ui-material-button';
 import { mapActions } from 'vuex';
+import { fixTextInputColors } from '@/utils/platform/ui';
 
 export default {
   name: 'CustomChannelInput',
 
   components: {
-    MDButton
+    MDButton,
   },
 
   props: {
     customUrl: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
 
   data() {
@@ -73,18 +75,19 @@ export default {
       return {
         'status-success': this.urlStatus === 'success',
         'status-error': this.urlStatus === 'error',
-        'status-unknown': this.urlStatus === 'unknown'
+        'status-unknown': this.urlStatus === 'unknown',
       };
-    }
+    },
   },
 
   watch: {
     url(newValue) {
       this.checkCustomUrl();
-    }
+    },
   },
 
   methods: {
+    fixTextInputColors,
     ...mapActions('manager', ['checkCustomChannelUrl']),
 
     /**
@@ -128,13 +131,13 @@ export default {
      */
     setExampleUrl(url) {
       this.url = url;
-    }
+    },
   },
 
   mounted() {
     // Check URL status on mount
     this.checkCustomUrl();
-  }
+  },
 };
 </script>
 
@@ -147,9 +150,9 @@ export default {
 
 .url-input-container {
   border-width: 1;
-  border-color: $surface-variant;
+  border-color: $surface;
   border-radius: 4;
-  background-color: $surface-bright;
+  background-color: $surface-container;
   margin-bottom: $spacing-s;
 }
 
@@ -157,11 +160,13 @@ export default {
   margin: 0;
   width: 100%;
   border-radius: 0;
+  border-bottom-width: 0;
+  border-color: transparent;
   padding: $spacing-s;
   font-size: 14;
   height: 50;
-  color: #ffffff;
-  placeholder-color: #aaaaaa;
+  color: $on-surface;
+  placeholder-color: $on-surface-variant;
 }
 
 .url-status-icon {
@@ -188,7 +193,7 @@ export default {
 .examples-label {
   margin: 4 0;
   font-size: 14;
-  color: $on-surface-dark;
+  color: $on-surface-variant;
 }
 
 .examples-container {
@@ -196,7 +201,7 @@ export default {
 }
 
 .example-button {
-  background-color: $primary;
+  background-color: $accent;
   color: $on-surface;
   margin: 4;
   padding: 8;

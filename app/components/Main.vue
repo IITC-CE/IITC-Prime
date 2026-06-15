@@ -90,7 +90,7 @@ import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
-import { parseAndroidInsets } from '@/utils/platform';
+import { parseAndroidInsets } from '@/utils/platform/ui';
 
 import { $navigateTo } from 'nativescript-vue';
 import AppWebView from './AppWebView';
@@ -473,7 +473,7 @@ export default {
 @import '../app';
 
 .page {
-  background-color: $accent;
+  background-color: $surface;
 }
 
 .main-content {
@@ -502,10 +502,6 @@ export default {
   width: 100%;
   height: 100%;
   z-index: 100;
-}
-
-.map-state-bar-overlay {
-  z-index: 1000;
 }
 
 .restore-panel-button {

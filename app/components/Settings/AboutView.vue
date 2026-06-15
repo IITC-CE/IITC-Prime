@@ -1,35 +1,30 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="About">
+  <SettingsBase :title="$L('about.title')">
     <StackLayout class="about-container">
       <Label class="app-name" :text="appName" />
       <Label class="app-version" :text="appVersion" />
-
-      <Label
-        class="app-description"
-        textWrap="true"
-        text="IITC Prime is&#160;a&#160;mobile client for&#160;Ingress Intel Total Conversion that provides an&#160;enhanced interface for&#160;the&#160;Ingress Intel Map."
-      />
+      <Label class="app-description" textWrap="true" :text="$L('about.description')" />
     </StackLayout>
 
     <SettingsItem
       type="link"
-      title="IITC-CE Website"
-      description="iitc.app"
+      :title="$L('about.iitc_website.title')"
+      :description="$L('about.iitc_website.url')"
       url="https://iitc.app"
       :isFirst="true"
     />
     <SettingsItem
       type="link"
-      title="IITC-CE on GitHub"
-      description="github.com/IITC-CE/ingress-intel-total-conversion"
+      :title="$L('about.iitc_github.title')"
+      :description="$L('about.iitc_github.url')"
       url="https://github.com/IITC-CE/ingress-intel-total-conversion"
     />
     <SettingsItem
       type="link"
-      title="IITC Prime on GitHub"
-      description="github.com/IITC-CE/IITC-Prime"
+      :title="$L('about.prime_github.title')"
+      :description="$L('about.prime_github.url')"
       url="https://github.com/IITC-CE/IITC-Prime"
       :isLast="true"
     />
@@ -42,7 +37,7 @@ import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import SettingsItem from './components/SettingsItem';
 import * as appVersion from '@nativescript/appversion';
-import { getAppName } from '~/utils/platform';
+import { getAppName } from '~/utils/platform/system';
 
 export default {
   name: 'AboutView',
@@ -56,7 +51,7 @@ export default {
   data() {
     return {
       appName: getAppName(),
-      appVersion: 'Loading...',
+      appVersion: this.$L('common.loading'),
     };
   },
 
@@ -100,8 +95,8 @@ export default {
 
 .app-version {
   font-size: $font-size;
-  color: $on-primary;
-  background-color: $primary-light;
+  color: $on-surface;
+  background-color: $accent;
   border-radius: $radius-large;
   padding: $spacing-s $spacing-m;
   margin-bottom: $spacing-l;

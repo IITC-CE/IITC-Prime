@@ -1,10 +1,10 @@
-// Copyright (C) 2025 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+// Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase title="Update Channel">
+  <SettingsBase :title="$L('update_channel.title')">
     <template #headerRight>
       <Label
-        text="Update now"
+        :text="$L('update_channel.update_now')"
         @tap="runForceUpdate"
         :isEnabled="!isUpdating"
         class="header-action"
@@ -12,14 +12,14 @@
     </template>
 
     <!-- Channel selection -->
-    <SettingsSection title="Channel" />
-    <UpdateChannelSelector
-      :currentChannel="currentChannel"
-      @channelSelected="selectChannel"
-    />
+    <SettingsSection :title="$L('update_channel.section.channel')" />
+    <UpdateChannelSelector :currentChannel="currentChannel" @channelSelected="selectChannel" />
 
     <!-- Custom Channel URL -->
-    <SettingsSection title="Custom URL" v-show="currentChannel === 'custom'" />
+    <SettingsSection
+      :title="$L('update_channel.section.custom_url')"
+      v-show="currentChannel === 'custom'"
+    />
     <CustomChannelInput
       v-show="currentChannel === 'custom'"
       :customUrl="customUrl"
@@ -27,7 +27,7 @@
     />
 
     <!-- Update frequency -->
-    <SettingsSection title="Update frequency" />
+    <SettingsSection :title="$L('update_channel.section.frequency')" />
     <UpdateIntervalSelector
       :currentChannel="currentChannel"
       :selectedInterval="selectedIntervalValue"
@@ -44,7 +44,7 @@
     <StackLayout class="update-status">
       <Label
         v-if="formattedLastCheckTime"
-        :text="`Last check: ${formattedLastCheckTime}`"
+        :text="$L('update_channel.last_check', formattedLastCheckTime)"
         class="last-check-label"
       />
       <ActivityIndicator v-if="isUpdating" busy="true" class="update-indicator" />
@@ -54,7 +54,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import {markRaw} from "vue";
+import { markRaw } from 'vue';
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
@@ -79,7 +79,7 @@ export default {
       selectedIntervalValue: '86400',
       externalIntervalValue: '86400',
       isUpdating: false,
-      lastCheckTime: null
+      lastCheckTime: null,
     };
   },
 
@@ -90,13 +90,15 @@ export default {
       return this.customChannelUrl;
     },
 
-    // Formatted last check date
     formattedLastCheckTime() {
       if (!this.lastCheckTime) return '';
 
-      const date = new Date(this.lastCheckTime);
-      return date.toLocaleString();
-    }
+      const diff = Math.floor((Date.now() - this.lastCheckTime) / 1000);
+      if (diff < 60) return this.$L('update_channel.time.just_now');
+      if (diff < 3600) return this.$L('update_channel.time.minutes_ago', Math.floor(diff / 60));
+      if (diff < 86400) return this.$L('update_channel.time.hours_ago', Math.floor(diff / 3600));
+      return this.$L('update_channel.time.days_ago', Math.floor(diff / 86400));
+    },
   },
 
   methods: {
@@ -107,7 +109,8 @@ export default {
       'setUpdateInterval',
       'loadCustomChannelUrl',
       'setCustomChannelUrl',
-      'forceUpdate'
+      'forceUpdate',
+      'getLastCheckTime',
     ]),
 
     /**
@@ -116,12 +119,13 @@ export default {
     async selectChannel(channel) {
       if (this.currentChannel === channel) return;
 
-      await this.setUpdateChannel(channel);
+      const data = await this.setUpdateChannel(channel);
 
-      // Load interval for this channel
-      await this.loadChannelInterval();
+      // Discard result if a newer tap already changed the channel
+      if (this.currentChannel !== channel) return;
 
-      // Load custom URL if needed
+      this.selectedIntervalValue = String(data.interval);
+
       if (channel === 'custom') {
         await this.loadCustomUrl();
       }
@@ -151,7 +155,7 @@ export default {
 
       await this.setUpdateInterval({
         interval: Number(interval),
-        channel: this.currentChannel
+        channel: this.currentChannel,
       });
     },
 
@@ -162,7 +166,7 @@ export default {
       this.externalIntervalValue = interval;
       await this.setUpdateInterval({
         interval: Number(interval),
-        channel: 'external'
+        channel: 'external',
       });
     },
 
@@ -184,7 +188,6 @@ export default {
      * Run force update
      */
     async runForceUpdate() {
-      console.log("runForceUpdate called in UpdateChannelView");
       this.isUpdating = true;
 
       try {
@@ -195,24 +198,23 @@ export default {
       } finally {
         this.isUpdating = false;
       }
-    }
+    },
+
+    async loadLastCheckTime() {
+      const seconds = await this.getLastCheckTime();
+      if (seconds) this.lastCheckTime = seconds * 1000;
+    },
   },
 
   async mounted() {
-    // Load current channel
     await this.loadUpdateChannel();
-
-    // Load interval for current channel
-    await this.loadChannelInterval();
-
-    // Load external plugins interval
-    await this.loadExternalInterval();
-
-    // Load custom URL if needed
-    if (this.currentChannel === 'custom') {
-      await this.loadCustomUrl();
-    }
-  }
+    await Promise.all([
+      this.loadChannelInterval(),
+      this.loadExternalInterval(),
+      this.loadLastCheckTime(),
+      ...(this.currentChannel === 'custom' ? [this.loadCustomUrl()] : []),
+    ]);
+  },
 };
 </script>
 
@@ -226,12 +228,12 @@ export default {
 
 .last-check-label {
   font-size: 14;
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   margin-bottom: 8;
 }
 
 .update-indicator {
-  color: $primary;
+  color: $accent;
   width: 24;
   height: 24;
   horizontal-align: center;

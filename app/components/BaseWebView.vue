@@ -20,6 +20,7 @@
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
 import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
+import { alert as customAlert, confirm as customConfirm } from '@/utils/dialogs';
 import { mapState } from 'vuex';
 
 export default {
@@ -106,6 +107,22 @@ export default {
       // Setup console log event handlers
       this.setupDebugEventHandlers();
 
+      this.webViewInstance.off('JSBridge');
+      this.webViewInstance.off('gmBridgeRequest');
+      this.webViewInstance.off('popupNavigate');
+      this.webViewInstance.off('webAlert');
+      this.webViewInstance.off('webConfirm');
+
+      this.webViewInstance.on('webAlert', async args => {
+        await customAlert({ message: args.message });
+        args.callback();
+      });
+
+      this.webViewInstance.on('webConfirm', async args => {
+        const result = await customConfirm({ message: args.message });
+        args.callback(result);
+      });
+
       // Setup JSBridge event handler
       this.webViewInstance.on('JSBridge', msg => {
         this.$emit('bridge-message', msg.data);
@@ -131,12 +148,13 @@ export default {
     setupDebugEventHandlers() {
       if (!this.webViewInstance) return;
 
-      // iOS: JS-level bridge overrides console methods and emits this event
+      this.webViewInstance.off('console:log');
+      this.webViewInstance.off('webConsole');
+
       this.webViewInstance.on('console:log', event => {
         this.$emit('console-log', event.data);
       });
 
-      // Android: native onConsoleMessage callback — catches syntax errors that JS bridge can't
       this.webViewInstance.on('webConsole', event => {
         this.$emit('console-log', {
           type: event.data.level,
@@ -244,6 +262,8 @@ export default {
             'JSBridge',
             'gmBridgeRequest',
             'popupNavigate',
+            'webAlert',
+            'webConfirm',
           ];
           events.forEach(event => {
             try {

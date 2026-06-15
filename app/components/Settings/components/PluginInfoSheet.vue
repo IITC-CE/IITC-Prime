@@ -18,7 +18,11 @@
 
           <StackLayout col="1" class="header-info">
             <Label :text="displayName" class="plugin-name" textWrap="true" />
-            <Label v-if="!isLoading" :text="plugin.category || 'Misc'" class="plugin-category" />
+            <Label
+              v-if="!isLoading"
+              :text="plugin.category || $L('plugin_info.default_category')"
+              class="plugin-category"
+            />
           </StackLayout>
         </GridLayout>
 
@@ -54,9 +58,7 @@
             col="1"
             row="0"
             :text="
-              plugin.override
-                ? 'This user plugin overrides an official plugin'
-                : 'This plugin was installed by the user'
+              plugin.override ? $L('plugin_info.override_notice') : $L('plugin_info.user_notice')
             "
             class="notice-text"
             textWrap="true"
@@ -72,11 +74,11 @@
             textWrap="true"
           />
           <FlexboxLayout v-if="plugin.version" class="detail-row">
-            <Label text="Version" class="detail-label" />
+            <Label :text="$L('plugin_info.version')" class="detail-label" />
             <Label :text="plugin.version" class="detail-value" />
           </FlexboxLayout>
           <FlexboxLayout v-if="plugin.author" class="detail-row">
-            <Label text="Author" class="detail-label" />
+            <Label :text="$L('plugin_info.author')" class="detail-label" />
             <Label :text="plugin.author" class="detail-value" textWrap="true" />
           </FlexboxLayout>
         </StackLayout>
@@ -84,37 +86,39 @@
         <!-- Action buttons -->
         <MDButton
           v-if="installMode && !isLoading && !hasLoadError"
-          text="Install"
+          :text="$L('plugin_info.install')"
           class="btn-install"
           @tap="onInstall"
         />
         <MDButton
           v-if="plugin.homepageURL"
-          text="Open homepage"
+          :text="$L('plugin_info.open_homepage')"
           class="btn-primary btn-action"
           @tap="onOpenHomepage"
         />
         <MDButton
           v-if="plugin.supportURL"
-          text="Open support page"
+          :text="$L('plugin_info.open_support')"
           class="btn-primary btn-action"
           @tap="onOpenSupport"
         />
         <MDButton
           v-if="plugin.downloadURL"
-          text="Share download URL"
+          :text="$L('plugin_info.share_download')"
           class="btn-primary btn-action"
           @tap="onShareDownload"
         />
         <MDButton
           v-if="plugin.updateURL"
-          text="Share update URL"
+          :text="$L('plugin_info.share_update')"
           class="btn-primary btn-action"
           @tap="onShareUpdate"
         />
         <MDButton
           v-if="plugin.user || plugin.override"
-          :text="plugin.override ? 'Remove override' : 'Delete plugin'"
+          :text="
+            plugin.override ? $L('plugin_info.remove_override') : $L('plugin_info.delete_plugin')
+          "
           class="btn-delete"
           @tap="onDelete"
         />
@@ -125,7 +129,8 @@
 
 <script>
 import { Utils } from '@nativescript/core';
-import { shareContent, getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform';
+import { shareContent } from '@/utils/platform/system';
+import { getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform/ui';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
 import AsyncRasterIcon from './plugins/AsyncRasterIcon.vue';
 
@@ -165,8 +170,8 @@ export default {
     },
 
     displayName() {
-      if (this.isLoading) return 'Loading...';
-      return this.plugin.name || 'Unknown Plugin';
+      if (this.isLoading) return this.$L('plugin_info.loading');
+      return this.plugin.name || this.$L('plugin_info.unknown_name');
     },
 
     pluginIcon() {
@@ -269,13 +274,13 @@ export default {
 }
 
 .plugin-category {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }
 
 .sheet-loading {
-  color: $primary;
+  color: $accent;
   width: 40;
   height: 40;
   margin: $spacing-m auto;
@@ -309,7 +314,7 @@ export default {
 }
 
 .notice-text {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
 }
 
@@ -333,7 +338,7 @@ export default {
 }
 
 .detail-label {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   font-weight: 500;
   width: 60;
@@ -346,7 +351,7 @@ export default {
 }
 
 .btn-install {
-  background-color: $primary;
+  background-color: $accent;
   border-radius: $radius-small;
   margin: 0 0 $spacing-m 0;
   color: #ffffff;

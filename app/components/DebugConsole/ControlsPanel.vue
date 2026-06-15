@@ -27,7 +27,7 @@
         v-model="commandText"
         @returnPress="executeCommand"
         @loaded="fixTextInputColors"
-        hint="Enter JavaScript command..."
+        :hint="$L('debug.command_hint')"
         autocorrect="false"
         maxLines="10"
       />
@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { fixTextInputColors } from '@/utils/platform';
+import { fixTextInputColors } from '@/utils/platform/ui';
 
 export default {
   props: {
@@ -167,7 +167,7 @@ export default {
 }
 
 .send-button {
-  background-color: $primary;
+  background-color: $accent;
   color: white;
   margin-left: $spacing-s;
   font-size: 16;

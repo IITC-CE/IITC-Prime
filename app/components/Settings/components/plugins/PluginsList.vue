@@ -130,7 +130,7 @@
 import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
-import { enableListEdgeToEdge } from '@/utils/platform';
+import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 export default {
   name: 'PluginsList',
@@ -423,7 +423,7 @@ export default {
 }
 
 .plugin-description {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   font-size: $font-size-small;
   margin-top: $spacing-xxs;
   height: 20;

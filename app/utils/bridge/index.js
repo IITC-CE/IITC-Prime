@@ -19,7 +19,7 @@ import {
   copyToClipboardBridge,
   shareString,
   gmBridgeRequest,
-} from '@/utils/events-from-iitc';
+} from './events-from-iitc';
 import { File, knownFolders, path } from '@nativescript/core';
 
 export const router = async event => {

@@ -2,7 +2,7 @@
 
 import store from '@/store';
 
-export const INGRESS_INTEL_MAP = 'https://intel.ingress.com/';
+export const INGRESS_INTEL_MAP = 'https://intel.ingress.com/intel';
 
 export const INITIAL_INTERNAL_HOSTNAMES = [
   'intel.ingress.com',

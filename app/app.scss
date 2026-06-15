@@ -19,22 +19,22 @@
 // COLOR SYSTEM
 //-----------------------------------------------
 
-// Original colors
-$surface: #0b2d3a; // Base background color (dark blue)
-$surface-variant: #0b303e; // Slightly darker variant (was $accent)
-$primary: #2e6772; // Main accent color (teal)
-$on-surface: #ffffff; // Text color on dark surfaces
-$on-surface-dark: #bbbbbb; // Text color on dark surfaces
+// Surfaces
+$surface: #0a2329;
+$surface-container: #133840; // card, section, list row
+$surface-container-high: #1d4853; // active chip, pressed tile
+
+// Accent - interactive: toggles, icons, buttons
+$accent: #26a69a;
+$accent-container: rgba(38, 166, 154, 0.14); // icon background, subtle fill
+$accent-border: rgba(38, 166, 154, 0.42); // active border ring
+
+// Text on dark surfaces
+$on-surface: #ffffff;
+$on-surface-variant: #71a0a6; // secondary / muted text
+
+// Interaction
 $ripple: rgba(255, 255, 255, 0.1);
-
-// Extended palette (hybrid approach)
-$primary-light: #437680; // Lighter version of primary
-$primary-dark: #295c66; // Darker version of primary
-$on-primary: #ffffff; // Text on primary color
-
-$surface-bright: #143542; // Brighter version of surface
-$surface-dim: #0c2d3a; // Dimmer version of surface
-$surface-container: #11394a; // Container on surface
 
 // States
 $state-hover: rgba(255, 255, 255, 0.08);
@@ -97,7 +97,7 @@ $spacing-m: 16;
 $spacing-l: 24;
 $spacing-xl: 32;
 $spacing-xxl: 48;
-$spacing-panel: 10;
+$spacing-panel: 15;
 $spacing-item: 56;
 $spacing-item-big: 82;
 
@@ -117,7 +117,7 @@ $radius-full: 9999; // For circular elements
 
 // Elevated surfaces (dialogs, dropdowns, etc.)
 .elevated-surface {
-  background-color: $surface-bright;
+  background-color: $surface-container;
   border-radius: $radius-medium;
 }
 
@@ -127,10 +127,10 @@ MDButton {
 }
 
 .btn-primary {
-  background-color: $surface-bright;
+  background-color: $surface-container;
   border-radius: $radius-small;
   margin: $spacing-xs 0;
-  color: $on-primary;
+  color: $on-surface;
   font-size: $font-size;
   ripple-color: $ripple;
   padding: $spacing-xxs $spacing-l;
@@ -157,7 +157,7 @@ MDButton {
 }
 
 .btn-text {
-  color: $primary;
+  color: $accent;
   font-size: $font-size;
   font-weight: bold;
   padding: $spacing-s $spacing-m;
@@ -172,8 +172,8 @@ MDButton {
 
 // Lists
 .list-item {
-  background-color: $surface-bright;
-  color: $on-primary;
+  background-color: $surface-container;
+  color: $on-surface;
   height: $spacing-item;
   ripple-color: $ripple;
   font-size: $font-size;
@@ -210,7 +210,7 @@ MDButton {
 
 // Dialog styles
 .dialog-container {
-  background-color: $surface-bright;
+  background-color: $surface-container;
   padding: $spacing-l;
 }
 
@@ -229,7 +229,7 @@ MDButton {
   font-size: $font-size;
   min-height: 40;
   color: $on-surface;
-  placeholder-color: $on-surface-dark;
+  placeholder-color: $on-surface-variant;
   border-bottom-width: 0;
   border-color: transparent;
 }
@@ -246,7 +246,7 @@ MDButton {
 
 .section-header {
   padding: 12 16 8 0;
-  color: $primary-light;
+  color: $on-surface-variant;
   font-size: $font-size;
   font-weight: bold;
 }
@@ -260,18 +260,3 @@ MDButton {
 Button.ns-dialog-item {
   color: #0a84ff;
 }
-
-//-----------------------------------------------
-// LEGACY VARIABLES (for backward compatibility)
-//-----------------------------------------------
-
-// Bottom sheet specific colors
-$bottom-sheet-surface: #f6f6f6; // Light background for bottom sheets
-$on-bottom-sheet: #222222; // Dark text for bottom sheets
-
-$base: $surface;
-$accent: $surface-variant;
-$text: $on-surface;
-
-$text-bottom-sheet: $on-bottom-sheet;
-$font-small-size: $font-size-small;

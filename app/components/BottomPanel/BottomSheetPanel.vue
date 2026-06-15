@@ -31,7 +31,7 @@
       </StackLayout>
 
       <!-- Control buttons -->
-      <GridLayout row="1" class="panel-buttons" columns="auto, auto, *, auto, auto, auto">
+      <GridLayout row="1" class="panel-buttons" columns="auto, *, auto, auto, auto">
         <!-- Quick Access Button / Back Button -->
         <ControlButton
           col="0"
@@ -45,7 +45,7 @@
 
         <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
         <ControlButton
-          col="3"
+          col="2"
           :text="$filters.fonticon('fa-paste')"
           :visible="hasClipboardLink"
           @tap="onPasteClipboard"
@@ -53,7 +53,7 @@
 
         <!-- Location Button -->
         <ControlButton
-          col="4"
+          col="3"
           :text="$filters.fonticon(locationButtonIcon)"
           :visible="isIitcLoaded"
           @tap="onLocate"
@@ -61,7 +61,7 @@
 
         <!-- Layers Button -->
         <ControlButton
-          col="5"
+          col="4"
           :text="$filters.fonticon('fa-layer-group')"
           :visible="isIitcLoaded"
           :active="isPanelOpen && activeButton === 'layers'"
@@ -83,7 +83,7 @@ import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/s
 import { Application, isIOS, isAndroid } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { layoutService } from '~/utils/layout-service';
-import { getAppName, readClipboardText } from '~/utils/platform';
+import { getAppName, readClipboardText } from '~/utils/platform/system';
 import { hasClipboardUrl } from '~/utils/clipboard';
 import { isSupportedDeepLinkUrl, processDeepLink } from '~/utils/deep-links';
 
@@ -137,6 +137,7 @@ export default {
       removeLayoutListener: null,
       hasClipboardLink: false,
       _boundAndroidActivityResumedHandler: null,
+      appName: getAppName(),
       PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
@@ -174,7 +175,7 @@ export default {
      */
     panelTitle() {
       if (this.isMapPane) {
-        return getAppName();
+        return this.appName;
       }
 
       const pane = this.panes.find(p => p.name === this.currentPane);
@@ -546,9 +547,9 @@ export default {
 
 .panel-container {
   background-color: $surface;
-  color: $text;
+  color: $on-surface;
   border-radius: $radius-medium $radius-medium 0 0;
-  border-color: $primary;
+  border-color: $accent-border;
   border-top-width: 1;
 }
 
@@ -558,7 +559,7 @@ export default {
 }
 
 .panel-header-line {
-  background-color: $primary;
+  background-color: $accent-border;
   width: $spacing-xl;
   height: $spacing-xs;
   margin: 5 0;
@@ -569,7 +570,7 @@ export default {
 .panel-buttons {
   height: 42;
   min-height: 42;
-  margin: $spacing-panel;
+  margin: calc($spacing-panel - 5);
   margin-top: 0;
   margin-bottom: 8;
   background-color: $surface;

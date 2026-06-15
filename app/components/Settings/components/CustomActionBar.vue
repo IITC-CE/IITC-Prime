@@ -12,7 +12,7 @@
           ref="searchField"
           col="1"
           class="search-input"
-          :hint="searchHint"
+          :hint="searchHint || $L('search.hint')"
           :text="searchText"
           @textChange="$emit('update:searchText', $event.value)"
           @loaded="fixTextInputColors"
@@ -55,7 +55,8 @@
 
 <script>
 import { Screen } from '@nativescript/core';
-import { fixTextInputColors, goBack } from '@/utils/platform';
+import { fixTextInputColors } from '@/utils/platform/ui';
+import { goBack } from '@/utils/platform/navigation';
 
 const ANIMATION_DURATION = 300;
 
@@ -77,7 +78,7 @@ export default {
     },
     searchHint: {
       type: String,
-      default: 'Search...',
+      default: null,
     },
   },
 
@@ -187,7 +188,7 @@ export default {
 }
 
 .search-bar {
-  background-color: $surface-bright;
+  background-color: $surface-container;
   border-radius: $radius-full;
 }
 
@@ -217,7 +218,7 @@ export default {
 .search-input {
   font-size: $font-size;
   color: $on-surface;
-  placeholder-color: $on-surface-dark;
+  placeholder-color: $on-surface-variant;
   background-color: transparent;
   border-bottom-width: 0;
   border-color: transparent;
@@ -249,7 +250,7 @@ export default {
 
 .clear-icon {
   font-size: 16;
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   text-align: center;
   vertical-alignment: center;
 }

@@ -15,28 +15,28 @@
     </template>
 
     <template #action-buttons-group="{ item }">
-      <GridLayout columns="*, *, *, *" class="block action-buttons-block">
-        <StackLayout
+      <GridLayout columns="*, 8, *, 8, *, 8, *" class="block action-buttons-block">
+        <MDRipple
           v-for="(button, index) in item.buttons"
           :key="button.id"
-          :col="index"
+          :col="index * 2"
           class="btn-quick"
           @tap="onActionButtonTap(button.id)"
         >
-          <MDRipple class="btn-quick-btn-icon">
+          <StackLayout>
             <Label
               class="fa btn-quick-icon"
               :text="$filters.fonticon(button.icon)"
               horizontalAlignment="center"
             />
-          </MDRipple>
-          <Label
-            class="btn-quick-text"
-            :text="button.text"
-            horizontalAlignment="center"
-            textWrap="true"
-          />
-        </StackLayout>
+            <Label
+              class="btn-quick-text"
+              :text="button.text"
+              horizontalAlignment="center"
+              textWrap="true"
+            />
+          </StackLayout>
+        </MDRipple>
       </GridLayout>
     </template>
 
@@ -53,7 +53,7 @@
     </template>
 
     <template #select-fields-group="{ item }">
-      <GridLayout columns="*, 2, *" rows="28, 56" class="block">
+      <GridLayout columns="*, 2, *" rows="28, 56" height="100" class="block">
         <!-- Highlighter column -->
         <Label
           v-if="item.fields[0].visible"
@@ -68,7 +68,7 @@
           row="1"
           :items="item.fields[0].items"
           :selectedIndex="item.fields[0].items.indexOf(item.fields[0].selectedValue)"
-          title="Select Highlighter"
+          :title="$L('layers.select_highlighter')"
           immediateChange
           class="list-item--top-left list-item--bottom-left"
           @change="onHighlighterSelected"
@@ -90,7 +90,7 @@
           :selectedIndex="item.fields[1].selectedIndex"
           idField="layerId"
           textField="name"
-          title="Select Base Layer"
+          :title="$L('layers.select_base_layer')"
           immediateChange
           class="list-item--top-right list-item--bottom-right"
           @change="onBaseLayerSelected"
@@ -99,26 +99,37 @@
     </template>
 
     <template #portal-icons-group="{ item }">
-      <GridLayout columns="*, *, *, *, *, *, *, *, *" rows="42" class="block">
+      <GridLayout
+        columns="*, *, *, *, *, *, *, *, *"
+        rows="52"
+        class="block portal-icons-row"
+        @loaded="onPortalRowLoaded"
+      >
         <template v-for="(portal, index) in item.portals" :key="portal.layerId">
-          <SVGView
+          <GridLayout
             v-if="index <= 8"
-            class="overlay-portal"
-            :class="{
-              'overlay-portal--active':
-                $store.state.map.overlayLayers[portal.index]?.active === true,
-            }"
             :col="index"
-            @tap="onOverlayPortalToggle($event, portal.index)"
-            :src="
-              '~/assets/icons/portals/portal_L' +
-              index +
-              '_' +
-              String(!!$store.state.map.overlayLayers[portal.index]?.active) +
-              '.svg'
-            "
-            stretch="aspectFit"
-          />
+            class="portal-icon-cell"
+            :class="{
+              'portal-icon-cell--active':
+                $store.state.map.overlayLayers[portal.index]?.active === true,
+              'portal-icon-cell--first': index === 0,
+              'portal-icon-cell--last': index === 8,
+            }"
+          >
+            <SVGView
+              class="overlay-portal"
+              @tap="onOverlayPortalToggle($event, portal.index)"
+              :src="
+                '~/assets/icons/portals/portal_L' +
+                index +
+                '_' +
+                String(!!$store.state.map.overlayLayers[portal.index]?.active) +
+                '.svg'
+              "
+              stretch="aspectFit"
+            />
+          </GridLayout>
         </template>
       </GridLayout>
     </template>
@@ -183,7 +194,7 @@
 <script>
 import SelectField from '@/components/base/SelectField.vue';
 import { $navigateTo } from 'nativescript-vue';
-import { disableListItemHighlight } from '@/utils/platform';
+import { disableListItemHighlight } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -211,6 +222,13 @@ export default {
 
   methods: {
     disableListItemHighlight,
+
+    onPortalRowLoaded(args) {
+      if (args.object.android) {
+        args.object.android.setClipToPadding(false);
+        args.object.android.setClipChildren(false);
+      }
+    },
 
     // Template selector function - determines which template to use
     templateSelector(data) {
@@ -244,7 +262,14 @@ export default {
     },
 
     onNavigationItemTap(paneName) {
-      this.switchToPane(paneName);
+      if (this.$store.getters['settings/isDesktopMode']) {
+        this.$store.dispatch(
+          'map/executeJavaScript',
+          `window.chat.chooseTab('${paneName}'); window.chat.toggle(); true`
+        );
+      } else {
+        this.switchToPane(paneName);
+      }
     },
 
     onBaseLayerSelected(args) {
@@ -324,12 +349,13 @@ export default {
 @import '@/app';
 
 .list-view {
-  margin-left: $spacing-m;
-  margin-right: $spacing-m;
+  margin-left: $spacing-panel;
+  margin-right: $spacing-panel;
 }
 
 .block {
   padding: 0;
+  margin: 0;
   padding-bottom: $spacing-m;
   background-color: $surface;
 }
@@ -340,29 +366,24 @@ export default {
 }
 
 .btn-quick {
-  font-size: $font-size;
-  text-align: center;
-  padding: 0 $spacing-s;
-}
-
-.btn-quick .btn-quick-btn-icon {
-  margin: 0 0 $spacing-xs 0;
-  width: 54;
-  height: 54;
+  padding: $spacing-s $spacing-xs;
   border-radius: $radius-large;
-  background-color: $surface-bright;
+  background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
   ripple-color: $ripple;
-  vertical-alignment: center;
 }
 
-.btn-quick .btn-quick-icon {
+.btn-quick-icon {
   font-size: $font-size-headline;
-  color: $on-primary;
+  color: $on-surface;
+  text-align: center;
+  margin-bottom: $spacing-xs;
 }
 
-.btn-quick .btn-quick-text {
-  color: $text;
+.btn-quick-text {
+  font-size: $font-size-small;
+  color: $on-surface;
+  text-align: center;
 }
 
 .icon {
@@ -378,19 +399,41 @@ export default {
 }
 
 .select-label {
-  font-size: $font-small-size;
-  color: $on-surface-dark;
+  font-size: $font-size-small;
+  color: $on-surface-variant;
+}
+
+.portal-icons-row {
+  background-color: $surface;
+  padding-left: $spacing-s;
+  padding-right: $spacing-s;
+  margin-bottom: 3;
+}
+
+.portal-icon-cell {
+  &--active {
+    background-color: $surface-container;
+  }
+
+  &--first {
+    border-top-left-radius: $radius-large;
+    border-bottom-left-radius: $radius-large;
+    padding-left: $spacing-s;
+    margin-left: -$spacing-s;
+  }
+
+  &--last {
+    border-top-right-radius: $radius-large;
+    border-bottom-right-radius: $radius-large;
+    padding-right: $spacing-s;
+    margin-right: -$spacing-s;
+  }
 }
 
 .overlay-portal {
-  border-radius: $radius-large;
+  height: 38;
   horizontal-align: center;
   vertical-align: middle;
-
-  &--active {
-    background-color: $surface-bright;
-    box-shadow: 0 2 5 rgba(0, 0, 0, 0.1);
-  }
 }
 
 .switch {

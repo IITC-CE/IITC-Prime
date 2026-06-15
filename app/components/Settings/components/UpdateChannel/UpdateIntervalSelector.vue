@@ -6,7 +6,7 @@
     <SelectField
       :items="updateIntervals"
       :selectedIndex="selectedIntervalIndex"
-      title="Select Update Interval"
+      :title="$L('update_interval.select_title')"
       textField="name"
       idField="value"
       class="list-item--first list-item--last"
@@ -36,30 +36,25 @@ export default {
     }
   },
 
-  data() {
-    return {
-      updateIntervals: [
-        { name: 'Every 5 seconds', value: '5' },
-        { name: 'Every 6 hours', value: '21600' },
-        { name: 'Every 12 hours', value: '43200' },
-        { name: 'Every day', value: '86400' },
-        { name: 'Every week', value: '604800' }
-      ]
-    };
-  },
-
   computed: {
-    // Update interval selected index
-    selectedIntervalIndex() {
-      return this.updateIntervals.findIndex(
-        item => item.value === this.selectedInterval
-      );
+    updateIntervals() {
+      return [
+        { name: this.$L('update_interval.every_5s'), value: '5' },
+        { name: this.$L('update_interval.every_6h'), value: '21600' },
+        { name: this.$L('update_interval.every_12h'), value: '43200' },
+        { name: this.$L('update_interval.every_day'), value: '86400' },
+        { name: this.$L('update_interval.every_week'), value: '604800' },
+      ];
     },
 
-    // Label for update interval section
+    selectedIntervalIndex() {
+      return this.updateIntervals.findIndex(item => item.value === this.selectedInterval);
+    },
+
     intervalLabel() {
-      return `${this.currentChannel.charAt(0).toUpperCase() + this.currentChannel.slice(1)} channel update frequency:`;
-    }
+      const channel = this.currentChannel.charAt(0).toUpperCase() + this.currentChannel.slice(1);
+      return this.$L('update_interval.channel_label', channel);
+    },
   },
 
   methods: {
@@ -82,7 +77,7 @@ export default {
 }
 
 .interval-label {
-  color: $on-surface-dark;
+  color: $on-surface-variant;
   margin-bottom: 8;
   font-size: 14;
 }

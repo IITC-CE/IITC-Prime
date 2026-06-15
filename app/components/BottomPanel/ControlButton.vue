@@ -87,7 +87,7 @@ export default {
   vertical-alignment: center;
 
   &--active {
-    background-color: $surface-bright;
+    background-color: $surface-container;
   }
 }
 </style>
