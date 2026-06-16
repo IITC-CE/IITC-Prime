@@ -23,18 +23,13 @@
           class="btn-quick"
           @tap="onActionButtonTap(button.id)"
         >
-          <StackLayout>
+          <StackLayout class="btn-quick-wrapper">
             <Label
               class="fa btn-quick-icon"
               :text="$filters.fonticon(button.icon)"
               horizontalAlignment="center"
             />
-            <Label
-              class="btn-quick-text"
-              :text="button.text"
-              horizontalAlignment="center"
-              textWrap="true"
-            />
+            <Label class="btn-quick-text" :text="button.text" horizontalAlignment="center" />
           </StackLayout>
         </MDRipple>
       </GridLayout>
@@ -366,11 +361,15 @@ export default {
 }
 
 .btn-quick {
-  padding: $spacing-s $spacing-xs;
+  padding: $spacing-s $spacing-xxs;
   border-radius: $radius-large;
   background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
   ripple-color: $ripple;
+}
+
+.btn-quick-wrapper {
+  padding: $spacing-xs 0;
 }
 
 .btn-quick-icon {
