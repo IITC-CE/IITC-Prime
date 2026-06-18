@@ -133,11 +133,13 @@ export default {
         this.$emit('bridge-message', ['gmBridgeRequest', msg.data]);
       });
 
-      // Intercept popup navigations: cancel (close popup) only for internal hostnames
-      // so OAuth flows navigate freely and only the callback redirect is handed to the host.
+      // Popup navigations stay in the popup, except two cases:
+      // any intel.ingress.com URL (matched by host goes to the main WebView,
+      // and app-scheme deep links (tg:, mailto:, ...) go to the OS
       this.webViewInstance.on('popupNavigate', args => {
         const url = args.url;
-        if (url && url !== 'about:blank' && !url.startsWith('file://') && this.isUrlAllowed(url)) {
+        if (!url || url === 'about:blank' || url.startsWith('file://')) return;
+        if (isIntelUrl(url)) {
           args.cancel = true;
           this.$emit('popup-navigate', url);
         }
