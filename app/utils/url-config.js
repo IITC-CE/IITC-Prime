@@ -10,6 +10,46 @@ export const INITIAL_INTERNAL_HOSTNAMES = [
   'signin.nianticspatial.com',
 ];
 
+// Schemes a WebView renders itself; anything else is an app/deep link
+// (tg:, mailto:, geo:, ...) that must be handed to the OS instead of loaded.
+const WEBVIEW_SCHEMES = new Set([
+  'http',
+  'https',
+  'about',
+  'file',
+  'data',
+  'blob',
+  'javascript',
+  'x-local',
+]);
+
+/**
+ * True if the URL points at the Intel map host
+ * @param {string} url
+ * @returns {boolean}
+ */
+export const isIntelUrl = url => {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname === 'intel.ingress.com';
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * True for URLs whose scheme points at an external app (deep link) rather than web
+ * content the WebView can display.
+ * @param {string} url
+ * @returns {boolean}
+ */
+export const isExternalAppSchemeUrl = url => {
+  if (!url) return false;
+  const match = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url);
+  if (!match) return false;
+  return !WEBVIEW_SCHEMES.has(match[1].toLowerCase());
+};
+
 /**
  * Add viewport parameter to URL for desktop/mobile mode switching
  * vp=f enables desktop mode, vp=m is the default mobile view

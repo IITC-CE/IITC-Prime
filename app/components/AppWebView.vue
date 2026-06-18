@@ -35,7 +35,7 @@ import {
   PLUGINS_READY_FLAG,
 } from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
-import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { addViewportParam, isIntelUrl } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
 import { webviewService } from '@/utils/webview/webview-service';
 
@@ -113,7 +113,7 @@ export default {
 
   methods: {
     handlePopupNavigate(url) {
-      if (url && url.startsWith(INGRESS_INTEL_MAP)) {
+      if (isIntelUrl(url)) {
         this.$store.dispatch('ui/reloadWebView', url);
       }
     },
@@ -143,7 +143,7 @@ export default {
       }
 
       try {
-        if (arg.url.startsWith(INGRESS_INTEL_MAP)) {
+        if (isIntelUrl(arg.url)) {
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
@@ -159,7 +159,7 @@ export default {
     async onLoadFinished(arg) {
       // Two-step reload: wait for about:blank before loading the OAuth callback URL.
       // Ensures the hash causes a full cross-document load instead of a same-document navigation.
-      if (this.pendingReloadUrl && !arg?.url?.startsWith(INGRESS_INTEL_MAP)) {
+      if (this.pendingReloadUrl && !isIntelUrl(arg?.url)) {
         const url = this.pendingReloadUrl;
         this.pendingReloadUrl = null;
         this.lastInjectedUrl = null; // OAuth URL has a hash; reset so the check above won't skip it
@@ -168,7 +168,7 @@ export default {
       }
 
       // Only process Intel pages
-      if (!arg?.url || !arg.url.startsWith(INGRESS_INTEL_MAP)) {
+      if (!isIntelUrl(arg?.url)) {
         return;
       }
 
