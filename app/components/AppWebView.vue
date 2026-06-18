@@ -28,11 +28,9 @@ import { injectCustomStyles } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/bridge/debug-bridge';
 import {
   deletePluginScriptFile,
-  writePluginsMarkerFile,
   readPluginScriptCode,
   pluginScriptName,
-  PLUGINS_MARKER_NAME,
-  PLUGINS_READY_FLAG,
+  PLUGINS_INJECTED_MAP,
 } from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, isIntelUrl } from '@/utils/url-config';
@@ -196,14 +194,9 @@ export default {
           }
         }
 
-        // Flag is set by the trailing marker user script after all plugins ran.
-        // Not set on cold start (manager not ready yet before first load).
-        const pluginsReady = await this.webview.executeJavaScript(
-          `window.${PLUGINS_READY_FLAG} === true`
-        );
-        if (pluginsReady !== true) {
-          await this.injectEnabledPlugins();
-        }
+        // Inject only plugins a pre-registered script didn't run; the per-file
+        // guard no-ops a redundant inject when injection timing races the load.
+        await this.injectEnabledPlugins();
 
         this.lastInjectedUrl = urlWithoutHash;
         this.pendingInjectionUrl = null;
@@ -311,11 +304,6 @@ export default {
           await webview.autoLoadJavaScriptFile(pluginScriptName(uid), filePath);
         }
 
-        // Marker last, so it runs after every plugin.
-        const markerPath = await writePluginsMarkerFile();
-        webview.removeAutoLoadJavaScriptFile(PLUGINS_MARKER_NAME);
-        await webview.autoLoadJavaScriptFile(PLUGINS_MARKER_NAME, markerPath);
-
         this.registeredPluginUids = newUids;
       } catch (error) {
         console.error('[AppWebView] Failed to register plugin scripts:', error);
@@ -338,8 +326,24 @@ export default {
     },
 
     async injectEnabledPlugins() {
+      // uids already run on this load.
+      const injectedJson = await this.webview.executeJavaScript(
+        `JSON.stringify(Object.keys(window.${PLUGINS_INJECTED_MAP}||{}))`
+      );
+      const injected = new Set(JSON.parse(injectedJson || '[]'));
+
+      // Fast path: all pre-registered plugins already ran -> skip the worker call.
+      // registeredPluginUids is empty before pre-registration, so fall through.
+      if (
+        this.registeredPluginUids.length &&
+        this.registeredPluginUids.every(uid => injected.has(uid))
+      ) {
+        return;
+      }
+
       const scripts = await this.$store.dispatch('manager/getEnabledPluginScripts');
       for (const script of scripts) {
+        if (injected.has(script.uid)) continue;
         await this.injectPlugin(script);
       }
     },
