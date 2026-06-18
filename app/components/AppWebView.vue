@@ -35,7 +35,7 @@ import {
   PLUGINS_READY_FLAG,
 } from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
-import { addViewportParam, INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { addViewportParam, INGRESS_INTEL_MAP, isIntelUrl } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
 import { webviewService } from '@/utils/webview/webview-service';
 
@@ -113,7 +113,7 @@ export default {
 
   methods: {
     handlePopupNavigate(url) {
-      if (url && url.startsWith(INGRESS_INTEL_MAP)) {
+      if (isIntelUrl(url)) {
         this.$store.dispatch('ui/reloadWebView', url);
       }
     },
