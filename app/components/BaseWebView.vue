@@ -19,6 +19,7 @@
 <script>
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
+import { isIntelUrl, isExternalAppSchemeUrl } from '@/utils/url-config';
 import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
 import { alert as customAlert, confirm as customConfirm } from '@/utils/dialogs';
 import { mapState } from 'vuex';
@@ -142,6 +143,9 @@ export default {
         if (isIntelUrl(url)) {
           args.cancel = true;
           this.$emit('popup-navigate', url);
+        } else if (isExternalAppSchemeUrl(url)) {
+          args.cancel = true;
+          this.$emit('external-url', url);
         }
       });
     },
