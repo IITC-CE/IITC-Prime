@@ -50,7 +50,7 @@
         <MDRipple
           v-if="isPanelHidden && !isDebugActive"
           class="fab restore-panel-button"
-          :style="{ marginBottom: systemBottomInset + 16, marginLeft: safeAreaLeftInset + 16 }"
+          :style="{ marginBottom: systemBottomInset + 16, marginRight: safeAreaRightInset + 16 }"
           @loaded="onRestoreButtonLoaded"
           @tap="restorePanel"
         >
@@ -505,7 +505,7 @@ export default {
 }
 
 .restore-panel-button {
-  horizontal-alignment: left;
+  horizontal-alignment: right;
   z-index: 1000;
 }
 </style>
