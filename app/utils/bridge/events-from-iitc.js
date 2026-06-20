@@ -181,6 +181,14 @@ export const setFollowMode = async follow => {
 };
 
 /**
+ * Handles base map theme changes from IITC
+ * @param {boolean} isDark - Whether the active base map is dark-themed
+ */
+export const setMapDarkMode = async isDark => {
+  await store.dispatch('ui/setMapDarkMode', isDark);
+};
+
+/**
  * Handles file save requests from IITC
  * @param {string} filename - Name of the file to save
  * @param {string} dataType - MIME type of the file

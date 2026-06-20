@@ -39,6 +39,9 @@ export const ui = {
 
     isKeyboardOpen: false,
 
+    // Active base map theme
+    isMapDark: true,
+
     isMainPageFocused: true,
 
     // Pending plugin to install (from file intent or URL)
@@ -124,6 +127,10 @@ export const ui = {
 
     SET_KEYBOARD_OPEN(state, isOpen) {
       state.isKeyboardOpen = isOpen;
+    },
+
+    SET_MAP_DARK(state, isDark) {
+      state.isMapDark = isDark;
     },
 
     SET_PENDING_PLUGIN(state, plugin) {
@@ -226,6 +233,10 @@ export const ui = {
 
     setKeyboardOpen({ commit }, isOpen) {
       commit('SET_KEYBOARD_OPEN', isOpen);
+    },
+
+    setMapDarkMode({ commit }, isDark) {
+      commit('SET_MAP_DARK', !!isDark);
     },
 
     setPendingPlugin({ commit }, plugin) {

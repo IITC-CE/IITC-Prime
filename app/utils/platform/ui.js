@@ -1,6 +1,6 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { Application, Utils, isAndroid, isIOS } from '@nativescript/core';
+import { Application, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
 
 /**
  * Get status bar height in DIP (Android only, fallback for when insets not yet dispatched)
@@ -32,6 +32,30 @@ export const getNavigationBarHeight = () => {
   return Utils.layout.toDeviceIndependentPixels(
     activity.getResources().getDimensionPixelSize(resourceId)
   );
+};
+
+/**
+ * Set status bar icon contrast for content shown over the map.
+ * The nav bar overlays the dark panel and is left untouched.
+ * @param {boolean} isDark - Whether the underlying content is dark (use light icons)
+ */
+export const setStatusBarForMapTheme = isDark => {
+  if (isAndroid) {
+    const activity = Application.android.foregroundActivity || Application.android.startActivity;
+    const window = activity?.getWindow();
+    if (!window) return;
+    const controller = androidx.core.view.WindowCompat.getInsetsController(
+      window,
+      window.getDecorView()
+    );
+    controller.setAppearanceLightStatusBars(!isDark);
+  } else if (isIOS) {
+    const page = Frame.topmost()?.currentPage;
+    if (!page) return;
+    page.statusBarStyle = isDark ? 'light' : 'dark';
+    // Setting the property doesn't invalidate the status bar appearance; force it.
+    page.updateStatusBar?.();
+  }
 };
 
 /**

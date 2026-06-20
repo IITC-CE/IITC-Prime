@@ -3,6 +3,7 @@
 <template>
   <Page
     actionBarHidden="true"
+    statusBarStyle="light"
     @navigatedTo="onNavigatedTo"
     @navigatedFrom="onNavigatedFrom"
     androidOverflowEdge="dont-apply"

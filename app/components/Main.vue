@@ -50,13 +50,18 @@
         <MDRipple
           v-if="isPanelHidden && !isDebugActive"
           class="fab restore-panel-button"
-          :style="{ marginBottom: systemBottomInset + 16, marginRight: safeAreaRightInset + 16 }"
+          :style="{
+            marginBottom: systemBottomInset + 16,
+            marginRight: safeAreaRightInset + 16,
+            backgroundColor: fabBackgroundColor,
+          }"
           @loaded="onRestoreButtonLoaded"
           @tap="restorePanel"
         >
           <Label
             class="fa"
             :text="$filters.fonticon('fa-chevron-up')"
+            :color="fabIconColor"
             horizontalAlignment="center"
             verticalAlignment="center"
           />
@@ -90,7 +95,7 @@ import { keyboardOpening } from '@bezlepkin/nativescript-keyboard-opening';
 import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
-import { parseAndroidInsets } from '@/utils/platform/ui';
+import { parseAndroidInsets, setStatusBarForMapTheme } from '@/utils/platform/ui';
 
 import { $navigateTo } from 'nativescript-vue';
 import AppWebView from './AppWebView';
@@ -141,6 +146,21 @@ export default {
     isPanelHidden() {
       return this.$store.state.ui.panelState.position === 'HIDDEN';
     },
+    isMapDark() {
+      return this.$store.state.ui.isMapDark;
+    },
+    // Non-map panes render dark content over the map, so they always need light icons;
+    // otherwise the status bar follows the map theme.
+    isStatusBarDark() {
+      return this.$store.state.navigation.currentPane !== 'map' ? true : this.isMapDark;
+    },
+    // Restore-panel button
+    fabIconColor() {
+      return this.isMapDark ? '#111111' : '#eeeeee';
+    },
+    fabBackgroundColor() {
+      return this.isMapDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+    },
     safeAreaLeftInset() {
       return this.$store.state.ui.screenSafeArea.left;
     },
@@ -175,6 +195,10 @@ export default {
   watch: {
     isPanelHidden(hidden) {
       this.updateMapStateBarVisibility(hidden, true);
+    },
+    isStatusBarDark(isDark) {
+      if (!this.isMainPageActive()) return;
+      setStatusBarForMapTheme(isDark);
     },
     '$store.state.ui.pendingPlugin'(pending) {
       if (pending) {
@@ -377,6 +401,15 @@ export default {
 
     onMainPageNavigatedTo() {
       this.$store.dispatch('ui/setMainPageFocused', true);
+      // Restore the status bar style after returning from another screen
+      setStatusBarForMapTheme(this.isStatusBarDark);
+    },
+
+    // Android EdgeToEdge resets the status bar to its default on every resume
+    onAppResume() {
+      if (this.isMainPageActive()) {
+        setStatusBarForMapTheme(this.isStatusBarDark);
+      }
     },
 
     onMainPageNavigatingFrom() {
@@ -434,6 +467,8 @@ export default {
     // Initialize deep link handling
     handleDeepLink();
 
+    Application.on(Application.resumeEvent, this.onAppResume);
+
     this.unsubscribeStore = this.$store.subscribeAction({
       after: async action => {
         switch (action.type) {
@@ -465,6 +500,8 @@ export default {
     if (this.userLocation) {
       this.userLocation.stopTracking();
     }
+
+    Application.off(Application.resumeEvent, this.onAppResume);
   },
 };
 </script>
