@@ -1,6 +1,7 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { isAndroid } from '@nativescript/core';
+import { l } from '@nativescript-community/l';
 import {
   confirm as confirmMaterial,
   alert as alertMaterial,
@@ -25,7 +26,11 @@ import {
  */
 export function confirm(options) {
   const confirmDialog = isAndroid ? confirmMaterial : confirmNative;
-  return confirmDialog(options);
+  return confirmDialog({
+    okButtonText: l('dialog.ok'),
+    cancelButtonText: l('dialog.cancel'),
+    ...options,
+  });
 }
 
 /**
@@ -40,7 +45,10 @@ export function confirm(options) {
  */
 export function alert(options) {
   const alertDialog = isAndroid ? alertMaterial : alertNative;
-  return alertDialog(options);
+  return alertDialog({
+    okButtonText: l('dialog.ok'),
+    ...options,
+  });
 }
 
 /**
@@ -56,5 +64,8 @@ export function alert(options) {
  */
 export function action(options) {
   const actionDialog = isAndroid ? actionMaterial : actionNative;
-  return actionDialog(options);
+  return actionDialog({
+    cancelButtonText: l('dialog.cancel'),
+    ...options,
+  });
 }
