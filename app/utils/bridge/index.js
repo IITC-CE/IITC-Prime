@@ -15,6 +15,7 @@ import {
   setActiveHighlighter,
   addInternalHostname,
   setFollowMode,
+  setMapDarkMode,
   saveFile,
   copyToClipboardBridge,
   shareString,
@@ -78,6 +79,9 @@ export const router = async event => {
     case 'setFollowMode':
       await setFollowMode(eventData.follow);
       break;
+    case 'setMapDarkMode':
+      await setMapDarkMode(eventData.isDark);
+      break;
     case 'saveFile':
       return await saveFile(eventData.filename, eventData.dataType, eventData.content);
     case 'copy':
@@ -117,6 +121,7 @@ const buildBridgeScript = () => {
     setActiveHighlighter: ['name'],
     addPane: ['name', 'label', 'icon'],
     setFollowMode: ['follow'],
+    setMapDarkMode: ['isDark'],
     setPortalStatus: [
       'guid',
       'team',
