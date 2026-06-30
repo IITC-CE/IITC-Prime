@@ -41,28 +41,15 @@
         </GridLayout>
 
         <!-- User / override notice -->
-        <GridLayout
-          v-if="plugin.user || plugin.override"
-          columns="auto, *"
-          rows="auto"
-          class="notice-block"
-        >
+        <GridLayout v-if="showNotice" columns="auto, *" rows="auto" class="notice-block">
           <Label
             col="0"
             row="0"
             :text="$filters.fonticon('fa-info-circle')"
             class="fa notice-icon"
-            :class="plugin.override ? 'notice-icon--warning' : 'notice-icon--user'"
+            :class="isOverride ? 'notice-icon--warning' : 'notice-icon--user'"
           />
-          <Label
-            col="1"
-            row="0"
-            :text="
-              plugin.override ? $L('plugin_info.override_notice') : $L('plugin_info.user_notice')
-            "
-            class="notice-text"
-            textWrap="true"
-          />
+          <Label col="1" row="0" :text="noticeText" class="notice-text" textWrap="true" />
         </GridLayout>
 
         <!-- Details section -->
@@ -97,10 +84,10 @@
           @tap="onOpenHomepage"
         />
         <MDButton
-          v-if="plugin.supportURL"
-          :text="$L('plugin_info.open_support')"
+          v-if="plugin.issueTracker"
+          :text="$L('plugin_info.open_issue_tracker')"
           class="btn-primary btn-action"
-          @tap="onOpenSupport"
+          @tap="onOpenIssueTracker"
         />
         <MDButton
           v-if="plugin.downloadURL"
@@ -115,7 +102,7 @@
           @tap="onShareUpdate"
         />
         <MDButton
-          v-if="plugin.user || plugin.override"
+          v-if="!installMode && (plugin.user || plugin.override)"
           :text="
             plugin.override ? $L('plugin_info.remove_override') : $L('plugin_info.delete_plugin')
           "
@@ -129,6 +116,7 @@
 
 <script>
 import { Utils } from '@nativescript/core';
+import { getUID } from 'lib-iitc-manager';
 import { shareContent } from '@/utils/platform/system';
 import { getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform/ui';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
@@ -190,6 +178,28 @@ export default {
     hasDetails() {
       return !!(this.plugin.description || this.plugin.version || this.plugin.author);
     },
+
+    // Whether installing this plugin would replace an official catalog plugin
+    isOverride() {
+      if (!this.installMode) return !!this.plugin.override;
+      if (this.isLoading || this.hasLoadError) return false;
+      const uid = getUID(this.plugin);
+      if (!uid) return false;
+      const existing = this.$store.getters['manager/plugins'][uid];
+      return !!(existing && (existing.override || !existing.user));
+    },
+
+    showNotice() {
+      // Install preview only warns about overriding an official plugin
+      if (this.installMode) return this.isOverride;
+      return !!(this.plugin.user || this.plugin.override);
+    },
+
+    noticeText() {
+      return this.isOverride
+        ? this.$L('plugin_info.override_notice')
+        : this.$L('plugin_info.user_notice');
+    },
   },
 
   methods: {
@@ -209,8 +219,8 @@ export default {
       Utils.openUrl(this.plugin.homepageURL);
     },
 
-    onOpenSupport() {
-      Utils.openUrl(this.plugin.supportURL);
+    onOpenIssueTracker() {
+      Utils.openUrl(this.plugin.issueTracker);
     },
 
     onShareDownload() {
