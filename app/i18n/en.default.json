@@ -143,7 +143,7 @@
   "plugin_info.author": "Author",
   "plugin_info.install": "Install",
   "plugin_info.open_homepage": "Open homepage",
-  "plugin_info.open_support": "Open support page",
+  "plugin_info.open_issue_tracker": "Open issue tracker",
   "plugin_info.share_download": "Share download URL",
   "plugin_info.share_update": "Share update URL",
   "plugin_info.remove_override": "Remove override",

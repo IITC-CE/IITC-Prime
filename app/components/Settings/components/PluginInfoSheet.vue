@@ -84,10 +84,10 @@
           @tap="onOpenHomepage"
         />
         <MDButton
-          v-if="plugin.supportURL"
-          :text="$L('plugin_info.open_support')"
+          v-if="plugin.issueTracker"
+          :text="$L('plugin_info.open_issue_tracker')"
           class="btn-primary btn-action"
-          @tap="onOpenSupport"
+          @tap="onOpenIssueTracker"
         />
         <MDButton
           v-if="plugin.downloadURL"
@@ -219,8 +219,8 @@ export default {
       Utils.openUrl(this.plugin.homepageURL);
     },
 
-    onOpenSupport() {
-      Utils.openUrl(this.plugin.supportURL);
+    onOpenIssueTracker() {
+      Utils.openUrl(this.plugin.issueTracker);
     },
 
     onShareDownload() {
