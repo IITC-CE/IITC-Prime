@@ -1,5 +1,5 @@
 diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-index ddb35cd..96593c0 100644
+index ddb35cd..17a81b6 100644
 --- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 +++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 @@ -404,15 +404,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
@@ -37,7 +37,71 @@ index ddb35cd..96593c0 100644
                  this.wasDraggingPanel = false;
              }
              // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
-@@ -592,6 +602,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -448,22 +458,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+             //     // Movement too small - likely a tap
+             //     return;
+             // }
+-            // Check current scroll position
+-            const currentScrollY = this._scrollView ? this.scrollViewVerticalOffset : 0;
+-            const isAtTop = currentScrollY === 0;
++            // Check current scroll position.
++            // On Android computeVerticalScrollOffset() (via scrollViewVerticalOffset) is
++            // unreliable on the native ListView - it can read 0 while the list is scrolled,
++            // which made swipe-down collapse the panel instead of scrolling the content.
++            // canScrollVertically(-1) reflects the true scroll state (false == at the top).
++            let isAtTop;
++            if (this._scrollView) {
++                isAtTop = __ANDROID__
++                    ? !this._scrollView.nativeViewProtected.canScrollVertically(-1)
++                    : this.scrollViewVerticalOffset === 0;
++            }
++            else {
++                isAtTop = true;
++            }
+             // If not yet dragging panel, check if we should start (one-way transition)
+             if (!this.wasDraggingPanel) {
+                 let shouldStartDraggingPanel = false;
++                // Decide direction/mode only after a meaningful movement. deltaY is 0 on the
++                // first move (touchStartY === touchY); treating 0 as an UP swipe would wrongly
++                // latch panel-drag on a downward gesture. Below the threshold, native scroll runs.
++                if (absDeltaY >= SWIPE_DISTANCE_MINIMUM) {
+                 if (deltaY > 0) {
+-                    // Swiping DOWN - start dragging panel if reached top
++                    // Swiping DOWN - collapse the panel only once the list is at the top,
++                    // so a scrolled list scrolls its content up first (relies on the reliable
++                    // isAtTop above; the drag->scroll hand-off keeps a single swipe continuous).
+                     shouldStartDraggingPanel = isAtTop;
+                 }
+                 else {
+-                    // Swiping UP - start dragging panel if at top AND panel not fully expanded
+-                    if (isAtTop) {
+-                        const maxOffset = this.translationMaxOffset;
+-                        const isPanelFullyExpanded = Math.abs(this.translationY + maxOffset) < 1;
+-                        shouldStartDraggingPanel = !isPanelFullyExpanded;
++                    // Swiping UP - while the panel is not fully expanded, always expand it
++                    // first (like Apple's sheet detents), regardless of the list scroll
++                    // position. Requiring isAtTop here caused two bugs: on Android the native
++                    // list scrolls a few px before this JS handler runs, so isAtTop already
++                    // reads false and the gesture locks into list-scroll mode at MIDDLE; on
++                    // iOS a list scrolled to its bottom left isAtTop false with no scroll room,
++                    // so the swipe did nothing. Once fully expanded the list scrolls normally,
++                    // and the drag->scroll hand-off below keeps a single swipe continuous.
++                    const maxOffset = this.translationMaxOffset;
++                    const isPanelFullyExpanded = Math.abs(this.translationY + maxOffset) < 1;
++                    if (!isPanelFullyExpanded) {
++                        shouldStartDraggingPanel = true;
+                     }
+                 }
+                 if (shouldStartDraggingPanel) {
+@@ -479,6 +513,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+                         this.isScrollEnabled = true;
+                     }
+                 }
++                }
+             }
+             else {
+                 const maxOffset = this.translationMaxOffset;
+@@ -592,6 +627,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
          if (this.animation) {
              this.animation.cancel();
