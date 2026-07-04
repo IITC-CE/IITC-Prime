@@ -149,9 +149,10 @@ export default {
     isMapDark() {
       return this.$store.state.ui.isMapDark;
     },
-    // Non-map panes render dark content over the map, so they always need light icons;
-    // otherwise the status bar follows the map theme.
+    // Non-map panes and the debug console render dark content over the map, so they
+    // always need light icons; otherwise the status bar follows the map theme.
     isStatusBarDark() {
+      if (this.isDebugActive) return true;
       return this.$store.state.navigation.currentPane !== 'map' ? true : this.isMapDark;
     },
     // Restore-panel button
