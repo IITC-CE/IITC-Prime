@@ -8,6 +8,8 @@
       row="0"
       class="logs-list"
       :items="displayLogs"
+      :style="{ paddingTop: topInset }"
+      iosOverflowSafeArea="true"
       @scroll="handleScroll"
       @scrollStarted="handleScrollStarted"
       @scrollEnd="handleScrollEnd"
@@ -27,6 +29,15 @@
         </MDRipple>
       </template>
     </CollectionView>
+
+    <!-- Fades logs scrolling under the status bar -->
+    <StackLayout
+      row="0"
+      verticalAlignment="top"
+      :height="topScrimHeight"
+      class="top-scrim"
+      @loaded="onScrimLoaded"
+    />
 
     <!-- Controls panel wrapper to handle translation -->
     <StackLayout
@@ -69,6 +80,7 @@ import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
 import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
+import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 export default {
   components: {
@@ -121,6 +133,15 @@ export default {
     navBarPadding() {
       if (!isAndroid) return 0;
       return this.$store.state.ui.screenSafeArea.bottom;
+    },
+
+    topInset() {
+      return this.$store.state.ui.screenSafeArea.top;
+    },
+
+    // Extend a bit past the status bar
+    topScrimHeight() {
+      return this.topInset + 24;
     },
 
     ...mapState({
@@ -188,8 +209,8 @@ export default {
       if (!isIOS) return;
       const nativeView = this._collectionView.ios;
 
-      // Update insets in real-time
-      const insets = UIEdgeInsetsMake(0, 0, newVal, 0);
+      // Re-apply topInset here too, or opening the keyboard would reset it to 0
+      const insets = UIEdgeInsetsMake(this.topInset, 0, newVal, 0);
       nativeView.contentInset = insets;
       nativeView.scrollIndicatorInsets = insets;
 
@@ -305,10 +326,24 @@ export default {
 
     onCollectionViewLoaded(args) {
       this._collectionView = args.object;
+      enableListEdgeToEdge(args.object);
+
       if (isIOS) {
         const nativeView = this._collectionView.ios;
         nativeView.keyboardDismissMode = 1;
         nativeView.automaticallyAdjustsContentInsets = false;
+        // CollectionView maps paddingTop -> contentInset.top; disable UIKit auto-adding
+        // safe-area inset on top of our manual paddingTop to avoid double-counting
+        nativeView.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
+      }
+    },
+
+    // Purely decorative overlay: must not intercept touches meant for the list below.
+    onScrimLoaded(args) {
+      if (isIOS && args.object.ios) {
+        args.object.ios.userInteractionEnabled = false;
+      } else if (isAndroid && args.object.android) {
+        args.object.android.setClickable(false);
       }
     },
 
@@ -394,6 +429,10 @@ export default {
 
 .logs-list {
   background-color: $surface;
+}
+
+.top-scrim {
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
 }
 
 .log-item {
