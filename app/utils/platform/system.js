@@ -389,3 +389,19 @@ export const getAppName = () => {
 
   return 'IITC-CE Prime';
 };
+
+/**
+ * Whether precise (FINE) location is actually granted.
+ * Android only distinguishes COARSE/FINE at runtime on API 23+; on iOS and
+ * older Android there is no such split, so precise is assumed available.
+ * @returns {boolean}
+ */
+export const isFineLocationGranted = () => {
+  if (!isAndroid) return true;
+  if (android.os.Build.VERSION.SDK_INT < 23) return true;
+  const context = Utils.android.getApplicationContext();
+  return (
+    context.checkSelfPermission('android.permission.ACCESS_FINE_LOCATION') ===
+    android.content.pm.PackageManager.PERMISSION_GRANTED
+  );
+};
