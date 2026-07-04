@@ -19,9 +19,11 @@ const WATCH_LOCATION_OPTIONS = {
   maximumAge: 3000,
 };
 
-// Single locate button
+// Single locate button. Both need an explicit timeout: without it the library
+// falls back to a 5-minute default, so a stalled attempt would never hand off.
 const APPROXIMATE_LOCATION_OPTIONS = {
   maximumAge: 30000,
+  timeout: 6000,
   provider: 'network',
   desiredAccuracy: CoreTypes.Accuracy.any,
 };
@@ -31,6 +33,11 @@ const GPS_LOCATION_OPTIONS = {
   timeout: 8000,
   desiredAccuracy: CoreTypes.Accuracy.high,
 };
+
+// Hard cap for the whole locate flow. getCurrentLocation only arms its own
+// timeout after the permission/enable step resolves, so a stuck permission
+// dialog can hang indefinitely - this bounds the UI regardless.
+const LOCATE_OVERALL_TIMEOUT = 20000;
 
 export default class UserLocation {
   constructor() {
@@ -162,6 +169,7 @@ export default class UserLocation {
       this.locationError(error);
     }
 
+    console.warn('User location: no fix from network, GPS, or last known location');
     return null;
   }
 
@@ -181,9 +189,10 @@ export default class UserLocation {
    */
   async triggerLocateOnce(persistentZoom = false) {
     const position = await this.getCurrentLocationOnce();
-    if (!position) return;
+    if (!position) return false;
     const { lat, lng } = position;
     await store.dispatch('map/locateMapOnce', { lat, lng, persistentZoom });
+    return true;
   }
 
   /**
@@ -194,10 +203,10 @@ export default class UserLocation {
       // Use GPS data with plugin
       const { lat, lng, accuracy } = this.lastLocation;
       await store.dispatch('map/userLocationLocate', { lat, lng, accuracy, persistentZoom });
-    } else {
-      // Fallback to built-in locate
-      await this.triggerLocateOnce(persistentZoom);
+      return true;
     }
+    // Fallback to built-in locate
+    return this.triggerLocateOnce(persistentZoom);
   }
 
   /**
@@ -333,12 +342,29 @@ export default class UserLocation {
   async locate() {
     const showLocationEnabled = store.getters['settings/isShowLocation'];
 
-    if (showLocationEnabled) {
-      // Use `user-location` plugin
-      await this.triggerLocate(this.persistentZoom);
-    } else {
-      // Single locate without tracking
-      await this.triggerLocateOnce(this.persistentZoom);
+    await store.dispatch('map/setLocationRequestState', 'locating');
+    try {
+      const work = showLocationEnabled
+        ? this.triggerLocate(this.persistentZoom) // Use `user-location` plugin
+        : this.triggerLocateOnce(this.persistentZoom); // Single locate without tracking
+      const success = await this.withTimeout(work, LOCATE_OVERALL_TIMEOUT);
+      await store.dispatch('map/setLocationRequestState', success ? 'idle' : 'error');
+    } catch (error) {
+      this.locationError(error);
+      await store.dispatch('map/setLocationRequestState', 'error');
     }
+  }
+
+  /**
+   * Reject if the wrapped promise does not settle within `ms`
+   */
+  withTimeout(promise, ms) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Location request timed out')), ms);
+      promise.then(
+        value => { clearTimeout(timer); resolve(value); },
+        error => { clearTimeout(timer); reject(error); }
+      );
+    });
   }
 }

@@ -56,6 +56,7 @@
           col="3"
           :text="$filters.fonticon(locationButtonIcon)"
           :visible="isIitcLoaded"
+          :loading="isLocating"
           @tap="onLocate"
         />
 
@@ -136,6 +137,7 @@ export default {
       _activeButton: null,
       removeLayoutListener: null,
       hasClipboardLink: false,
+      _locationErrorTimer: null,
       _boundAndroidActivityResumedHandler: null,
       appName: getAppName(),
       PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
@@ -150,6 +152,7 @@ export default {
       panelCommand: state => state.ui.panelCommand,
       currentPane: state => state.navigation.currentPane,
       panes: state => state.navigation.panes,
+      locationRequestState: state => state.map.locationRequestState,
     }),
 
     ...mapGetters('map', ['isFollowingUser']),
@@ -195,9 +198,19 @@ export default {
     },
 
     /**
-     * Determine location button icon based on follow mode
+     * Whether a location request is currently in progress
+     */
+    isLocating() {
+      return this.locationRequestState === 'locating';
+    },
+
+    /**
+     * Determine location button icon based on request state and follow mode
      */
     locationButtonIcon() {
+      if (this.locationRequestState === 'error') {
+        return 'fa-exclamation-triangle'; // Location could not be determined
+      }
       return this.isFollowingUser
         ? 'fa-crosshairs' // Following mode icon
         : 'fa-location-arrow'; // Regular locate icon
@@ -317,6 +330,19 @@ export default {
     },
 
     /**
+     * Surface a failed location request: toast + auto-clear the error icon
+     */
+    locationRequestState(newState) {
+      clearTimeout(this._locationErrorTimer);
+      if (newState === 'error') {
+        new Toasty({ text: this.$L('location.toast.failed') }).show();
+        this._locationErrorTimer = setTimeout(() => {
+          this.$store.dispatch('map/setLocationRequestState', 'idle');
+        }, 2000);
+      }
+    },
+
+    /**
      * Watch for panel commands from store
      */
     panelCommand: {
@@ -405,6 +431,8 @@ export default {
      * Handle location button tap
      */
     async onLocate() {
+      // Ignore taps while a request is in progress to avoid stacking GPS lookups
+      if (this.isLocating) return;
       await this.$store.dispatch('map/triggerUserLocate');
     },
 
@@ -528,6 +556,8 @@ export default {
   },
 
   beforeUnmount() {
+    clearTimeout(this._locationErrorTimer);
+
     if (this.removeLayoutListener) {
       this.removeLayoutListener();
     }

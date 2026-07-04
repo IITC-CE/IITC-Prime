@@ -182,6 +182,8 @@
   "map_status.portals": "portals",
   "map_status.all_links": "all links",
 
+  "location.toast.failed": "Could not determine your location",
+
   "manager.server_not_available": "Server is not available. Retry after %s seconds",
 
   "clipboard.copy_failed": "Failed to copy to clipboard",
