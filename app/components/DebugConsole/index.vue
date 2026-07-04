@@ -82,6 +82,10 @@ import ControlsPanel from './ControlsPanel.vue';
 import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
+// Cubic-bezier [x1, y1, x2, y2] approximating the keyboard's (non-public) easing for the
+// iOS panel translation. Tune to better match the keyboard motion.
+const PANEL_CURVE = [0.2, 0.5, 0.7, 1.0];
+
 export default {
   components: {
     ControlsPanel,
@@ -372,7 +376,6 @@ export default {
           const userInfo = notification.userInfo;
           const frame = userInfo.objectForKey(UIKeyboardFrameEndUserInfoKey).CGRectValue;
           const duration = userInfo.objectForKey(UIKeyboardAnimationDurationUserInfoKey);
-          const curve = userInfo.objectForKey(UIKeyboardAnimationCurveUserInfoKey);
           const screenHeight = UIScreen.mainScreen.bounds.size.height;
           const height = Math.max(0, screenHeight - frame.origin.y);
           this.localKeyboardHeight = height;
@@ -381,18 +384,19 @@ export default {
           const translateY = -Math.max(0, height - safeAreaBottom);
           const wrapper = this.$refs.controlsWrapper?.nativeView;
           const fab = this.$refs.scrollBottomBtn?.nativeView;
+
+          // Translate via NativeScript's translateY property (animate()), not a raw layer
+          // transform: NS preserves the property across relayouts, so a multi-line paste
+          // that grows the TextView can't drop the panel behind the keyboard.
+          // duration === 0 is the interactive drag-to-dismiss stream - track instantly.
           if (duration > 0) {
-            UIView.animateWithDurationDelayOptionsAnimationsCompletion(
-              duration,
-              0,
-              (curve << 16) | UIViewAnimationOptionBeginFromCurrentState,
-              () => {
-                if (wrapper?.ios)
-                  wrapper.ios.transform = CGAffineTransformMakeTranslation(0, translateY);
-                if (fab?.ios) fab.ios.transform = CGAffineTransformMakeTranslation(0, translateY);
-              },
-              null
-            );
+            const opts = {
+              duration: duration * 1000,
+              curve: CAMediaTimingFunction.functionWithControlPoints(...PANEL_CURVE),
+            };
+            if (wrapper)
+              wrapper.animate({ ...opts, translate: { x: 0, y: translateY } }).catch(() => {});
+            if (fab) fab.animate({ ...opts, translate: { x: 0, y: translateY } }).catch(() => {});
           } else {
             if (wrapper) wrapper.translateY = translateY;
             if (fab) fab.translateY = translateY;

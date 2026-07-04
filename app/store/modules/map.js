@@ -12,6 +12,7 @@ export const map = {
     highlighterSelected: 'No Highlights',
     location: { lat: 0, lng: 0, accuracy: 0 },
     isFollowingUser: false,
+    locationRequestState: 'idle', // 'idle' | 'locating' | 'error'
     injectPlugin: {},
     portalStatus: {
       guid: null,
@@ -76,6 +77,9 @@ export const map = {
     },
     SET_FOLLOWING_USER(state, following) {
       state.isFollowingUser = following;
+    },
+    SET_LOCATION_REQUEST_STATE(state, requestState) {
+      state.locationRequestState = requestState;
     },
     SET_INJECT_PLUGIN(state, plugin) {
       state.injectPlugin = plugin;
@@ -155,6 +159,9 @@ export const map = {
     },
     setFollowingUser({ commit }, following) {
       commit('SET_FOLLOWING_USER', following);
+    },
+    setLocationRequestState({ commit }, requestState) {
+      commit('SET_LOCATION_REQUEST_STATE', requestState);
     },
     setInjectPlugin({ commit }, plugin) {
       commit('SET_INJECT_PLUGIN', plugin);
