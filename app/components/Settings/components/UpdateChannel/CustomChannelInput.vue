@@ -88,7 +88,7 @@ export default {
 
   methods: {
     fixTextInputColors,
-    ...mapActions('manager', ['checkCustomChannelUrl']),
+    ...mapActions('manager', ['checkCustomChannelUrl', 'forceUpdate']),
 
     /**
      * Check if custom URL is valid
@@ -109,16 +109,16 @@ export default {
         }
 
         const isValid = await this.checkCustomChannelUrl(urlToCheck);
+        this.urlStatus = isValid ? 'success' : 'error';
 
+        if (this.url !== urlToCheck) {
+          this.url = urlToCheck;
+          await this.$nextTick();
+        }
+
+        this.$emit('urlChanged', urlToCheck);
         if (isValid) {
-          this.urlStatus = 'success';
-          if (this.url !== urlToCheck) {
-            this.url = urlToCheck;
-            await this.$nextTick();
-          }
-          this.$emit('urlChanged', urlToCheck);
-        } else {
-          this.urlStatus = 'error';
+          await this.forceUpdate();
         }
       } catch (error) {
         console.error('Error checking custom URL:', error);
