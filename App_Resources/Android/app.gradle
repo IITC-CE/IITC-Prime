@@ -24,7 +24,10 @@ def getVersionCodeTimeStamps = { ->
         println "Failed to get commit date"
         return -1
     }
-    return (int)(Long.parseLong(unixtime) / 10)
+    def code = (int)(Long.parseLong(unixtime) / 10)
+    // release builds are cut from the same commit as the preceding master (beta) merge,
+    // so bump by 1 to avoid colliding with the versionCode already used by that beta upload
+    return buildTypeFromEnv == "release" ? code + 1 : code
 }
 
 def getPackageVersion = { ->

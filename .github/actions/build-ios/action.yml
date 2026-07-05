@@ -5,6 +5,9 @@ inputs:
   prepare-script:
     description: 'npm prepare script to run (e.g. prepare:ios:appstore-beta)'
     required: true
+  build-type:
+    description: 'Build type used for the version sync step (beta or release)'
+    required: true
   apple-team-id:
     description: 'Apple Developer Team ID'
     required: true
@@ -98,6 +101,8 @@ runs:
 
     - name: Sync iOS version from git timestamp
       shell: bash
+      env:
+        BUILD_TYPE: ${{ inputs.build-type }}
       run: npm run version:sync-ios
 
     - name: Prepare iOS Xcode project

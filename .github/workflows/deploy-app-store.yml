@@ -18,9 +18,11 @@ jobs:
       - name: Set prepare script and lane
         run: |
           if [[ $GITHUB_REF == refs/heads/master ]]; then
+            echo "BUILD_TYPE=beta" >> $GITHUB_ENV
             echo "PREPARE_SCRIPT=prepare:ios:appstore-beta" >> $GITHUB_ENV
             echo "FASTLANE_LANE=deploy_testflight" >> $GITHUB_ENV
           elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "BUILD_TYPE=release" >> $GITHUB_ENV
             echo "PREPARE_SCRIPT=prepare:ios:appstore-release" >> $GITHUB_ENV
             echo "FASTLANE_LANE=deploy_appstore" >> $GITHUB_ENV
           fi
@@ -28,6 +30,7 @@ jobs:
       - name: Prepare iOS Xcode project
         uses: ./.github/actions/build-ios
         with:
+          build-type: ${{ env.BUILD_TYPE }}
           prepare-script: ${{ env.PREPARE_SCRIPT }}
           apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
           certificate-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
