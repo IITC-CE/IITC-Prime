@@ -58,8 +58,11 @@ platform :ios do
     upload_to_app_store(
       api_key: api_key,
       ipa: ipa_path,
-      skip_metadata: true,
-      skip_screenshots: true,
+      metadata_path: "./fastlane/metadata/ios",
+      screenshots_path: "./fastlane/screenshots/ios",
+      skip_metadata: false,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
       submit_for_review: true,
       automatic_release: false,
       force: true,
@@ -106,7 +109,7 @@ platform :android do
       json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
       skip_upload_apk: true,
       skip_upload_images: true,
-      skip_upload_screenshots: true
+      skip_upload_screenshots: false
     )
   end
 
@@ -121,7 +124,7 @@ platform :android do
       json_key_data: ENV['GOOGLE_PLAY_ACCOUNT'],
       skip_upload_apk: true,
       skip_upload_images: true,
-      skip_upload_screenshots: true
+      skip_upload_screenshots: false
     )
   end
 
