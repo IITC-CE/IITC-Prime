@@ -1,8 +1,28 @@
 diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-index ddb35cd..17a81b6 100644
+index ddb35cd..3d1c8f0 100644
 --- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 +++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-@@ -404,15 +404,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -155,13 +155,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+     }
+     disposeNativeView() {
+         // this.off('layoutChanged', this.onLayoutChange, this);
++        // Native views can be recreated while the JS view tree survives (Android
++        // activity recreation, e.g. system navigation mode change). Only detach
++        // listeners here; initNativeView() -> initGestures() re-attaches them.
++        // Keep this.scrollView and this.bottomSheet: nulling the bottomSheet
++        // property triggers _onBottomSheetChanged -> removeChild(), permanently
++        // removing the sheet from the tree so the panel never comes back.
+         if (this.scrollView) {
+             this.scrollView.off('touch', this.onScrollViewTouch, this);
+-            this.scrollView = null;
+         }
+         if (__ANDROID__ && this.bottomSheet) {
+             this.bottomSheet.off('touch', this.onBottomSheetTouch, this);
+-            this.bottomSheet = null;
+         }
+         super.disposeNativeView();
+         if (this.panGestureHandler) {
+@@ -404,15 +408,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
          }
          else if (event.action === 'up' || event.action === 'cancel') {
              this.vt?.addMovement(p.getX(), p.getY());
@@ -37,7 +57,7 @@ index ddb35cd..17a81b6 100644
                  this.wasDraggingPanel = false;
              }
              // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
-@@ -448,22 +458,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -448,22 +462,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              //     // Movement too small - likely a tap
              //     return;
              // }
@@ -93,7 +113,7 @@ index ddb35cd..17a81b6 100644
                      }
                  }
                  if (shouldStartDraggingPanel) {
-@@ -479,6 +513,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -479,6 +517,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
                          this.isScrollEnabled = true;
                      }
                  }
@@ -101,7 +121,7 @@ index ddb35cd..17a81b6 100644
              }
              else {
                  const maxOffset = this.translationMaxOffset;
-@@ -592,6 +627,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -592,6 +631,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
          if (this.animation) {
              this.animation.cancel();
