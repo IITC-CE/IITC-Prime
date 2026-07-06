@@ -1,0 +1,22 @@
+diff --git a/node_modules/@nativescript/core/ui/core/view/index.android.js b/node_modules/@nativescript/core/ui/core/view/index.android.js
+index 30557ec..3b3deb5 100644
+--- a/node_modules/@nativescript/core/ui/core/view/index.android.js
++++ b/node_modules/@nativescript/core/ui/core/view/index.android.js
+@@ -647,6 +647,17 @@ export class View extends ViewCommon {
+                 this.layoutChangeListener = null;
+             }
+         }
++        if (this.insetListenerIsSet) {
++            // The native view is going away (e.g. activity recreation); mark the
++            // listener as needed so initNativeView() re-attaches it to the new
++            // native view. Otherwise insets are never consumed again and inner
++            // OverflowEdgeNone layouts keep stale edgeInsets as padding.
++            this.insetListenerIsSet = false;
++            this.needsInsetListener = true;
++            if (this.nativeViewProtected && this.nativeViewProtected.setInsetListener) {
++                this.nativeViewProtected.setInsetListener(null);
++            }
++        }
+         super.disposeNativeView();
+     }
+     setOnTouchListener() {
