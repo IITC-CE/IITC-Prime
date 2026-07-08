@@ -63,6 +63,13 @@ export function initSentry() {
   Trace.setErrorHandler(errorHandler);
 }
 
+// Report a non-fatal anomaly with context; logged locally when Sentry is disabled.
+export function captureWarning(message: string, data?: Record<string, unknown>) {
+  console.warn(`[Sentry] ${message}`, data ? JSON.stringify(data) : '');
+  if (!__ENABLE_SENTRY__ || !initialized) return;
+  Sentry.captureMessage(message, { level: 'warning', extra: data });
+}
+
 // Call this after createApp() to capture errors thrown inside Vue components.
 export function setupVueErrorHandler(app: { config: { errorHandler: unknown } }) {
   if (!__ENABLE_SENTRY__) return;

@@ -96,6 +96,7 @@ import { layoutService } from '~/utils/layout-service';
 import UserLocation from '@/utils/user-location';
 import { handleDeepLink } from '@/utils/deep-links';
 import { parseAndroidInsets, setStatusBarForMapTheme } from '@/utils/platform/ui';
+import { captureWarning } from '~/sentry';
 
 import { $navigateTo } from 'nativescript-vue';
 import AppWebView from './AppWebView';
@@ -215,13 +216,20 @@ export default {
 
       const slideDistance = this.mapStateBarHeight + this.systemBottomInset;
       const y = hidden ? slideDistance : 0;
+      this._mapStateBarTargetY = y;
 
       if (animate) {
-        bar.animate({
-          translate: { x: 0, y },
-          duration: 200,
-          curve: CoreTypes.AnimationCurve.easeOut,
-        });
+        bar
+          .animate({
+            translate: { x: 0, y },
+            duration: 200,
+            curve: CoreTypes.AnimationCurve.easeOut,
+          })
+          .catch(() => {})
+          .finally(() => {
+            // Overlapping hide/show animations: converge on the last requested target
+            bar.translateY = this._mapStateBarTargetY;
+          });
       } else {
         bar.translateY = y;
       }
@@ -406,10 +414,48 @@ export default {
       setStatusBarForMapTheme(this.isStatusBarDark);
     },
 
-    // Android EdgeToEdge resets the status bar to its default on every resume
     onAppResume() {
       if (this.isMainPageActive()) {
+        // Android EdgeToEdge resets the status bar to its default on every resume
         setStatusBarForMapTheme(this.isStatusBarDark);
+      }
+      this.healPanelTransforms();
+    },
+
+    /**
+     * iOS CA delegate races can desync native translate values from JS state
+     * (panel invisible while the store says visible). Heal on resume and report to Sentry.
+     */
+    healPanelTransforms() {
+      if (!isIOS) return;
+      const owner = this.bottomSheetInstance;
+      const sheet = owner?.bottomSheet;
+      if (owner && sheet && !owner.animating && !owner.animation) {
+        const expected = owner.computeTranslationData()?.bottomSheet?.translateY;
+        const actual = sheet.translateY || 0;
+        if (typeof expected === 'number' && Math.abs(actual - expected) > 1) {
+          captureWarning('BottomSheet transform desync healed on resume', {
+            actual,
+            expected,
+            translationY: owner.translationY,
+            stepIndex: owner.stepIndex,
+          });
+          owner.applyTrData(owner.computeTranslationData());
+        }
+      }
+
+      const bar = this.$refs.mapStateBar?.$el?.nativeView;
+      if (bar) {
+        const expected = this.isPanelHidden ? this.mapStateBarHeight + this.systemBottomInset : 0;
+        const actual = bar.translateY || 0;
+        if (Math.abs(actual - expected) > 1) {
+          captureWarning('MapStateBar transform desync healed on resume', {
+            actual,
+            expected,
+            isPanelHidden: this.isPanelHidden,
+          });
+          bar.translateY = expected;
+        }
       }
     },
 
