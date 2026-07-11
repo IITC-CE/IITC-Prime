@@ -83,8 +83,9 @@ import ControlButton from '@/components/BottomPanel/ControlButton.vue';
 import { ControlPanelDataService } from '@/components/BottomPanel/ControlPanel/services/controlPanelDataService.js';
 import { Application, isIOS, isAndroid } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
+import { l } from '@nativescript-community/l';
 import { layoutService } from '~/utils/layout-service';
-import { getAppName, readClipboardText } from '~/utils/platform/system';
+import { readClipboardText } from '~/utils/platform/system';
 import { hasClipboardUrl } from '~/utils/clipboard';
 import { isSupportedDeepLinkUrl, processDeepLink } from '~/utils/deep-links';
 
@@ -139,7 +140,6 @@ export default {
       hasClipboardLink: false,
       _locationErrorTimer: null,
       _boundAndroidActivityResumedHandler: null,
-      appName: getAppName(),
       PANEL_CLOSED_HEIGHT: 110, // Visible height when panel is in BOTTOM position
     };
   },
@@ -175,10 +175,12 @@ export default {
 
     /**
      * Get panel title - app name for map pane, pane label for others
+     * Always uses the release name, not the native app label (which may be
+     * suffixed "Beta"/"Debug"), so it isn't mistaken for the update channel setting.
      */
     panelTitle() {
       if (this.isMapPane) {
-        return this.appName;
+        return l('app.name.release');
       }
 
       const pane = this.panes.find(p => p.name === this.currentPane);
