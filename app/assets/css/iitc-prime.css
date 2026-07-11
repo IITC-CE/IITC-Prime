@@ -6,6 +6,24 @@ body {
   min-width: initial;
 }
 
+/* login page */
+#dashboard_container {
+  display: flex;
+  flex-direction: column;
+  min-width: 245px;
+  min-height: 365px;
+}
+
+.button {
+  margin: 5px 10%;
+  padding: 0;
+}
+
+#dashboard_container a {
+  display: block;
+  padding: 10px 15px;
+}
+
 /* Prevent iOS WKWebView auto-zoom on input focus (triggered when font-size < 16px) */
 input,
 textarea,

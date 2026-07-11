@@ -31,6 +31,10 @@ const ctx = global;
 
 let manager = null;
 
+// Embedded at build time - see scripts/fetch-iitc-fallback-core.js.
+// May be '' if the build machine had no network; the library treats that as "nothing to seed".
+const FALLBACK_CORE = __IITC_FALLBACK_CORE__;
+
 const stripCode = plugin => {
   if (!plugin) return plugin;
   const { code, ...meta } = plugin;
@@ -74,6 +78,7 @@ const getManager = () => {
       `,
     },
     appName: 'IITC Prime',
+    fallbackCore: FALLBACK_CORE,
     message: (message, args) => {
       emitCallback('onMessage', [message, args]);
     },
