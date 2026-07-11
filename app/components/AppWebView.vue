@@ -24,7 +24,7 @@ import {
   writePrimeParamsFile,
   router,
 } from '@/utils/bridge';
-import { injectCustomStyles } from '~/utils/iitc-prime-resources';
+import { injectCustomStyles, writeCustomStylesFile } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/bridge/debug-bridge';
 import {
   deletePluginScriptFile,
@@ -54,6 +54,12 @@ import {
 // atDocumentEnd; Android: addDocumentStartJavaScript wrapped in a DOMContentLoaded guard).
 // The `check` expression detects cold-start absence so the fallback `inject` can run.
 const PRELOAD_SCRIPTS = [
+  {
+    name: 'iitcPrimeStyles',
+    write: writeCustomStylesFile,
+    inject: injectCustomStyles,
+    check: 'document.getElementById("iitcprimecss") !== null',
+  },
   {
     name: 'iitcBridge',
     write: writeBridgeScriptFile,
