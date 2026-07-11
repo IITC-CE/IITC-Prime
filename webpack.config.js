@@ -3,6 +3,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const { resolve, join } = require('path');
 const { readFileSync } = require('fs');
 const { execSync } = require('child_process');
+const { fetchIitcFallbackCore } = require('./scripts/fetch-iitc-fallback-core');
 
 require('dotenv').config();
 
@@ -25,6 +26,9 @@ module.exports = env => {
   try {
     gitCommitHash = execSync('git rev-parse --short HEAD').toString().trim();
   } catch (_) {}
+
+  // Offline fallback for cold-start IITC core
+  const iitcFallbackCore = fetchIitcFallbackCore();
 
   const platform = webpack.Utils.platform.getPlatformName();
   const projectSlug = `${process.env.SENTRY_PROJECT_SLUG}-${platform}`;
@@ -49,6 +53,7 @@ module.exports = env => {
         __SENTRY_PREFIX__: `'${SENTRY_PREFIX}'`,
         __SENTRY_DSN_IOS__: JSON.stringify(process.env.SENTRY_DSN_IOS),
         __SENTRY_DSN_ANDROID__: JSON.stringify(process.env.SENTRY_DSN_ANDROID),
+        __IITC_FALLBACK_CORE__: JSON.stringify(iitcFallbackCore),
       });
       return args;
     });
