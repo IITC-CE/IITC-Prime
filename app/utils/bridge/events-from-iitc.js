@@ -8,6 +8,8 @@ import { shareFile } from '@/utils/file-manager';
 import { copyToClipboard } from '@/utils/clipboard';
 import { shareContent } from '~/utils/platform/system';
 import { mapIcon } from '@/utils/pane-icon-compat';
+import { alert } from '@/utils/dialogs';
+import { l } from '@nativescript-community/l';
 
 /**
  * Handles request to share geographic position
@@ -45,6 +47,13 @@ export const getZoomControl = () => {
  */
 export const bootFinished = async name => {
   await store.dispatch('ui/iitcBootFinished');
+
+  if (await store.dispatch('ui/consumeDemoWelcome')) {
+    await alert({
+      title: l('demo.welcome.title'),
+      message: l('demo.welcome.message'),
+    });
+  }
 };
 
 /**
@@ -170,6 +179,13 @@ export const setProgress = async progress => {
  */
 export const addInternalHostname = async domain => {
   await store.dispatch('map/addInternalHostname', domain);
+};
+
+/**
+ * Opens the public demo server, invoked by the in-page "Try demo" button
+ */
+export const openDemo = async () => {
+  await store.dispatch('ui/enableDemoMode');
 };
 
 /**

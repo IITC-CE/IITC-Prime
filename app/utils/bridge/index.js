@@ -20,6 +20,7 @@ import {
   copyToClipboardBridge,
   shareString,
   gmBridgeRequest,
+  openDemo,
 } from './events-from-iitc';
 import { File, knownFolders, path } from '@nativescript/core';
 
@@ -93,6 +94,9 @@ export const router = async event => {
     case 'gmBridgeRequest':
       await gmBridgeRequest(eventData);
       break;
+    case 'openDemo':
+      await openDemo();
+      break;
     case 'setPermalink':
       // Intentionally ignored
       break;
@@ -138,6 +142,7 @@ const buildBridgeScript = () => {
     addInternalHostname: ['domain'],
     saveFile: ['filename', 'dataType', 'content'],
     reloadIITC: ['clearCache'],
+    openDemo: [],
   };
 
   // regular sync bridge functions
