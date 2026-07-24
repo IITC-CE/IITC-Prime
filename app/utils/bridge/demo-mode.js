@@ -9,11 +9,18 @@ const buildDemoModeScript = () => `(function () {
   if (window.__iitcDemoModeRan) return;
   window.__iitcDemoModeRan = true;
 
-  // On the demo host, suppress IITC's non-standard-domain warning before boot.
-  // localStorage is per-origin, so the real intel domain is unaffected.
+  // On the demo host, prime IITC's localStorage before boot
+  // (per-origin, so the real intel domain is unaffected)
   if (location.hostname === '${DEMO_INTEL_HOST}') {
     try {
+      // Hide IITC's non-standard-domain warning.
       localStorage['pass-checking-intel-url'] = 'true';
+      // Google base layers don't work without an intel token, so start on CartoDB.
+      // Only override an unset or Google choice, to keep a deliberate CartoDB pick.
+      var baseMap = localStorage['iitc-base-map'];
+      if (!baseMap || baseMap.indexOf('Google') === 0) {
+        localStorage['iitc-base-map'] = 'CartoDB Dark Matter';
+      }
     } catch (e) {}
   }
 

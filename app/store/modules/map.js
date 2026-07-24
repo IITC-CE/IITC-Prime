@@ -1,6 +1,10 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { INITIAL_INTERNAL_HOSTNAMES } from '@/utils/url-config';
+import { INITIAL_INTERNAL_HOSTNAMES, isDemoUrl } from '@/utils/url-config';
+
+// Google base layers need a Maps API token IITC extracts from intel.ingress.com,
+// which the demo server can't provide, so they are dropped in demo mode.
+const isGoogleBaseLayer = name => typeof name === 'string' && name.startsWith('Google');
 
 export const map = {
   namespaced: true,
@@ -127,11 +131,17 @@ export const map = {
     },
   },
   actions: {
-    setBaseLayers({ commit }, baseLayers) {
+    setBaseLayers({ commit, dispatch, rootState }, baseLayers) {
+      const inDemo = isDemoUrl(rootState.ui.currentUrl);
+      const visible = inDemo
+        ? baseLayers.filter(layer => !isGoogleBaseLayer(layer.name))
+        : baseLayers;
+
       const layers = [];
       let activeId = 0;
+      let hasActive = false;
 
-      baseLayers.forEach((layer, index) => {
+      visible.forEach(layer => {
         layers.push({
           name: layer.name,
           layerId: layer.layerId,
@@ -139,11 +149,19 @@ export const map = {
 
         if (layer.active === true) {
           activeId = layer.layerId;
+          hasActive = true;
         }
       });
 
-      commit('SET_BASE_LAYER_SELECTED', activeId);
       commit('SET_BASE_LAYERS_LIST', layers);
+
+      if (inDemo && !hasActive && layers.length > 0) {
+        // Active base map was a filtered-out Google layer -
+        // switch IITC to the first remaining one
+        dispatch('setActiveBaseLayer', layers[0].layerId);
+      } else {
+        commit('SET_BASE_LAYER_SELECTED', activeId);
+      }
     },
     setActiveBaseLayer({ commit }, index) {
       commit('SET_BASE_LAYER_SELECTED', index);
