@@ -1,13 +1,25 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { File, knownFolders, path } from '@nativescript/core';
+import { DEMO_INTEL_HOST } from '@/utils/url-config';
 
-// Runs on every page load (no per-URL matching),
-// so it must no-op unless the sign-in dashboard is present
+// Runs on every page load (no per-URL matching), so each part guards its own
+// preconditions. Runs at DOMContentLoaded, before IITC core is injected.
 const buildDemoModeScript = () => `(function () {
-  if (document.getElementById('iitc-demo-button')) return;
+  if (window.__iitcDemoModeRan) return;
+  window.__iitcDemoModeRan = true;
+
+  // On the demo host, suppress IITC's non-standard-domain warning before boot.
+  // localStorage is per-origin, so the real intel domain is unaffected.
+  if (location.hostname === '${DEMO_INTEL_HOST}') {
+    try {
+      localStorage['pass-checking-intel-url'] = 'true';
+    } catch (e) {}
+  }
+
+  // On the sign-in dashboard, add a button that switches to the demo server.
   var container = document.getElementById('dashboard_container');
-  if (!container) return;
+  if (!container || document.getElementById('iitc-demo-button')) return;
 
   var wrapper = document.createElement('div');
   wrapper.className = 'button unselectable';

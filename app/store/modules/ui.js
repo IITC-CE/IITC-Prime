@@ -1,6 +1,6 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { INGRESS_INTEL_MAP, DEMO_INTEL_MAP } from '@/utils/url-config';
+import { INGRESS_INTEL_MAP, DEMO_INTEL_MAP, isDemoUrl } from '@/utils/url-config';
 
 export const ui = {
   namespaced: true,
@@ -13,6 +13,10 @@ export const ui = {
     progress: 0,
     isDebugActive: false,
     currentUrl: INGRESS_INTEL_MAP,
+
+    // Set on demo activation; consumed once at the next demo boot to show the
+    // welcome dialog (see consumeDemoWelcome).
+    demoWelcomePending: false,
 
     // Panel configuration
     mapStateBarHeight: 46,
@@ -103,6 +107,9 @@ export const ui = {
     SET_CURRENT_URL(state, url) {
       state.currentUrl = url;
     },
+    SET_DEMO_WELCOME_PENDING(state, pending) {
+      state.demoWelcomePending = pending;
+    },
 
     // Set active panel in sliding panel with validation
     SET_ACTIVE_PANEL(state, panelName) {
@@ -187,8 +194,20 @@ export const ui = {
 
     // Points the WebView home URL at the demo server.
     // Auto-disabled on return to the real intel host.
-    enableDemoMode({ dispatch }) {
+    enableDemoMode({ commit, dispatch }) {
+      commit('SET_DEMO_WELCOME_PENDING', true);
       dispatch('setCurrentUrl', DEMO_INTEL_MAP);
+    },
+
+    // Returns true once per demo activation, when IITC boots on the demo host,
+    // to trigger the demo welcome dialog. Guards against a stale flag firing on
+    // the real intel host if the user left the demo before it booted.
+    consumeDemoWelcome({ state, commit }) {
+      if (state.demoWelcomePending && isDemoUrl(state.currentUrl)) {
+        commit('SET_DEMO_WELCOME_PENDING', false);
+        return true;
+      }
+      return false;
     },
 
     // Set active panel

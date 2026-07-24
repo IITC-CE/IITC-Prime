@@ -71,8 +71,7 @@ const PRELOAD_SCRIPTS = [
     name: 'iitcDemoMode',
     write: writeDemoModeFile,
     inject: injectDemoMode,
-    check:
-      'document.getElementById("iitc-demo-button") !== null || document.getElementById("dashboard_container") === null',
+    check: 'window.__iitcDemoModeRan === true',
   },
   {
     name: 'iitcDebugBridge',

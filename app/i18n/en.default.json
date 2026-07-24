@@ -18,6 +18,9 @@
   "dialog.cancel": "Cancel",
   "dialog.error.title": "Error",
 
+  "demo.welcome.title": "Demo mode",
+  "demo.welcome.message": "You're exploring IITC Prime with simulated data. Portals, links and fields aren't real and don't come from Niantic's Ingress Intel. Sign in with an Ingress account to see live data.",
+
   "settings.title": "Settings",
   "settings.section.iitc_management": "IITC management",
   "settings.plugins.title": "Plugins",
