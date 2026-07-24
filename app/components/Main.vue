@@ -123,7 +123,6 @@ export default {
       layout: {
         bottomPadding: 0,
         panelWidth: 0,
-        contentHeight: 0,
       },
       sliding: {
         isVisible: true,
@@ -268,7 +267,6 @@ export default {
       this.layout = {
         bottomPadding: dimensions.bottomPadding,
         panelWidth: dimensions.panelWidth,
-        contentHeight: dimensions.contentHeight,
       };
 
       // Update Vuex store
@@ -280,7 +278,6 @@ export default {
      */
     async updateStoreLayout(dimensions) {
       await this.$store.dispatch('ui/setLayoutDimensions', {
-        contentHeight: dimensions.contentHeight,
         panelWidth: dimensions.panelWidth,
         availableWidth: dimensions.availableWidth,
       });
@@ -492,7 +489,6 @@ export default {
     this.layout = {
       bottomPadding: layoutService.dimensions.bottomPadding,
       panelWidth: layoutService.dimensions.panelWidth,
-      contentHeight: layoutService.dimensions.contentHeight,
     };
 
     // Update store with initial values

@@ -5,7 +5,6 @@ import { INGRESS_INTEL_MAP, DEMO_INTEL_MAP, isDemoUrl } from '@/utils/url-config
 export const ui = {
   namespaced: true,
   state: () => ({
-    screenHeight: 0,
     panelWidth: 0,
     availableWidth: 0,
     isWebviewLoaded: false,
@@ -83,9 +82,6 @@ export const ui = {
   },
 
   mutations: {
-    SET_SCREEN_HEIGHT(state, height) {
-      state.screenHeight = height;
-    },
     SET_PANEL_WIDTH(state, width) {
       state.panelWidth = width;
     },
@@ -157,8 +153,7 @@ export const ui = {
   },
 
   actions: {
-    setLayoutDimensions({ commit }, { contentHeight, panelWidth, availableWidth }) {
-      commit('SET_SCREEN_HEIGHT', contentHeight);
+    setLayoutDimensions({ commit }, { panelWidth, availableWidth }) {
       commit('SET_PANEL_WIDTH', panelWidth);
       commit('SET_AVAILABLE_WIDTH', availableWidth);
     },

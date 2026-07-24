@@ -373,13 +373,10 @@ export default {
     }),
 
     /**
-     * Get screen height from layout service
+     * Get screen height from layout service (0 until first measurement)
      */
     _getScreenHeight() {
-      if (layoutService.isInitialized) {
-        return layoutService.dimensions.availableHeight;
-      }
-      return this.$store.state.ui.screenHeight;
+      return layoutService.dimensions.availableHeight;
     },
 
     /**
