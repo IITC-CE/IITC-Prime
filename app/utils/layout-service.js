@@ -17,7 +17,6 @@ class LayoutService extends Observable {
       // Panel width when docked to the side on wide screens
       sidePanelWidth: 425,
       bottomPadding: 100,
-      tabletWidthThreshold: 600,
       ...options,
     };
 
@@ -27,11 +26,7 @@ class LayoutService extends Observable {
       availableHeight: 0,
       bottomPadding: this.config.bottomPadding,
       panelWidth: 0,
-      isTablet: false,
-      isLandscape: false,
     };
-
-    this._initialized = false;
   }
 
   /**
@@ -40,13 +35,6 @@ class LayoutService extends Observable {
    */
   get dimensions() {
     return { ...this._dimensions };
-  }
-
-  /**
-   * Check if the service has been initialized
-   */
-  get isInitialized() {
-    return this._initialized;
   }
 
   /**
@@ -96,10 +84,6 @@ class LayoutService extends Observable {
     // Store previous values for comparison
     const previousDimensions = { ...this._dimensions };
 
-    // Determine orientation and device type
-    const isLandscape = width > height;
-    const isTablet = width > this.config.tabletWidthThreshold;
-
     const bottomPadding = this._calculateBottomPadding(width);
     const panelWidth = this._calculatePanelWidth(width);
 
@@ -109,14 +93,7 @@ class LayoutService extends Observable {
       availableHeight: height,
       bottomPadding,
       panelWidth,
-      isTablet,
-      isLandscape,
     };
-
-    // Mark as initialized
-    if (!this._initialized) {
-      this._initialized = true;
-    }
 
     // Notify listeners if important dimensions have changed
     if (this._hasDimensionsChanged(previousDimensions, this._dimensions)) {
@@ -177,8 +154,7 @@ class LayoutService extends Observable {
       Math.abs(prev.availableWidth - curr.availableWidth) > 1 ||
       Math.abs(prev.availableHeight - curr.availableHeight) > 1 ||
       prev.bottomPadding !== curr.bottomPadding ||
-      prev.panelWidth !== curr.panelWidth ||
-      prev.isLandscape !== curr.isLandscape
+      prev.panelWidth !== curr.panelWidth
     );
   }
 
@@ -203,10 +179,7 @@ class LayoutService extends Observable {
       availableHeight: 0,
       bottomPadding: this.config.bottomPadding,
       panelWidth: 0,
-      isTablet: false,
-      isLandscape: false,
     };
-    this._initialized = false;
   }
 }
 
