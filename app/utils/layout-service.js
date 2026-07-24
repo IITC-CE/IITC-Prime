@@ -14,7 +14,8 @@ class LayoutService extends Observable {
 
         // Default configuration
         this.config = {
-            defaultPanelWidth: 500,
+            // Panel width when docked to the side on wide screens
+            sidePanelWidth: 425,
             bottomPadding: 100,
             tabletWidthThreshold: 600,
             ...options
@@ -99,11 +100,8 @@ class LayoutService extends Observable {
         const isLandscape = width > height;
         const isTablet = width > this.config.tabletWidthThreshold;
 
-        // Calculate bottom padding based on orientation and device type
-        const bottomPadding = this._calculateBottomPadding(width, height);
-
-        // Calculate panel width
-        const panelWidth = this._calculatePanelWidth(width, height);
+        const bottomPadding = this._calculateBottomPadding(width);
+        const panelWidth = this._calculatePanelWidth(width);
 
         // Update dimensions
         this._dimensions = {
@@ -132,41 +130,38 @@ class LayoutService extends Observable {
     }
 
     /**
-     * Calculate bottom padding based on device orientation and size
+     * Panel docks to the side (vs. full width) only when the screen is wide
+     * enough to leave the map comparable room. Independent of orientation.
      *
      * @param {number} width - Available width
-     * @param {number} height - Available height
-     * @returns {number} Calculated bottom padding
+     * @returns {boolean}
      * @private
      */
-    _calculateBottomPadding(width, height) {
-        if (width <= height) {
-            // Portrait mode
-            return this.config.bottomPadding;
-        }
-
-        // Landscape mode
-        return width > this.config.tabletWidthThreshold ? 0 : this.config.bottomPadding;
+    _shouldDockPanelToSide(width) {
+        return width >= this.config.sidePanelWidth * 1.8;
     }
 
     /**
-     * Calculate panel width based on device orientation and size
+     * Calculate bottom padding based on available width.
+     * A side-docked panel doesn't overlap the content below it, so no padding.
      *
      * @param {number} width - Available width
-     * @param {number} height - Available height
+     * @returns {number} Calculated bottom padding
+     * @private
+     */
+    _calculateBottomPadding(width) {
+        return this._shouldDockPanelToSide(width) ? 0 : this.config.bottomPadding;
+    }
+
+    /**
+     * Calculate panel width based on available width
+     *
+     * @param {number} width - Available width
      * @returns {number} Calculated panel width
      * @private
      */
-    _calculatePanelWidth(width, height) {
-        if (width <= height) {
-            // Portrait mode - panel takes full width
-            return width;
-        }
-
-        // Landscape mode - either use fixed width for tablets or available width
-        return width > this.config.tabletWidthThreshold
-            ? this.config.defaultPanelWidth
-            : width;
+    _calculatePanelWidth(width) {
+        return this._shouldDockPanelToSide(width) ? this.config.sidePanelWidth : width;
     }
 
     /**
