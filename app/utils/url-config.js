@@ -4,11 +4,18 @@ import store from '@/store';
 
 export const INGRESS_INTEL_MAP = 'https://intel.ingress.com/intel';
 
+// Public demo server serving sample data without an Ingress sign-in.
+export const DEMO_INTEL_HOST = 'demo.iitc.app';
+export const DEMO_INTEL_MAP = `https://${DEMO_INTEL_HOST}/intel`;
+
 export const INITIAL_INTERNAL_HOSTNAMES = [
   'intel.ingress.com',
   'signin.nianticlabs.com',
   'signin.nianticspatial.com',
+  DEMO_INTEL_HOST,
 ];
+
+const INTEL_HOSTS = new Set(['intel.ingress.com', DEMO_INTEL_HOST]);
 
 // Schemes a WebView renders itself; anything else is an app/deep link
 // (tg:, mailto:, geo:, ...) that must be handed to the OS instead of loaded.
@@ -31,7 +38,21 @@ const WEBVIEW_SCHEMES = new Set([
 export const isIntelUrl = url => {
   if (!url) return false;
   try {
-    return new URL(url).hostname === 'intel.ingress.com';
+    return INTEL_HOSTS.has(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * True if the URL points at the public demo server host
+ * @param {string} url
+ * @returns {boolean}
+ */
+export const isDemoUrl = url => {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname === DEMO_INTEL_HOST;
   } catch {
     return false;
   }

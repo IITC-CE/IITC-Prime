@@ -26,6 +26,7 @@ import {
 } from '@/utils/bridge';
 import { injectCustomStyles, writeCustomStylesFile } from '~/utils/iitc-prime-resources';
 import { injectDebugBridge, writeDebugBridgeFile } from '@/utils/bridge/debug-bridge';
+import { injectDemoMode, writeDemoModeFile } from '@/utils/bridge/demo-mode';
 import {
   deletePluginScriptFile,
   readPluginScriptCode,
@@ -33,7 +34,7 @@ import {
   PLUGINS_INJECTED_MAP,
 } from '@/utils/manager/plugin-scripts';
 import BaseWebView from './BaseWebView.vue';
-import { addViewportParam, isIntelUrl } from '@/utils/url-config';
+import { addViewportParam, isIntelUrl, isDemoUrl, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
 import { webviewService } from '@/utils/webview/webview-service';
 
@@ -65,6 +66,13 @@ const PRELOAD_SCRIPTS = [
     write: writeBridgeScriptFile,
     inject: injectBridgeIITC,
     check: 'typeof window.app !== "undefined"',
+  },
+  {
+    name: 'iitcDemoMode',
+    write: writeDemoModeFile,
+    inject: injectDemoMode,
+    check:
+      'document.getElementById("iitc-demo-button") !== null || document.getElementById("dashboard_container") === null',
   },
   {
     name: 'iitcDebugBridge',
@@ -148,6 +156,11 @@ export default {
 
       try {
         if (isIntelUrl(arg.url)) {
+          // Leaving the demo server (logout redirects to real intel) turns demo mode off
+          if (!isDemoUrl(arg.url) && isDemoUrl(this.$store.state.ui.currentUrl)) {
+            await this.$store.dispatch('ui/setCurrentUrl', INGRESS_INTEL_MAP);
+          }
+
           // Mark this URL as pending injection; onLoadFinished will inject only for this URL
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;

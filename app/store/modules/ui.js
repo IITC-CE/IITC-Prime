@@ -1,6 +1,6 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { INGRESS_INTEL_MAP, DEMO_INTEL_MAP } from '@/utils/url-config';
 
 export const ui = {
   namespaced: true,
@@ -183,6 +183,12 @@ export const ui = {
     },
     setCurrentUrl({ commit }, url) {
       commit('SET_CURRENT_URL', url);
+    },
+
+    // Points the WebView home URL at the demo server.
+    // Auto-disabled on return to the real intel host.
+    enableDemoMode({ dispatch }) {
+      dispatch('setCurrentUrl', DEMO_INTEL_MAP);
     },
 
     // Set active panel

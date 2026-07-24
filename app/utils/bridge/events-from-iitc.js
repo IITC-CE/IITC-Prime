@@ -173,6 +173,13 @@ export const addInternalHostname = async domain => {
 };
 
 /**
+ * Opens the public demo server, invoked by the in-page "Try demo" button
+ */
+export const openDemo = async () => {
+  await store.dispatch('ui/enableDemoMode');
+};
+
+/**
  * Handles follow mode state changes from IITC user location plugin
  * @param {boolean} follow - Whether follow mode is active
  */
