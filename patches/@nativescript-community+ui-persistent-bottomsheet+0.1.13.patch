@@ -1,8 +1,8 @@
 diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-index ddb35cd..65a6064 100644
+index c91387f..3809f91 100644
 --- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 +++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-@@ -155,13 +155,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -158,13 +158,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      }
      disposeNativeView() {
          // this.off('layoutChanged', this.onLayoutChange, this);
@@ -16,13 +16,13 @@ index ddb35cd..65a6064 100644
              this.scrollView.off('touch', this.onScrollViewTouch, this);
 -            this.scrollView = null;
          }
-         if (__ANDROID__ && this.bottomSheet) {
+         if (this.bottomSheet) {
              this.bottomSheet.off('touch', this.onBottomSheetTouch, this);
 -            this.bottomSheet = null;
          }
          super.disposeNativeView();
          if (this.panGestureHandler) {
-@@ -404,15 +408,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -414,15 +418,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
          }
          else if (event.action === 'up' || event.action === 'cancel') {
              this.vt?.addMovement(p.getX(), p.getY());
@@ -57,7 +57,7 @@ index ddb35cd..65a6064 100644
                  this.wasDraggingPanel = false;
              }
              // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
-@@ -448,22 +462,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -483,22 +497,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              //     // Movement too small - likely a tap
              //     return;
              // }
@@ -113,7 +113,7 @@ index ddb35cd..65a6064 100644
                      }
                  }
                  if (shouldStartDraggingPanel) {
-@@ -479,6 +517,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -514,6 +552,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
                          this.isScrollEnabled = true;
                      }
                  }
@@ -121,7 +121,7 @@ index ddb35cd..65a6064 100644
              }
              else {
                  const maxOffset = this.translationMaxOffset;
-@@ -592,6 +631,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -627,6 +666,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
          if (this.animation) {
              this.animation.cancel();
@@ -131,7 +131,7 @@ index ddb35cd..65a6064 100644
          }
          if (this.animating) {
              return;
-@@ -627,21 +669,40 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -662,21 +704,40 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              }
          })
              .filter((a) => !!a);

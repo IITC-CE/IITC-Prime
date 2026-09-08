@@ -1,5 +1,5 @@
 diff --git a/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js b/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
-index e1e906c..67d97d9 100644
+index e1e906c..b70392c 100644
 --- a/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
 +++ b/node_modules/@nativescript-community/ui-material-bottomsheet/bottomsheet.ios.js
 @@ -99,7 +99,7 @@ function layoutView(controller, owner) {

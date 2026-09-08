@@ -37,10 +37,10 @@ index 82fedc2..afaa805 100644
          const args = {
              eventName: WebViewExtBase_1.shouldOverrideUrlLoadingEvent,
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index 828f395..bbc3aba 100644
+index ebb9a67..08ffd6e 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
-@@ -523,12 +523,20 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -523,6 +523,14 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
                  break;
              }
          }
@@ -55,14 +55,7 @@ index 828f395..bbc3aba 100644
          var shouldOverrideUrlLoading = owner._onShouldOverrideUrlLoading(url, httpMethod, navType);
          if (shouldOverrideUrlLoading === true) {
              if (Trace.isEnabled()) {
-                 Trace.write("WKNavigationDelegateClass.webViewDecidePolicyForNavigationActionDecisionHandler(\"".concat(url, "\", \"").concat(navigationAction.navigationType, "\") -> method:").concat(httpMethod, " \"").concat(navType, "\" -> cancel"), WebViewTraceCategory, Trace.messageType.info);
--                decisionHandler(WKNavigationActionPolicy.Cancel);
-             }
-+            decisionHandler(WKNavigationActionPolicy.Cancel);
-             return;
-         }
-         decisionHandler(WKNavigationActionPolicy.Allow);
-@@ -701,7 +709,9 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -718,7 +726,9 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                      if (webView.customUserAgent) {
                          popupWebView_1.customUserAgent = webView.customUserAgent;
                      }
@@ -73,7 +66,7 @@ index 828f395..bbc3aba 100644
                      while (currentVC && currentVC.presentedViewController) {
                          currentVC = currentVC.presentedViewController;
                      }
-@@ -734,13 +744,16 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -751,13 +761,16 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                          var handler = CloseHandler.alloc().init();
                          var closeButton = UIBarButtonItem.alloc().initWithBarButtonSystemItemTargetAction(UIBarButtonSystemItem.Done, handler, 'onCloseButtonTap:');
                          popupVC.navigationItem.leftBarButtonItem = closeButton;
@@ -90,10 +83,19 @@ index 828f395..bbc3aba 100644
                                  });
                              }
                          }, {
-@@ -749,6 +762,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -766,11 +779,30 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                              .alloc()
                              .init();
                          popupWebView_1.UIDelegate = simpleUIDelegate_1;
+-                        // Without a navigation delegate the popup is a blind spot: `shouldOverrideUrlLoading`,
+-                        // `loadStarted` and `loadFinished` would never fire for anything loaded in it.
+-                        if (owner) {
+-                            popupWebView_1.navigationDelegate = owner.wkNavigationDelegate;
+-                        }
++                        // A dedicated delegate rather than the owner's: reusing the main one would
++                        // report popup navigations through loadStarted/loadFinished/shouldOverrideUrlLoading
++                        // as if they happened in the main WebView. Emit popupNavigate instead, so the
++                        // owner can decide per URL whether to keep it in the popup.
 +                        var PopupNavDelegate = NSObject.extend({
 +                            webViewDecidePolicyForNavigationActionDecisionHandler: function (wkWebView, navigationAction, decisionHandler) {
 +                                try {
