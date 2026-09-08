@@ -34,5 +34,4 @@ typings/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-package-lock.json
 .env

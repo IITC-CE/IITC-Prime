@@ -57,7 +57,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: npm install
+      run: npm ci
 
     - name: Install NativeScript CLI
       shell: bash
