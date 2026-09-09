@@ -53,7 +53,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: npm install
+      run: npm ci
 
     - name: Decode Android keystore
       shell: bash

@@ -248,9 +248,20 @@ export default {
       return this.webViewInstance?.executeJavaScript(code);
     },
 
+    // Re-assigning an unchanged src is a no-op and a fragment-only change is a
+    // same-document hop - neither reloads the document, so fall back to native reload.
     reload(url) {
-      this.webViewInstance.loadUrl('about:blank');
-      this.webViewInstance.loadUrl(url ?? this.src);
+      const wv = this.webViewInstance;
+      const target = url ?? this.src;
+      if (!wv || !target) return;
+
+      if (target.split('#')[0] !== (wv.src ?? '').split('#')[0]) {
+        wv.loadUrl(target);
+        return;
+      }
+
+      if (target !== wv.src) wv.loadUrl(target);
+      wv.reload();
     },
 
     // Cleanup

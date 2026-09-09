@@ -105,7 +105,6 @@ export default {
       lastInjectedUrl: null, // URL (without hash) for which bridge was last injected
       pendingInjectionUrl: null, // URL set by onLoadStarted; onLoadFinished only injects for this URL
       injectionInProgress: false,
-      pendingReloadUrl: null, // OAuth callback URL waiting for about:blank step to finish
     };
   },
 
@@ -173,16 +172,6 @@ export default {
     },
 
     async onLoadFinished(arg) {
-      // Two-step reload: wait for about:blank before loading the OAuth callback URL.
-      // Ensures the hash causes a full cross-document load instead of a same-document navigation.
-      if (this.pendingReloadUrl && !isIntelUrl(arg?.url)) {
-        const url = this.pendingReloadUrl;
-        this.pendingReloadUrl = null;
-        this.lastInjectedUrl = null; // OAuth URL has a hash; reset so the check above won't skip it
-        this.webview?.loadUrl(url);
-        return;
-      }
-
       // Only process Intel pages
       if (!isIntelUrl(arg?.url)) {
         return;
@@ -382,7 +371,8 @@ export default {
       if (this.pluginRegistrationPromise) await this.pluginRegistrationPromise;
       // Only re-register the dynamic script: static ones stay ordered before plugins.
       await this.registerPreloadScripts(webview, { dynamicOnly: true });
-      await this.$refs.baseWebView.reload();
+      this.lastInjectedUrl = null; // reload keeps IITC's hash; don't let the fragment guard skip it
+      this.$refs.baseWebView.reload();
     },
   },
 
@@ -417,8 +407,8 @@ export default {
             break;
           case 'ui/reloadWebView':
             if (action.payload) {
-              this.pendingReloadUrl = addViewportParam(action.payload);
-              webview.loadUrl('about:blank');
+              this.lastInjectedUrl = null; // OAuth URL has a hash; don't let the fragment guard skip it
+              this.$refs.baseWebView.reload(addViewportParam(action.payload));
             } else if (this.$store.state.ui.isMainPageFocused) {
               await this.performReload();
             } else {
