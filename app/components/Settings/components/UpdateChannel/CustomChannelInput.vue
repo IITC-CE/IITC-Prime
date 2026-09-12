@@ -13,7 +13,7 @@
       />
       <Label
         col="1"
-        class="fa url-status-icon"
+        class="ms url-status-icon"
         :class="urlStatusClass"
         :text="$filters.fonticon(urlStatusIcon)"
       />
@@ -66,9 +66,9 @@ export default {
   computed: {
     // URL status icon based on validation state
     urlStatusIcon() {
-      if (this.urlStatus === 'success') return 'fa-check';
-      if (this.urlStatus === 'error') return 'fa-times';
-      return 'fa-question';
+      if (this.urlStatus === 'success') return 'ms-check';
+      if (this.urlStatus === 'error') return 'ms-close';
+      return 'ms-question-mark';
     },
 
     urlStatusClass() {
@@ -170,12 +170,9 @@ export default {
 }
 
 .url-status-icon {
-  font-size: 18;
   width: 40;
-  height: 40;
-  padding: 8;
   text-align: center;
-  vertical-alignment: center;
+  vertical-align: center;
 
   &.status-success {
     color: $state-success;

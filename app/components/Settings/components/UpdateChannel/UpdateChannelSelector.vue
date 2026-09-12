@@ -89,7 +89,7 @@ export default {
   border-radius: 10;
   border-width: 1.5;
   border-color: $on-surface-variant;
-  vertical-alignment: center;
+  vertical-align: center;
   margin-right: $spacing-m;
 
   &--active {
@@ -103,15 +103,15 @@ export default {
   height: 7;
   border-radius: 4;
   background-color: $surface;
-  horizontal-alignment: center;
-  vertical-alignment: center;
+  horizontal-align: center;
+  vertical-align: center;
 }
 
 .channel-title {
   font-size: $font-size-title;
   font-weight: bold;
   color: $on-surface;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .channel-subtitle {

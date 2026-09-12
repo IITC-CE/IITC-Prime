@@ -63,8 +63,8 @@
               ? 'swipe-drawer swipe-drawer--delete'
               : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user || item.override ? 'fa-trash-alt' : 'fa-ban')"
-          class="fa"
+          :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+          class="ms"
           @tap="onSwipeAction(item)"
         />
       </SwipeMenu>
@@ -117,8 +117,8 @@
               ? 'swipe-drawer swipe-drawer--delete'
               : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user || item.override ? 'fa-trash-alt' : 'fa-ban')"
-          class="fa"
+          :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+          class="ms"
           @tap="onSwipeAction(item)"
         />
       </SwipeMenu>
@@ -378,29 +378,29 @@ export default {
 .plugin-item {
   height: 82;
   padding: 0 $spacing-m;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .plugin-icon-wrapper {
   width: 34;
   height: 34;
   margin-right: 10;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .plugin-icon {
   width: 32;
   height: 32;
-  horizontal-alignment: left;
-  vertical-alignment: top;
+  horizontal-align: left;
+  vertical-align: top;
 }
 
 .plugin-badge {
   width: 10;
   height: 10;
   border-radius: 5;
-  horizontal-alignment: right;
-  vertical-alignment: bottom;
+  horizontal-align: right;
+  vertical-align: bottom;
 
   &--user {
     background-color: #6b7c3a;
@@ -412,7 +412,7 @@ export default {
 }
 
 .plugin-info {
-  vertical-alignment: center;
+  vertical-align: center;
   margin-right: $spacing-xxs;
 }
 
@@ -436,17 +436,17 @@ export default {
 
 .switch {
   height: 32;
-  vertical-alignment: center;
-  horizontal-alignment: center;
+  vertical-align: center;
+  horizontal-align: center;
 }
 
 .swipe-drawer {
   width: 82;
   height: 82;
   color: #ffffff;
-  font-size: 22;
-  text-alignment: center;
-  vertical-alignment: center;
+  font-size: $icon-size-large;
+  text-align: center;
+  vertical-align: center;
 
   &--delete {
     background-color: $state-error;

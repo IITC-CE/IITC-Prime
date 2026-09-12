@@ -25,7 +25,7 @@
         >
           <StackLayout class="btn-quick-wrapper">
             <Label
-              class="fa btn-quick-icon"
+              class="ms btn-quick-icon"
               :text="$filters.fonticon(button.icon)"
               horizontalAlignment="center"
             />
@@ -373,10 +373,9 @@ export default {
 }
 
 .btn-quick-icon {
-  font-size: $font-size-headline;
   color: $on-surface;
   text-align: center;
-  margin-bottom: $spacing-xs;
+  margin-bottom: $spacing-xxs;
 }
 
 .btn-quick-text {
@@ -386,7 +385,6 @@ export default {
 }
 
 .icon {
-  font-size: 24;
   width: $spacing-item;
   height: $spacing-item;
   vertical-align: center;

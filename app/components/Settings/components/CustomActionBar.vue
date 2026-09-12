@@ -6,7 +6,7 @@
     <GridLayout v-if="search" columns="*, auto" class="search-row">
       <GridLayout col="0" columns="48, *, auto" class="search-bar">
         <MDRipple col="0" class="back-button" @tap="goBack">
-          <Label class="fa back-icon" :text="$filters.fonticon('fa-arrow-left')" />
+          <Label class="ms back-icon" :text="$filters.fonticon('ms-arrow-back')" />
         </MDRipple>
         <TextField
           ref="searchField"
@@ -26,7 +26,7 @@
           :class="['clear-button', searchActive ? 'fade-in' : 'fade-out']"
           @tap="clearSearch"
         >
-          <Label class="fa clear-icon" :text="$filters.fonticon('fa-times')" />
+          <Label class="ms clear-icon" :text="$filters.fonticon('ms-close')" />
         </MDRipple>
       </GridLayout>
       <StackLayout
@@ -43,7 +43,7 @@
     <!-- Normal mode -->
     <GridLayout v-else columns="48, *, auto" class="normal-bar">
       <MDRipple col="0" class="back-button" @tap="goBack">
-        <Label class="fa back-icon" :text="$filters.fonticon('fa-arrow-left')" />
+        <Label class="ms back-icon" :text="$filters.fonticon('ms-arrow-back')" />
       </MDRipple>
       <Label col="1" :text="title" class="action-bar-title" />
       <StackLayout col="2" orientation="horizontal" verticalAlignment="center">
@@ -196,15 +196,14 @@ export default {
   width: 48;
   height: 48;
   border-radius: 24;
-  vertical-alignment: center;
+  vertical-align: center;
   ripple-color: $ripple;
 }
 
 .back-icon {
-  font-size: 20;
   color: $on-surface;
   text-align: center;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .action-bar-title {
@@ -212,7 +211,7 @@ export default {
   font-weight: 500;
   color: $on-surface;
   padding: $spacing-m 0;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .search-input {
@@ -222,7 +221,7 @@ export default {
   background-color: transparent;
   border-bottom-width: 0;
   border-color: transparent;
-  vertical-alignment: center;
+  vertical-align: center;
   padding: 0;
   margin: 0;
 }
@@ -231,7 +230,7 @@ export default {
   width: 48;
   height: 48;
   border-radius: 24;
-  vertical-alignment: center;
+  vertical-align: center;
   ripple-color: $ripple;
   opacity: 0;
 }
@@ -249,9 +248,9 @@ export default {
 }
 
 .clear-icon {
-  font-size: 16;
+  font-size: $icon-size-small;
   color: $on-surface-variant;
   text-align: center;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 </style>

@@ -3,7 +3,7 @@
 <template>
   <MDButton
     variant="flat"
-    class="fa app-control-button"
+    class="ms app-control-button"
     :class="{ 'app-control-button--active': active }"
     :isUserInteractionEnabled="visible"
     :text="text"
@@ -128,13 +128,12 @@ export default {
   height: 42;
   margin: 0 5;
   padding: 0;
-  font-size: 18;
   border-radius: 10;
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
   ripple-color: $ripple;
-  horizontal-alignment: center;
-  vertical-alignment: center;
+  horizontal-align: center;
+  vertical-align: center;
 
   &--active {
     background-color: $surface-container;

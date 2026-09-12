@@ -35,7 +35,7 @@
         <!-- Quick Access Button / Back Button -->
         <ControlButton
           col="0"
-          :text="$filters.fonticon(isMapPane ? 'fa-bars' : 'fa-arrow-left')"
+          :text="$filters.fonticon(isMapPane ? 'ms-menu' : 'ms-arrow-back')"
           :active="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
           @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
@@ -46,7 +46,7 @@
         <!-- Paste from Clipboard Button (visible when a URL is detected in clipboard) -->
         <ControlButton
           col="2"
-          :text="$filters.fonticon('fa-paste')"
+          :text="$filters.fonticon('ms-content-paste')"
           :visible="hasClipboardLink"
           @tap="onPasteClipboard"
         />
@@ -63,7 +63,7 @@
         <!-- Layers Button -->
         <ControlButton
           col="4"
-          :text="$filters.fonticon('fa-layer-group')"
+          :text="$filters.fonticon('ms-layers')"
           :visible="isIitcLoaded"
           :active="isPanelOpen && activeButton === 'layers'"
           @tap="handleControlButtonTap('layers')"
@@ -211,11 +211,11 @@ export default {
      */
     locationButtonIcon() {
       if (this.locationRequestState === 'error') {
-        return 'fa-exclamation-triangle'; // Location could not be determined
+        return 'ms-warning'; // Location could not be determined
       }
       return this.isFollowingUser
-        ? 'fa-crosshairs' // Following mode icon
-        : 'fa-location-arrow'; // Regular locate icon
+        ? 'ms-my-location' // Following mode icon
+        : 'ms-near-me'; // Regular locate icon
     },
 
     /**
@@ -593,7 +593,7 @@ export default {
   height: $spacing-xs;
   margin: 5 0;
   border-radius: $radius-small;
-  horizontal-alignment: center;
+  horizontal-align: center;
 }
 
 .panel-buttons {

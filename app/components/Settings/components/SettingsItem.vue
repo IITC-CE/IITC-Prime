@@ -28,16 +28,16 @@
       <!-- Navigation arrow -->
       <Label
         v-if="type === 'nav'"
-        class="fa settings-nav-icon"
-        :text="$filters.fonticon('fa-chevron-right')"
+        class="ms settings-nav-icon"
+        :text="$filters.fonticon('ms-chevron-right')"
         once="true"
       />
 
       <!-- External link icon -->
       <Label
         v-else-if="type === 'link'"
-        class="fa settings-nav-icon"
-        :text="$filters.fonticon('fa-external-link-alt')"
+        class="ms settings-nav-icon"
+        :text="$filters.fonticon('ms-open-in-new')"
         once="true"
       />
 
@@ -168,16 +168,16 @@ export default {
 
 .settings-nav-icon {
   color: $on-surface-variant;
-  font-size: 16;
+  font-size: $icon-size-small;
   margin-right: 4;
   text-align: right;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 .settings-value-text {
   color: $on-surface-variant;
   font-size: $font-size-small;
   margin-right: 4;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 </style>

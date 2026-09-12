@@ -34,8 +34,8 @@
           <Label
             col="0"
             row="0"
-            :text="$filters.fonticon('fa-exclamation-circle')"
-            class="fa notice-icon notice-icon--error"
+            :text="$filters.fonticon('ms-error')"
+            class="ms notice-icon notice-icon--error"
           />
           <Label col="1" row="0" :text="plugin.loadError" class="notice-text" textWrap="true" />
         </GridLayout>
@@ -45,8 +45,8 @@
           <Label
             col="0"
             row="0"
-            :text="$filters.fonticon('fa-info-circle')"
-            class="fa notice-icon"
+            :text="$filters.fonticon('ms-info')"
+            class="ms notice-icon"
             :class="isOverride ? 'notice-icon--warning' : 'notice-icon--user'"
           />
           <Label col="1" row="0" :text="noticeText" class="notice-text" textWrap="true" />
@@ -269,8 +269,8 @@ export default {
 .plugin-icon {
   width: 48;
   height: 48;
-  horizontal-alignment: left;
-  vertical-alignment: center;
+  horizontal-align: left;
+  vertical-align: center;
 }
 
 .header-info {
@@ -294,7 +294,7 @@ export default {
   width: 40;
   height: 40;
   margin: $spacing-m auto;
-  horizontal-alignment: center;
+  horizontal-align: center;
 }
 
 .notice-block {
@@ -305,9 +305,9 @@ export default {
 }
 
 .notice-icon {
-  font-size: 16;
+  font-size: $icon-size-small;
   margin-right: $spacing-s;
-  vertical-alignment: center;
+  vertical-align: center;
   flex-shrink: 0;
 
   &--user {

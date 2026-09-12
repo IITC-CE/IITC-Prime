@@ -59,8 +59,8 @@
           @tap="restorePanel"
         >
           <Label
-            class="fa"
-            :text="$filters.fonticon('fa-chevron-up')"
+            class="ms"
+            :text="$filters.fonticon('ms-keyboard-arrow-up')"
             :color="fabIconColor"
             horizontalAlignment="center"
             verticalAlignment="center"
@@ -585,7 +585,7 @@ export default {
 }
 
 .restore-panel-button {
-  horizontal-alignment: right;
+  horizontal-align: right;
   z-index: 1000;
 }
 </style>

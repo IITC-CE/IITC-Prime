@@ -154,9 +154,8 @@ MDButton {
 
   .ms {
     color: white;
-    font-size: 18;
-    horizontal-alignment: center;
-    vertical-alignment: center;
+    horizontal-align: center;
+    vertical-align: center;
     margin-top: -50;
     height: 50;
   }
@@ -173,7 +172,7 @@ MDButton {
   color: $on-surface;
   font-size: $font-size;
   padding: $spacing-s $spacing-m;
-  vertical-alignment: center;
+  vertical-align: center;
 }
 
 // Lists
