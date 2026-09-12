@@ -1,8 +1,26 @@
 diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-index c91387f..3809f91 100644
+index c91387f..db77d94 100644
 --- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 +++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-@@ -158,13 +158,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -84,12 +84,11 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+         if (this.scrollView) {
+             this.scrollView.on('touch', this.onScrollViewTouch, this);
+         }
+-        // Also listen to touch events on bottomSheet to detect gestures that start on children
+-        // overlaying the scrollView (headers, drag handles, buttons...). Those swallow the touch
+-        // so the scrollView listener never sees it, and shouldStartGesture rejects the pan handler
+-        // for anything inside the scrollView bounds. onBottomSheetTouch is a no-op while the
+-        // scrollView is touched, so the scrollView keeps driving the gesture when it is the target.
+-        if (this.bottomSheet) {
++        // Android only. This covers gestures starting on children that overlay the scrollView,
++        // which shouldStartGesture rejects. On iOS those children are already served by the pan
++        // handler, so the listener only adds a second drive: a tap reaches onTouch and loses to
++        // cancelAllGestures(), and a header drag ends with two competing snap animations.
++        if (__ANDROID__ && this.bottomSheet) {
+             this.bottomSheet.on('touch', this.onBottomSheetTouch, this);
+         }
+         const manager = Manager.getInstance();
+@@ -158,13 +157,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      }
      disposeNativeView() {
          // this.off('layoutChanged', this.onLayoutChange, this);
@@ -22,7 +40,7 @@ index c91387f..3809f91 100644
          }
          super.disposeNativeView();
          if (this.panGestureHandler) {
-@@ -414,15 +418,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -414,15 +417,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
          }
          else if (event.action === 'up' || event.action === 'cancel') {
              this.vt?.addMovement(p.getX(), p.getY());
@@ -57,7 +75,7 @@ index c91387f..3809f91 100644
                  this.wasDraggingPanel = false;
              }
              // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
-@@ -483,22 +497,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -483,22 +496,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              //     // Movement too small - likely a tap
              //     return;
              // }
@@ -113,7 +131,7 @@ index c91387f..3809f91 100644
                      }
                  }
                  if (shouldStartDraggingPanel) {
-@@ -514,6 +552,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -514,6 +551,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
                          this.isScrollEnabled = true;
                      }
                  }
@@ -121,7 +139,7 @@ index c91387f..3809f91 100644
              }
              else {
                  const maxOffset = this.translationMaxOffset;
-@@ -627,6 +666,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -627,6 +665,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
      async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
          if (this.animation) {
              this.animation.cancel();
@@ -131,7 +149,7 @@ index c91387f..3809f91 100644
          }
          if (this.animating) {
              return;
-@@ -662,21 +704,40 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -662,21 +703,40 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              }
          })
              .filter((a) => !!a);
