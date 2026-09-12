@@ -10,9 +10,15 @@
 // TYPOGRAPHY AND ICONS
 //-----------------------------------------------
 
-.fa {
-  font-family: 'Font Awesome 5 Free', 'fa-solid-900';
-  font-weight: 900;
+// Icon sizes (Material Symbols is optically tuned for 24)
+$icon-size-small: 20; // Inline with text
+$icon-size: 24; // Default
+$icon-size-large: 32; // Large touch targets
+
+.ms {
+  font-family: 'Material Symbols Outlined', 'material-symbols-outlined';
+  font-weight: 400;
+  font-size: $icon-size;
 }
 
 //-----------------------------------------------
@@ -146,7 +152,7 @@ MDButton {
   background-color: rgba(255, 255, 255, 0.1);
   ripple-color: $ripple;
 
-  .fa {
+  .ms {
     color: white;
     font-size: 18;
     horizontal-alignment: center;
