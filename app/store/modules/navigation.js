@@ -3,11 +3,11 @@
 import { l } from '@nativescript-community/l';
 
 const DEFAULT_PANES = [
-  { name: 'all', label: l('nav.pane.chat_all'), icon: 'fa-bullhorn' },
-  { name: 'faction', label: l('nav.pane.chat_faction'), icon: 'fa-user-friends' },
-  { name: 'alerts', label: l('nav.pane.alerts'), icon: 'fa-bell' },
-  { name: 'info', label: l('nav.pane.info'), icon: 'fa-info-circle' },
-  { name: 'map', label: l('nav.pane.map'), icon: 'fa-map' },
+  { name: 'all', label: l('nav.pane.chat_all'), icon: 'ms-campaign' },
+  { name: 'faction', label: l('nav.pane.chat_faction'), icon: 'ms-group' },
+  { name: 'alerts', label: l('nav.pane.alerts'), icon: 'ms-notifications' },
+  { name: 'info', label: l('nav.pane.info'), icon: 'ms-info' },
+  { name: 'map', label: l('nav.pane.map'), icon: 'ms-map' },
 ];
 
 export const navigation = {

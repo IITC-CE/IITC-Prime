@@ -42,7 +42,7 @@
         orientation="horizontal"
         @tap="onNavigationItemTap(item.id)"
       >
-        <Label class="fa icon" :text="$filters.fonticon(item.icon)" col="0" row="0" />
+        <Label class="ms icon" :text="$filters.fonticon(item.icon)" col="0" row="0" />
         <Label class="navigation-item-label" :text="item.text" col="1" row="0" />
       </MDRipple>
     </template>
@@ -386,7 +386,7 @@ export default {
 }
 
 .icon {
-  font-size: 18;
+  font-size: 24;
   width: $spacing-item;
   height: $spacing-item;
   vertical-align: center;
