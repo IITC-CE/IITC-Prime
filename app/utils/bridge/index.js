@@ -126,7 +126,6 @@ const buildBridgeScript = () => {
   const events = {
     intentPosLink: ['lat', 'lng', 'zoom', 'title', 'isPortal', 'guid'],
     shareString: ['str'],
-    spinnerEnabled: ['en'],
     copy: ['s'],
     switchToPane: ['id'],
     bootFinished: [],
@@ -153,6 +152,8 @@ const buildBridgeScript = () => {
     saveFile: ['filename', 'dataType', 'content'],
     reloadIITC: ['clearCache'],
     openDemo: [],
+    // Paused native JS injection while a <select> is open: on Android 4.x it closed the list.
+    // spinnerEnabled: ['en'],
   };
 
   // Only the Android back button uses the dialog stack; without these IITC doesn't report dialogs
