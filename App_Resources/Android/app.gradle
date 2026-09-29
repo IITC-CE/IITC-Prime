@@ -32,7 +32,15 @@ def getVersionCodeTimeStamps = { ->
 
 def getPackageVersion = { ->
     def packageJson = new groovy.json.JsonSlurper().parseText(file('../../../package.json').text)
-    return packageJson.version
+    def version = packageJson.version
+    if (buildTypeFromEnv != "beta") return version
+
+    def proc = ['git', 'tag', '--list', version].execute()
+    proc.waitFor()
+    if (proc.in.text.trim().isEmpty()) return version
+
+    def (major, minor, patch) = version.tokenize('.')*.toInteger()
+    return "${major}.${minor}.${patch + 1}"
 }
 
 android {
