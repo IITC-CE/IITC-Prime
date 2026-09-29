@@ -5,16 +5,16 @@
     <!-- Controls panel -->
     <GridLayout row="0" class="controls-panel" columns="auto, *, auto, auto, auto">
       <MDRipple col="0" class="control-button" @tap="handleClose">
-        <Label class="fa" :text="$filters.fonticon('fa-arrow-left')" />
+        <Label class="ms" :text="$filters.fonticon('ms-arrow-back')" />
       </MDRipple>
       <MDRipple col="2" class="control-button trash" @tap="$emit('clear')">
-        <Label class="fa" :text="$filters.fonticon('fa-trash')" />
+        <Label class="ms" :text="$filters.fonticon('ms-delete')" />
       </MDRipple>
       <MDRipple col="3" class="control-button" @tap="navigateHistoryUp">
-        <Label class="fa" :text="$filters.fonticon('fa-arrow-up')" />
+        <Label class="ms" :text="$filters.fonticon('ms-arrow-upward')" />
       </MDRipple>
       <MDRipple col="4" class="control-button" @tap="navigateHistoryDown">
-        <Label class="fa" :text="$filters.fonticon('fa-arrow-down')" />
+        <Label class="ms" :text="$filters.fonticon('ms-arrow-downward')" />
       </MDRipple>
     </GridLayout>
 
@@ -32,7 +32,7 @@
         maxLines="10"
       />
       <MDRipple col="1" class="btn-primary send-button" @tap="executeCommand">
-        <Label class="fa" :text="$filters.fonticon('fa-paper-plane')" />
+        <Label class="ms" :text="$filters.fonticon('ms-send')" />
       </MDRipple>
     </GridLayout>
   </StackLayout>
@@ -135,7 +135,6 @@ export default {
 }
 
 .control-button {
-  font-size: 16;
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
   border-radius: 4;
@@ -170,10 +169,9 @@ export default {
   background-color: $accent;
   color: white;
   margin-left: $spacing-s;
-  font-size: 16;
   height: 40;
   width: 50;
-  padding: 0 3 0 0;
+  padding: 0;
   vertical-align: center;
   text-align: center;
 }

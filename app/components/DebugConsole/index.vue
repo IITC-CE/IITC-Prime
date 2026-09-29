@@ -65,8 +65,8 @@
       @tap="scrollToBottom"
     >
       <Label
-        class="fa"
-        :text="$filters.fonticon('fa-arrow-down')"
+        class="ms"
+        :text="$filters.fonticon('ms-arrow-downward')"
         horizontalAlignment="center"
         verticalAlignment="center"
       />

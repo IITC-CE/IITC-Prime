@@ -80,7 +80,10 @@ export default {
           moduleName: 'lib-iitc-manager',
           moduleUrl: 'https://github.com/IITC-CE/lib-iitc-manager',
         },
-        { moduleName: 'FontAwesome', moduleUrl: 'https://fontawesome.com' },
+        {
+          moduleName: 'Material Symbols',
+          moduleUrl: 'https://github.com/google/material-design-icons',
+        },
         ...(licensesData.dependencies || []),
       ];
 

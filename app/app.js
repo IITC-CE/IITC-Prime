@@ -36,7 +36,7 @@ installBottomSheet();
 installPersistentBottomSheet();
 
 FontIcon.paths = {
-  fa: './assets/css/Font-Awesome.css',
+  ms: './assets/css/material-symbols.css',
 };
 FontIcon.loadCssSync();
 

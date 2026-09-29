@@ -1,3 +1,6 @@
 node_modules/
 platforms/
 *.d.ts
+
+# Generated icon font codepoint maps
+app/assets/css/material-symbols.css

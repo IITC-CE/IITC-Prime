@@ -90,7 +90,7 @@ export default {
   font-weight: 900;
   color: $on-surface;
   margin-bottom: $spacing-s;
-  horizontal-alignment: center;
+  horizontal-align: center;
 }
 
 .app-version {
@@ -100,7 +100,7 @@ export default {
   border-radius: $radius-large;
   padding: $spacing-s $spacing-m;
   margin-bottom: $spacing-l;
-  horizontal-alignment: center;
+  horizontal-align: center;
 }
 
 .app-description {

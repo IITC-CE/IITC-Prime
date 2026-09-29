@@ -23,10 +23,10 @@ export class ControlPanelDataService {
         type: 'action-buttons-group',
         id: 'action-buttons',
         buttons: [
-          { id: 'settings', icon: 'fa-tools', text: l('nav.settings') },
-          { id: 'plugins', icon: 'fa-toolbox', text: l('nav.plugins') },
-          { id: 'debug', icon: 'fa-terminal', text: l('nav.debug') },
-          { id: 'reload', icon: 'fa-redo', text: l('nav.reload_iitc') },
+          { id: 'settings', icon: 'ms-settings', text: l('nav.settings') },
+          { id: 'plugins', icon: 'ms-extension', text: l('nav.plugins') },
+          { id: 'debug', icon: 'ms-terminal', text: l('nav.debug') },
+          { id: 'reload', icon: 'ms-refresh', text: l('nav.reload_iitc') },
         ],
       },
     ];
