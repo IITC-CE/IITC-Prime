@@ -9,10 +9,98 @@ import { INGRESS_INTEL_MAP } from '@/utils/url-config';
 // avoid false positives while still matching plain-text URLs reliably.
 const URL_CONFIDENCE_THRESHOLD = 0.7;
 
+// iOS has no geo: intent, so map apps are opened through their own URL schemes.
+// Custom schemes must be listed in LSApplicationQueriesSchemes for canOpenURL.
+const IOS_MAP_APPS = [
+  {
+    name: 'Apple Maps',
+    url: (lat, lng, title) =>
+      `https://maps.apple.com/?ll=${lat},${lng}&q=${encodeURIComponent(title)}`,
+  },
+  {
+    name: 'Google Maps',
+    url: (lat, lng) => `comgooglemaps://?q=${lat},${lng}&center=${lat},${lng}&zoom=17`,
+  },
+  {
+    name: 'Organic Maps',
+    url: (lat, lng, title) => `om://map?v=1&ll=${lat},${lng}&n=${encodeURIComponent(title)}`,
+  },
+  {
+    name: 'OsmAnd',
+    url: (lat, lng, title) =>
+      `osmandmaps://?lat=${lat}&lon=${lng}&z=17&title=${encodeURIComponent(title)}`,
+  },
+  {
+    name: 'Yandex Maps',
+    url: (lat, lng) => `yandexmaps://maps.yandex.ru/?pt=${lng},${lat}&z=17&l=map`,
+  },
+  { name: '2GIS', url: (lat, lng) => `dgis://2gis.ru/geo/${lng},${lat}` },
+  { name: 'Waze', url: (lat, lng) => `waze://?ll=${lat},${lng}` },
+  {
+    name: 'Citymapper',
+    url: (lat, lng, title) =>
+      `citymapper://directions?endcoord=${lat},${lng}&endname=${encodeURIComponent(title)}`,
+  },
+  // Chinese map apps use GCJ-02 internally; the parameters below mark input as WGS-84
+  {
+    name: 'Amap',
+    url: (lat, lng, title) =>
+      `iosamap://viewMap?sourceApplication=IITC%20Prime&poiname=${encodeURIComponent(title)}&lat=${lat}&lon=${lng}&dev=1`,
+  },
+  {
+    name: 'Baidu Maps',
+    url: (lat, lng, title) =>
+      `baidumap://map/marker?location=${lat},${lng}&title=${encodeURIComponent(title)}&content=&coord_type=wgs84&src=IITC%20Prime`,
+  },
+  {
+    name: 'Tencent Maps',
+    url: (lat, lng, title) =>
+      `qqmap://map/marker?marker=coord:${lat},${lng};title:${encodeURIComponent(title)};addr:&coord_type=1&referer=IITC%20Prime`,
+  },
+];
+
+const canOpenUrlIOS = url => UIApplication.sharedApplication.canOpenURL(NSURL.URLWithString(url));
+
+/**
+ * Map apps installed on this iOS device that can show the given location
+ * @returns {{label: string, open: () => Promise<boolean>}[]}
+ */
+export const getMapAppsIOS = (lat, lng, title = '') => {
+  const locationTitle = title || `${lat},${lng}`;
+  return IOS_MAP_APPS.map(app => ({
+    label: l('share.action.open_in', app.name),
+    url: app.url(lat, lng, locationTitle),
+  }))
+    .filter(app => canOpenUrlIOS(app.url))
+    .map(({ label, url }) => ({ label, open: () => Utils.openUrlAsync(url) }));
+};
+
+const presentActivityControllerIOS = items => {
+  const controller = UIActivityViewController.alloc().initWithActivityItemsApplicationActivities(
+    items,
+    null
+  );
+
+  let topController = UIApplication.sharedApplication.keyWindow.rootViewController;
+  while (topController.presentedViewController) {
+    topController = topController.presentedViewController;
+  }
+
+  const popover = controller.popoverPresentationController;
+  if (popover) {
+    const bounds = topController.view.bounds;
+    popover.sourceView = topController.view;
+    popover.sourceRect = CGRectMake(bounds.size.width / 2, bounds.size.height / 2, 0, 0);
+    popover.permittedArrowDirections = 0;
+  }
+
+  topController.presentViewControllerAnimatedCompletion(controller, true, null);
+};
+
 /**
  * Universal sharing function for different content types
  * @param {any} content - Content to share (object for geo, string for text/url)
- * @param {string} contentType - Type of content ('geo', 'text', 'url', 'prime')
+ * @param {string} contentType - Type of content ('geo' (Android only), 'text', 'url', 'prime')
  * @param {string} title - Optional title or description
  * @returns {boolean} Success status
  */
@@ -60,43 +148,12 @@ export const shareContent = (content, contentType, title = '') => {
 
       return true;
     } else if (isIOS) {
-      const shareItems = [];
-
-      if (contentType === 'geo') {
-        // Share as geo location with URL schemes
-        const lat = content.lat;
-        const lng = content.lng;
-        const locationTitle = title || `${lat},${lng}`;
-
-        // Add text and multiple URL schemes for map apps
-        shareItems.push(`${locationTitle}\nCoordinates: ${lat},${lng}`);
-        shareItems.push(`maps://?ll=${lat},${lng}&q=${encodeURIComponent(locationTitle)}`);
-        shareItems.push(`comgooglemaps://?q=${lat},${lng}`);
-        shareItems.push(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`);
+      if (contentType === 'prime') {
+        return Utils.openUrl(content);
       } else if (contentType === 'url' || contentType === 'text') {
-        // Share as text or URL
-        shareItems.push(content);
-      } else if (contentType === 'prime') {
-        // Open directly in Ingress Prime
-        const url = NSURL.URLWithString(content);
-        UIApplication.sharedApplication.openURL(url);
+        presentActivityControllerIOS([content]);
         return true;
       }
-
-      // Create and show UIActivityViewController
-      const controller =
-        UIActivityViewController.alloc().initWithActivityItemsApplicationActivities(
-          shareItems,
-          null
-        );
-
-      let topController = UIApplication.sharedApplication.keyWindow.rootViewController;
-      while (topController.presentedViewController) {
-        topController = topController.presentedViewController;
-      }
-      topController.presentViewControllerAnimatedCompletion(controller, true, null);
-
-      return true;
     }
 
     return false;
