@@ -2,7 +2,9 @@
 
 import { action } from '~/utils/dialogs';
 import { l } from '@nativescript-community/l';
-import { shareContent } from '~/utils/platform/system';
+import { isIOS } from '@nativescript/core';
+import { shareContent, getMapAppsIOS } from '~/utils/platform/system';
+import { copyToClipboard } from '~/utils/clipboard';
 
 /**
  * Creates a link to open a specific portal in Ingress Prime.
@@ -56,48 +58,55 @@ const makePrimeLink = (guid, lat, lng) => {
  */
 export const showLocationShareOptions = (lat, lng, title = '', isPortal = false, guid = '') => {
   try {
-    // Prepare options for the dialog
-    const options = {
+    // Android lets the system chooser pick a map app; iOS has no equivalent,
+    // so each installed map app gets its own entry
+    const mapActions = isIOS
+      ? getMapAppsIOS(lat, lng, title)
+      : [
+          {
+            label: l('share.action.maps'),
+            open: () => shareContent({ lat, lng }, 'geo', title),
+          },
+        ];
+
+    const shareActions = [
+      {
+        label: l('share.action.text'),
+        open: () => {
+          const textContent = `${title ? title + '\n' : ''}Location: ${lat},${lng}`;
+          return shareContent(textContent, 'text', title || 'Location');
+        },
+      },
+      {
+        label: l('share.action.link'),
+        open: () => {
+          const url = `https://intel.ingress.com/?ll=${lat},${lng}&z=17${isPortal ? `&pll=${lat},${lng}` : ''}`;
+          return shareContent(url, 'url', title || 'Intel Map');
+        },
+      },
+      {
+        label: l('share.action.coordinates'),
+        open: () =>
+          copyToClipboard(`${lat},${lng}`, l('share.toast.coordinates_copied')).then(() => true),
+      },
+      ...mapActions,
+    ];
+
+    if (isPortal || guid) {
+      shareActions.push({
+        label: l('share.action.ingress_prime'),
+        open: () => shareContent(makePrimeLink(guid, lat, lng), 'prime'),
+      });
+    }
+
+    return action({
       title: l('share.title'),
       message: l('share.message'),
       cancelButtonText: l('dialog.cancel'),
-      actions: [l('share.action.text'), l('share.action.maps'), l('share.action.link')],
-    };
-
-    // Add Ingress Prime option if it's a portal or has guid
-    if (isPortal || guid) {
-      options.actions.push(l('share.action.ingress_prime'));
-    }
-
-    // Show dialog with options
-    return action(options).then(result => {
-      // User cancelled if result is undefined or equals cancelButtonText
-      if (!result || result === options.cancelButtonText) return false;
-
-      const index = options.actions.indexOf(result);
-      if (index === -1) return false;
-
-      switch (index) {
-        case 0: // Share as text
-          const textContent = `${title ? title + '\n' : ''}Location: ${lat},${lng}`;
-          return shareContent(textContent, 'text', title || 'Location');
-
-        case 1: // Open in maps
-          return shareContent({ lat, lng }, 'geo', title);
-
-        case 2: // Share link
-          const url = `https://intel.ingress.com/?ll=${lat},${lng}&z=17${isPortal ? `&pll=${lat},${lng}` : ''}`;
-          return shareContent(url, 'url', title || 'Intel Map');
-
-        case 3: // Open in Ingress Prime (if available)
-          if (options.actions.length > 3) {
-            const primeUrl = makePrimeLink(guid, lat, lng);
-            return shareContent(primeUrl, 'prime');
-          }
-          return false;
-      }
-
-      return false;
+      actions: shareActions.map(item => item.label),
+    }).then(result => {
+      const selected = shareActions.find(item => item.label === result);
+      return selected ? selected.open() : false;
     });
   } catch (error) {
     console.error('Error showing location share options:', error);
