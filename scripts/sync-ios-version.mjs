@@ -32,18 +32,25 @@ function getVersionCodeTimeStamps() {
     // release builds are cut from the same commit as the preceding master (beta) merge,
     // so bump by 1 to avoid colliding with the build number already used by that beta upload
     return process.env.BUILD_TYPE === 'release' ? code + 1 : code;
-
   } catch (error) {
     console.warn('Failed to get git timestamp, using current timestamp:', error.message);
     return Math.floor(Date.now() / 1000 / 10);
   }
 }
 
+function getMarketingVersion(version) {
+  if (process.env.BUILD_TYPE !== 'beta') return version;
+  const released = execSync(`git tag --list ${version}`, { encoding: 'utf8' }).trim() !== '';
+  if (!released) return version;
+  const [major, minor, patch] = version.split('.').map(Number);
+  return `${major}.${minor}.${patch + 1}`;
+}
+
 function updateIOSVersion() {
   try {
     const packagePath = path.join(__dirname, '..', 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-    const newVersion = packageJson.version;
+    const newVersion = getMarketingVersion(packageJson.version);
 
     const versionCode = getVersionCodeTimeStamps();
 
