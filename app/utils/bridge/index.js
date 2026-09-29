@@ -3,6 +3,8 @@
 import {
   sharePosition,
   switchToPane,
+  dialogOpened,
+  dialogFocused,
   bootFinished,
   getVersionName,
   getZoomControl,
@@ -22,7 +24,7 @@ import {
   gmBridgeRequest,
   openDemo,
 } from './events-from-iitc';
-import { File, knownFolders, path } from '@nativescript/core';
+import { File, isAndroid, knownFolders, path } from '@nativescript/core';
 
 export const router = async event => {
   const [eventName, eventData] = event;
@@ -40,6 +42,12 @@ export const router = async event => {
       break;
     case 'switchToPane':
       await switchToPane(eventData.id);
+      break;
+    case 'dialogOpened':
+      await dialogOpened(eventData.id, eventData.open);
+      break;
+    case 'dialogFocused':
+      await dialogFocused(eventData.id);
       break;
     case 'bootFinished':
       await bootFinished();
@@ -117,8 +125,6 @@ const buildBridgeScript = () => {
     spinnerEnabled: ['en'],
     copy: ['s'],
     switchToPane: ['id'],
-    dialogFocused: ['id'],
-    dialogOpened: ['id', 'open'],
     bootFinished: [],
     setLayers: ['base_layer', 'overlay_layer'],
     addPortalHighlighter: ['name'],
@@ -144,6 +150,12 @@ const buildBridgeScript = () => {
     reloadIITC: ['clearCache'],
     openDemo: [],
   };
+
+  // Only the Android back button uses the dialog stack; without these IITC doesn't report dialogs
+  if (isAndroid) {
+    events.dialogFocused = ['id'];
+    events.dialogOpened = ['id', 'open'];
+  }
 
   // regular sync bridge functions
   Object.entries(events).forEach(entry => {

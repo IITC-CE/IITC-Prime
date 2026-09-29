@@ -42,6 +42,7 @@ import {
   changePortalHighlights,
   showLayer,
   switchToPane,
+  closeDialog,
   setView,
   userLocationLocate,
   userLocationUpdate,
@@ -163,6 +164,7 @@ export default {
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
           await this.$store.dispatch('navigation/resetPanes');
+          await this.$store.dispatch('navigation/resetDialogs');
         }
 
         await this.$store.dispatch('ui/setWebviewLoaded', false);
@@ -453,6 +455,9 @@ export default {
             }
             break;
           }
+          case 'navigation/closeDialog':
+            await webview.executeJavaScript(closeDialog(action.payload));
+            break;
           case 'map/locateMapOnce':
             await webview.executeJavaScript(
               setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
