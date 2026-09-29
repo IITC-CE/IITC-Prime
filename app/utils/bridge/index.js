@@ -23,6 +23,7 @@ import {
   shareString,
   gmBridgeRequest,
   openDemo,
+  reloadIITC,
 } from './events-from-iitc';
 import { File, isAndroid, knownFolders, path } from '@nativescript/core';
 
@@ -104,6 +105,9 @@ export const router = async event => {
       break;
     case 'openDemo':
       await openDemo();
+      break;
+    case 'reloadIITC':
+      await reloadIITC(eventData.clearCache);
       break;
     case 'setPermalink':
       // Intentionally ignored

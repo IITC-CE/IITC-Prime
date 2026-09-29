@@ -206,6 +206,14 @@ export const openDemo = async () => {
 };
 
 /**
+ * Reloads IITC, e.g. from the "IITC is out of date" dialog
+ * @param {boolean} clearCache Clear the WebView HTTP cache before reloading
+ */
+export const reloadIITC = async clearCache => {
+  await store.dispatch('ui/reloadIITC', clearCache === true);
+};
+
+/**
  * Handles follow mode state changes from IITC user location plugin
  * @param {boolean} follow - Whether follow mode is active
  */

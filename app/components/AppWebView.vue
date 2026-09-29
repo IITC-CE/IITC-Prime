@@ -37,6 +37,7 @@ import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, isIntelUrl, isDemoUrl, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
 import { webviewService } from '@/utils/webview/webview-service';
+import { clearWebViewCache } from '@/utils/webview/cache';
 
 import {
   changePortalHighlights,
@@ -416,6 +417,10 @@ export default {
             } else {
               this.reloadPending = true;
             }
+            break;
+          case 'ui/reloadIITC':
+            if (action.payload) await clearWebViewCache(webview);
+            await this.$store.dispatch('ui/reloadWebView');
             break;
           case 'ui/iitcBootFinished': {
             // Re-inject after IITC boot since document.head was replaced
