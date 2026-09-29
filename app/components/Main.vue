@@ -381,16 +381,24 @@ export default {
           return;
         }
 
-        // If panel is hidden, restore it
-        if (this.isPanelHidden) {
-          this.restorePanel();
+        // If panel is expanded (open), collapse it to BOTTOM
+        if (this.$store.state.ui.panelState.isOpen) {
+          this.$store.dispatch('ui/closePanel');
           args.cancel = true;
           return;
         }
 
-        // If panel is expanded (open), collapse it to BOTTOM
-        if (this.$store.state.ui.panelState.isOpen) {
-          this.$store.dispatch('ui/closePanel');
+        // Close the focused IITC dialog
+        const topDialog = this.$store.getters['navigation/topDialog'];
+        if (topDialog) {
+          this.$store.dispatch('navigation/closeDialog', topDialog);
+          args.cancel = true;
+          return;
+        }
+
+        // If panel is hidden, restore it
+        if (this.isPanelHidden) {
+          this.restorePanel();
           args.cancel = true;
           return;
         }

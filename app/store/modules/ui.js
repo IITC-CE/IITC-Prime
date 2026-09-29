@@ -171,6 +171,7 @@ export const ui = {
       commit('SET_PROGRESS', progress);
     },
     reloadWebView() {},
+    reloadIITC() {},
     setMainPageFocused({ commit }, active) {
       commit('SET_MAIN_PAGE_FOCUSED', active);
     },

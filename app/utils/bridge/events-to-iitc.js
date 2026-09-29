@@ -26,6 +26,16 @@ export const switchToPane = name => {
 };
 
 /**
+ * Closes an IITC dialog and removes its element.
+ * @param {string} id Dialog ID (key in window.DIALOGS)
+ */
+export const closeDialog = id => {
+  // Plugin-supplied ids may contain quotes
+  const key = JSON.stringify(id);
+  return `(function() { var s = $(window.DIALOGS[${key}]); s.dialog('close'); s.remove(); })(); true`;
+};
+
+/**
  * Trigger locate action in `user-location` plugin
  * @param {number} lat Latitude
  * @param {number} lng Longitude

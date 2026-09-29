@@ -37,11 +37,13 @@ import BaseWebView from './BaseWebView.vue';
 import { addViewportParam, isIntelUrl, isDemoUrl, INGRESS_INTEL_MAP } from '@/utils/url-config';
 import { isIOS, isAndroid, Utils } from '@nativescript/core';
 import { webviewService } from '@/utils/webview/webview-service';
+import { clearWebViewCache } from '@/utils/webview/cache';
 
 import {
   changePortalHighlights,
   showLayer,
   switchToPane,
+  closeDialog,
   setView,
   userLocationLocate,
   userLocationUpdate,
@@ -163,6 +165,7 @@ export default {
           this.pendingInjectionUrl = urlWithoutHash;
           this.lastInjectedUrl = null;
           await this.$store.dispatch('navigation/resetPanes');
+          await this.$store.dispatch('navigation/resetDialogs');
         }
 
         await this.$store.dispatch('ui/setWebviewLoaded', false);
@@ -415,6 +418,10 @@ export default {
               this.reloadPending = true;
             }
             break;
+          case 'ui/reloadIITC':
+            if (action.payload) await clearWebViewCache(webview);
+            await this.$store.dispatch('ui/reloadWebView');
+            break;
           case 'ui/iitcBootFinished': {
             // Re-inject after IITC boot since document.head was replaced
             await injectCustomStyles(webview);
@@ -453,6 +460,9 @@ export default {
             }
             break;
           }
+          case 'navigation/closeDialog':
+            await webview.executeJavaScript(closeDialog(action.payload));
+            break;
           case 'map/locateMapOnce':
             await webview.executeJavaScript(
               setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)

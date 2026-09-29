@@ -3,6 +3,8 @@
 import {
   sharePosition,
   switchToPane,
+  dialogOpened,
+  dialogFocused,
   bootFinished,
   getVersionName,
   getZoomControl,
@@ -21,8 +23,9 @@ import {
   shareString,
   gmBridgeRequest,
   openDemo,
+  reloadIITC,
 } from './events-from-iitc';
-import { File, knownFolders, path } from '@nativescript/core';
+import { File, isAndroid, knownFolders, path } from '@nativescript/core';
 
 export const router = async event => {
   const [eventName, eventData] = event;
@@ -40,6 +43,12 @@ export const router = async event => {
       break;
     case 'switchToPane':
       await switchToPane(eventData.id);
+      break;
+    case 'dialogOpened':
+      await dialogOpened(eventData.id, eventData.open);
+      break;
+    case 'dialogFocused':
+      await dialogFocused(eventData.id);
       break;
     case 'bootFinished':
       await bootFinished();
@@ -97,6 +106,9 @@ export const router = async event => {
     case 'openDemo':
       await openDemo();
       break;
+    case 'reloadIITC':
+      await reloadIITC(eventData.clearCache);
+      break;
     case 'setPermalink':
       // Intentionally ignored
       break;
@@ -114,11 +126,8 @@ const buildBridgeScript = () => {
   const events = {
     intentPosLink: ['lat', 'lng', 'zoom', 'title', 'isPortal', 'guid'],
     shareString: ['str'],
-    spinnerEnabled: ['en'],
     copy: ['s'],
     switchToPane: ['id'],
-    dialogFocused: ['id'],
-    dialogOpened: ['id', 'open'],
     bootFinished: [],
     setLayers: ['base_layer', 'overlay_layer'],
     addPortalHighlighter: ['name'],
@@ -143,7 +152,15 @@ const buildBridgeScript = () => {
     saveFile: ['filename', 'dataType', 'content'],
     reloadIITC: ['clearCache'],
     openDemo: [],
+    // Paused native JS injection while a <select> is open: on Android 4.x it closed the list.
+    // spinnerEnabled: ['en'],
   };
+
+  // Only the Android back button uses the dialog stack; without these IITC doesn't report dialogs
+  if (isAndroid) {
+    events.dialogFocused = ['id'];
+    events.dialogOpened = ['id', 'open'];
+  }
 
   // regular sync bridge functions
   Object.entries(events).forEach(entry => {

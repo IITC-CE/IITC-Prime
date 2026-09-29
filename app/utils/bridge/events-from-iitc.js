@@ -67,6 +67,23 @@ export const switchToPane = async name => {
 };
 
 /**
+ * Tracks jQuery UI dialog open/close for the Android back button.
+ * @param {string} id Dialog ID (key in window.DIALOGS)
+ * @param {boolean} open `false` when the dialog was closed
+ */
+export const dialogOpened = async (id, open) => {
+  await store.dispatch(open ? 'navigation/dialogOpened' : 'navigation/dialogClosed', id);
+};
+
+/**
+ * Moves the focused dialog to the top of the back stack.
+ * @param {string} id Dialog ID (key in window.DIALOGS)
+ */
+export const dialogFocused = async id => {
+  await store.dispatch('navigation/dialogFocused', id);
+};
+
+/**
  * Assigns the basemap and overlay layers.
  * @param {Array.Object.<string, number|string|boolean>} base_layers List of objects of map providers
  * @param {Array.Object.<string, number|string|boolean>} overlay_layer List of objects of overlay layers
@@ -186,6 +203,14 @@ export const addInternalHostname = async domain => {
  */
 export const openDemo = async () => {
   await store.dispatch('ui/enableDemoMode');
+};
+
+/**
+ * Reloads IITC, e.g. from the "IITC is out of date" dialog
+ * @param {boolean} clearCache Clear the WebView HTTP cache before reloading
+ */
+export const reloadIITC = async clearCache => {
+  await store.dispatch('ui/reloadIITC', clearCache === true);
 };
 
 /**
