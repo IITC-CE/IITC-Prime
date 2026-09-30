@@ -35,3 +35,6 @@ typings/
 !.vscode/extensions.json
 
 .env
+
+e2e/package-lock.json
+e2e/artifacts/

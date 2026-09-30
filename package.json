@@ -17,6 +17,8 @@
     "prepare:ios:appstore-release": "BUILD_TYPE=release APP_ID_SUFFIX= ns prepare ios --release --env.uglify --env.sentry",
     "clean": "ns clean",
     "lint": "ns build android --no-copy && echo 'Syntax check passed'",
+    "e2e:android": "npm --prefix e2e run android",
+    "e2e:ios": "npm --prefix e2e run ios",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "postinstall": "patch-package",

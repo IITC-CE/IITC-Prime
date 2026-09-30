@@ -1,0 +1,2 @@
+// Xcode 26.3 ships no lib_TestingInterop.dylib, which the WebDriverAgent project embeds
+WDA_XCTEST_EXCLUDED_2600 = $(inherited) lib_TestingInterop.dylib
