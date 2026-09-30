@@ -37,7 +37,7 @@ index 82fedc2..afaa805 100644
          const args = {
              eventName: WebViewExtBase_1.shouldOverrideUrlLoadingEvent,
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index ebb9a67..90ffb41 100644
+index ebb9a67..e04b381 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
 @@ -523,6 +523,19 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
@@ -72,18 +72,20 @@ index ebb9a67..90ffb41 100644
                  try {
                      var popupConfig = configuration;
                      // iOS shares WKUserContentController between parent and popup webviews by default.
-@@ -718,7 +736,9 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -718,7 +736,11 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                      if (webView.customUserAgent) {
                          popupWebView_1.customUserAgent = webView.customUserAgent;
                      }
 -                    var currentVC = UIApplication.sharedApplication.keyWindow.rootViewController;
++                    // debugMode covers popups too
++                    popupWebView_1.inspectable = webView.inspectable;
 +                    // keyWindow is deprecated in iOS 13+ and may return nil in iOS 15+/17+.
 +                    // Use the webview's own window instead - it is always valid when visible.
 +                    var currentVC = webView.window ? webView.window.rootViewController : null;
                      while (currentVC && currentVC.presentedViewController) {
                          currentVC = currentVC.presentedViewController;
                      }
-@@ -751,14 +771,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -751,14 +773,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                          var handler = CloseHandler.alloc().init();
                          var closeButton = UIBarButtonItem.alloc().initWithBarButtonSystemItemTargetAction(UIBarButtonSystemItem.Done, handler, 'onCloseButtonTap:');
                          popupVC.navigationItem.leftBarButtonItem = closeButton;
@@ -110,7 +112,7 @@ index ebb9a67..90ffb41 100644
                              }
                          }, {
                              protocols: [WKUIDelegate]
-@@ -766,11 +798,35 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -766,11 +800,35 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                              .alloc()
                              .init();
                          popupWebView_1.UIDelegate = simpleUIDelegate_1;
