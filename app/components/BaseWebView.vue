@@ -19,7 +19,12 @@
 <script>
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
-import { isIntelUrl, isExternalAppSchemeUrl } from '@/utils/url-config';
+import {
+  isIntelUrl,
+  isExternalAppSchemeUrl,
+  isLoginUrl,
+  isUrlOnHostnames,
+} from '@/utils/url-config';
 import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
 import { alert as customAlert, confirm as customConfirm } from '@/utils/dialogs';
 import { mapState } from 'vuex';
@@ -134,19 +139,11 @@ export default {
         this.$emit('bridge-message', ['gmBridgeRequest', msg.data]);
       });
 
-      // Popup navigations stay in the popup, except two cases:
-      // any intel.ingress.com URL (matched by host goes to the main WebView,
-      // and app-scheme deep links (tg:, mailto:, ...) go to the OS
       this.webViewInstance.on('popupNavigate', args => {
-        const url = args.url;
-        if (!url || url === 'about:blank' || url.startsWith('file://')) return;
-        if (isIntelUrl(url)) {
-          args.cancel = true;
-          this.$emit('popup-navigate', url);
-        } else if (isExternalAppSchemeUrl(url)) {
-          args.cancel = true;
-          this.$emit('external-url', url);
-        }
+        const target = this.popupUrlTarget(args.url);
+        if (target === 'popup') return;
+        args.cancel = true;
+        this.$emit(target === 'main' ? 'popup-navigate' : 'external-url', args.url);
       });
     },
 
@@ -209,6 +206,16 @@ export default {
       this.$emit('page-title-changed', args.title);
     },
 
+    // Where a URL opened from or inside a popup belongs: 'main', 'popup' or 'external'
+    popupUrlTarget(url) {
+      if (isIntelUrl(url)) return 'main';
+      if (isExternalAppSchemeUrl(url)) return 'external';
+      // about:blank, data:, blob:, file:// are the popup's own content
+      if (!/^https?:/i.test(url)) return 'popup';
+      if (isUrlOnHostnames(url, this.internalHostnames) || isLoginUrl(url)) return 'popup';
+      return 'external';
+    },
+
     /**
      * Check if URL should be handled by the main WebView
      * URLs not allowed here will be opened in the system browser instead
@@ -219,21 +226,7 @@ export default {
       // Allow internal/system URLs
       if (url === 'about:blank' || url?.startsWith('file://')) return true;
 
-      try {
-        const uri = new URL(url);
-        const hostname = uri.hostname;
-
-        // Check each allowed domain
-        for (const domain of this.internalHostnames) {
-          if (hostname === domain) return true;
-          if (hostname.endsWith('.' + domain)) return true;
-        }
-
-        return false;
-      } catch (e) {
-        console.error('Invalid URL:', url);
-        return false;
-      }
+      return isUrlOnHostnames(url, this.internalHostnames);
     },
 
     // Execute JavaScript command in webview
