@@ -37,10 +37,10 @@ index 82fedc2..afaa805 100644
          const args = {
              eventName: WebViewExtBase_1.shouldOverrideUrlLoadingEvent,
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index ebb9a67..08ffd6e 100644
+index ebb9a67..e04b381 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
-@@ -523,6 +523,14 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -523,6 +523,19 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
                  break;
              }
          }
@@ -52,21 +52,40 @@ index ebb9a67..08ffd6e 100644
 +            decisionHandler(WKNavigationActionPolicy.Allow);
 +            return;
 +        }
++        // New window: createWebView handles it; nothing loads in this webview
++        if (!navigationAction.targetFrame) {
++            decisionHandler(WKNavigationActionPolicy.Allow);
++            return;
++        }
          var shouldOverrideUrlLoading = owner._onShouldOverrideUrlLoading(url, httpMethod, navType);
          if (shouldOverrideUrlLoading === true) {
              if (Trace.isEnabled()) {
-@@ -718,7 +726,9 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -709,6 +722,11 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+         if (navigationAction && navigationAction.request && navigationAction.request.URL && (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame)) {
+             var supportPopups = (_a = owner === null || owner === void 0 ? void 0 : owner.supportPopups) !== null && _a !== void 0 ? _a : true;
+             if (supportPopups) {
++                // The URL is known before the popup exists: let the owner route it elsewhere
++                // without presenting anything
++                if (owner && owner._onPopupNavigate(navigationAction.request.URL.absoluteString)) {
++                    return null;
++                }
+                 try {
+                     var popupConfig = configuration;
+                     // iOS shares WKUserContentController between parent and popup webviews by default.
+@@ -718,7 +736,11 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                      if (webView.customUserAgent) {
                          popupWebView_1.customUserAgent = webView.customUserAgent;
                      }
 -                    var currentVC = UIApplication.sharedApplication.keyWindow.rootViewController;
++                    // debugMode covers popups too
++                    popupWebView_1.inspectable = webView.inspectable;
 +                    // keyWindow is deprecated in iOS 13+ and may return nil in iOS 15+/17+.
 +                    // Use the webview's own window instead - it is always valid when visible.
 +                    var currentVC = webView.window ? webView.window.rootViewController : null;
                      while (currentVC && currentVC.presentedViewController) {
                          currentVC = currentVC.presentedViewController;
                      }
-@@ -751,13 +761,16 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+@@ -751,14 +773,26 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                          var handler = CloseHandler.alloc().init();
                          var closeButton = UIBarButtonItem.alloc().initWithBarButtonSystemItemTargetAction(UIBarButtonSystemItem.Done, handler, 'onCloseButtonTap:');
                          popupVC.navigationItem.leftBarButtonItem = closeButton;
@@ -81,9 +100,19 @@ index ebb9a67..08ffd6e 100644
                                      simpleUIDelegate_1 = null;
 +                                    popupNavDelegate_1 = null;
                                  });
++                            },
++                            // No nested popups: a new window from the popup opens in the system
++                            // browser, keeping the popup page (e.g. an unfinished sign-in)
++                            webViewCreateWebViewWithConfigurationForNavigationActionWindowFeatures: function (wkWebView, config, action, features) {
++                                var nsUrl = action.request.URL;
++                                if (nsUrl && nsUrl.absoluteString && nsUrl.absoluteString !== 'about:blank') {
++                                    UIApplication.sharedApplication.openURLOptionsCompletionHandler(nsUrl, NSDictionary.dictionary(), null);
++                                }
++                                return null;
                              }
                          }, {
-@@ -766,11 +779,30 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+                             protocols: [WKUIDelegate]
+@@ -766,11 +800,35 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
                              .alloc()
                              .init();
                          popupWebView_1.UIDelegate = simpleUIDelegate_1;
@@ -99,8 +128,13 @@ index ebb9a67..08ffd6e 100644
 +                        var PopupNavDelegate = NSObject.extend({
 +                            webViewDecidePolicyForNavigationActionDecisionHandler: function (wkWebView, navigationAction, decisionHandler) {
 +                                try {
++                                    // Iframes must not close the popup; new windows are handled in createWebView
++                                    if (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame) {
++                                        decisionHandler(WKNavigationActionPolicy.Allow);
++                                        return;
++                                    }
 +                                    var url = navigationAction.request.URL && navigationAction.request.URL.absoluteString;
-+                                    if (url && owner && typeof owner._onPopupNavigate === 'function') {
++                                    if (url && owner) {
 +                                        var cancelled = owner._onPopupNavigate(url);
 +                                        if (cancelled) {
 +                                            decisionHandler(WKNavigationActionPolicy.Cancel);

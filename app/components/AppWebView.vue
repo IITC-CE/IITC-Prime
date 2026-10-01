@@ -166,6 +166,7 @@ export default {
           this.lastInjectedUrl = null;
           await this.$store.dispatch('navigation/resetPanes');
           await this.$store.dispatch('navigation/resetDialogs');
+          await this.$store.dispatch('map/resetInternalHostnames');
         }
 
         await this.$store.dispatch('ui/setWebviewLoaded', false);

@@ -129,6 +129,9 @@ export const map = {
         state.internalHostnames.push(domain);
       }
     },
+    RESET_INTERNAL_HOSTNAMES(state) {
+      state.internalHostnames = [...INITIAL_INTERNAL_HOSTNAMES];
+    },
   },
   actions: {
     setBaseLayers({ commit, dispatch, rootState }, baseLayers) {
@@ -202,9 +205,18 @@ export const map = {
       commit('SET_MAP_STATUS', data);
     },
     addInternalHostname({ commit }, domain) {
-      if (domain && typeof domain === 'string' && domain.trim() !== '') {
-        commit('ADD_INTERNAL_HOSTNAME', domain.trim());
+      if (typeof domain !== 'string') return;
+      // Subdomains always match, so "*.example.com" and ".example.com" mean "example.com"
+      const hostname = domain
+        .trim()
+        .toLowerCase()
+        .replace(/^\*?\./, '');
+      if (hostname) {
+        commit('ADD_INTERNAL_HOSTNAME', hostname);
       }
+    },
+    resetInternalHostnames({ commit }) {
+      commit('RESET_INTERNAL_HOSTNAMES');
     },
     /**
      * Handle location tracking enable/disable
