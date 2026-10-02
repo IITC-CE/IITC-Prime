@@ -28,9 +28,9 @@ export const copyToClipboard = async (text: string, toastMessage?: string): Prom
 
 /**
  * Check whether the clipboard contains a URL. Uses native detection APIs
- * when available to avoid triggering paste prompts on iOS 14+ and Android 12+.
+ * when available to avoid triggering paste prompts on iOS and Android 12+.
  *
- * On platforms without detection support (iOS <14, Android <12), falls back
+ * On platforms without detection support (Android <12), falls back
  * to reading clipboard content and running a basic URL regex.
  *
  * @returns True if a URL is detected
@@ -45,7 +45,7 @@ export const hasClipboardUrl = async (): Promise<boolean> => {
 /**
  * Read clipboard URL if it matches a pattern.
  *
- * Uses native URL detection first (iOS 14+ / Android 12+) to skip reading
+ * Uses native URL detection first (iOS / Android 12+) to skip reading
  * when no URL is present - avoiding the paste banner/toast in that case.
  *
  * When a URL is detected (or detection is unavailable), reads content and

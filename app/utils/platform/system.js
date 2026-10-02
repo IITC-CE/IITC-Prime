@@ -237,7 +237,7 @@ export const openAppLinkSettings = () => {
  *  - false - no URL present
  *  - null  - detection unavailable on this OS version; caller must read content
  *
- * iOS 14+: UIPasteboard.detectPatterns (no paste prompt).
+ * iOS: UIPasteboard.detectPatterns (no paste prompt).
  * Android 12+ (API 31): ClipDescription.getConfidenceScore(TYPE_URL) (no toast).
  *
  * @returns {Promise<boolean|null>}
@@ -246,11 +246,6 @@ export const detectClipboardUrl = () => {
   return new Promise(resolve => {
     try {
       if (isIOS) {
-        const osVersion = parseFloat(UIDevice.currentDevice.systemVersion);
-        if (osVersion < 14.0) {
-          resolve(null);
-          return;
-        }
         const patterns = NSSet.setWithObject(UIPasteboardDetectionPatternProbableWebURL);
         UIPasteboard.generalPasteboard.detectPatternsForPatternsCompletionHandler(
           patterns,
@@ -312,7 +307,7 @@ export const detectClipboardUrl = () => {
 };
 
 /**
- * Read raw and trimmed text from clipboard. On iOS 14+/Android 12+, this is what
+ * Read raw and trimmed text from clipboard. On iOS and Android 12+, this is what
  * triggers the paste banner/toast. Only call after user-initiated action or as
  * fallback when detection is not available.
  *

@@ -29,7 +29,4 @@ export default {
     v8Flags: '--expose_gc',
     markingMode: 'none',
   },
-  ios: {
-    deploymentTarget: '13.0',
-  },
 } as NativeScriptConfig;
