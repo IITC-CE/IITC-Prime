@@ -1,8 +1,8 @@
 diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-index c91387f..db77d94 100644
+index e089e31..31c2c7f 100644
 --- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
 +++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
-@@ -84,12 +84,11 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -93,12 +93,11 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
          if (this.scrollView) {
              this.scrollView.on('touch', this.onScrollViewTouch, this);
          }
@@ -20,27 +20,7 @@ index c91387f..db77d94 100644
              this.bottomSheet.on('touch', this.onBottomSheetTouch, this);
          }
          const manager = Manager.getInstance();
-@@ -158,13 +157,17 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
-     }
-     disposeNativeView() {
-         // this.off('layoutChanged', this.onLayoutChange, this);
-+        // Native views can be recreated while the JS view tree survives (Android
-+        // activity recreation, e.g. system navigation mode change). Only detach
-+        // listeners here; initNativeView() -> initGestures() re-attaches them.
-+        // Keep this.scrollView and this.bottomSheet: nulling the bottomSheet
-+        // property triggers _onBottomSheetChanged -> removeChild(), permanently
-+        // removing the sheet from the tree so the panel never comes back.
-         if (this.scrollView) {
-             this.scrollView.off('touch', this.onScrollViewTouch, this);
--            this.scrollView = null;
-         }
-         if (this.bottomSheet) {
-             this.bottomSheet.off('touch', this.onBottomSheetTouch, this);
--            this.bottomSheet = null;
-         }
-         super.disposeNativeView();
-         if (this.panGestureHandler) {
-@@ -414,15 +417,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -430,15 +429,25 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
          }
          else if (event.action === 'up' || event.action === 'cancel') {
              this.vt?.addMovement(p.getX(), p.getY());
@@ -75,7 +55,7 @@ index c91387f..db77d94 100644
                  this.wasDraggingPanel = false;
              }
              // only reset on bottomsheet up/cancel event (will happen after scrollView up/cancel)
-@@ -483,22 +496,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -499,22 +508,46 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
              //     // Movement too small - likely a tap
              //     return;
              // }
@@ -131,7 +111,7 @@ index c91387f..db77d94 100644
                      }
                  }
                  if (shouldStartDraggingPanel) {
-@@ -514,6 +551,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+@@ -530,6 +563,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
                          this.isScrollEnabled = true;
                      }
                  }
@@ -139,52 +119,10 @@ index c91387f..db77d94 100644
              }
              else {
                  const maxOffset = this.translationMaxOffset;
-@@ -627,6 +665,9 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
-     async animateToPosition(position, duration = OPEN_DURATION, curve = CoreTypes.AnimationCurve.easeOut) {
-         if (this.animation) {
-             this.animation.cancel();
-+            // Reset synchronously so the guard below does not block the new animation.
-+            // The previous call's finally block will run later but animating is already false.
-+            this.animating = false;
-         }
-         if (this.animating) {
-             return;
-@@ -662,21 +703,40 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
-             }
-         })
-             .filter((a) => !!a);
-+        let animation;
-         try {
--            this.animation = new Animation(params);
--            await this.animation.play();
-+            animation = new Animation(params);
-+            this.animation = animation;
-+            await animation.play();
-         }
-         catch (err) {
-+            // Superseded by a newer animateToPosition (its cancel() rejected play());
-+            // applying trData here would overwrite the newer target with a stale one.
-+            if (this.animation !== animation) {
-+                return;
-+            }
-             //ensure we go to end position
-             this.applyTrData(trData);
-             console.error('BottomSheet animation cancelled', err);
-         }
-         finally {
--            this.isScrollEnabled = true;
--            this.animating = false;
--            this.panGestureHandler.enabled = this.stepIndex !== 0;
--            this.animation = null;
--            this.notify({ eventName: 'animated', position, duration });
-+            if (this.animation === animation) {
-+                // iOS writes the animated value in the CAAnimation didStart delegate, which
-+                // never fires for hidden layers - re-commit the end position explicitly.
-+                this.applyTrData(trData);
-+                this.isScrollEnabled = true;
-+                this.animating = false;
-+                this.panGestureHandler.enabled = this.stepIndex !== 0;
-+                this.animation = null;
+@@ -700,6 +734,13 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+                 this.animating = false;
+                 this.panGestureHandler.enabled = this.stepIndex !== 0;
+                 this.animation = null;
 +                // A cancelled animation's didStart can still fire on the next CA commit
 +                // and write a stale target; re-commit once more after it had its chance.
 +                setTimeout(() => {
@@ -192,8 +130,6 @@ index c91387f..db77d94 100644
 +                        this.applyTrData(this.computeTranslationData());
 +                    }
 +                }, 300);
-+                this.notify({ eventName: 'animated', position, duration });
-+            }
+                 this.notify({ eventName: 'animated', position, duration });
+             }
          }
-     }
- };
