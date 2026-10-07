@@ -392,15 +392,6 @@ export default {
         return;
       }
 
-      // If clicking the same button again, close panel to BOTTOM
-      if (button === this.activeButton) {
-        this.setActivePanel(null);
-        this.$nextTick(() => {
-          this.stepIndexLocal = 1; // BOTTOM
-        });
-        return;
-      }
-
       // Switch to different panel
       this.switchPanel(button);
     },
@@ -422,8 +413,16 @@ export default {
           ? this.activeButton === 'quick' || this.activeButton === null
           : this.activeButton === buttonName);
 
-      const action = isActive ? null : buttonName;
-      this.setActiveButton(action);
+      // Tapping the active button closes the panel to BOTTOM
+      if (isActive) {
+        this.setActivePanel(null);
+        this.$nextTick(() => {
+          this.stepIndexLocal = 1; // BOTTOM
+        });
+        return;
+      }
+
+      this.setActiveButton(buttonName);
     },
 
     /**
