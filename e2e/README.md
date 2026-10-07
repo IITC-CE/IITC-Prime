@@ -2,7 +2,8 @@
 
 Appium + WebdriverIO tests that drive the debug build on a running emulator or
 simulator. They start from a fresh install, which opens the Intel welcome page,
-so no Ingress account is needed.
+so no Ingress account is needed. The panel tests switch to the public demo server
+(demo.iitc.app) to get a booted IITC.
 
 ```bash
 npm --prefix e2e install

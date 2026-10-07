@@ -4,6 +4,7 @@
   <StackLayout class="custom-url-container">
     <GridLayout columns="*, auto" rows="auto" class="url-input-container">
       <TextField
+        ref="urlInput"
         col="0"
         class="url-input"
         v-model="url"
@@ -81,8 +82,9 @@ export default {
   },
 
   watch: {
-    url(newValue) {
-      this.checkCustomUrl();
+    url() {
+      clearTimeout(this.checkTimer);
+      this.checkTimer = setTimeout(() => this.checkCustomUrl(), 100);
     },
   },
 
@@ -101,20 +103,21 @@ export default {
 
       this.urlStatus = 'unknown';
 
+      const enteredUrl = this.url;
+
       try {
-        // Try to add http:// prefix if missing
-        let urlToCheck = this.url;
+        // Normalized only for checking and saving
+        let urlToCheck = enteredUrl;
         if (!/^https?:\/\//i.test(urlToCheck)) {
           urlToCheck = 'http://' + urlToCheck;
         }
 
         const isValid = await this.checkCustomChannelUrl(urlToCheck);
-        this.urlStatus = isValid ? 'success' : 'error';
 
-        if (this.url !== urlToCheck) {
-          this.url = urlToCheck;
-          await this.$nextTick();
-        }
+        // A slower check of an older value must not override a newer one
+        if (this.url !== enteredUrl) return;
+
+        this.urlStatus = isValid ? 'success' : 'error';
 
         this.$emit('urlChanged', urlToCheck);
         if (isValid) {
@@ -122,21 +125,27 @@ export default {
         }
       } catch (error) {
         console.error('Error checking custom URL:', error);
-        this.urlStatus = 'error';
+        if (this.url === enteredUrl) this.urlStatus = 'error';
       }
     },
 
     /**
      * Set example URL
      */
-    setExampleUrl(url) {
+    async setExampleUrl(url) {
       this.url = url;
+      await this.$nextTick();
+      this.$refs.urlInput?.nativeView?.setSelection(url.length);
     },
   },
 
   mounted() {
     // Check URL status on mount
     this.checkCustomUrl();
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.checkTimer);
   },
 };
 </script>

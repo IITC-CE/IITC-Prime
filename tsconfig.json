@@ -23,5 +23,6 @@
         "noImplicitUseStrict": false,
         "noFallthroughCasesInSwitch": true
     },
+    "include": ["app/**/*"],
     "compileOnSave": false
 }

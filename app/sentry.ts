@@ -22,6 +22,8 @@ export function initSentry() {
     enableAutoPerformanceTracking: false,
     enableAutoSessionTracking: false,
     attachScreenshot: false,
+    // 5xx from third-party plugin hosts are not actionable; the native iOS SDK captures them by default
+    enableCaptureFailedRequests: false,
     dist: __SENTRY_DIST__,
     release: __SENTRY_RELEASE__,
     environment: __SENTRY_ENVIRONMENT__,

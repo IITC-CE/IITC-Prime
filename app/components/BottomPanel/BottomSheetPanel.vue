@@ -36,6 +36,7 @@
         <ControlButton
           col="0"
           :text="$filters.fonticon(isMapPane ? 'ms-menu' : 'ms-arrow-back')"
+          :accessibilityLabel="$L(isMapPane ? 'panel.menu' : 'panel.back_to_map')"
           :active="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
           @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
@@ -47,6 +48,7 @@
         <ControlButton
           col="2"
           :text="$filters.fonticon('ms-content-paste')"
+          :accessibilityLabel="$L('panel.paste_link')"
           :visible="hasClipboardLink"
           @tap="onPasteClipboard"
         />
@@ -55,6 +57,7 @@
         <ControlButton
           col="3"
           :text="$filters.fonticon(locationButtonIcon)"
+          :accessibilityLabel="$L('panel.my_location')"
           :visible="isIitcLoaded"
           :loading="isLocating"
           @tap="onLocate"
@@ -64,6 +67,7 @@
         <ControlButton
           col="4"
           :text="$filters.fonticon('ms-layers')"
+          :accessibilityLabel="$L('panel.layers')"
           :visible="isIitcLoaded"
           :active="isPanelOpen && activeButton === 'layers'"
           @tap="handleControlButtonTap('layers')"
@@ -392,15 +396,6 @@ export default {
         return;
       }
 
-      // If clicking the same button again, close panel to BOTTOM
-      if (button === this.activeButton) {
-        this.setActivePanel(null);
-        this.$nextTick(() => {
-          this.stepIndexLocal = 1; // BOTTOM
-        });
-        return;
-      }
-
       // Switch to different panel
       this.switchPanel(button);
     },
@@ -422,8 +417,16 @@ export default {
           ? this.activeButton === 'quick' || this.activeButton === null
           : this.activeButton === buttonName);
 
-      const action = isActive ? null : buttonName;
-      this.setActiveButton(action);
+      // Tapping the active button closes the panel to BOTTOM
+      if (isActive) {
+        this.setActivePanel(null);
+        this.$nextTick(() => {
+          this.stepIndexLocal = 1; // BOTTOM
+        });
+        return;
+      }
+
+      this.setActiveButton(buttonName);
     },
 
     /**
