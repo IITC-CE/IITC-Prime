@@ -6,7 +6,8 @@ export const BROWSER_ID = () => (driver.isIOS ? 'com.apple.mobilesafari' : 'com.
 export const MESSAGES_ID = () =>
   driver.isIOS ? 'com.apple.MobileSMS' : 'com.google.android.apps.messaging';
 
-const MAIN_PAGE = /^https:\/\/intel\.ingress\.com\//;
+// The main WebView shows Intel or, in demo mode, the public demo server
+const MAIN_HOSTS = ['intel.ingress.com', 'demo.iitc.app'];
 
 export const native = () => driver.switchAppiumContext('NATIVE_APP');
 
@@ -54,19 +55,19 @@ const listPages = async () => {
 // Pages that existed at the last reset; a closed popup's WebView can outlive it
 let knownPages = new Set();
 
-const switchToPage = (urlPattern, { isNew = false } = {}) =>
+const switchToPage = (matches, { isNew = false } = {}) =>
   driver.waitUntil(async () => {
     const pages = await listPages().catch(() => []);
-    const page = pages.find(p => urlPattern.test(p.url) && !(isNew && knownPages.has(p.id)));
+    const page = pages.find(p => matches(p.url) && !(isNew && knownPages.has(p.id)));
     if (!page) return false;
     await (driver.isIOS ? driver.switchAppiumContext(page.id) : driver.switchToWindow(page.id));
     return true;
   });
 
-export const mainPage = () => switchToPage(MAIN_PAGE);
+export const mainPage = () => switchToPage(url => MAIN_HOSTS.includes(URL.parse(url)?.hostname));
 
 /** Switches to a WebView page opened after the last reset, such as a popup. */
-export const newPage = urlPattern => switchToPage(urlPattern, { isNew: true });
+export const newPage = urlPattern => switchToPage(url => urlPattern.test(url), { isNew: true });
 
 export const waitForMainPageUrl = urlPattern =>
   driver.waitUntil(async () => {
