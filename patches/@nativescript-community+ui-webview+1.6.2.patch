@@ -1,3 +1,25 @@
+diff --git a/node_modules/@nativescript-community/ui-webview/index.android.js b/node_modules/@nativescript-community/ui-webview/index.android.js
+index 96cb563..8d7cc13 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.android.js
++++ b/node_modules/@nativescript-community/ui-webview/index.android.js
+@@ -218,7 +218,7 @@ function initializeWebViewClient() {
+         if (Trace.isEnabled()) {
+             Trace.write("WebViewClientClass.onReceivedErrorAPI23(".concat(error.getErrorCode(), ", ").concat(error.getDescription(), ", ").concat(url, ")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(url, "".concat(error.getDescription(), "(").concat(error.getErrorCode(), ")"));
++        owner._onLoadFinished(url, "".concat(error.getDescription(), "(").concat(error.getErrorCode(), ")")).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     WebViewExtClientImpl.prototype.onReceivedErrorBeforeAPI23 = function (view, errorCode, description, failingUrl) {
+         _super.prototype.onReceivedError.call(this, view, errorCode, description, failingUrl);
+@@ -232,7 +232,7 @@ function initializeWebViewClient() {
+         if (Trace.isEnabled()) {
+             Trace.write("WebViewClientClass.onReceivedErrorBeforeAPI23(".concat(errorCode, ", \"").concat(description, "\", \"").concat(failingUrl, "\")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(failingUrl, "".concat(description, "(").concat(errorCode, ")"));
++        owner._onLoadFinished(failingUrl, "".concat(description, "(").concat(errorCode, ")")).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     return WebViewExtClientImpl;
+ }(android.webkit.WebViewClient));
 diff --git a/node_modules/@nativescript-community/ui-webview/index.common.js b/node_modules/@nativescript-community/ui-webview/index.common.js
 index 82fedc2..afaa805 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.common.js
@@ -37,7 +59,7 @@ index 82fedc2..afaa805 100644
          const args = {
              eventName: WebViewExtBase_1.shouldOverrideUrlLoadingEvent,
 diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
-index ebb9a67..e04b381 100644
+index ebb9a67..09cab4e 100644
 --- a/node_modules/@nativescript-community/ui-webview/index.ios.js
 +++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
 @@ -523,6 +523,19 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
@@ -60,6 +82,24 @@ index ebb9a67..e04b381 100644
          var shouldOverrideUrlLoading = owner._onShouldOverrideUrlLoading(url, httpMethod, navType);
          if (shouldOverrideUrlLoading === true) {
              if (Trace.isEnabled()) {
+@@ -589,7 +602,7 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+         if (Trace.isEnabled()) {
+             Trace.write("WKNavigationDelegateClass.webViewDidFailNavigationWithError(\"".concat(error.localizedDescription, "\")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(src, error.localizedDescription);
++        owner._onLoadFinished(src, error.localizedDescription).catch(() => { }); // the error is already delivered via loadFinishedEvent
+     };
+     WKNavigationDelegateNotaImpl.prototype.webViewDidFailProvisionalNavigationWithError = function (webView, navigation, error) {
+         var owner = this.owner.get();
+@@ -603,7 +616,7 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+         if (Trace.isEnabled()) {
+             Trace.write("WKNavigationDelegateClass.webViewDidFailProvisionalNavigationWithError(".concat(error.localizedDescription), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(src, error.localizedDescription);
++        owner._onLoadFinished(src, error.localizedDescription).catch(() => { }); // the error is already delivered via loadFinishedEvent
+     };
+     WKNavigationDelegateNotaImpl.ObjCProtocols = [WKNavigationDelegate];
+     return WKNavigationDelegateNotaImpl;
 @@ -709,6 +722,11 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
          if (navigationAction && navigationAction.request && navigationAction.request.URL && (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame)) {
              var supportPopups = (_a = owner === null || owner === void 0 ? void 0 : owner.supportPopups) !== null && _a !== void 0 ? _a : true;
