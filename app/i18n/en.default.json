@@ -171,6 +171,13 @@
   "nav.debug": "Debug",
   "nav.reload_iitc": "Reload",
 
+  "panel.menu": "Menu",
+  "panel.back_to_map": "Back to map",
+  "panel.paste_link": "Paste link",
+  "panel.my_location": "My location",
+  "panel.layers": "Layers",
+  "panel.show": "Show panel",
+
   "layers.highlighter": "Highlighter",
   "layers.base_layer": "Base layer",
   "layers.select_highlighter": "Select highlighter",

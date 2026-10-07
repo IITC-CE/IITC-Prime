@@ -36,6 +36,7 @@
         <ControlButton
           col="0"
           :text="$filters.fonticon(isMapPane ? 'ms-menu' : 'ms-arrow-back')"
+          :accessibilityLabel="$L(isMapPane ? 'panel.menu' : 'panel.back_to_map')"
           :active="isPanelOpen && (activeButton === 'quick' || activeButton === null)"
           @tap="isMapPane ? handleControlButtonTap('quick') : handleBackToMap()"
         />
@@ -47,6 +48,7 @@
         <ControlButton
           col="2"
           :text="$filters.fonticon('ms-content-paste')"
+          :accessibilityLabel="$L('panel.paste_link')"
           :visible="hasClipboardLink"
           @tap="onPasteClipboard"
         />
@@ -55,6 +57,7 @@
         <ControlButton
           col="3"
           :text="$filters.fonticon(locationButtonIcon)"
+          :accessibilityLabel="$L('panel.my_location')"
           :visible="isIitcLoaded"
           :loading="isLocating"
           @tap="onLocate"
@@ -64,6 +67,7 @@
         <ControlButton
           col="4"
           :text="$filters.fonticon('ms-layers')"
+          :accessibilityLabel="$L('panel.layers')"
           :visible="isIitcLoaded"
           :active="isPanelOpen && activeButton === 'layers'"
           @tap="handleControlButtonTap('layers')"

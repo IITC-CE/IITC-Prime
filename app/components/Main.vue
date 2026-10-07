@@ -50,6 +50,9 @@
         <MDRipple
           v-if="isPanelHidden && !isDebugActive"
           class="fab restore-panel-button"
+          accessible="true"
+          accessibilityRole="button"
+          :accessibilityLabel="$L('panel.show')"
           :style="{
             marginBottom: systemBottomInset + 16,
             marginRight: safeAreaRightInset + 16,
