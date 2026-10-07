@@ -92,7 +92,7 @@ export const fixTextInputColors = args => {
   const { Color: NSColor } = require('@nativescript/core');
   view.style.color = new NSColor('#ffffff');
   view.style.placeholderColor = new NSColor('#71a0a6');
-  if (isAndroid) {
+  if (isAndroid && view.nativeViewProtected) {
     // Center text vertically for single-line appearance
     const nativeView = view.nativeViewProtected;
     const gravity = nativeView.getGravity();

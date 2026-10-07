@@ -89,6 +89,12 @@ export default {
   methods: {
     // WebView State Management
     onWebViewLoaded(args) {
+      // A recreated Android activity fires loaded once, before the native view exists
+      if (!args.object.nativeViewProtected) {
+        args.object.once('layoutChanged', () => this.onWebViewLoaded(args));
+        return;
+      }
+
       this.webViewInstance = args.object;
 
       try {
