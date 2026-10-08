@@ -61,7 +61,6 @@ export function initSentry() {
   });
 
   Application.on('uncaughtError', event => Sentry.captureException(event.error));
-  Application.on('discardedError', event => Sentry.captureException(event.error));
   Trace.setErrorHandler(errorHandler);
 }
 

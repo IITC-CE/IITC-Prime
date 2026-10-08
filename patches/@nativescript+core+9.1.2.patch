@@ -1,8 +1,8 @@
 diff --git a/node_modules/@nativescript/core/ui/core/view/index.android.js b/node_modules/@nativescript/core/ui/core/view/index.android.js
-index 30557ec..3b3deb5 100644
+index b17d5f1..c3d17e9 100644
 --- a/node_modules/@nativescript/core/ui/core/view/index.android.js
 +++ b/node_modules/@nativescript/core/ui/core/view/index.android.js
-@@ -647,6 +647,17 @@ export class View extends ViewCommon {
+@@ -649,6 +649,17 @@ export class View extends ViewCommon {
                  this.layoutChangeListener = null;
              }
          }
