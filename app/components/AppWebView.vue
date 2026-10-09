@@ -404,94 +404,104 @@ export default {
         const webview = this.webview;
         if (!webview) return;
 
-        switch (action.type) {
-          case 'manager/run':
-          case 'manager/handlePluginEvent':
-            await this.registerPluginScripts();
-            break;
-          case 'ui/reloadWebView':
-            if (action.payload) {
-              this.lastInjectedUrl = null; // OAuth URL has a hash; don't let the fragment guard skip it
-              this.$refs.baseWebView.reload(addViewportParam(action.payload));
-            } else if (this.$store.state.ui.isMainPageFocused) {
-              await this.performReload();
-            } else {
-              this.reloadPending = true;
+        try {
+          switch (action.type) {
+            case 'manager/run':
+            case 'manager/handlePluginEvent':
+              await this.registerPluginScripts();
+              break;
+            case 'ui/reloadWebView':
+              if (action.payload) {
+                this.lastInjectedUrl = null; // OAuth URL has a hash; don't let the fragment guard skip it
+                this.$refs.baseWebView.reload(addViewportParam(action.payload));
+              } else if (this.$store.state.ui.isMainPageFocused) {
+                await this.performReload();
+              } else {
+                this.reloadPending = true;
+              }
+              break;
+            case 'ui/reloadIITC':
+              if (action.payload) await clearWebViewCache(webview);
+              await this.$store.dispatch('ui/reloadWebView');
+              break;
+            case 'ui/iitcBootFinished': {
+              // Re-inject after IITC boot since document.head was replaced
+              await injectCustomStyles(webview);
+              // Set initial safe area insets after IITC loads
+              const wsa = this.$store.getters['ui/webviewSafeArea'];
+              await webview.executeJavaScript(
+                setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
+              );
+              break;
             }
-            break;
-          case 'ui/reloadIITC':
-            if (action.payload) await clearWebViewCache(webview);
-            await this.$store.dispatch('ui/reloadWebView');
-            break;
-          case 'ui/iitcBootFinished': {
-            // Re-inject after IITC boot since document.head was replaced
-            await injectCustomStyles(webview);
-            // Set initial safe area insets after IITC loads
-            const wsa = this.$store.getters['ui/webviewSafeArea'];
-            await webview.executeJavaScript(
-              setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
-            );
-            break;
-          }
-          case 'map/setInjectPlugin':
-            await this.injectPlugin(action.payload);
-            break;
-          case 'map/executeJavaScript':
-            if (webview && action.payload) {
-              await webview.executeJavaScript(action.payload);
+            case 'map/setInjectPlugin':
+              await this.injectPlugin(action.payload);
+              break;
+            case 'map/executeJavaScript':
+              if (webview && action.payload) {
+                await webview.executeJavaScript(action.payload);
+              }
+              break;
+            case 'map/setActiveBaseLayer':
+              await webview.executeJavaScript(showLayer(action.payload, true));
+              break;
+            case 'map/setOverlayLayerProperty': {
+              const overlay_layer = state.map.overlayLayers[action.payload.index];
+              await webview.executeJavaScript(
+                showLayer(overlay_layer.layerId, overlay_layer.active)
+              );
+              break;
             }
-            break;
-          case 'map/setActiveBaseLayer':
-            await webview.executeJavaScript(showLayer(action.payload, true));
-            break;
-          case 'map/setOverlayLayerProperty': {
-            const overlay_layer = state.map.overlayLayers[action.payload.index];
-            await webview.executeJavaScript(showLayer(overlay_layer.layerId, overlay_layer.active));
-            break;
-          }
-          case 'map/setActiveHighlighter':
-            await webview.executeJavaScript(changePortalHighlights(action.payload));
-            break;
-          case 'navigation/setCurrentPane': {
-            await webview.executeJavaScript(switchToPane(action.payload));
-            if (action.payload === 'map') {
-              await webview.executeJavaScript(removePaneSafeAreaInsets());
-            } else {
-              await webview.executeJavaScript(applyPaneSafeAreaInsets());
+            case 'map/setActiveHighlighter':
+              await webview.executeJavaScript(changePortalHighlights(action.payload));
+              break;
+            case 'navigation/setCurrentPane': {
+              await webview.executeJavaScript(switchToPane(action.payload));
+              if (action.payload === 'map') {
+                await webview.executeJavaScript(removePaneSafeAreaInsets());
+              } else {
+                await webview.executeJavaScript(applyPaneSafeAreaInsets());
+              }
+              break;
             }
-            break;
+            case 'navigation/closeDialog':
+              await webview.executeJavaScript(closeDialog(action.payload));
+              break;
+            case 'map/locateMapOnce':
+              await webview.executeJavaScript(
+                setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
+              );
+              break;
+            case 'map/userLocationLocate': {
+              const { lat, lng, accuracy, persistentZoom } = action.payload;
+              await webview.executeJavaScript(
+                userLocationLocate(lat, lng, accuracy, persistentZoom)
+              );
+              break;
+            }
+            case 'map/setLocation':
+              await webview.executeJavaScript(
+                userLocationUpdate(action.payload.lat, action.payload.lng)
+              );
+              break;
+            case 'map/userLocationOrientation':
+              await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
+              break;
+            case 'ui/setKeyboardOpen':
+            case 'ui/setScreenSafeArea':
+            case 'ui/setLayoutDimensions':
+            case 'ui/setPanelPosition': {
+              const wsa = this.$store.getters['ui/webviewSafeArea'];
+              await webview.executeJavaScript(
+                setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
+              );
+              break;
+            }
           }
-          case 'navigation/closeDialog':
-            await webview.executeJavaScript(closeDialog(action.payload));
-            break;
-          case 'map/locateMapOnce':
-            await webview.executeJavaScript(
-              setView(action.payload.lat, action.payload.lng, action.payload.persistentZoom)
-            );
-            break;
-          case 'map/userLocationLocate': {
-            const { lat, lng, accuracy, persistentZoom } = action.payload;
-            await webview.executeJavaScript(userLocationLocate(lat, lng, accuracy, persistentZoom));
-            break;
-          }
-          case 'map/setLocation':
-            await webview.executeJavaScript(
-              userLocationUpdate(action.payload.lat, action.payload.lng)
-            );
-            break;
-          case 'map/userLocationOrientation':
-            await webview.executeJavaScript(userLocationOrientation(action.payload.direction));
-            break;
-          case 'ui/setKeyboardOpen':
-          case 'ui/setScreenSafeArea':
-          case 'ui/setLayoutDimensions':
-          case 'ui/setPanelPosition': {
-            const wsa = this.$store.getters['ui/webviewSafeArea'];
-            await webview.executeJavaScript(
-              setSafeAreaInsets(wsa.top, wsa.bottom, wsa.left, wsa.right)
-            );
-            break;
-          }
+        } catch (error) {
+          // WKWebView rejects with an NSError, e.g. when its content process dies; nothing to report
+          if (!(isIOS && error instanceof NSError)) throw error;
+          console.error(`[AppWebView] ${action.type} failed:`, error);
         }
       },
     });

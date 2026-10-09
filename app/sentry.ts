@@ -8,6 +8,7 @@ declare const __ENABLE_SENTRY__: boolean;
 declare const __SENTRY_PREFIX__: string;
 declare const __SENTRY_DSN_IOS__: string;
 declare const __SENTRY_DSN_ANDROID__: string;
+declare const NSError: any;
 
 let initialized = false;
 export function initSentry() {
@@ -60,8 +61,16 @@ export function initSentry() {
     });
   });
 
-  Application.on('uncaughtError', event => Sentry.captureException(event.error));
+  Application.on('uncaughtError', event => Sentry.captureException(toError(event.error)));
   Trace.setErrorHandler(errorHandler);
+}
+
+// Sentry reports an NSError as an empty object with no message
+function toError(error: any) {
+  if (__APPLE__ && error instanceof NSError) {
+    return new Error(`${error.domain} (${error.code}): ${error.localizedDescription}`);
+  }
+  return error;
 }
 
 // Report a non-fatal anomaly with context; logged locally when Sentry is disabled.
