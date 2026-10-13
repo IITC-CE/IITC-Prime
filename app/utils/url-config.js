@@ -10,6 +10,7 @@ export const DEMO_INTEL_MAP = `https://${DEMO_INTEL_HOST}/intel`;
 
 export const INITIAL_INTERNAL_HOSTNAMES = [
   'intel.ingress.com',
+  'login.ingress.com',
   'signin.nianticlabs.com',
   'signin.nianticspatial.com',
   DEMO_INTEL_HOST,

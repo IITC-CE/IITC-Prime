@@ -66,6 +66,8 @@ const switchToPage = (matches, { isNew = false } = {}) =>
 
 export const mainPage = () => switchToPage(url => MAIN_HOSTS.includes(URL.parse(url)?.hostname));
 
+export const pageWithUrl = urlPattern => switchToPage(url => urlPattern.test(url));
+
 /** Switches to a WebView page opened after the last reset, such as a popup. */
 export const newPage = urlPattern => switchToPage(url => urlPattern.test(url), { isNew: true });
 
