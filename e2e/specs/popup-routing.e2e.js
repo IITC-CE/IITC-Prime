@@ -1,10 +1,12 @@
 import {
+  APP_ID,
   BROWSER_ID,
   MESSAGES_ID,
   addInternalHostname,
   mainPage,
   navigateCurrentPage,
   newPage,
+  pageWithUrl,
   resetApp,
   returnToApp,
   tapBlankLink,
@@ -53,6 +55,28 @@ describe('New window from the main page', () => {
     await tapBlankLink('https://intel.ingress.com/intel?e2e=blank');
     await expectNoPopup();
     await waitForMainPageUrl(/e2e=blank/);
+  });
+});
+
+describe('Navigation in the main page', () => {
+  beforeEach(reset);
+
+  it('opens an external site in the browser', async () => {
+    await navigateCurrentPage(EXTERNAL_URL);
+    await waitForForegroundApp(BROWSER_ID());
+    await returnToApp();
+    await expectNoPopup();
+  });
+
+  // The Intel sign-in page sends the main frame to the provider
+  it('keeps a sign-in redirect in the main webview', async () => {
+    await navigateCurrentPage('https://accounts.google.com/');
+    await pageWithUrl(/^https:\/\/accounts\.google\.com\//);
+    await expectNoPopup();
+    await waitForForegroundApp(APP_ID);
+    await pageWithUrl(/^https:\/\/accounts\.google\.com\//);
+    await navigateCurrentPage('https://intel.ingress.com/intel');
+    await waitForMainPageUrl(/^https:\/\/intel\.ingress\.com\//);
   });
 });
 
