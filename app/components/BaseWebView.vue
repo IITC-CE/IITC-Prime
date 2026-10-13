@@ -232,7 +232,8 @@ export default {
       // Allow internal/system URLs
       if (url === 'about:blank' || url?.startsWith('file://')) return true;
 
-      return isUrlOnHostnames(url, this.internalHostnames);
+      // The Intel sign-in page redirects the main frame to the provider
+      return isUrlOnHostnames(url, this.internalHostnames) || isLoginUrl(url);
     },
 
     // Execute JavaScript command in webview
