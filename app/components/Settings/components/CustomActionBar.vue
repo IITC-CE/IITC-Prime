@@ -5,7 +5,14 @@
     <!-- Search mode -->
     <GridLayout v-if="search" columns="*, auto" class="search-row">
       <GridLayout col="0" columns="48, *, auto" class="search-bar">
-        <MDRipple col="0" class="back-button" @tap="goBack">
+        <MDRipple
+          col="0"
+          class="back-button"
+          accessible="true"
+          accessibilityRole="button"
+          :accessibilityLabel="$L('nav.back')"
+          @tap="goBack"
+        >
           <Label class="ms back-icon" :text="$filters.fonticon('ms-arrow-back')" />
         </MDRipple>
         <TextField
@@ -42,7 +49,14 @@
 
     <!-- Normal mode -->
     <GridLayout v-else columns="48, *, auto" class="normal-bar">
-      <MDRipple col="0" class="back-button" @tap="goBack">
+      <MDRipple
+        col="0"
+        class="back-button"
+        accessible="true"
+        accessibilityRole="button"
+        :accessibilityLabel="$L('nav.back')"
+        @tap="goBack"
+      >
         <Label class="ms back-icon" :text="$filters.fonticon('ms-arrow-back')" />
       </MDRipple>
       <Label col="1" :text="title" class="action-bar-title" />
