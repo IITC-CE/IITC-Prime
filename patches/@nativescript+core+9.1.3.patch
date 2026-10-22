@@ -1,0 +1,30 @@
+diff --git a/node_modules/@nativescript/core/ui/core/view/view-helper/index.ios.js b/node_modules/@nativescript/core/ui/core/view/view-helper/index.ios.js
+index 9e530af..85efc9c 100644
+--- a/node_modules/@nativescript/core/ui/core/view/view-helper/index.ios.js
++++ b/node_modules/@nativescript/core/ui/core/view/view-helper/index.ios.js
+@@ -540,7 +540,8 @@ export class IOSHelper {
+         let controllerInWindow = { x: 0, y: 0 };
+         if (viewControllerView) {
+             safeArea = viewControllerView.safeAreaLayoutGuide.layoutFrame;
+-            fullscreen = viewControllerView.frame;
++            // safeArea and inWindow are relative to the controller view, not its superview.
++            fullscreen = viewControllerView.bounds;
+             controllerInWindow = viewControllerView.convertPointToView(viewControllerView.bounds.origin, null);
+         }
+         else if (scrollView) {
+diff --git a/node_modules/@nativescript/core/ui/page/index.ios.js b/node_modules/@nativescript/core/ui/page/index.ios.js
+index 9f4d117..be119c5 100644
+--- a/node_modules/@nativescript/core/ui/page/index.ios.js
++++ b/node_modules/@nativescript/core/ui/page/index.ios.js
+@@ -420,8 +420,9 @@ export class Page extends PageBase {
+         }
+         const childLeft = 0 + insets.left;
+         const childTop = 0 + insets.top;
+-        const childRight = right - insets.right;
+-        const childBottom = bottom - insets.bottom;
++        // Bounds come from the native frame, which may be offset within its superview.
++        const childRight = right - left - insets.right;
++        const childBottom = bottom - top - insets.bottom;
+         View.layoutChild(this, this.layoutView, childLeft, childTop, childRight, childBottom);
+     }
+     _addViewToNativeVisualTree(child, atIndex) {
