@@ -25,15 +25,15 @@
 
     <Label :text="$L('custom_channel.examples')" class="examples-label" once="true" />
     <WrapLayout class="examples-container">
-      <MDButton
+      <Label
         text="localhost:8000"
-        class="example-button"
+        class="chip"
         @tap="setExampleUrl('http://localhost:8000')"
         once="true"
       />
-      <MDButton
+      <Label
         text="iitc.app/build/artifact/PR"
-        class="example-button"
+        class="chip"
         @tap="setExampleUrl('https://iitc.app/build/artifact/PR')"
         once="true"
       />
@@ -42,16 +42,11 @@
 </template>
 
 <script>
-import { MDButton } from '@nativescript-community/ui-material-button';
 import { mapActions } from 'vuex';
 import { fixTextInputColors } from '@/utils/platform/ui';
 
 export default {
   name: 'CustomChannelInput',
-
-  components: {
-    MDButton,
-  },
 
   props: {
     customUrl: {
@@ -201,16 +196,6 @@ export default {
 }
 
 .examples-container {
-  margin: 0 -4;
-}
-
-.example-button {
-  background-color: $accent;
-  color: $on-surface;
-  margin: 4;
-  padding: 8;
-  border-radius: 4;
-  font-size: 12;
-  text-transform: none;
+  margin: 0 -$spacing-xxs;
 }
 </style>

@@ -224,6 +224,21 @@ MDButton {
   min-width: $spacing-item;
 }
 
+.chip {
+  margin: $spacing-xxs;
+  padding: 6 12;
+  border-radius: $radius-large;
+  background-color: $surface-container;
+  color: $on-surface;
+  font-size: $font-size-small;
+  text-align: center;
+
+  &--active {
+    background-color: $accent;
+    font-weight: bold;
+  }
+}
+
 // Dialog styles
 .dialog-container {
   background-color: $surface-container;

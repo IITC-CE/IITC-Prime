@@ -6,8 +6,8 @@
       v-for="(category, key) in categories"
       :key="key"
       :text="getCategoryText(category)"
-      class="category-tag"
-      :class="{ active: activeCategory === category.name, 'has-new': category.hasNew }"
+      class="chip"
+      :class="{ 'chip--active': activeCategory === category.name, 'has-new': category.hasNew }"
       @tap="onCategoryTap(category.name)"
     />
   </WrapLayout>
@@ -47,21 +47,5 @@ export default {
 
 .categories {
   padding: $spacing-s 0;
-}
-
-.category-tag {
-  margin: $spacing-xxs;
-  padding: 6 12;
-  border-radius: $radius-large;
-  background-color: $surface-container;
-  color: $on-surface;
-  font-size: $font-size-small;
-  text-align: center;
-}
-
-.category-tag.active {
-  background-color: $accent;
-  color: $on-surface;
-  font-weight: bold;
 }
 </style>
