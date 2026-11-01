@@ -154,7 +154,7 @@
           rows="54"
         >
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
-          <MDSwitch
+          <AppSwitch
             class="switch list-item-trailing"
             @checkedChange="args => onOverlayToggle(switchItem.index, args.value)"
             :checked="$store.state.map.overlayLayers[switchItem.index]?.active"
@@ -174,7 +174,7 @@
         orientation="horizontal"
       >
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
-        <MDSwitch
+        <AppSwitch
           class="switch list-item-trailing"
           @checkedChange="args => onOverlayToggle(item.item.index, args.value)"
           :checked="$store.state.map.overlayLayers[item.item.index]?.active"
@@ -188,6 +188,7 @@
 
 <script>
 import SelectField from '@/components/base/SelectField.vue';
+import AppSwitch from '@/components/base/AppSwitch.vue';
 import { $navigateTo } from 'nativescript-vue';
 import { disableListItemHighlight } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
@@ -198,6 +199,7 @@ export default {
   inheritAttrs: false,
 
   components: {
+    AppSwitch,
     SelectField,
   },
 

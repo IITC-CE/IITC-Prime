@@ -42,7 +42,7 @@
       />
 
       <!-- Switch toggle -->
-      <MDSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
+      <AppSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
     </StackLayout>
   </GridLayout>
 </template>
@@ -50,9 +50,14 @@
 <script>
 import { $navigateTo } from 'nativescript-vue';
 import { Utils } from '@nativescript/core';
+import AppSwitch from '@/components/base/AppSwitch.vue';
 
 export default {
   name: 'SettingsItem',
+
+  components: {
+    AppSwitch,
+  },
 
   props: {
     // Basic props

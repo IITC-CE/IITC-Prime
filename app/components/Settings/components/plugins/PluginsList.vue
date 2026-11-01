@@ -48,7 +48,7 @@
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
           <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
-            <MDSwitch
+            <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
               :isEnabled="!item.isCore"
@@ -102,7 +102,7 @@
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
           <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
-            <MDSwitch
+            <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
               :isEnabled="!item.isCore"
@@ -130,12 +130,14 @@
 import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
+import AppSwitch from '@/components/base/AppSwitch.vue';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 export default {
   name: 'PluginsList',
 
   components: {
+    AppSwitch,
     AsyncSVGIcon,
     AsyncRasterIcon,
   },
