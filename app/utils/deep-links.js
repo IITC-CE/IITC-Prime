@@ -38,12 +38,13 @@ const convertDeepLinkToIntelUrl = url => {
   // new URL() validates and normalizes; returns null on parse failure
   // to avoid storing an unparseable URL in the store
   try {
-    if (url.includes('://intel.ingress.com')) {
-      return new URL(url).toString();
+    // Only the query is used, so iitc://intel?pll=… and iitc://intel.ingress.com/?pll=… both work
+    if (url.startsWith('iitc://')) {
+      return new URL(INGRESS_INTEL_MAP + new URL(url).search).toString();
     }
 
-    if (url.startsWith('iitc://')) {
-      return new URL(url.replace('iitc://intel', INGRESS_INTEL_MAP)).toString();
+    if (url.includes('://intel.ingress.com')) {
+      return new URL(url).toString();
     }
   } catch {
     return null;
