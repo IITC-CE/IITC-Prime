@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { isIOS, isAndroid } from '@nativescript/core';
+import { isAndroid } from '@nativescript/core';
 import { markRaw } from 'vue';
 import { attachBackHandler, detachBackHandler, goBack } from '@/utils/platform/navigation';
 import {
@@ -146,14 +146,10 @@ export default {
   },
 
   created() {
+    // On iOS the scroll views keep their content above the home indicator themselves
     if (isAndroid) {
       this.statusBarInset = getStatusBarHeight();
       this.navBarInset = getNavigationBarHeight();
-    } else if (isIOS) {
-      const window = UIApplication.sharedApplication?.keyWindow;
-      if (window) {
-        this.navBarInset = window.safeAreaInsets.bottom;
-      }
     }
   },
 
