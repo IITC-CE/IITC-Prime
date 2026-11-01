@@ -6,7 +6,9 @@
  * @param {boolean} show Pass `false` to hide the layer
  */
 export const showLayer = (id, show) => {
-  return 'window.layerChooser.showLayer(' + id + ',' + show + '); true';
+  // One expression: the iOS WebView returns the value of the first statement, and the
+  // Leaflet object returned here cannot be passed back
+  return '(window.layerChooser.showLayer(' + id + ',' + show + '), true)';
 };
 
 /**
@@ -71,7 +73,7 @@ export const userLocationOrientation = direction => {
  */
 export const setView = (lat, lng, persistentZoom) => {
   const zoom = persistentZoom ? 'window.map.getZoom()' : 'window.DEFAULT_ZOOM';
-  return `window.map.setView([${lat}, ${lng}], ${zoom}); true`;
+  return `(window.map.setView([${lat}, ${lng}], ${zoom}), true)`;
 };
 
 /**
