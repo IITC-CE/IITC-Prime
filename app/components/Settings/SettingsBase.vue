@@ -29,7 +29,8 @@
         :orientation="useScroll === 'true' ? 'vertical' : undefined"
         class="settings-container"
       >
-        <StackLayout :style="contentInsetStyle">
+        <!-- iOS safe-area expansion stretches scroll content that ends near the bottom -->
+        <StackLayout :style="contentInsetStyle" :iosOverflowSafeAreaEnabled="useScroll !== 'true'">
           <slot :bottomPadding="contentBottomPadding"></slot>
         </StackLayout>
       </component>
