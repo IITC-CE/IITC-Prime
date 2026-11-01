@@ -114,7 +114,7 @@ export default {
     intelMapUrl() {
       // Add viewport param to current URL
       const currentUrl = this.$store.state.ui.currentUrl;
-      const finalUrl = addViewportParam(currentUrl);
+      const finalUrl = addViewportParam(currentUrl, this.$store.getters['settings/isDesktopMode']);
       return finalUrl;
     },
 
@@ -413,7 +413,9 @@ export default {
             case 'ui/reloadWebView':
               if (action.payload) {
                 this.lastInjectedUrl = null; // OAuth URL has a hash; don't let the fragment guard skip it
-                this.$refs.baseWebView.reload(addViewportParam(action.payload));
+                this.$refs.baseWebView.reload(
+                  addViewportParam(action.payload, this.$store.getters['settings/isDesktopMode'])
+                );
               } else if (this.$store.state.ui.isMainPageFocused) {
                 await this.performReload();
               } else {

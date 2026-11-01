@@ -4,54 +4,9 @@ import {
   registerUniversalLinkCallback,
   getUniversalLink,
 } from '@nativescript-community/universal-links';
-import { INGRESS_INTEL_MAP } from '@/utils/url-config';
+import { deepLinkToIntelUrl, isPluginUrl } from '@/utils/url-config';
 import { readFileFromUri } from '@/utils/platform/system';
 import store from '@/store';
-
-/**
- * Check if a URL points to a userscript plugin (.user.js)
- * @param {string} url
- * @returns {boolean}
- */
-const isPluginUrl = url => {
-  if (!url || typeof url !== 'string') return false;
-
-  // HTTP(S) URL ending with .user.js
-  if (/^https?:\/\/.+\.user\.js(\?.*)?$/i.test(url)) return true;
-
-  // File URI (content:// or file://) - treat as plugin file
-  if (url.startsWith('content://') || url.startsWith('file://')) return true;
-
-  return false;
-};
-
-/**
- * Convert deep link URL to intel.ingress.com URL
- * @param {string} url - The incoming deep link URL
- * @returns {string|null} Intel map URL
- */
-const convertDeepLinkToIntelUrl = url => {
-  if (!url || typeof url !== 'string') {
-    return null;
-  }
-
-  // new URL() validates and normalizes; returns null on parse failure
-  // to avoid storing an unparseable URL in the store
-  try {
-    // Only the query is used, so iitc://intel?pll=… and iitc://intel.ingress.com/?pll=… both work
-    if (url.startsWith('iitc://')) {
-      return new URL(INGRESS_INTEL_MAP + new URL(url).search).toString();
-    }
-
-    if (url.includes('://intel.ingress.com')) {
-      return new URL(url).toString();
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
 
 /**
  * Initialize deep link handling
@@ -82,7 +37,7 @@ export const handleDeepLink = () => {
  */
 export const isSupportedDeepLinkUrl = url => {
   if (!url || typeof url !== 'string') return false;
-  return isPluginUrl(url) || convertDeepLinkToIntelUrl(url) !== null;
+  return isPluginUrl(url) || deepLinkToIntelUrl(url) !== null;
 };
 
 /**
@@ -98,7 +53,7 @@ export const processDeepLink = url => {
     return;
   }
 
-  const intelUrl = convertDeepLinkToIntelUrl(url);
+  const intelUrl = deepLinkToIntelUrl(url);
   if (intelUrl) {
     store.dispatch('ui/setCurrentUrl', intelUrl);
   }

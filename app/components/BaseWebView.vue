@@ -19,12 +19,7 @@
 <script>
 import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
-import {
-  isIntelUrl,
-  isExternalAppSchemeUrl,
-  isLoginUrl,
-  isUrlOnHostnames,
-} from '@/utils/url-config';
+import { isMainWebViewUrlAllowed, popupUrlTarget } from '@/utils/url-config';
 import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
 import { alert as customAlert, confirm as customConfirm } from '@/utils/dialogs';
 import { mapState } from 'vuex';
@@ -146,7 +141,7 @@ export default {
       });
 
       this.webViewInstance.on('popupNavigate', args => {
-        const target = this.popupUrlTarget(args.url);
+        const target = popupUrlTarget(args.url, this.internalHostnames);
         if (target === 'popup') return;
         args.cancel = true;
         this.$emit(target === 'main' ? 'popup-navigate' : 'external-url', args.url);
@@ -200,7 +195,7 @@ export default {
     // URL Navigation Control
     onShouldOverrideUrlLoading(args) {
       // Only check URLs if checkUrls is true
-      if (this.checkUrls && !this.isUrlAllowed(args.url)) {
+      if (this.checkUrls && !isMainWebViewUrlAllowed(args.url, this.internalHostnames)) {
         args.cancel = true;
         this.$emit('external-url', args.url);
       }
@@ -210,30 +205,6 @@ export default {
 
     onTitleChanged(args) {
       this.$emit('page-title-changed', args.title);
-    },
-
-    // Where a URL opened from or inside a popup belongs: 'main', 'popup' or 'external'
-    popupUrlTarget(url) {
-      if (isIntelUrl(url)) return 'main';
-      if (isExternalAppSchemeUrl(url)) return 'external';
-      // about:blank, data:, blob:, file:// are the popup's own content
-      if (!/^https?:/i.test(url)) return 'popup';
-      if (isUrlOnHostnames(url, this.internalHostnames) || isLoginUrl(url)) return 'popup';
-      return 'external';
-    },
-
-    /**
-     * Check if URL should be handled by the main WebView
-     * URLs not allowed here will be opened in the system browser instead
-     */
-    isUrlAllowed(url) {
-      if (!this.internalHostnames.length) return true;
-
-      // Allow internal/system URLs
-      if (url === 'about:blank' || url?.startsWith('file://')) return true;
-
-      // The Intel sign-in page redirects the main frame to the provider
-      return isUrlOnHostnames(url, this.internalHostnames) || isLoginUrl(url);
     },
 
     // Execute JavaScript command in webview
