@@ -208,6 +208,12 @@ MDButton {
   &--last {
     border-bottom-right-radius: $radius-large;
   }
+  // No separator under the last row: Android draws it straight across the rounded corners
+  &--bottom-left,
+  &--bottom-right,
+  &--last {
+    border-bottom-width: 0;
+  }
 
   &--icon-text {
     padding-left: $spacing-m;
