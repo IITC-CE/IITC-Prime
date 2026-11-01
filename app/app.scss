@@ -182,13 +182,14 @@ MDButton {
   height: $spacing-item;
   ripple-color: $ripple;
   font-size: $font-size;
-  padding: 0 $spacing-l;
+  padding: 0 $spacing-m;
   border-bottom-width: $spacing-xxs;
   border-bottom-color: $surface;
   border-top-left-radius: 0;
 
   &--big {
     height: $spacing-item-big;
+    padding: 0 $spacing-l;
   }
 
   &--top-left,
