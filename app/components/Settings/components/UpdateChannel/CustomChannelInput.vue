@@ -2,7 +2,10 @@
 
 <template>
   <StackLayout class="custom-url-container">
-    <GridLayout columns="*, auto" rows="auto" class="url-input-container">
+    <GridLayout
+      columns="*, auto"
+      class="list-item list-item--first list-item--last url-input-container"
+    >
       <TextField
         ref="urlInput"
         col="0"
@@ -158,10 +161,6 @@ export default {
 }
 
 .url-input-container {
-  border-width: 1;
-  border-color: $surface;
-  border-radius: 4;
-  background-color: $surface-container;
   margin-bottom: $spacing-s;
 }
 
@@ -171,15 +170,14 @@ export default {
   border-radius: 0;
   border-bottom-width: 0;
   border-color: transparent;
-  padding: $spacing-s;
+  padding: 0;
   font-size: 14;
-  height: 50;
   color: $on-surface;
   placeholder-color: $on-surface-variant;
 }
 
 .url-status-icon {
-  width: 40;
+  width: 24;
   text-align: center;
   vertical-align: center;
 
