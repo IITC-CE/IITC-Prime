@@ -150,12 +150,12 @@
             'list-item--bottom-left': switchItem.isBottomLeft,
             'list-item--bottom-right': switchItem.isBottomRight,
           }"
-          columns="*, 56"
+          columns="*, auto"
           rows="54"
         >
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <MDSwitch
-            class="switch"
+            class="switch list-item-trailing"
             @checkedChange="args => onOverlayToggle(switchItem.index, args.value)"
             :checked="$store.state.map.overlayLayers[switchItem.index]?.active"
             col="1"
@@ -169,13 +169,13 @@
       <GridLayout
         class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        columns="*, 56"
+        columns="*, auto"
         rows="54"
         orientation="horizontal"
       >
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <MDSwitch
-          class="switch"
+          class="switch list-item-trailing"
           @checkedChange="args => onOverlayToggle(item.item.index, args.value)"
           :checked="$store.state.map.overlayLayers[item.item.index]?.active"
           col="1"
@@ -434,7 +434,7 @@ export default {
 }
 
 .switch {
-  height: 32;
+  vertical-align: center;
 }
 
 .switch-pair-block {

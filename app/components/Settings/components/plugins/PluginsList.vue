@@ -28,7 +28,7 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="auto, *, auto"
           rows="82"
           width="100%"
         >
@@ -47,7 +47,7 @@
             <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
+          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -82,7 +82,7 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="auto, *, auto"
           rows="82"
           width="100%"
         >
@@ -101,7 +101,7 @@
             <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
+          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
             <MDSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -430,12 +430,10 @@ export default {
 }
 
 .switch-area {
-  width: 56;
   height: 82;
 }
 
 .switch {
-  height: 32;
   vertical-align: center;
   horizontal-align: center;
 }

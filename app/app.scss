@@ -213,6 +213,10 @@ MDButton {
   }
 }
 
+.list-item-trailing {
+  min-width: $spacing-item;
+}
+
 // Dialog styles
 .dialog-container {
   background-color: $surface-container;
