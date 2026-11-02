@@ -100,7 +100,7 @@ const presentActivityControllerIOS = items => {
 /**
  * Universal sharing function for different content types
  * @param {any} content - Content to share (object for geo, string for text/url)
- * @param {string} contentType - Type of content ('geo' (Android only), 'text', 'url', 'prime')
+ * @param {string} contentType - Type of content ('geo' (Android only), 'text', 'url', 'ingress')
  * @param {string} title - Optional title or description
  * @returns {boolean} Success status
  */
@@ -128,8 +128,8 @@ export const shareContent = (content, contentType, title = '') => {
         if (title) {
           intent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
         }
-      } else if (contentType === 'prime') {
-        // Open in Ingress Prime
+      } else if (contentType === 'ingress') {
+        // Open in Ingress
         intent.setAction(android.content.Intent.ACTION_VIEW);
         intent.setData(android.net.Uri.parse(content));
       }
@@ -140,7 +140,7 @@ export const shareContent = (content, contentType, title = '') => {
           geo: l('share.action.maps'),
           url: l('share.chooser.open_url'),
           text: l('share.chooser.share_text'),
-          prime: l('share.action.ingress_prime'),
+          ingress: l('share.action.ingress'),
         }[contentType] || l('share.chooser.fallback');
 
       const chooser = android.content.Intent.createChooser(intent, chooserTitle);
@@ -148,7 +148,7 @@ export const shareContent = (content, contentType, title = '') => {
 
       return true;
     } else if (isIOS) {
-      if (contentType === 'prime') {
+      if (contentType === 'ingress') {
         return Utils.openUrl(content);
       } else if (contentType === 'url' || contentType === 'text') {
         presentActivityControllerIOS([content]);
