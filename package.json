@@ -25,7 +25,8 @@
     "version:patch": "npm version patch && npm run version:sync-ios",
     "version:minor": "npm version minor && npm run version:sync-ios",
     "version:major": "npm version major && npm run version:sync-ios",
-    "version:sync-ios": "node scripts/sync-ios-version.mjs"
+    "version:sync-ios": "node scripts/sync-ios-version.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@bezlepkin/nativescript-keyboard-opening": "^1.0.1",
@@ -74,6 +75,7 @@
     "prettier": "^3.6.2",
     "simple-plist": "^1.3.1",
     "typescript": "^5.6.3",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vitest": "^5.0.5"
   }
 }
