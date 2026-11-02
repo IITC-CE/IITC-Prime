@@ -26,7 +26,7 @@ export const config = {
         process.env.APP ||
         path.resolve(
           import.meta.dirname,
-          '../platforms/ios/build/Debug-iphonesimulator/IITCPrime.app'
+          '../../platforms/ios/build/Debug-iphonesimulator/IITCPrime.app'
         ),
       'appium:bundleId': APP_ID,
       'appium:enforceAppInstall': true,
