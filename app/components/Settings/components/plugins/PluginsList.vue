@@ -28,7 +28,7 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="auto, *, auto"
           rows="82"
           width="100%"
         >
@@ -47,8 +47,8 @@
             <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
-            <MDSwitch
+          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
+            <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
               :isEnabled="!item.isCore"
@@ -82,7 +82,7 @@
           ~mainContent
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, 56"
+          columns="auto, *, auto"
           rows="82"
           width="100%"
         >
@@ -101,8 +101,8 @@
             <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area" @tap="onSwitchTap(item)">
-            <MDSwitch
+          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
+            <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
               :isEnabled="!item.isCore"
@@ -130,12 +130,14 @@
 import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
+import AppSwitch from '@/components/base/AppSwitch.vue';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 export default {
   name: 'PluginsList',
 
   components: {
+    AppSwitch,
     AsyncSVGIcon,
     AsyncRasterIcon,
   },
@@ -430,12 +432,10 @@ export default {
 }
 
 .switch-area {
-  width: 56;
   height: 82;
 }
 
 .switch {
-  height: 32;
   vertical-align: center;
   horizontal-align: center;
 }

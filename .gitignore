@@ -36,5 +36,5 @@ typings/
 
 .env
 
-e2e/package-lock.json
-e2e/artifacts/
+tests/e2e/package-lock.json
+tests/e2e/artifacts/

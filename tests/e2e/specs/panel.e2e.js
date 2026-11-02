@@ -88,18 +88,23 @@ describe('Bottom panel', function () {
       input.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647';
       document.body.appendChild(input);
     });
-    // WKWebView shows the keyboard only for a focus from a real tap
-    await native();
-    const { width, height } = await driver.getWindowSize();
-    await driver
-      .action('pointer', { parameters: { pointerType: 'touch' } })
-      .move({ x: Math.round(width / 2), y: Math.round(height / 2) })
-      .down()
-      .up()
-      .perform();
-    await waitForPanel('hidden');
-    await mainPage();
-    await driver.execute(() => document.getElementById('e2e-input').remove());
+    try {
+      // WKWebView shows the keyboard only for a focus from a real tap
+      await native();
+      const { width, height } = await driver.getWindowSize();
+      await driver
+        .action('pointer', { parameters: { pointerType: 'touch' } })
+        .move({ x: Math.round(width / 2), y: Math.round(height / 2) })
+        .down()
+        .up()
+        .perform();
+      // The first keyboard after an emulator boot takes ~15 s to appear
+      await waitForPanel('hidden', { timeout: 60000 });
+    } finally {
+      // A focused input left behind keeps the keyboard over the next tests
+      await mainPage();
+      await driver.execute(() => document.getElementById('e2e-input')?.remove());
+    }
     await waitForPanel('bottom');
   });
 

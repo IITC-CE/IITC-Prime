@@ -1,7 +1,5 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import store from '@/store';
-
 export const INGRESS_INTEL_MAP = 'https://intel.ingress.com/intel';
 
 // Public demo server serving sample data without an Ingress sign-in.
@@ -95,18 +93,82 @@ export const isExternalAppSchemeUrl = url => {
 };
 
 /**
+ * Where a URL opened from or inside a popup belongs
+ * @param {string} url
+ * @param {string[]} internalHostnames
+ * @returns {'main'|'popup'|'external'}
+ */
+export const popupUrlTarget = (url, internalHostnames) => {
+  if (isIntelUrl(url)) return 'main';
+  if (isExternalAppSchemeUrl(url)) return 'external';
+  // about:blank, data:, blob:, file:// are the popup's own content
+  if (!/^https?:/i.test(url)) return 'popup';
+  if (isUrlOnHostnames(url, internalHostnames) || isLoginUrl(url)) return 'popup';
+  return 'external';
+};
+
+/**
+ * True if the main WebView may load the URL; others open in the system browser
+ * @param {string} url
+ * @param {string[]} internalHostnames
+ * @returns {boolean}
+ */
+export const isMainWebViewUrlAllowed = (url, internalHostnames) => {
+  if (!internalHostnames.length) return true;
+
+  // Allow internal/system URLs
+  if (url === 'about:blank' || url?.startsWith('file://')) return true;
+
+  // The Intel sign-in page redirects the main frame to the provider
+  return isUrlOnHostnames(url, internalHostnames) || isLoginUrl(url);
+};
+
+/**
+ * True if the URL points to a userscript plugin: a remote .user.js or a local file
+ * @param {string} url
+ * @returns {boolean}
+ */
+export const isPluginUrl = url => {
+  if (!url || typeof url !== 'string') return false;
+  if (/^https?:\/\/.+\.user\.js(\?.*)?$/i.test(url)) return true;
+  return url.startsWith('content://') || url.startsWith('file://');
+};
+
+/**
+ * Convert a deep link to the Intel map URL
+ * @param {string} url - iitc:// link or an intel.ingress.com URL
+ * @returns {string|null} Intel map URL, or null if the link is not for Intel or unparseable
+ */
+export const deepLinkToIntelUrl = url => {
+  if (!url || typeof url !== 'string') return null;
+
+  try {
+    // Only the query is used, so iitc://intel?pll=… and iitc://intel.ingress.com/?pll=… both work
+    if (url.startsWith('iitc://')) {
+      return new URL(INGRESS_INTEL_MAP + new URL(url).search).toString();
+    }
+
+    if (url.includes('://intel.ingress.com')) {
+      return new URL(url).toString();
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+/**
  * Add viewport parameter to URL for desktop/mobile mode switching
  * vp=f enables desktop mode, vp=m is the default mobile view
  * @param {string} url - The base URL
- * @returns {string} URL with viewport parameter based on current settings
+ * @param {boolean} desktopMode
+ * @returns {string} URL with the viewport parameter
  */
-export const addViewportParam = url => {
+export const addViewportParam = (url, desktopMode) => {
   if (!url) return url;
 
-  const desktopMode = store.getters['settings/isDesktopMode'];
-  const viewportParam = desktopMode ? 'f' : 'm';
-
   const parsed = new URL(url);
-  parsed.searchParams.set('vp', viewportParam);
+  parsed.searchParams.set('vp', desktopMode ? 'f' : 'm');
   return parsed.toString();
 };

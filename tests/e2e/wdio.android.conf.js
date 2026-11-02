@@ -11,7 +11,7 @@ export const config = {
         process.env.APP ||
         path.resolve(
           import.meta.dirname,
-          '../platforms/android/app/build/outputs/apk/debug/app-debug.apk'
+          '../../platforms/android/app/build/outputs/apk/debug/app-debug.apk'
         ),
       'appium:appPackage': APP_ID,
       // Every debug build has the same version code; install the given APK anyway

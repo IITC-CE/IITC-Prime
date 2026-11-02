@@ -182,13 +182,14 @@ MDButton {
   height: $spacing-item;
   ripple-color: $ripple;
   font-size: $font-size;
-  padding: 0 $spacing-l;
+  padding: 0 $spacing-m;
   border-bottom-width: $spacing-xxs;
   border-bottom-color: $surface;
   border-top-left-radius: 0;
 
   &--big {
     height: $spacing-item-big;
+    padding: 0 $spacing-l;
   }
 
   &--top-left,
@@ -207,9 +208,34 @@ MDButton {
   &--last {
     border-bottom-right-radius: $radius-large;
   }
+  // No separator under the last row: Android draws it straight across the rounded corners
+  &--bottom-left,
+  &--bottom-right,
+  &--last {
+    border-bottom-width: 0;
+  }
 
   &--icon-text {
     padding-left: $spacing-m;
+  }
+}
+
+.list-item-trailing {
+  min-width: $spacing-item;
+}
+
+.chip {
+  margin: $spacing-xxs;
+  padding: 6 12;
+  border-radius: $radius-large;
+  background-color: $surface-container;
+  color: $on-surface;
+  font-size: $font-size-small;
+  text-align: center;
+
+  &--active {
+    background-color: $accent;
+    font-weight: bold;
   }
 }
 

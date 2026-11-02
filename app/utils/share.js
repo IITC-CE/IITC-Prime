@@ -7,7 +7,7 @@ import { shareContent, getMapAppsIOS } from '~/utils/platform/system';
 import { copyToClipboard } from '~/utils/clipboard';
 
 /**
- * Creates a link to open a specific portal in Ingress Prime.
+ * Creates a link to open a specific portal in Ingress.
  * Uses Firebase's Dynamic Links feature.
  * https://firebase.google.com/docs/dynamic-links/create-manually
  *
@@ -17,9 +17,9 @@ import { copyToClipboard } from '~/utils/clipboard';
  * @param {string} guid - Portal's globally unique identifier
  * @param {number} lat - Latitude of the portal
  * @param {number} lng - Longitude of the portal
- * @returns {string} URL that opens Ingress Prime with portal details
+ * @returns {string} URL that opens Ingress with portal details
  */
-const makePrimeLink = (guid, lat, lng) => {
+const makeIngressLink = (guid, lat, lng) => {
   const base = 'https://link.ingress.com/';
 
   // Define URL components
@@ -94,8 +94,8 @@ export const showLocationShareOptions = (lat, lng, title = '', isPortal = false,
 
     if (isPortal || guid) {
       shareActions.push({
-        label: l('share.action.ingress_prime'),
-        open: () => shareContent(makePrimeLink(guid, lat, lng), 'prime'),
+        label: l('share.action.ingress'),
+        open: () => shareContent(makeIngressLink(guid, lat, lng), 'ingress'),
       });
     }
 

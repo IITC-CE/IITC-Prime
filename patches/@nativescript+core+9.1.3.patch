@@ -12,6 +12,20 @@ index 9e530af..85efc9c 100644
              controllerInWindow = viewControllerView.convertPointToView(viewControllerView.bounds.origin, null);
          }
          else if (scrollView) {
+diff --git a/node_modules/@nativescript/core/ui/list-view/index.ios.js b/node_modules/@nativescript/core/ui/list-view/index.ios.js
+index eeceb31..48f4ba1 100644
+--- a/node_modules/@nativescript/core/ui/list-view/index.ios.js
++++ b/node_modules/@nativescript/core/ui/list-view/index.ios.js
+@@ -136,7 +136,8 @@ var DataSource = (function (_super) {
+             cell = (tableView.dequeueReusableCellWithIdentifier(template.key) || ListViewCell.initWithEmptyBackground());
+             owner._prepareCell(cell, indexPath);
+             var cellView = cell.view;
+-            if (cellView && cellView.isLayoutRequired) {
++            // A reused cell may already be laid out with a stale height from another item
++            if (cellView) {
+                 var width = layout.getMeasureSpecSize(owner.widthMeasureSpec);
+                 var rowHeight = owner._effectiveRowHeight;
+                 var cellHeight = rowHeight > 0 ? rowHeight : owner.getHeight(indexPath.row, indexPath.section);
 diff --git a/node_modules/@nativescript/core/ui/page/index.ios.js b/node_modules/@nativescript/core/ui/page/index.ios.js
 index 9f4d117..be119c5 100644
 --- a/node_modules/@nativescript/core/ui/page/index.ios.js

@@ -58,24 +58,25 @@ let knownPages = new Set();
 const switchToPage = (matches, { isNew = false } = {}) =>
   driver.waitUntil(async () => {
     const pages = await listPages().catch(() => []);
-    const page = pages.find(p => matches(p.url) && !(isNew && knownPages.has(p.id)));
+    const page = pages.find(p => matches(p.url, p.id) && !(isNew && knownPages.has(p.id)));
     if (!page) return false;
     await (driver.isIOS ? driver.switchAppiumContext(page.id) : driver.switchToWindow(page.id));
-    return true;
+    return page.id;
   });
 
-export const mainPage = () => switchToPage(url => MAIN_HOSTS.includes(URL.parse(url)?.hostname));
+// The main WebView keeps its page when it leaves Intel, e.g. for a sign-in provider
+let mainPageId;
 
-export const pageWithUrl = urlPattern => switchToPage(url => urlPattern.test(url));
+export const mainPage = async () => {
+  mainPageId = await switchToPage(url => MAIN_HOSTS.includes(URL.parse(url)?.hostname));
+};
 
 /** Switches to a WebView page opened after the last reset, such as a popup. */
 export const newPage = urlPattern => switchToPage(url => urlPattern.test(url), { isNew: true });
 
+/** Waits for the main page to show the URL; a popup left on the same URL doesn't count. */
 export const waitForMainPageUrl = urlPattern =>
-  driver.waitUntil(async () => {
-    await mainPage();
-    return urlPattern.test(await driver.getUrl());
-  });
+  switchToPage((url, id) => id === mainPageId && urlPattern.test(url));
 
 /** Brings the app to the front on its main page, with the other apps closed. */
 export const resetApp = async () => {

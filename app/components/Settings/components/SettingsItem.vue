@@ -4,7 +4,7 @@
   <GridLayout
     class="list-item list-item--big"
     :class="{ 'list-item--first': isFirst, 'list-item--last': isLast, 'list-item--spaced': spaced }"
-    columns="*, 56"
+    columns="*, auto"
     rows="auto"
     @tap="onTap"
   >
@@ -24,7 +24,7 @@
     </StackLayout>
 
     <!-- Right side content based on type -->
-    <StackLayout col="1" verticalAlignment="center">
+    <StackLayout col="1" class="list-item-trailing" verticalAlignment="center">
       <!-- Navigation arrow -->
       <Label
         v-if="type === 'nav'"
@@ -42,7 +42,7 @@
       />
 
       <!-- Switch toggle -->
-      <MDSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
+      <AppSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
     </StackLayout>
   </GridLayout>
 </template>
@@ -50,9 +50,14 @@
 <script>
 import { $navigateTo } from 'nativescript-vue';
 import { Utils } from '@nativescript/core';
+import AppSwitch from '@/components/base/AppSwitch.vue';
 
 export default {
   name: 'SettingsItem',
+
+  components: {
+    AppSwitch,
+  },
 
   props: {
     // Basic props

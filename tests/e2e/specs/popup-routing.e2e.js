@@ -6,7 +6,6 @@ import {
   mainPage,
   navigateCurrentPage,
   newPage,
-  pageWithUrl,
   resetApp,
   returnToApp,
   tapBlankLink,
@@ -71,10 +70,10 @@ describe('Navigation in the main page', () => {
   // The Intel sign-in page sends the main frame to the provider
   it('keeps a sign-in redirect in the main webview', async () => {
     await navigateCurrentPage('https://accounts.google.com/');
-    await pageWithUrl(/^https:\/\/accounts\.google\.com\//);
+    await waitForMainPageUrl(/^https:\/\/accounts\.google\.com\//);
     await expectNoPopup();
     await waitForForegroundApp(APP_ID);
-    await pageWithUrl(/^https:\/\/accounts\.google\.com\//);
+    await waitForMainPageUrl(/^https:\/\/accounts\.google\.com\//);
     await navigateCurrentPage('https://intel.ingress.com/intel');
     await waitForMainPageUrl(/^https:\/\/intel\.ingress\.com\//);
   });
