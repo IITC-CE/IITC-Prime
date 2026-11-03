@@ -1,0 +1,133 @@
+diff --git a/node_modules/@nativescript-community/ui-webview/index.android.js b/node_modules/@nativescript-community/ui-webview/index.android.js
+index dee79c5..9ed63d6 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.android.js
++++ b/node_modules/@nativescript-community/ui-webview/index.android.js
+@@ -218,7 +218,7 @@ function initializeWebViewClient() {
+         if (Trace.isEnabled()) {
+             Trace.write("WebViewClientClass.onReceivedErrorAPI23(".concat(error.getErrorCode(), ", ").concat(error.getDescription(), ", ").concat(url, ")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(url, "".concat(error.getDescription(), "(").concat(error.getErrorCode(), ")"));
++        owner._onLoadFinished(url, "".concat(error.getDescription(), "(").concat(error.getErrorCode(), ")")).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     WebViewExtClientImpl.prototype.onReceivedErrorBeforeAPI23 = function (view, errorCode, description, failingUrl) {
+         _super.prototype.onReceivedError.call(this, view, errorCode, description, failingUrl);
+@@ -232,7 +232,7 @@ function initializeWebViewClient() {
+         if (Trace.isEnabled()) {
+             Trace.write("WebViewClientClass.onReceivedErrorBeforeAPI23(".concat(errorCode, ", \"").concat(description, "\", \"").concat(failingUrl, "\")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(failingUrl, "".concat(description, "(").concat(errorCode, ")"));
++        owner._onLoadFinished(failingUrl, "".concat(description, "(").concat(errorCode, ")")).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     return WebViewExtClientImpl;
+ }(android.webkit.WebViewClient));
+diff --git a/node_modules/@nativescript-community/ui-webview/index.ios.js b/node_modules/@nativescript-community/ui-webview/index.ios.js
+index 04e3e7a..123c7ea 100644
+--- a/node_modules/@nativescript-community/ui-webview/index.ios.js
++++ b/node_modules/@nativescript-community/ui-webview/index.ios.js
+@@ -528,6 +528,11 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+             decisionHandler(WKNavigationActionPolicy.Allow);
+             return;
+         }
++        // New window: createWebView handles it; nothing loads in this webview
++        if (!navigationAction.targetFrame) {
++            decisionHandler(WKNavigationActionPolicy.Allow);
++            return;
++        }
+         var shouldOverrideUrlLoading = owner._onShouldOverrideUrlLoading(url, httpMethod, navType);
+         if (shouldOverrideUrlLoading === true) {
+             if (Trace.isEnabled()) {
+@@ -594,7 +599,7 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+         if (Trace.isEnabled()) {
+             Trace.write("WKNavigationDelegateClass.webViewDidFailNavigationWithError(\"".concat(error.localizedDescription, "\")"), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(src, error.localizedDescription);
++        owner._onLoadFinished(src, error.localizedDescription).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     WKNavigationDelegateNotaImpl.prototype.webViewDidFailProvisionalNavigationWithError = function (webView, navigation, error) {
+         var owner = this.owner.get();
+@@ -608,7 +613,7 @@ var WKNavigationDelegateNotaImpl = /** @class */ (function (_super) {
+         if (Trace.isEnabled()) {
+             Trace.write("WKNavigationDelegateClass.webViewDidFailProvisionalNavigationWithError(".concat(error.localizedDescription), WebViewTraceCategory, Trace.messageType.info);
+         }
+-        owner._onLoadFinished(src, error.localizedDescription);
++        owner._onLoadFinished(src, error.localizedDescription).catch(function () { }); // the error is already delivered via loadFinishedEvent
+     };
+     WKNavigationDelegateNotaImpl.ObjCProtocols = [WKNavigationDelegate];
+     return WKNavigationDelegateNotaImpl;
+@@ -714,6 +719,14 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+         if (navigationAction && navigationAction.request && navigationAction.request.URL && (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame)) {
+             var supportPopups = (_a = owner === null || owner === void 0 ? void 0 : owner.supportPopups) !== null && _a !== void 0 ? _a : true;
+             if (supportPopups) {
++                // Decide on a known URL before presenting anything. A blank window is decided at its first navigation.
++                var firstUrl_1 = navigationAction.request.URL.absoluteString;
++                if (!firstUrl_1 || firstUrl_1 === 'about:blank') {
++                    firstUrl_1 = null;
++                }
++                else if (owner && owner._onPopupNavigate(firstUrl_1)) {
++                    return null;
++                }
+                 try {
+                     var popupConfig = configuration;
+                     // iOS shares WKUserContentController between parent and popup webviews by default.
+@@ -723,6 +736,8 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+                     if (webView.customUserAgent) {
+                         popupWebView_1.customUserAgent = webView.customUserAgent;
+                     }
++                    // debugMode covers popups too
++                    popupWebView_1.inspectable = webView.inspectable;
+                     var currentVC = webView.window ? webView.window.rootViewController : null;
+                     while (currentVC && currentVC.presentedViewController) {
+                         currentVC = currentVC.presentedViewController;
+@@ -767,6 +782,15 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+                                     simpleUIDelegate_1 = null;
+                                     popupNavDelegate_1 = null;
+                                 });
++                            },
++                            // No nested popups: a new window from the popup opens in the system
++                            // browser, keeping the popup page (e.g. an unfinished sign-in)
++                            webViewCreateWebViewWithConfigurationForNavigationActionWindowFeatures: function (wkWebView, config, action, features) {
++                                var nsUrl = action.request.URL;
++                                if (nsUrl && nsUrl.absoluteString && nsUrl.absoluteString !== 'about:blank') {
++                                    UIApplication.sharedApplication.openURLOptionsCompletionHandler(nsUrl, NSDictionary.dictionary(), null);
++                                }
++                                return null;
+                             }
+                         }, {
+                             protocols: [WKUIDelegate]
+@@ -783,14 +807,30 @@ var WKUIDelegateNotaImpl = /** @class */ (function (_super) {
+                         var PopupNavDelegate = NSObject.extend({
+                             webViewDecidePolicyForNavigationActionDecisionHandler: function (wkWebView, navigationAction, decisionHandler) {
+                                 var _a;
+-                                var url = (_a = navigationAction.request.URL) === null || _a === void 0 ? void 0 : _a.absoluteString;
+-                                if (url && owner) {
+-                                    var cancelled = owner._onPopupNavigate(url);
+-                                    if (cancelled) {
+-                                        decisionHandler(WKNavigationActionPolicy.Cancel);
+-                                        navController_1 === null || navController_1 === void 0 ? void 0 : navController_1.dismissViewControllerAnimatedCompletion(true, null);
++                                try {
++                                    // Iframes must not close the popup; new windows are handled in createWebView
++                                    if (!navigationAction.targetFrame || !navigationAction.targetFrame.mainFrame) {
++                                        decisionHandler(WKNavigationActionPolicy.Allow);
++                                        return;
++                                    }
++                                    var url = (_a = navigationAction.request.URL) === null || _a === void 0 ? void 0 : _a.absoluteString;
++                                    // Already decided above
++                                    if (url && url === firstUrl_1) {
++                                        firstUrl_1 = null;
++                                        decisionHandler(WKNavigationActionPolicy.Allow);
+                                         return;
+                                     }
++                                    if (url && owner) {
++                                        var cancelled = owner._onPopupNavigate(url);
++                                        if (cancelled) {
++                                            decisionHandler(WKNavigationActionPolicy.Cancel);
++                                            navController_1 === null || navController_1 === void 0 ? void 0 : navController_1.dismissViewControllerAnimatedCompletion(true, null);
++                                            return;
++                                        }
++                                    }
++                                }
++                                catch (e) {
++                                    console.error('[ui-webview] PopupNavDelegate error:', e);
+                                 }
+                                 decisionHandler(WKNavigationActionPolicy.Allow);
+                             }
