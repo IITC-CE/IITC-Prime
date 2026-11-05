@@ -24,7 +24,7 @@ export const changePortalHighlights = name => {
  * @param {string} name Panel ID
  */
 export const switchToPane = name => {
-  return "window.show('" + name + "'); true";
+  return "window.show?.('" + name + "'); true";
 };
 
 /**
