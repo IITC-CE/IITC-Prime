@@ -226,12 +226,16 @@ export default {
       const target = url ?? this.src;
       if (!wv || !target) return;
 
+      // loadUrl rejects when the load fails or the reload below cancels it;
+      // loadFinished already reports the failure
+      const ignoreLoadError = () => {};
+
       if (target.split('#')[0] !== (wv.src ?? '').split('#')[0]) {
-        wv.loadUrl(target);
+        wv.loadUrl(target).catch(ignoreLoadError);
         return;
       }
 
-      if (target !== wv.src) wv.loadUrl(target);
+      if (target !== wv.src) wv.loadUrl(target).catch(ignoreLoadError);
       wv.reload();
     },
 

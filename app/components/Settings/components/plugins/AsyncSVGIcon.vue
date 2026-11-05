@@ -11,6 +11,7 @@
 
 <script>
 import svgCacheService from '@/utils/svg-cache';
+import { svgFromDataUri } from '@/utils/data-uri';
 
 export default {
   name: 'AsyncSVGIcon',
@@ -47,6 +48,11 @@ export default {
     async loadSVG(url) {
       if (!url) {
         this.currentSrc = this.svgPlaceholder;
+        return;
+      }
+
+      if (url.startsWith('data:')) {
+        this.currentSrc = svgFromDataUri(url) ?? this.svgPlaceholder;
         return;
       }
 

@@ -6,6 +6,7 @@
 
 <script>
 import imageCacheService from '@/utils/image-cache';
+import { rasterDataUri } from '@/utils/data-uri';
 
 export default {
   name: 'AsyncRasterIcon',
@@ -41,6 +42,11 @@ export default {
     async loadImage(url) {
       if (!url || typeof url !== 'string') {
         this.currentSrc = this.placeholder;
+        return;
+      }
+
+      if (url.startsWith('data:')) {
+        this.currentSrc = rasterDataUri(url) ?? this.placeholder;
         return;
       }
 

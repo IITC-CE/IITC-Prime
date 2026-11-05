@@ -402,7 +402,9 @@ export default {
     this.store_unsubscribe = this.$store.subscribeAction({
       after: async (action, state) => {
         const webview = this.webview;
-        if (!webview) return;
+        // Gone with a destroyed Android activity, while GPS updates keep coming;
+        // onWebViewLoaded registers the scripts again once it is recreated
+        if (!webview?.nativeViewProtected) return;
 
         try {
           switch (action.type) {
