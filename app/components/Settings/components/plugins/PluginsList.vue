@@ -326,6 +326,10 @@ export default {
       enableListEdgeToEdge(args.object);
 
       if (isIOS) {
+        // Without a known height the iOS list lays out every row up front to measure it,
+        // which stalls the page for a full list. Plugin rows are 82 high, as in the templates.
+        args.object.setTemplateRowHeight('plugin-svg', 82);
+        args.object.setTemplateRowHeight('plugin-raster', 82);
         this.updateIosContentInset();
         args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
       }
