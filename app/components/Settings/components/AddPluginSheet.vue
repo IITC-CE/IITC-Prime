@@ -27,11 +27,10 @@
       />
 
       <!-- Load button -->
-      <MDButton
-        class="btn-primary btn-load"
+      <AppButton
+        class="btn-load"
         :text="$L('add_plugin.load_url')"
         :isEnabled="!!pluginUrl.trim()"
-        @loaded="onLoadButtonLoaded"
         @tap="loadPlugin"
       />
 
@@ -42,11 +41,7 @@
         <StackLayout class="divider-line" />
       </FlexboxLayout>
       <!-- Choose file -->
-      <MDButton
-        class="btn-primary btn-file"
-        :text="$L('add_plugin.choose_file')"
-        @tap="chooseFile"
-      />
+      <AppButton class="btn-file" :text="$L('add_plugin.choose_file')" @tap="chooseFile" />
 
       <!-- Error message -->
       <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
@@ -55,7 +50,7 @@
 </template>
 
 <script>
-import { isAndroid, isIOS } from '@nativescript/core';
+import { isAndroid } from '@nativescript/core';
 import {
   fixTextInputColors,
   getBottomSheetInsetRefs,
@@ -63,9 +58,12 @@ import {
 } from '@/utils/platform/ui';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
   name: 'AddPluginSheet',
+
+  components: { AppButton },
 
   data() {
     return {
@@ -96,12 +94,6 @@ export default {
       const url = await getClipboardURLIfMatches(/\.user\.js/i);
       if (url) {
         this.pluginUrl = url;
-      }
-    },
-
-    onLoadButtonLoaded(args) {
-      if (isIOS) {
-        args.object.ios.setTitleColorForState(UIColor.whiteColor, UIControlState.Disabled);
       }
     },
 
@@ -168,6 +160,11 @@ export default {
   margin: 0;
 }
 
+.btn-load,
+.btn-file {
+  margin: 0;
+}
+
 .btn-load {
   margin-top: $spacing-s;
 }
@@ -176,6 +173,7 @@ export default {
   flex-direction: row;
   align-items: center;
   height: 24;
+  margin: $spacing-s 0;
 }
 
 .divider-line {
@@ -193,10 +191,6 @@ export default {
 
 .divider-text.android {
   line-height: 1;
-}
-
-.btn-file {
-  margin-top: $spacing-s;
 }
 
 .error-message {

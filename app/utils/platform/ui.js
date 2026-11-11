@@ -3,7 +3,7 @@
 import { Application, Color, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
 
 // $accent in app.scss
-const ACCENT_COLOR = '#26a69a';
+export const ACCENT_COLOR = '#26a69a';
 
 /**
  * Get status bar height in DIP (Android only, fallback for when insets not yet dispatched)
