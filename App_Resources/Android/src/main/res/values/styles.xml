@@ -61,6 +61,30 @@
     <style name="AppTheme" parent="AppThemeBase">
     </style>
 
+    <!-- M3 surface roles for the top app bar and search (utils/platform/material.js) -->
+    <style name="AppTopBarOverlay" parent="">
+        <item name="colorSurface">@color/ns_primary</item>
+        <!-- The lifted app bar, a step below the search bar so the two stay apart -->
+        <item name="colorSurfaceContainer">@color/surface_container_low</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_container</item>
+        <item name="colorSurfaceContainerHighest">@color/ns_surface_bright</item>
+        <item name="colorOnSurface">@color/ns_text</item>
+        <item name="colorOnSurfaceVariant">@color/ns_primary_light</item>
+        <item name="colorPrimary">@color/ns_accent</item>
+        <item name="colorControlNormal">@color/ns_text</item>
+        <item name="android:textColorPrimary">@color/ns_text</item>
+        <item name="android:textColorHint">@color/ns_primary_light</item>
+        <item name="toolbarStyle">@style/Widget.Material3.Toolbar</item>
+        <item name="materialButtonStyle">@style/Widget.Material3.Button.TextButton</item>
+    </style>
+
+    <!-- Search results lie on the page color, so plugin rows stand out as on the page -->
+    <style name="AppSearchViewOverlay" parent="AppTopBarOverlay">
+        <item name="colorSurfaceContainerHigh">@color/ns_primary</item>
+        <!-- SearchView lightens its background by its elevation -->
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+
     <!-- Default style for DatePicker - in spinner mode -->
     <style name="SpinnerDatePicker" parent="android:Widget.Material.DatePicker">
         <item name="android:datePickerMode">spinner</item>
