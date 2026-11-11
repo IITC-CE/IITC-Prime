@@ -51,9 +51,10 @@
         v-model="commandText"
         @returnPress="executeCommand"
         @focus="$emit('input-focus')"
-        @loaded="fixTextInputColors"
+        @loaded="onInputLoaded"
         :hint="$L('debug.command_hint')"
         autocorrect="false"
+        autocapitalizationType="none"
         maxLines="10"
       />
       <AppButton
@@ -69,6 +70,7 @@
 </template>
 
 <script>
+import { isIOS } from '@nativescript/core';
 import { fixTextInputColors } from '@/utils/platform/ui';
 import AppButton from '@/components/base/AppButton.vue';
 
@@ -106,7 +108,15 @@ export default {
   },
 
   methods: {
-    fixTextInputColors,
+    onInputLoaded(args) {
+      fixTextInputColors(args);
+      // autocorrect="false" leaves them on
+      if (isIOS) {
+        const textView = args.object.ios;
+        textView.smartQuotesType = UITextSmartQuotesType.No;
+        textView.smartDashesType = UITextSmartDashesType.No;
+      }
+    },
 
     // Execute command and emit result to parent
     executeCommand() {
