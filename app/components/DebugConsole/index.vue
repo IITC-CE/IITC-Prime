@@ -45,6 +45,7 @@
       row="1"
       :paddingBottom="navBarPadding"
       class="controls-wrapper"
+      ios:clipToBounds="false"
     >
       <ControlsPanel
         v-model:command="command"

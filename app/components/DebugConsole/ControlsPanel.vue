@@ -1,9 +1,16 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="controls-container">
+  <!-- Liquid Glass buttons stretch out of their bounds while dragged: nothing up to the wrapper in
+       index.vue may clip them -->
+  <StackLayout class="controls-container" ios:clipToBounds="false">
     <!-- Controls panel -->
-    <GridLayout row="0" class="controls-panel" columns="auto, *, auto, auto, auto">
+    <GridLayout
+      row="0"
+      class="controls-panel"
+      columns="auto, *, auto, auto, auto"
+      ios:clipToBounds="false"
+    >
       <AppButton
         col="0"
         icon
@@ -36,7 +43,7 @@
     </GridLayout>
 
     <!-- Command input -->
-    <GridLayout row="1" columns="*, auto" class="command-input-container">
+    <GridLayout row="1" columns="*, auto" class="command-input-container" ios:clipToBounds="false">
       <TextView
         ref="commandInput"
         col="0"
