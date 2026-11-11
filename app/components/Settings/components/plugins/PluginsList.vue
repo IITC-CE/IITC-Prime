@@ -7,7 +7,7 @@
     class="plugins-list"
     :items="combinedItems"
     :itemTemplateSelector="templateSelector"
-    :style="{ paddingBottom: bottomPadding }"
+    :style="{ paddingTop: topPadding, paddingBottom: bottomPadding }"
     iosOverflowSafeArea="true"
     @loaded="onLoaded"
   >
@@ -167,6 +167,16 @@ export default {
       type: Number,
       default: 0,
     },
+    // Android: inside the list, so the rows start below a gap yet scroll up to the bar
+    topPadding: {
+      type: Number,
+      default: 0,
+    },
+    // iOS: nothing above the list on the page, so it extends under the navigation bar too
+    underNavigationBar: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   computed: {
@@ -241,6 +251,9 @@ export default {
     combinedItems() {
       this.collectionViewRef?.closeCurrentMenu();
     },
+    underNavigationBar() {
+      this.updateIosContentInset();
+    },
   },
 
   methods: {
@@ -313,11 +326,20 @@ export default {
       enableListEdgeToEdge(args.object);
 
       if (isIOS) {
-        // CollectionView maps paddingBottom -> contentInset.bottom; disable UIKit auto-adding
-        // safe-area inset on top of our manual paddingBottom to avoid double-counting
-        args.object.ios.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
+        this.updateIosContentInset();
         args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
       }
+    },
+
+    updateIosContentInset() {
+      const collectionView = this.collectionViewRef?.ios;
+      if (!isIOS || !collectionView) return;
+      // CollectionView maps paddingBottom -> contentInset.bottom; disable UIKit auto-adding
+      // safe-area inset on top of our manual paddingBottom to avoid double-counting.
+      // Under the navigation bar UIKit's inset is the only one keeping the first rows visible.
+      collectionView.contentInsetAdjustmentBehavior = this.underNavigationBar
+        ? UIScrollViewContentInsetAdjustmentBehavior.Always
+        : UIScrollViewContentInsetAdjustmentBehavior.Never;
     },
 
     async onSwitchTap(item) {

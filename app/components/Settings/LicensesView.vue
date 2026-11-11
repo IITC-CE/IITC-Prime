@@ -2,11 +2,11 @@
 
 <template>
   <SettingsBase :title="$L('licenses.title')" use-scroll="false" v-slot="{ bottomPadding }">
-    <GridLayout rows="*" class="licenses-list-container">
+    <GridLayout rows="*" class="licenses-list-container" :style="containerStyle">
       <ListView
         row="0"
         :items="licenses"
-        :style="{ paddingBottom: bottomPadding }"
+        :style="{ paddingTop: listTopPadding, paddingBottom: bottomPadding }"
         class="licenses-list"
         separatorColor="transparent"
         @loaded="onLoaded"
@@ -31,6 +31,7 @@
 
 <script>
 import { markRaw } from 'vue';
+import { isAndroid } from '@nativescript/core';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
 import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform/ui';
@@ -45,6 +46,9 @@ export default {
   data() {
     return {
       licenses: [],
+      // Android: the gap is list padding, so rows scroll up to the app bar; the iOS list ignores it
+      containerStyle: isAndroid ? {} : { paddingTop: 24 },
+      listTopPadding: isAndroid ? 24 : 0,
     };
   },
 
@@ -107,10 +111,6 @@ export default {
 
 <style scoped lang="scss">
 @import '@/app';
-
-.licenses-list-container {
-  padding-top: $spacing-l;
-}
 
 .licenses-list {
   width: 100%;

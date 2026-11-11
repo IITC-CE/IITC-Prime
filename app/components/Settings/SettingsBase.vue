@@ -2,59 +2,87 @@
 
 <template>
   <Page
-    actionBarHidden="true"
     statusBarStyle="light"
+    :actionBarHidden="isAndroid"
+    @loaded="onPageLoaded"
+    @navigatingTo="onNavigatingTo"
     @navigatedTo="onNavigatedTo"
     @navigatedFrom="onNavigatedFrom"
     androidOverflowEdge="dont-apply"
     @androidOverflowInset="onAndroidInset"
   >
-    <GridLayout rows="auto, *" class="page-root">
-      <CustomActionBar
-        row="0"
-        :title="title"
-        :search="search"
-        :searchText="searchText"
-        :searchHint="searchHint"
-        :style="actionBarStyle"
-        @update:searchText="$emit('update:searchText', $event)"
-      >
-        <slot name="headerRight"></slot>
-      </CustomActionBar>
+    <!-- iOS gets its search field from attachIosSearchController -->
+    <ActionBar
+      v-if="!isAndroid"
+      :title="title"
+      flat="true"
+      color="#ffffff"
+      backgroundColor="#0a2329"
+    >
+      <ActionItem
+        v-for="action in actions"
+        :key="action.id"
+        ios:ios.position="right"
+        :text="action.text"
+        @tap="$emit('action', action.id)"
+      />
+    </ActionBar>
 
-      <!-- Content -->
+    <GridLayout rows="auto, *" class="settings-container">
+      <MaterialTopAppBar
+        v-if="isAndroid"
+        row="0"
+        :search="search"
+        :title="title"
+        :hint="searchHint"
+        :actions="actions"
+        :navigationText="$L('nav.back')"
+        @loaded="onTopAppBarLoaded"
+        @navigationTap="goBack"
+        @actionTap="$emit('action', actions[$event.index].id)"
+      />
+
       <component
         row="1"
         :is="useScroll === 'true' ? 'ScrollView' : 'StackLayout'"
         :orientation="useScroll === 'true' ? 'vertical' : undefined"
-        class="settings-container"
       >
         <!-- iOS safe-area expansion stretches scroll content that ends near the bottom -->
         <StackLayout :style="contentInsetStyle" :iosOverflowSafeAreaEnabled="useScroll !== 'true'">
           <slot :bottomPadding="contentBottomPadding"></slot>
         </StackLayout>
       </component>
+
+      <MaterialSearchView
+        v-if="isAndroid && search"
+        row="0"
+        rowSpan="2"
+        :hint="searchHint"
+        @loaded="onSearchViewLoaded"
+        @textChange="$emit('update:searchText', $event.value)"
+        @stateChange="onSearchStateChange"
+      >
+        <StackLayout :style="contentInsetStyle">
+          <slot name="searchResults" :bottomPadding="contentBottomPadding"></slot>
+        </StackLayout>
+      </MaterialSearchView>
     </GridLayout>
   </Page>
 </template>
 
 <script>
 import { isAndroid } from '@nativescript/core';
-import { markRaw } from 'vue';
 import { attachBackHandler, detachBackHandler, goBack } from '@/utils/platform/navigation';
 import {
   parseAndroidInsets,
   getStatusBarHeight,
   getNavigationBarHeight,
+  attachIosSearchController,
+  styleIosNavigationBar,
 } from '@/utils/platform/ui';
-import CustomActionBar from './components/CustomActionBar';
 
 export default {
   name: 'SettingsBase',
-
-  components: {
-    CustomActionBar: markRaw(CustomActionBar),
-  },
 
   props: {
     title: {
@@ -78,12 +106,19 @@ export default {
       type: String,
       default: 'Search...',
     },
+    // [{ id, text }]: text buttons at the trailing end of the bar
+    actions: {
+      type: Array,
+      default: () => [],
+    },
   },
 
-  emits: ['navigatedTo', 'navigatedFrom', 'update:searchText'],
+  // searchActiveChange: iOS only, Android shows the results in its own search view
+  emits: ['navigatedTo', 'navigatedFrom', 'update:searchText', 'searchActiveChange', 'action'],
 
   data() {
     return {
+      isAndroid,
       statusBarInset: 0,
       navBarInset: 0,
       leftInset: 0,
@@ -94,14 +129,6 @@ export default {
   computed: {
     contentBottomPadding() {
       return 24 + this.navBarInset; // $spacing-l + nav bar
-    },
-
-    actionBarStyle() {
-      return {
-        paddingTop: this.statusBarInset,
-        paddingLeft: this.leftInset,
-        paddingRight: this.rightInset,
-      };
     },
 
     contentInsetStyle() {
@@ -118,6 +145,59 @@ export default {
   },
 
   methods: {
+    goBack,
+
+    onBack() {
+      if (this.searchView?.isShowing) {
+        this.searchView.hide();
+      } else {
+        goBack();
+      }
+    },
+
+    onPageLoaded({ object: page }) {
+      styleIosNavigationBar(page);
+    },
+
+    onNavigatingTo({ object: page }) {
+      if (this.search && !this.iosSearch) {
+        this.iosSearch = attachIosSearchController(page, {
+          hint: this.searchHint,
+          text: this.searchText,
+          onTextChange: text => {
+            if (text !== this.searchText) this.$emit('update:searchText', text);
+          },
+          onActiveChange: active => this.$emit('searchActiveChange', active),
+        });
+      }
+    },
+
+    onTopAppBarLoaded({ object }) {
+      this.topAppBar = object;
+      this.updateTopAppBarInsets();
+      this.searchView?.setupWithSearchBar(object);
+    },
+
+    onSearchViewLoaded({ object }) {
+      this.searchView = object;
+      this.updateTopAppBarInsets();
+      if (this.topAppBar) object.setupWithSearchBar(this.topAppBar);
+    },
+
+    // The query only lives while the search is open
+    onSearchStateChange({ state }) {
+      if (state === 'HIDDEN') {
+        this.searchView.clearText();
+        this.topAppBar?.bar?.clearText();
+      }
+    },
+
+    updateTopAppBarInsets() {
+      const insets = { top: this.statusBarInset, left: this.leftInset, right: this.rightInset };
+      this.topAppBar?.setInsets(insets);
+      this.searchView?.setInsets(insets);
+    },
+
     onAndroidInset(args) {
       if (!isAndroid || !args?.inset) return;
       const insets = parseAndroidInsets(args.inset);
@@ -126,6 +206,7 @@ export default {
       this.navBarInset = insets.bottom;
       this.leftInset = insets.left;
       this.rightInset = insets.right;
+      this.updateTopAppBarInsets();
 
       args.inset.topConsumed = true;
       args.inset.bottomConsumed = true;
@@ -135,7 +216,7 @@ export default {
     },
 
     onNavigatedTo(event) {
-      attachBackHandler(goBack);
+      attachBackHandler(this.onBack);
       this.$emit('navigatedTo', event);
     },
 
@@ -161,10 +242,6 @@ export default {
 
 <style scoped lang="scss">
 @import '@/app';
-
-.page-root {
-  background-color: $surface;
-}
 
 .settings-container {
   background-color: $surface;

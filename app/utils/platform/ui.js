@@ -1,6 +1,9 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { Application, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
+import { Application, Color, Frame, Utils, isAndroid, isIOS } from '@nativescript/core';
+
+// $accent in app.scss
+const ACCENT_COLOR = '#26a69a';
 
 /**
  * Get status bar height in DIP (Android only, fallback for when insets not yet dispatched)
@@ -55,6 +58,107 @@ export const setStatusBarForMapTheme = isDark => {
     page.statusBarStyle = isDark ? 'light' : 'dark';
     // Setting the property doesn't invalidate the status bar appearance; force it.
     page.updateStatusBar?.();
+  }
+};
+
+let SearchResultsUpdater;
+
+/**
+ * Attach a native UISearchController to a page's navigation item (iOS only).
+ * The caller must keep the returned object: the controller holds the updater weakly.
+ * @param {object} page - NativeScript Page
+ * @param {{ hint: string, text: string, onTextChange: (text: string) => void,
+ *   onActiveChange: (active: boolean) => void }} options
+ * @returns {{ controller: UISearchController, updater: NSObject } | null}
+ */
+export const attachIosSearchController = (page, { hint, text, onTextChange, onActiveChange }) => {
+  if (!isIOS || !page?.ios) return null;
+
+  if (!SearchResultsUpdater) {
+    SearchResultsUpdater = NSObject.extend(
+      {
+        updateSearchResultsForSearchController(controller) {
+          const text = controller.searchBar.text || '';
+          // The dismissal clears the text; that waits for didDismissSearchController
+          if (this.dismissing) return;
+          this.onTextChange?.(text);
+        },
+        willPresentSearchController() {
+          this.onActiveChange?.(true);
+        },
+        willDismissSearchController() {
+          this.dismissing = true;
+        },
+        // The page goes back to its full list once the search is gone, not under its animation
+        didDismissSearchController(controller) {
+          this.dismissing = false;
+          this.onTextChange?.(controller.searchBar.text || '');
+          this.onActiveChange?.(false);
+        },
+      },
+      { protocols: [UISearchResultsUpdating, UISearchControllerDelegate] }
+    );
+  }
+
+  const updater = SearchResultsUpdater.new();
+  updater.onTextChange = onTextChange;
+  updater.onActiveChange = onActiveChange;
+
+  const controller = UISearchController.alloc().initWithSearchResultsController(null);
+  controller.searchResultsUpdater = updater;
+  controller.delegate = updater;
+  controller.obscuresBackgroundDuringPresentation = false;
+  controller.searchBar.placeholder = hint;
+  controller.searchBar.text = text;
+  controller.searchBar.overrideUserInterfaceStyle = UIUserInterfaceStyle.Dark;
+  controller.searchBar.autocapitalizationType = UITextAutocapitalizationType.None;
+  controller.searchBar.autocorrectionType = UITextAutocorrectionType.No;
+  // Cancel and the cursor, matching the bar's actions (iOS 26 has a glass close button instead)
+  if (Utils.SDK_VERSION < 26) {
+    controller.searchBar.tintColor = new Color(ACCENT_COLOR).ios;
+  }
+
+  const navigationItem = page.ios.navigationItem;
+  navigationItem.searchController = controller;
+  navigationItem.hidesSearchBarWhenScrolling = false;
+  // Automatic placement on iOS 26 moves the field from under the title to the toolbar after the
+  // push, the taller bar covering the page meanwhile; a button in the bar doesn't jump
+  if (Utils.SDK_VERSION >= 26) {
+    navigationItem.preferredSearchBarPlacement =
+      UINavigationItemSearchBarPlacement.IntegratedButton;
+    navigationItem.searchBarPlacementAllowsToolbarIntegration = false;
+  }
+  page.ios.definesPresentationContext = true;
+
+  return { controller, updater };
+};
+
+/**
+ * Style the navigation bar of a settings page (iOS only). The bar stays dark: the app is always
+ * dark, while the bar would otherwise follow the system light mode.
+ * @param {object} page - NativeScript Page
+ */
+export const styleIosNavigationBar = page => {
+  const navBar = page?.frame?.ios?.controller?.navigationBar;
+  if (!navBar) return;
+  navBar.overrideUserInterfaceStyle = UIUserInterfaceStyle.Dark;
+
+  // Before iOS 26 the actions are bare text in the title's color; the accent sets them apart, as
+  // on Android. The back button keeps the color of its chevron, which follows the bar's tint.
+  // ActionBar resets that tint on every update but keeps the appearance.
+  if (Utils.SDK_VERSION < 26) {
+    const textColor = color =>
+      NSDictionary.dictionaryWithObjectForKey(new Color(color).ios, NSForegroundColorAttributeName);
+    const buttons = UIBarButtonItemAppearance.alloc().initWithStyle(UIBarButtonItemStyle.Plain);
+    buttons.normal.titleTextAttributes = textColor(ACCENT_COLOR);
+    const back = UIBarButtonItemAppearance.alloc().initWithStyle(UIBarButtonItemStyle.Plain);
+    back.normal.titleTextAttributes = textColor('#ffffff');
+    const appearance = navBar.standardAppearance;
+    appearance.buttonAppearance = buttons;
+    appearance.backButtonAppearance = back;
+    navBar.standardAppearance = appearance;
+    navBar.compactAppearance = appearance;
+    navBar.scrollEdgeAppearance = appearance;
   }
 };
 

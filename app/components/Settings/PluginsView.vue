@@ -2,20 +2,21 @@
 
 <template>
   <SettingsBase
+    :title="$L('settings.plugins.title')"
     search
     v-model:searchText="searchQuery"
     :searchHint="$L('plugins.search_hint')"
     use-scroll="false"
+    :actions="headerActions"
+    @action="openAddPlugin"
+    @searchActiveChange="searchActive = $event"
     @navigatedTo="onNavigatedTo"
   >
-    <template #headerRight>
-      <Label :text="$L('plugins.add_plugin')" @tap="openAddPlugin" class="header-action" />
-    </template>
-
     <template #default="{ bottomPadding }">
       <GridLayout rows="auto, auto, *" class="main-container">
         <!-- Categories list component -->
         <CategoriesList
+          v-show="!searching"
           row="0"
           :categories="categoriesWithPlugins"
           :activeCategory="activeCategory"
@@ -28,22 +29,43 @@
         <!-- Plugins container -->
         <GridLayout row="2" class="plugins-container" v-if="isPluginsVisible">
           <PluginsList
-            v-if="filteredPlugins.length > 0 || iitcCore"
-            :plugins="filteredPlugins"
+            v-if="listPlugins.length > 0 || iitcCore"
+            :plugins="listPlugins"
             :iitcCore="iitcCore"
-            :showEnabledFirst="activeCategory === 'All'"
+            :showEnabledFirst="activeCategory === 'All' && !searching"
+            :underNavigationBar="searching"
             :bottomPadding="bottomPadding"
             @info="showPluginInfo"
             @toggle="togglePlugin"
             @delete="deletePlugin"
           />
           <Label
-            v-if="filteredPlugins.length === 0 && !iitcCore"
+            v-if="listPlugins.length === 0 && !iitcCore"
             :text="getEmptyMessage()"
             class="no-plugins"
-            once="true"
           />
         </GridLayout>
+      </GridLayout>
+    </template>
+
+    <!-- Android: shown in the search view, across all categories -->
+    <template #searchResults="{ bottomPadding }">
+      <GridLayout rows="*">
+        <PluginsList
+          v-if="searchResults.length > 0"
+          :plugins="searchResults"
+          :topPadding="16"
+          :bottomPadding="bottomPadding"
+          @info="showPluginInfo"
+          @toggle="togglePlugin"
+          @delete="deletePlugin"
+        />
+        <Label
+          v-else-if="searchQuery.trim()"
+          :text="$L('plugins.no_plugins')"
+          class="no-plugins"
+          verticalAlignment="top"
+        />
       </GridLayout>
     </template>
   </SettingsBase>
@@ -83,6 +105,8 @@ export default {
   data() {
     return {
       searchQuery: '',
+      // iOS: the search shows its results in the page list itself
+      searchActive: false,
       activeCategory: 'All',
       isPluginsVisible: false,
     };
@@ -95,8 +119,27 @@ export default {
       return this.plugins;
     },
 
+    headerActions() {
+      return [{ id: 'add', text: this.$L('plugins.add_plugin') }];
+    },
+
+    searchResults() {
+      if (!this.hasData || !this.searchQuery.trim()) return [];
+      return this.searchPlugins(this.searchQuery, Object.values(this.allPlugins));
+    },
+
+    // iOS: the page stays as it is until the first letter, so opening the search animates
+    // without rebuilding the list; the results then come from all categories
+    searching() {
+      return this.searchActive && !!this.searchQuery.trim();
+    },
+
+    listPlugins() {
+      return this.searching ? this.searchResults : this.filteredPlugins;
+    },
+
     iitcCore() {
-      if (this.activeCategory !== 'All' || this.searchQuery.trim()) return null;
+      if (this.activeCategory !== 'All' || this.searching) return null;
       return this.core || null;
     },
 
@@ -112,14 +155,8 @@ export default {
 
       let plugins = Object.values(this.allPlugins);
 
-      // Step 1: Filter by category (only for non-All categories)
       if (this.activeCategory !== 'All') {
         plugins = plugins.filter(p => p.category === this.activeCategory);
-      }
-
-      // Step 2: Filter by search query if present
-      if (this.searchQuery.trim()) {
-        plugins = this.searchPlugins(this.searchQuery, plugins);
       }
 
       return plugins;
@@ -275,7 +312,7 @@ export default {
     },
 
     getEmptyMessage() {
-      if (this.activeCategory === 'All') {
+      if (this.activeCategory === 'All' || this.searching) {
         return this.$L('plugins.no_plugins');
       }
       return this.$L('plugins.no_plugins_in_category', this.activeCategory);
