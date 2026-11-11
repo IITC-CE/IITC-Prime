@@ -58,19 +58,14 @@
       />
     </StackLayout>
 
-    <MDRipple
+    <AppButton
       ref="scrollBottomBtn"
       v-show="!isAtBottom"
-      class="fab scroll-bottom-button"
+      icon
+      class="ms fab scroll-bottom-button"
+      :text="$filters.fonticon('ms-arrow-downward')"
       @tap="scrollToBottom"
-    >
-      <Label
-        class="ms"
-        :text="$filters.fonticon('ms-arrow-downward')"
-        horizontalAlignment="center"
-        verticalAlignment="center"
-      />
-    </MDRipple>
+    />
   </GridLayout>
 </template>
 
@@ -79,6 +74,7 @@ import { mapState, mapActions } from 'vuex';
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
+import AppButton from '@/components/base/AppButton.vue';
 import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
@@ -89,6 +85,7 @@ const PANEL_CURVE = [0.2, 0.5, 0.7, 1.0];
 export default {
   components: {
     ControlsPanel,
+    AppButton,
   },
 
   mixins: [logFormattingMixin],
@@ -196,7 +193,11 @@ export default {
       if (isAndroid) {
         const targetY = newValue ? -(this.keyboardPaddingBottom - this.navBarPadding) : 0;
         this._animateAndroidTranslateY(this.$refs.controlsWrapper?.nativeView, targetY, newValue);
-        this._animateAndroidTranslateY(this.$refs.scrollBottomBtn?.nativeView, targetY, newValue);
+        this._animateAndroidTranslateY(
+          this.$refs.scrollBottomBtn?.$el?.nativeView,
+          targetY,
+          newValue
+        );
       }
     },
 
@@ -365,7 +366,7 @@ export default {
           const translateY = -this.keyboardPaddingBottom;
           const wrapper = this.$refs.controlsWrapper?.nativeView;
           if (wrapper) wrapper.translateY = translateY;
-          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          const fab = this.$refs.scrollBottomBtn?.$el?.nativeView;
           if (fab) fab.translateY = translateY;
         });
       }
@@ -383,7 +384,7 @@ export default {
           const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
           const translateY = -Math.max(0, height - safeAreaBottom);
           const wrapper = this.$refs.controlsWrapper?.nativeView;
-          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          const fab = this.$refs.scrollBottomBtn?.$el?.nativeView;
 
           // Translate via NativeScript's translateY property (animate()), not a raw layer
           // transform: NS preserves the property across relayouts, so a multi-line paste

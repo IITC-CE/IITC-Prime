@@ -4,7 +4,7 @@
   <MDButton
     v-if="isAndroid"
     :text="text"
-    :variant="variant === 'plain' ? 'flat' : undefined"
+    :variant="variant === 'plain' || icon ? 'flat' : undefined"
     :class="androidClass"
   />
   <SystemButton v-else :text="text" :variant="variant" :destructive="destructive" :icon="icon" />
@@ -24,7 +24,8 @@ export default {
     text: { type: String, default: '' },
     variant: { type: String, default: 'tinted' },
     destructive: { type: Boolean, default: false },
-    // The text is a glyph in the CSS font, centered in the CSS size
+    // The text is a glyph in the CSS font, centered in the CSS size.
+    // On Android the CSS draws the button: variant and destructive apply on iOS only
     icon: { type: Boolean, default: false },
   },
 
@@ -34,6 +35,7 @@ export default {
 
   computed: {
     androidClass() {
+      if (this.icon) return null;
       if (this.destructive) return 'btn-destructive';
       return { filled: 'btn-filled', tinted: 'btn-primary' }[this.variant];
     },

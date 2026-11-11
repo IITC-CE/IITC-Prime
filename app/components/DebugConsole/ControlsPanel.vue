@@ -4,18 +4,35 @@
   <StackLayout class="controls-container">
     <!-- Controls panel -->
     <GridLayout row="0" class="controls-panel" columns="auto, *, auto, auto, auto">
-      <MDRipple col="0" class="control-button" @tap="handleClose">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-back')" />
-      </MDRipple>
-      <MDRipple col="2" class="control-button trash" @tap="$emit('clear')">
-        <Label class="ms" :text="$filters.fonticon('ms-delete')" />
-      </MDRipple>
-      <MDRipple col="3" class="control-button" @tap="navigateHistoryUp">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-upward')" />
-      </MDRipple>
-      <MDRipple col="4" class="control-button" @tap="navigateHistoryDown">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-downward')" />
-      </MDRipple>
+      <AppButton
+        col="0"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-back')"
+        @tap="handleClose"
+      />
+      <AppButton
+        col="2"
+        icon
+        destructive
+        class="ms control-button trash"
+        :text="$filters.fonticon('ms-delete')"
+        @tap="$emit('clear')"
+      />
+      <AppButton
+        col="3"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-upward')"
+        @tap="navigateHistoryUp"
+      />
+      <AppButton
+        col="4"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-downward')"
+        @tap="navigateHistoryDown"
+      />
     </GridLayout>
 
     <!-- Command input -->
@@ -31,17 +48,25 @@
         autocorrect="false"
         maxLines="10"
       />
-      <MDRipple col="1" class="btn-primary send-button" @tap="executeCommand">
-        <Label class="ms" :text="$filters.fonticon('ms-send')" />
-      </MDRipple>
+      <AppButton
+        col="1"
+        variant="filled"
+        icon
+        class="ms send-button"
+        :text="$filters.fonticon('ms-send')"
+        @tap="executeCommand"
+      />
     </GridLayout>
   </StackLayout>
 </template>
 
 <script>
 import { fixTextInputColors } from '@/utils/platform/ui';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
+  components: { AppButton },
+
   props: {
     command: {
       type: String,
@@ -135,21 +160,24 @@ export default {
 }
 
 .control-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4;
   margin: 0 $spacing-xs;
-  padding: 0;
   height: 40;
-  min-width: 40;
   width: 40;
-  text-align: center;
   vertical-align: center;
-  ripple-color: $ripple;
 }
 
 .control-button.trash {
   margin-right: $spacing-l;
+}
+
+.ns-android .control-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: $radius-small;
+  ripple-color: $ripple;
+}
+
+.ns-android .control-button.trash {
   ripple-color: rgba(255, 0, 0, 0.3);
 }
 
@@ -166,13 +194,16 @@ export default {
 }
 
 .send-button {
-  background-color: $accent;
-  color: white;
-  margin-left: $spacing-s;
+  margin: $spacing-xs 0 $spacing-xs $spacing-s;
   height: 40;
   width: 50;
-  padding: 0;
   vertical-align: center;
-  text-align: center;
+}
+
+.ns-android .send-button {
+  background-color: $accent;
+  color: white;
+  border-radius: $radius-small;
+  ripple-color: $ripple;
 }
 </style>

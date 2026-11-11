@@ -48,8 +48,7 @@ export class SystemButton extends Button {
     const button = this.nativeViewProtected;
     if (!button) return;
     const { variant, destructive, icon } = this;
-    // System buttons are Liquid Glass since iOS 26
-    const liquidGlass = Utils.SDK_VERSION >= 26;
+    const liquidGlass = Utils.supportsGlass();
     const Config = UIButtonConfiguration;
     let config;
     if (variant === 'plain') config = Config.plainButtonConfiguration();
@@ -71,6 +70,9 @@ export class SystemButton extends Button {
       );
       config.background = background;
       config.cornerStyle = UIButtonConfigurationCornerStyle.Fixed;
+    } else if (icon) {
+      // A capsule, as system icon buttons are
+      config.cornerStyle = UIButtonConfigurationCornerStyle.Capsule;
     }
 
     if (icon && fontInternal) {

@@ -149,16 +149,12 @@ MDButton {
   height: 50;
   vertical-align: bottom;
   border-radius: $radius-full;
-  background-color: rgba(255, 255, 255, 0.1);
-  ripple-color: $ripple;
+}
 
-  .ms {
-    color: white;
-    horizontal-align: center;
-    vertical-align: center;
-    margin-top: -50;
-    height: 50;
-  }
+.ns-android .fab {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  ripple-color: $ripple;
 }
 
 .btn-text {
