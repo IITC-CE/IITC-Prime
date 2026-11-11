@@ -2,10 +2,11 @@
 
 <template>
   <GridLayout rows="*, auto" class="debug-console">
-    <!-- Logs list -->
+    <!-- Logs list. With Liquid Glass it runs under the controls, as under system toolbars -->
     <CollectionView
       ref="logsList"
       row="0"
+      :rowSpan="liquidGlass ? 2 : 1"
       class="logs-list"
       :items="displayLogs"
       :style="{ paddingTop: topInset }"
@@ -45,7 +46,10 @@
       row="1"
       :paddingBottom="navBarPadding"
       class="controls-wrapper"
+      :class="{ 'controls-wrapper--liquid-glass': liquidGlass }"
       ios:clipToBounds="false"
+      @loaded="onControlsLoaded"
+      @layoutChanged="updateListInsets"
     >
       <ControlsPanel
         v-model:command="command"
@@ -55,6 +59,7 @@
         @command-executed="onCommandExecuted"
         @history-navigate="handleHistoryNavigation"
         @close="closeDebugConsole"
+        @input-focus="scrollToBottom"
         ref="controlsPanel"
       />
     </StackLayout>
@@ -76,7 +81,7 @@ import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
 import AppButton from '@/components/base/AppButton.vue';
-import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
+import { isAndroid, isIOS, Application, CoreTypes, Utils } from '@nativescript/core';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
 
 // Cubic-bezier [x1, y1, x2, y2] approximating the keyboard's (non-public) easing for the
@@ -113,8 +118,10 @@ export default {
       isUserScrolling: false,
       logsVisible: false, // Controls whether logs should be shown or not
       localKeyboardHeight: 0,
+      liquidGlass: Utils.supportsGlass(),
 
       _collectionView: null,
+      _edgeContainers: null,
       _keyboardObserver: null,
     };
   },
@@ -180,6 +187,11 @@ export default {
       }
     },
 
+    // Editing the command returns to the latest logs
+    command() {
+      if (!this.isAtBottom) this.scrollToBottom();
+    },
+
     displayLogs() {
       if (this.isVisible && this.isAtBottom && !this.isUserScrolling) {
         this.scrollToBottom();
@@ -214,11 +226,7 @@ export default {
 
       if (!isIOS) return;
       const nativeView = this._collectionView.ios;
-
-      // Re-apply topInset here too, or opening the keyboard would reset it to 0
-      const insets = UIEdgeInsetsMake(this.topInset, 0, newVal, 0);
-      nativeView.contentInset = insets;
-      nativeView.scrollIndicatorInsets = insets;
+      this.updateListInsets();
 
       // Offset shift when opening
       if (newVal > oldVal && oldVal === 0 && !this.isAtBottom) {
@@ -230,7 +238,9 @@ export default {
       if (newVal === 0 && oldVal > 0) {
         const maxOffset = Math.max(
           0,
-          nativeView.contentSize.height - nativeView.bounds.size.height
+          nativeView.contentSize.height +
+            nativeView.contentInset.bottom -
+            nativeView.bounds.size.height
         );
         const current = nativeView.contentOffset;
         if (current.y > maxOffset) {
@@ -338,10 +348,34 @@ export default {
         const nativeView = this._collectionView.ios;
         nativeView.keyboardDismissMode = 1;
         nativeView.automaticallyAdjustsContentInsets = false;
-        // CollectionView maps paddingTop -> contentInset.top; disable UIKit auto-adding
-        // safe-area inset on top of our manual paddingTop to avoid double-counting
+        // CollectionView turns paddingTop into a section inset; keep UIKit from adding the
+        // safe area on top of it
         nativeView.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
       }
+    },
+
+    updateListInsets() {
+      const nativeView = this._collectionView?.ios;
+      if (!nativeView) return;
+      let bottom = this.keyboardPaddingBottom;
+      if (this.liquidGlass) {
+        // The list reaches the screen bottom, under the controls and the home indicator
+        const controls = this.$refs.controlsWrapper?.nativeView;
+        bottom +=
+          (controls?.getActualSize()?.height ?? 0) + this.$store.state.ui.screenSafeArea.bottom;
+      }
+      // No top content inset: paddingTop is already a section inset
+      nativeView.contentInset = UIEdgeInsetsMake(0, 0, bottom, 0);
+      nativeView.scrollIndicatorInsets = UIEdgeInsetsMake(this.topInset, 0, bottom, 0);
+    },
+
+    // UIKit's edge effect fades the logs under the controls; core's helper registers them
+    // again whenever they reload
+    onControlsLoaded(args) {
+      if (!this.liquidGlass || this._edgeContainers || !this._collectionView) return;
+      const { ScrollEdgeContainers } = require('@nativescript/core/ui/core/view/view-helper');
+      this._edgeContainers = new ScrollEdgeContainers(this._collectionView);
+      this._edgeContainers.add(args.object, 'bottom');
     },
 
     // Purely decorative overlay: must not intercept touches meant for the list below.
@@ -504,6 +538,10 @@ export default {
 
 .controls-wrapper {
   background-color: $surface;
+}
+
+.controls-wrapper--liquid-glass {
+  background-color: transparent;
 }
 
 .scroll-bottom-button {

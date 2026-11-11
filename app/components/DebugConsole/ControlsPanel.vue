@@ -50,6 +50,7 @@
         class="text-input command-input"
         v-model="commandText"
         @returnPress="executeCommand"
+        @focus="$emit('input-focus')"
         @loaded="fixTextInputColors"
         :hint="$L('debug.command_hint')"
         autocorrect="false"
@@ -161,7 +162,6 @@ export default {
 }
 
 .controls-panel {
-  background-color: $surface;
   padding: $spacing-s $spacing-m;
   margin: 0 -4;
 }
@@ -189,7 +189,6 @@ export default {
 }
 
 .command-input-container {
-  background-color: $surface;
   padding: $spacing-s $spacing-m $spacing-s $spacing-m;
 }
 
