@@ -3,21 +3,29 @@
 <template>
   <GridLayout
     class="list-item list-item--big"
-    :class="{ 'list-item--first': isFirst, 'list-item--last': isLast, 'list-item--spaced': spaced }"
+    :class="{
+      'list-item--first': isFirst,
+      'list-item--last': isLast,
+      'list-item--spaced': spaced,
+      'list-item--two-line': description,
+    }"
     columns="*, auto"
-    rows="auto"
+    rows="*"
+    v-on="type === 'switch' ? {} : rowHighlight"
     @tap="onTap"
   >
-    <StackLayout class="stack" col="0" verticalAlignment="center">
+    <ContentView class="list-item-spacer" colSpan="2" />
+
+    <StackLayout class="list-item-text" col="0" verticalAlignment="center">
       <Label
         :text="title"
-        :class="['settings-item-title', { 'settings-item-title--bold': bold }]"
+        :class="['list-item-title settings-item-title', { 'settings-item-title--bold': bold }]"
         once="true"
       />
       <Label
         v-if="description"
         :text="description"
-        class="settings-item-description"
+        class="list-item-subtitle settings-item-description"
         textWrap="true"
         once="true"
       />
@@ -44,13 +52,16 @@
       <!-- Switch toggle -->
       <AppSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
     </StackLayout>
+
+    <ContentView v-if="isIOS && !isLast" colSpan="2" class="list-separator" />
   </GridLayout>
 </template>
 
 <script>
 import { $navigateTo } from 'nativescript-vue';
-import { Utils } from '@nativescript/core';
+import { Utils, isIOS } from '@nativescript/core';
 import AppSwitch from '@/components/base/AppSwitch.vue';
+import { rowHighlight } from '@/utils/platform/ui';
 
 export default {
   name: 'SettingsItem',
@@ -117,6 +128,10 @@ export default {
     },
   },
 
+  data() {
+    return { isIOS, rowHighlight };
+  },
+
   methods: {
     onTap() {
       if (this.type === 'nav' && this.targetScreen) {
@@ -147,13 +162,7 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.stack {
-  height: $spacing-item-big;
-}
-
 .settings-item-title {
-  color: $on-surface;
-  font-size: $font-size;
   font-weight: 500;
 }
 
@@ -166,8 +175,6 @@ export default {
 }
 
 .settings-item-description {
-  color: $on-surface-variant;
-  font-size: $font-size-small;
   margin-top: 4;
 }
 

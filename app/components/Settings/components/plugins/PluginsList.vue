@@ -13,7 +13,12 @@
   >
     <!-- Template for section headers -->
     <template #section-header="{ item }">
-      <Label :text="item.title" class="section-header" once="true" />
+      <Label
+        :text="item.title"
+        class="section-header"
+        :class="{ 'section-header--first': item.isFirst }"
+        once="true"
+      />
     </template>
 
     <!-- Template for plugin items with SVG icons -->
@@ -29,7 +34,8 @@
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
           columns="auto, *, auto"
-          rows="82"
+          :rows="String(rowHeight)"
+          :height="rowHeight"
           width="100%"
         >
           <!-- SVG Plugin icon with badge -->
@@ -43,8 +49,12 @@
           </GridLayout>
           <!-- Plugin info -->
           <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
-            <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+            <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
+            <Label
+              :text="getPluginDescription(item)"
+              class="list-item-subtitle plugin-description"
+              once="true"
+            />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
           <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
@@ -55,6 +65,13 @@
               isUserInteractionEnabled="false"
             />
           </GridLayout>
+          <ContentView
+            v-if="isIOS"
+            col="1"
+            colSpan="2"
+            class="list-separator"
+            :visibility="item.isLast ? 'collapse' : 'visible'"
+          />
         </GridLayout>
         <Label
           ~rightDrawer
@@ -65,6 +82,8 @@
           "
           :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
           class="ms"
+          :width="rowHeight"
+          :height="rowHeight"
           @tap="onSwipeAction(item)"
         />
       </SwipeMenu>
@@ -83,7 +102,8 @@
           class="list-item plugin-item"
           :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
           columns="auto, *, auto"
-          rows="82"
+          :rows="String(rowHeight)"
+          :height="rowHeight"
           width="100%"
         >
           <!-- Raster Plugin icon with badge -->
@@ -97,8 +117,12 @@
           </GridLayout>
           <!-- Plugin info -->
           <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
-            <Label :text="getPluginName(item)" class="plugin-name" once="true" />
-            <Label :text="getPluginDescription(item)" class="plugin-description" once="true" />
+            <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
+            <Label
+              :text="getPluginDescription(item)"
+              class="list-item-subtitle plugin-description"
+              once="true"
+            />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
           <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
@@ -109,6 +133,13 @@
               isUserInteractionEnabled="false"
             />
           </GridLayout>
+          <ContentView
+            v-if="isIOS"
+            col="1"
+            colSpan="2"
+            class="list-separator"
+            :visibility="item.isLast ? 'collapse' : 'visible'"
+          />
         </GridLayout>
         <Label
           ~rightDrawer
@@ -119,6 +150,8 @@
           "
           :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
           class="ms"
+          :width="rowHeight"
+          :height="rowHeight"
           @tap="onSwipeAction(item)"
         />
       </SwipeMenu>
@@ -132,6 +165,12 @@ import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { enableListEdgeToEdge } from '@/utils/platform/ui';
+
+// A two-line row as the platform draws it: Material 3 and iOS 26 give 72, earlier iOS 60
+const ROW_HEIGHT = isIOS && Utils.SDK_VERSION < 26 ? 60 : 72;
+// Match .section-header and .section-header--first
+const HEADER_HEIGHT = 56;
+const FIRST_HEADER_HEIGHT = 40;
 
 export default {
   name: 'PluginsList',
@@ -179,6 +218,10 @@ export default {
     },
   },
 
+  data() {
+    return { isIOS, rowHeight: ROW_HEIGHT };
+  },
+
   computed: {
     // Combine all data into single array with different item types
     combinedItems() {
@@ -195,6 +238,7 @@ export default {
           items.push({
             type: 'section-header',
             title: 'Enabled',
+            isFirst: true,
           });
 
           // Core is always first in the Enabled section
@@ -225,6 +269,7 @@ export default {
         items.push({
           type: 'section-header',
           title: 'All plugins',
+          isFirst: items.length === 0,
         });
       }
 
@@ -327,9 +372,9 @@ export default {
 
       if (isIOS) {
         // Without a known height the iOS list lays out every row up front to measure it,
-        // which stalls the page for a full list. Plugin rows are 82 high, as in the templates.
-        args.object.setTemplateRowHeight('plugin-svg', 82);
-        args.object.setTemplateRowHeight('plugin-raster', 82);
+        // which stalls the page for a full list.
+        args.object.setTemplateRowHeight('plugin-svg', ROW_HEIGHT);
+        args.object.setTemplateRowHeight('plugin-raster', ROW_HEIGHT);
         this.updateIosContentInset();
         args.object.ios.keyboardDismissMode = 1; // UIScrollViewKeyboardDismissModeOnDrag
       }
@@ -365,17 +410,17 @@ export default {
       const itemsDelta = enabledAfter - enabledBefore;
       if (itemsDelta === 0 || !this.collectionViewRef) return;
 
-      // item height matches .plugin-item { height: 82 }
-      // header height matches .section-header { padding: 12 + 8; font-size: 14 } = 38dp
-      const ITEM_H = 82;
-      const HEADER_H = 38;
+      const ITEM_H = ROW_HEIGHT;
+      const HEADER_H = HEADER_HEIGHT;
 
+      // A new first header pushes down a header that grows to full height: a full header in all
       let heightDelta = itemsDelta * ITEM_H;
       if (enabledBefore === 0 && itemsDelta > 0) heightDelta += HEADER_H;
       if (enabledAfter === 0 && itemsDelta < 0) heightDelta -= HEADER_H;
 
       // only compensate when the Enabled section items are fully above the viewport
-      const enabledSectionEndY = enabledBefore > 0 ? HEADER_H + enabledBefore * ITEM_H : 0;
+      const enabledSectionEndY =
+        enabledBefore > 0 ? FIRST_HEADER_HEIGHT + enabledBefore * ITEM_H : 0;
       if (scrollBefore <= enabledSectionEndY) return;
 
       if (isIOS) {
@@ -403,8 +448,23 @@ export default {
   width: 100%;
 }
 
+// Right below the categories, which have padding of their own: 16 less from the top than
+// .section-header
+.section-header.section-header--first {
+  height: 40;
+  padding-top: 12;
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .section-header.section-header--first {
+    padding-top: 18;
+  }
+}
+
 .plugin-item {
-  height: 82;
   padding: 0 $spacing-m;
   vertical-align: center;
 }
@@ -412,7 +472,7 @@ export default {
 .plugin-icon-wrapper {
   width: 34;
   height: 34;
-  margin-right: 10;
+  margin-right: $spacing-m;
   vertical-align: center;
 }
 
@@ -441,24 +501,15 @@ export default {
 
 .plugin-info {
   vertical-align: center;
-  margin-right: $spacing-xxs;
+  margin-right: $spacing-m;
 }
 
 .plugin-name {
-  color: $on-surface;
-  font-size: $font-size;
   font-weight: 500;
 }
 
 .plugin-description {
-  color: $on-surface-variant;
-  font-size: $font-size-small;
   margin-top: $spacing-xxs;
-  height: 20;
-}
-
-.switch-area {
-  height: 82;
 }
 
 .switch {
@@ -467,8 +518,6 @@ export default {
 }
 
 .swipe-drawer {
-  width: 82;
-  height: 82;
   color: #ffffff;
   font-size: $icon-size-large;
   text-align: center;

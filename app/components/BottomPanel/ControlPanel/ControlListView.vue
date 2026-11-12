@@ -8,6 +8,7 @@
     :itemTemplateSelector="templateSelector"
     separatorColor="#00000000"
     iosEstimatedRowHeight="44"
+    @loaded="hideListSeparators"
     @itemLoading="disableListItemHighlight"
   >
     <template #default="{ item }">
@@ -21,6 +22,7 @@
           :key="button.id"
           :col="index * 2"
           class="btn-quick"
+          v-on="rowHighlight"
           @tap="onActionButtonTap(button.id)"
         >
           <StackLayout class="btn-quick-wrapper">
@@ -37,18 +39,26 @@
 
     <template #navigation-item="{ item }">
       <MDRipple
-        class="list-item list-item--icon-text"
+        class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        orientation="horizontal"
+        v-on="rowHighlight"
         @tap="onNavigationItemTap(item.id)"
       >
-        <Label class="ms icon" :text="$filters.fonticon(item.icon)" col="0" row="0" />
-        <Label class="navigation-item-label" :text="item.text" col="1" row="0" />
+        <GridLayout columns="auto, *" height="100%">
+          <Label class="ms list-item-icon" :text="$filters.fonticon(item.icon)" col="0" />
+          <Label class="list-item-title" :text="item.text" col="1" verticalAlignment="center" />
+          <ContentView
+            v-if="isIOS"
+            col="1"
+            class="list-separator"
+            :visibility="item.isLast ? 'collapse' : 'visible'"
+          />
+        </GridLayout>
       </MDRipple>
     </template>
 
     <template #select-fields-group="{ item }">
-      <GridLayout columns="*, 2, *" rows="28, 56" height="100" class="block">
+      <GridLayout :columns="pairColumns" rows="28, auto" class="block">
         <!-- Highlighter column -->
         <Label
           v-if="item.fields[0].visible"
@@ -65,21 +75,21 @@
           :selectedIndex="item.fields[0].items.indexOf(item.fields[0].selectedValue)"
           :title="$L('layers.select_highlighter')"
           immediateChange
-          class="list-item--top-left list-item--bottom-left"
+          class="select-field--compact list-item--top-left list-item--bottom-left"
           @change="onHighlighterSelected"
         />
 
         <!-- Base layer column -->
         <Label
           v-if="item.fields[1].visible"
-          col="2"
+          :col="pairStep"
           row="0"
           class="select-label"
           :text="item.fields[1].label"
         />
         <SelectField
           v-if="item.fields[1].visible"
-          col="2"
+          :col="pairStep"
           row="1"
           :items="item.fields[1].items"
           :selectedIndex="item.fields[1].selectedIndex"
@@ -87,9 +97,10 @@
           textField="name"
           :title="$L('layers.select_base_layer')"
           immediateChange
-          class="list-item--top-right list-item--bottom-right"
+          class="select-field--compact list-item--top-right list-item--bottom-right"
           @change="onBaseLayerSelected"
         />
+        <ContentView v-if="isIOS" col="1" row="1" class="list-separator list-separator--vertical" />
       </GridLayout>
     </template>
 
@@ -131,8 +142,8 @@
 
     <template #switch-pair="{ item }">
       <GridLayout
-        columns="*, 2, *"
-        rows="56"
+        :columns="pairColumns"
+        rows="auto"
         class="switch-pair-block"
         :class="{
           'switch-pair-block--first': item.isFirst,
@@ -142,7 +153,7 @@
         <GridLayout
           v-for="(switchItem, colIndex) in item.items"
           :key="switchItem.layerId"
-          :col="colIndex * 2"
+          :col="colIndex * pairStep"
           class="list-item"
           :class="{
             'list-item--top-left': switchItem.isTopLeft,
@@ -151,7 +162,7 @@
             'list-item--bottom-right': switchItem.isBottomRight,
           }"
           columns="*, auto"
-          rows="54"
+          rows="*"
         >
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <AppSwitch
@@ -161,7 +172,16 @@
             col="1"
             row="0"
           />
+          <ContentView
+            v-if="isIOS"
+            colSpan="2"
+            class="list-separator"
+            :visibility="
+              switchItem.isBottomLeft || switchItem.isBottomRight ? 'collapse' : 'visible'
+            "
+          />
         </GridLayout>
+        <ContentView v-if="isIOS" col="1" class="list-separator list-separator--vertical" />
       </GridLayout>
     </template>
 
@@ -170,8 +190,7 @@
         class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         columns="*, auto"
-        rows="54"
-        orientation="horizontal"
+        rows="*"
       >
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <AppSwitch
@@ -180,6 +199,12 @@
           :checked="$store.state.map.overlayLayers[item.item.index]?.active"
           col="1"
           row="0"
+        />
+        <ContentView
+          v-if="isIOS"
+          colSpan="2"
+          class="list-separator"
+          :visibility="item.isLast ? 'collapse' : 'visible'"
         />
       </GridLayout>
     </template>
@@ -190,7 +215,8 @@
 import SelectField from '@/components/base/SelectField.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { $navigateTo } from 'nativescript-vue';
-import { disableListItemHighlight } from '@/utils/platform/ui';
+import { isIOS } from '@nativescript/core';
+import { disableListItemHighlight, hideListSeparators, rowHighlight } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -214,11 +240,17 @@ export default {
     return {
       settingsScreen: SettingsView,
       pluginsScreen: PluginsView,
+      isIOS,
+      rowHighlight,
+      // iOS joins the two cells of a row into one card, Android keeps a gap between them
+      pairColumns: isIOS ? '*, *' : '*, 2, *',
+      pairStep: isIOS ? 1 : 2,
     };
   },
 
   methods: {
     disableListItemHighlight,
+    hideListSeparators,
 
     onPortalRowLoaded(args) {
       if (args.object.android) {
@@ -370,6 +402,14 @@ export default {
   ripple-color: $ripple;
 }
 
+.ns-ios .btn-quick {
+  ripple-color: transparent;
+
+  &:highlighted {
+    background-color: $surface-container-high;
+  }
+}
+
 .btn-quick-wrapper {
   padding: $spacing-xs 0;
 }
@@ -384,17 +424,6 @@ export default {
   font-size: $font-size-small;
   color: $on-surface;
   text-align: center;
-}
-
-.icon {
-  width: $spacing-item;
-  height: $spacing-item;
-  vertical-align: center;
-  text-align: center;
-}
-
-.navigation-item-label {
-  font-size: $font-size;
 }
 
 .select-label {
@@ -447,8 +476,9 @@ export default {
   }
 }
 
+// Smaller than row text elsewhere, so that a name and a switch fit into half a row
 .overlay-item-label {
-  height: $spacing-item;
+  vertical-align: center;
   font-size: $font-size;
 }
 </style>

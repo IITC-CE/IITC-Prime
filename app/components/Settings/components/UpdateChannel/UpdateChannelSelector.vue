@@ -1,12 +1,15 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="channel-selector">
+  <StackLayout>
     <MDRipple
-      v-for="option in channelOptions"
+      v-for="(option, index) in channelOptions"
       :key="option.id"
       class="channel-card"
-      :class="{ 'channel-card--active': currentChannel === option.id }"
+      :class="{
+        'channel-card--active': currentChannel === option.id,
+        'channel-card--last': index === channelOptions.length - 1,
+      }"
       @tap="$emit('channelSelected', option.id)"
     >
       <GridLayout columns="auto, *">
@@ -64,10 +67,6 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.channel-selector {
-  padding-bottom: $spacing-m;
-}
-
 .channel-card {
   border-radius: $radius-large;
   border-width: 1;
@@ -81,6 +80,10 @@ export default {
     background-color: $accent-container;
     border-color: $accent-border;
   }
+}
+
+.channel-card--last {
+  margin-bottom: 0;
 }
 
 .radio-circle {

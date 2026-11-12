@@ -187,6 +187,29 @@ export const disableListItemHighlight = args => {
 };
 
 /**
+ * Loaded handler for a ListView whose rows draw their own lines: a table keeps a pixel under
+ * each row for its separator, even a transparent one.
+ * @param {object} args - NativeScript loaded event args
+ */
+export const hideListSeparators = args => {
+  if (isIOS) {
+    args.object.nativeViewProtected.separatorStyle = UITableViewCellSeparatorStyle.None;
+  }
+};
+
+const highlightOnTouch = args => {
+  if (args.action === 'down') args.object.addPseudoClass('highlighted');
+  else if (args.action === 'up' || args.action === 'cancel')
+    args.object.deletePseudoClass('highlighted');
+};
+
+/**
+ * Listeners for v-on: a list row on iOS is highlighted while touched, as table cells are
+ * (styled by `:highlighted`). Android rows draw a ripple, so there are none.
+ */
+export const rowHighlight = isIOS ? { touch: highlightOnTouch } : {};
+
+/**
  * Fix text input colors for system dark mode.
  * Use as @loaded handler on TextField/TextView components.
  * @param {object} args - NativeScript loaded event args

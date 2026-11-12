@@ -1,11 +1,16 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout columns="*, auto" class="list-item select-field" @tap="showSelectDialog">
+  <GridLayout
+    columns="*, auto"
+    class="list-item select-field"
+    v-on="rowHighlight"
+    @tap="showSelectDialog"
+  >
     <Label
       col="0"
       :text="selectedText"
-      class="select-text"
+      class="list-item-title select-text"
       verticalAlignment="center"
       textWrap="true"
     />
@@ -15,6 +20,7 @@
 
 <script>
 import { RadioDialog } from 'nativescript-radio-dialog';
+import { rowHighlight } from '@/utils/platform/ui';
 
 export default {
   props: {
@@ -52,6 +58,7 @@ export default {
 
   data() {
     return {
+      rowHighlight,
       currentSelectedIndex: this.selectedIndex,
     };
   },
@@ -161,16 +168,12 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.select-field {
-  height: 56;
-}
-
 .select-field:active {
   background-color: $state-pressed;
 }
 
-.select-text {
-  color: $on-surface;
+// Fits the layers tab, where the field takes half a row
+.select-field--compact .select-text {
   font-size: $font-size;
 }
 

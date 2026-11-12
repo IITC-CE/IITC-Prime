@@ -15,13 +15,30 @@
       >
         <template #default="{ item }">
           <GridLayout
-            class="list-item license-item"
+            class="list-item list-item--big license-item"
             :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
             columns="*"
             rows="auto, auto"
+            v-on="rowHighlight"
           >
-            <Label :text="item.moduleName" class="license-name" textWrap="true" row="0" />
-            <Label v-if="item.moduleUrl" :text="item.moduleUrl" class="license-url" row="1" />
+            <Label
+              :text="item.moduleName"
+              class="list-item-title license-name"
+              textWrap="true"
+              row="0"
+            />
+            <Label
+              v-if="item.moduleUrl"
+              :text="item.moduleUrl"
+              class="list-item-subtitle license-url"
+              row="1"
+            />
+            <ContentView
+              v-if="isIOS"
+              rowSpan="2"
+              class="list-separator license-separator"
+              :visibility="item.isLast ? 'collapse' : 'visible'"
+            />
           </GridLayout>
         </template>
       </ListView>
@@ -31,10 +48,15 @@
 
 <script>
 import { markRaw } from 'vue';
-import { isAndroid } from '@nativescript/core';
+import { isAndroid, isIOS } from '@nativescript/core';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
-import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform/ui';
+import {
+  enableListEdgeToEdge,
+  disableListItemHighlight,
+  hideListSeparators,
+  rowHighlight,
+} from '@/utils/platform/ui';
 
 export default {
   name: 'LicensesView',
@@ -46,6 +68,8 @@ export default {
   data() {
     return {
       licenses: [],
+      isIOS,
+      rowHighlight,
       // Android: the gap is list padding, so rows scroll up to the app bar; the iOS list ignores it
       containerStyle: isAndroid ? {} : { paddingTop: 24 },
       listTopPadding: isAndroid ? 24 : 0,
@@ -59,6 +83,7 @@ export default {
   methods: {
     onLoaded(args) {
       enableListEdgeToEdge(args.object);
+      hideListSeparators(args);
     },
 
     disableListItemHighlight,
@@ -118,18 +143,18 @@ export default {
 
 .license-item {
   padding: $spacing-m;
-  height: auto;
+}
+
+// The line lies on the row edge, below the padding
+.license-separator {
+  margin-bottom: -$spacing-m;
 }
 
 .license-name {
-  color: $on-surface;
-  font-size: $font-size;
   font-weight: 500;
 }
 
 .license-url {
-  color: $on-surface-variant;
-  font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }
 </style>

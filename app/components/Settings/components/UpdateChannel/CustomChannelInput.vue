@@ -1,7 +1,7 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="custom-url-container">
+  <StackLayout>
     <GridLayout
       columns="*, auto"
       class="list-item list-item--first list-item--last url-input-container"
@@ -23,8 +23,8 @@
       />
     </GridLayout>
 
-    <Label :text="$L('custom_channel.examples')" class="examples-label" once="true" />
-    <WrapLayout class="examples-container">
+    <Label :text="$L('custom_channel.examples')" class="examples-label section-note" once="true" />
+    <WrapLayout class="examples-container section-note">
       <Label
         text="localhost:8000"
         class="chip"
@@ -150,10 +150,6 @@ export default {
 
 <style scoped lang="scss">
 @import '@/app';
-
-.custom-url-container {
-  padding-bottom: $spacing-m;
-}
 
 .url-input-container {
   margin-bottom: $spacing-s;
