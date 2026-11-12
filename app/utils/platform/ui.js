@@ -343,3 +343,127 @@ export const applyBottomSheetInsets = (args, refs, options = {}) => {
 
   return Utils.layout.toDeviceIndependentPixels(padBottom);
 };
+
+const ANDROID_SHEET_OPTIONS = {
+  dismissOnBackgroundTap: true,
+  dismissOnDraggingDownSheet: true,
+  skipCollapsedState: true,
+};
+
+/**
+ * Show a sheet: a system page sheet on iOS, a BottomSheetDialogFragment on Android.
+ * The component calls closeSheet to return a result; a sheet swiped away resolves undefined.
+ * @param {object} vm - the calling component
+ * @param {object} component
+ * @param {{ props?: object, android?: object }} [options] - android: more $showBottomSheet options
+ * @returns {Promise<any>}
+ */
+export const showSheet = async (vm, component, { props, android } = {}) => {
+  if (isIOS) {
+    return vm.$showModal(component, {
+      props,
+      target: vm,
+      ios: { presentationStyle: UIModalPresentationStyle.PageSheet },
+    });
+  }
+  const result = await vm.$showBottomSheet(component, {
+    props,
+    ...ANDROID_SHEET_OPTIONS,
+    ...android,
+  });
+  return result?.[0];
+};
+
+/**
+ * @param {object} vm - the sheet component
+ * @param {any} result - what showSheet resolves with
+ */
+export const closeSheet = (vm, result) =>
+  isIOS ? vm.$closeModal(result) : vm.$closeBottomSheet(result);
+
+// In DIP. Only before the first layout: measuring a laid out sheet moves the titles of system
+// buttons off center
+const measureSheetContent = (view, width) => {
+  const { layout } = Utils;
+  view.measure(
+    layout.makeMeasureSpec(layout.toDevicePixels(width), layout.EXACTLY),
+    layout.makeMeasureSpec(0, layout.UNSPECIFIED)
+  );
+  return layout.toDeviceIndependentPixels(view.getMeasuredHeight());
+};
+
+// In DIP. A scroll view's content is measured at its full height, the scroll view itself is not
+const laidOutSheetContent = view => {
+  let height = view.effectivePaddingTop + view.effectivePaddingBottom;
+  view.eachChildView(child => {
+    const content = child.content ?? child;
+    height += content.getMeasuredHeight() + child.effectiveMarginTop + child.effectiveMarginBottom;
+  });
+  return Utils.layout.toDeviceIndependentPixels(height);
+};
+
+/**
+ * showingModally handler for the root of a sheet component. It runs before the sheet is
+ * presented, so the sheet opens at the height set here: as tall as the content, as on Android.
+ * @param {object} args - NativeScript showingModally event args
+ */
+export const configureIosSheet = args => {
+  const view = args.object;
+  const controller = view.viewController;
+  const sheet = controller?.sheetPresentationController;
+  if (!sheet) return;
+  // Only the root extends under the bottom safe area, scroll views inset their content
+  // themselves. Otherwise a view added while the sheet slides in is extended too and stays taller
+  const contents = [];
+  view.eachChildView(child => {
+    child.iosIgnoreSafeArea = true;
+    contents.push(child.content ?? child);
+  });
+  // The presentation, grabber included, follows the window's light appearance until the sheet is
+  // in place
+  if (Utils.SDK_VERSION >= 17) {
+    sheet.traitOverrides.userInterfaceStyle = UIUserInterfaceStyle.Dark;
+  } else {
+    sheet.overrideTraitCollection = UITraitCollection.traitCollectionWithUserInterfaceStyle(
+      UIUserInterfaceStyle.Dark
+    );
+  }
+  // Otherwise in landscape it turns into a full-screen page that can't be swiped away
+  sheet.prefersEdgeAttachedInCompactHeight = true;
+  sheet.prefersGrabberVisible = true;
+
+  // Custom heights come with iOS 16
+  if (Utils.SDK_VERSION < 16) {
+    sheet.detents = [
+      UISheetPresentationControllerDetent.mediumDetent(),
+      UISheetPresentationControllerDetent.largeDetent(),
+    ];
+    return;
+  }
+  let height = 0;
+  // The detent holds the resolver natively, and a strong reference to the view would keep the
+  // sheet alive through the view's controller
+  const viewRef = new WeakRef(view);
+  sheet.detents = [
+    UISheetPresentationControllerDetent.customDetentWithIdentifierResolver('content', context => {
+      const root = viewRef.deref();
+      if (!height && root) {
+        height = root.isLayoutValid
+          ? laidOutSheetContent(root)
+          : measureSheetContent(root, UIScreen.mainScreen.bounds.size.width);
+      }
+      return Math.min(height || context.maximumDetentValue, context.maximumDetentValue);
+    }),
+  ];
+  // The content can change while the sheet is shown, e.g. once a plugin has loaded. The sheet
+  // is resized after the layout pass, not in the middle of it
+  const onContentLayout = () =>
+    setTimeout(() => {
+      if (!view.isLoaded) return;
+      const next = laidOutSheetContent(view);
+      if (Math.abs(next - height) < 1) return;
+      height = next;
+      sheet.animateChanges(() => sheet.invalidateDetents());
+    });
+  contents.forEach(content => content.on('layoutChanged', onContentLayout));
+};

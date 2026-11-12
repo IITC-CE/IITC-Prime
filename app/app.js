@@ -31,8 +31,8 @@ initSentry();
 
 loadLocaleJSON(require('./i18n/en.default.json'));
 
-// Install BottomSheet plugins
-installBottomSheet();
+// Install BottomSheet plugins. iOS shows sheets as system page sheets, see showSheet
+if (isAndroid) installBottomSheet();
 installPersistentBottomSheet();
 
 FontIcon.paths = {
@@ -90,7 +90,7 @@ app.use(CanvasSVG);
 app.use(ButtonPlugin);
 app.use(SwitchPlugin);
 app.use(RipplePlugin);
-app.use(BottomSheetPlugin);
+if (isAndroid) app.use(BottomSheetPlugin);
 app.use(PersistentBottomSheetPlugin);
 app.use(SwipeMenuPlugin);
 

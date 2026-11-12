@@ -40,6 +40,11 @@ $accent-border: rgba(38, 166, 154, 0.42); // active border ring
 $on-surface: #ffffff;
 $on-surface-variant: #71a0a6; // secondary / muted text
 
+// iOS 26 sheets show grey glass, where the teal ones above look out of place: tertiarySystemFill
+// and secondaryLabel in the dark appearance
+$ios-sheet-fill: rgba(118, 118, 128, 0.24);
+$ios-sheet-on-surface-variant: rgba(235, 235, 245, 0.6);
+
 // Interaction
 $ripple: rgba(255, 255, 255, 0.1);
 
@@ -387,6 +392,25 @@ MDButton {
   font-weight: bold;
   margin-bottom: $spacing-m;
   color: $on-surface;
+}
+
+// Root of a sheet shown with showSheet. The iOS system sheet draws its own corners, and from
+// iOS 26 its own glass background
+.sheet-root {
+  background-color: $surface;
+  border-radius: $radius-large $radius-large 0 0;
+}
+
+.ns-ios.sheet-root {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.ns-ios-15.sheet-root,
+.ns-ios-16.sheet-root,
+.ns-ios-17.sheet-root,
+.ns-ios-18.sheet-root {
+  background-color: $surface;
 }
 
 // Text inputs

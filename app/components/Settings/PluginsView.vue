@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { isIOS, isAndroid } from '@nativescript/core';
+import { isAndroid } from '@nativescript/core';
 import { mapActions, mapGetters } from 'vuex';
 import { reactive, markRaw } from 'vue';
 import { fuzzysearch } from 'scored-fuzzysearch';
@@ -80,6 +80,7 @@ import { Toasty } from '@triniwiz/nativescript-toasty';
 import { confirm } from '@/utils/dialogs';
 import { downloadPlugin, parsePlugin, installPlugin } from '@/utils/manager/plugin-installer';
 import { readFileContent } from '@/utils/file-manager';
+import { showSheet } from '@/utils/platform/ui';
 import SettingsBase from './SettingsBase';
 import AddPluginSheet from './components/AddPluginSheet';
 import PluginInfoSheet from './components/PluginInfoSheet';
@@ -203,37 +204,26 @@ export default {
     ...mapActions('manager', ['loadPlugins', 'managePlugin']),
 
     async showPluginInfo(plugin) {
-      const result = await this.$showBottomSheet(PluginInfoSheet, {
+      const result = await showSheet(this, PluginInfoSheet, {
         props: { plugin },
-        dismissOnBackgroundTap: true,
-        dismissOnDraggingDownSheet: true,
-        skipCollapsedState: true,
-        ignoreBottomSafeArea: true,
-        transparent: isIOS,
-        trackingScrollView: 'mainScrollView',
       });
 
-      if (result?.[0] === 'delete') {
+      if (result === 'delete') {
         await this.deletePlugin(plugin);
       }
     },
 
     async openAddPlugin() {
-      const result = await this.$showBottomSheet(AddPluginSheet, {
-        dismissOnBackgroundTap: true,
-        dismissOnDraggingDownSheet: true,
-        skipCollapsedState: true,
-        ignoreBottomSafeArea: true,
-        ignoreKeyboardHeight: false,
-        transparent: isIOS,
-        // On Android the dialog inherits adjustNothing from the activity;
-        // override so the sheet resizes above the keyboard when the URL text field is focused.
-        windowSoftInputMode: isAndroid
-          ? android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-          : undefined,
+      const pending = await showSheet(this, AddPluginSheet, {
+        android: {
+          // The dialog inherits adjustNothing from the activity; override so the sheet
+          // resizes above the keyboard when the URL text field is focused.
+          windowSoftInputMode: isAndroid
+            ? android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            : undefined,
+        },
       });
 
-      const pending = result?.[0];
       if (!pending) return;
 
       let loaderFn;
@@ -256,14 +246,8 @@ export default {
     async confirmInstallPlugin(loaderFn) {
       const pluginState = reactive({ loading: true });
 
-      const sheetPromise = this.$showBottomSheet(PluginInfoSheet, {
+      const sheetPromise = showSheet(this, PluginInfoSheet, {
         props: { plugin: pluginState, installMode: true },
-        dismissOnBackgroundTap: true,
-        dismissOnDraggingDownSheet: true,
-        skipCollapsedState: true,
-        ignoreBottomSafeArea: true,
-        transparent: isIOS,
-        trackingScrollView: 'mainScrollView',
       });
 
       let resolvedCode = null;
@@ -278,7 +262,7 @@ export default {
       }
 
       const sheetResult = await sheetPromise;
-      if (sheetResult?.[0] === 'install' && resolvedCode) {
+      if (sheetResult === 'install' && resolvedCode) {
         try {
           await installPlugin(pluginState, resolvedCode);
         } catch (error) {

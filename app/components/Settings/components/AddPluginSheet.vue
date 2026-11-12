@@ -5,52 +5,57 @@
     class="sheet-root"
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
+    @showingModally="configureIosSheet"
     @androidOverflowInset="onAndroidInset"
     :paddingBottom="insetBottom"
   >
-    <FlexboxLayout class="sheet-content">
-      <Label :text="$L('add_plugin.title')" class="sheet-title" />
+    <ScrollView iosContentInsetAdjustmentBehavior="always">
+      <FlexboxLayout class="sheet-content">
+        <Label :text="$L('add_plugin.title')" class="sheet-title" />
 
-      <!-- URL input -->
-      <TextField
-        ref="urlField"
-        class="text-input url-field"
-        :hint="$L('add_plugin.url_hint')"
-        v-model="pluginUrl"
-        autocorrect="false"
-        autocapitalizationType="none"
-        keyboardType="url"
-        returnKeyType="go"
-        @returnPress="loadPlugin"
-        @loaded="fixTextInputColors"
-      />
+        <!-- URL input -->
+        <TextField
+          ref="urlField"
+          class="text-input url-field"
+          :hint="$L('add_plugin.url_hint')"
+          v-model="pluginUrl"
+          autocorrect="false"
+          autocapitalizationType="none"
+          keyboardType="url"
+          returnKeyType="go"
+          @returnPress="loadPlugin"
+          @loaded="onUrlFieldLoaded"
+        />
 
-      <!-- Load button -->
-      <AppButton
-        class="btn-load"
-        :text="$L('add_plugin.load_url')"
-        :isEnabled="!!pluginUrl.trim()"
-        @tap="loadPlugin"
-      />
+        <!-- Load button -->
+        <AppButton
+          class="btn-load"
+          :text="$L('add_plugin.load_url')"
+          :isEnabled="!!pluginUrl.trim()"
+          @tap="loadPlugin"
+        />
 
-      <!-- Divider -->
-      <FlexboxLayout class="divider-row" clipToBounds="true">
-        <StackLayout class="divider-line" />
-        <Label :text="$L('add_plugin.or')" :class="['divider-text', { android: isAndroid }]" />
-        <StackLayout class="divider-line" />
+        <!-- Divider -->
+        <FlexboxLayout class="divider-row" clipToBounds="true">
+          <StackLayout class="divider-line" />
+          <Label :text="$L('add_plugin.or')" :class="['divider-text', { android: isAndroid }]" />
+          <StackLayout class="divider-line" />
+        </FlexboxLayout>
+        <!-- Choose file -->
+        <AppButton class="btn-file" :text="$L('add_plugin.choose_file')" @tap="chooseFile" />
+
+        <!-- Error message -->
+        <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
       </FlexboxLayout>
-      <!-- Choose file -->
-      <AppButton class="btn-file" :text="$L('add_plugin.choose_file')" @tap="chooseFile" />
-
-      <!-- Error message -->
-      <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
-    </FlexboxLayout>
+    </ScrollView>
   </StackLayout>
 </template>
 
 <script>
-import { isAndroid } from '@nativescript/core';
+import { Color, Utils, isAndroid, isIOS } from '@nativescript/core';
 import {
+  closeSheet,
+  configureIosSheet,
   fixTextInputColors,
   getBottomSheetInsetRefs,
   applyBottomSheetInsets,
@@ -74,7 +79,15 @@ export default {
   },
 
   methods: {
-    fixTextInputColors,
+    configureIosSheet,
+
+    onUrlFieldLoaded(args) {
+      fixTextInputColors(args);
+      // $ios-sheet-on-surface-variant: fixTextInputColors sets the placeholder over any CSS
+      if (isIOS && Utils.SDK_VERSION >= 26) {
+        args.object.style.placeholderColor = new Color('rgba(235, 235, 245, 0.6)');
+      }
+    },
 
     onSheetLoaded(args) {
       this._insetRefs = getBottomSheetInsetRefs(args);
@@ -95,7 +108,7 @@ export default {
     loadPlugin() {
       const url = this.pluginUrl.trim();
       if (!url) return;
-      this.$closeBottomSheet({ type: 'url', url });
+      closeSheet(this, { type: 'url', url });
     },
 
     async chooseFile() {
@@ -109,7 +122,7 @@ export default {
 
         if (!files.length) return;
 
-        this.$closeBottomSheet({ type: 'file', path: files[0].path });
+        closeSheet(this, { type: 'file', path: files[0].path });
       } catch (error) {
         console.error('Failed to choose file:', error);
         this.errorMessage = error.message || this.$L('add_plugin.unknown_error');
@@ -130,9 +143,17 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.sheet-root {
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
+.ns-ios .divider-text {
+  color: $ios-sheet-on-surface-variant;
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .divider-text {
+    color: $on-surface-variant;
+  }
 }
 
 .sheet-content {
@@ -140,8 +161,6 @@ export default {
   justify-content: flex-start;
   padding: $spacing-l;
   padding-bottom: $spacing-xl;
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
 }
 
 .sheet-title {

@@ -5,10 +5,11 @@
     class="sheet-root"
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
+    @showingModally="configureIosSheet"
     @androidOverflowInset="onAndroidInset"
     :paddingBottom="insetBottom"
   >
-    <ScrollView id="mainScrollView">
+    <ScrollView iosContentInsetAdjustmentBehavior="always">
       <FlexboxLayout class="sheet-content">
         <!-- Header: icon + name / category -->
         <GridLayout class="plugin-header" columns="64, *" rows="auto">
@@ -119,7 +120,12 @@
 import { Utils } from '@nativescript/core';
 import { getUID } from 'lib-iitc-manager';
 import { shareContent } from '@/utils/platform/system';
-import { getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform/ui';
+import {
+  closeSheet,
+  configureIosSheet,
+  getBottomSheetInsetRefs,
+  applyBottomSheetInsets,
+} from '@/utils/platform/ui';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
 import AsyncRasterIcon from './plugins/AsyncRasterIcon.vue';
 import AppButton from '@/components/base/AppButton.vue';
@@ -205,6 +211,8 @@ export default {
   },
 
   methods: {
+    configureIosSheet,
+
     onSheetLoaded(args) {
       this._insetRefs = getBottomSheetInsetRefs(args);
     },
@@ -231,11 +239,11 @@ export default {
     },
 
     onInstall() {
-      this.$closeBottomSheet('install');
+      closeSheet(this, 'install');
     },
 
     onDelete() {
-      this.$closeBottomSheet('delete');
+      closeSheet(this, 'delete');
     },
   },
 
@@ -248,17 +256,39 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.sheet-root {
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
+.ns-ios {
+  .notice-block,
+  .details {
+    background-color: $ios-sheet-fill;
+  }
+
+  .plugin-category,
+  .notice-text,
+  .detail-label {
+    color: $ios-sheet-on-surface-variant;
+  }
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .notice-block,
+  .details {
+    background-color: $surface-container;
+  }
+
+  .plugin-category,
+  .notice-text,
+  .detail-label {
+    color: $on-surface-variant;
+  }
 }
 
 .sheet-content {
   flex-direction: column;
-  background-color: $surface;
   padding: $spacing-l;
   padding-bottom: $spacing-xl;
-  border-radius: $radius-large $radius-large 0 0;
 }
 
 .plugin-header {
