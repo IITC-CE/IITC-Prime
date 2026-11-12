@@ -45,6 +45,7 @@ registerElement('MaterialTopAppBar', () => require('~/utils/platform/material').
 registerElement('MaterialSearchView', () => require('~/utils/platform/material').SearchView);
 registerElement('SystemButton', () => require('~/utils/platform/system-button').SystemButton);
 registerElement('MenuButton', () => require('~/utils/platform/menu-button').MenuButton);
+registerElement('RadioMark', () => require('~/utils/platform/radio-mark').RadioMark);
 registerElement('CheckBox', () => CheckBox, {
   model: {
     prop: 'checked',

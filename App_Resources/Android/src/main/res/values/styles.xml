@@ -48,6 +48,7 @@
 
         <!-- Material Switch style -->
         <item name="materialSwitchStyle">@style/AppMaterialSwitchStyle</item>
+        <item name="radioButtonStyle">@style/AppRadioButtonStyle</item>
 
         <!-- Bottom sheet dialog styling -->
         <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogTheme</item>
@@ -112,6 +113,16 @@
         <item name="colorOnPrimary">@color/switch_track_on</item>
         <item name="colorSurfaceContainerHighest">@color/switch_track_off</item>
         <item name="colorOnSurface">@color/switch_thumb_off</item>
+    </style>
+
+    <!-- The theme's primary is the page color; the radio button takes the accent -->
+    <style name="AppRadioButtonStyle" parent="Widget.Material3.CompoundButton.RadioButton">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.App.RadioButton</item>
+    </style>
+
+    <style name="ThemeOverlay.App.RadioButton" parent="">
+        <item name="colorPrimary">@color/ns_accent</item>
+        <item name="colorOnSurfaceVariant">@color/ns_primary_light</item>
     </style>
 
     <!-- Custom dialog style -->
