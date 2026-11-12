@@ -6,7 +6,6 @@
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
     @androidOverflowInset="onAndroidInset"
-    :paddingTop="insetTop"
     :paddingBottom="insetBottom"
   >
     <ScrollView id="mainScrollView">
@@ -147,7 +146,6 @@ export default {
 
   data() {
     return {
-      insetTop: 0,
       insetBottom: 0,
     };
   },
@@ -212,11 +210,8 @@ export default {
     },
 
     onAndroidInset(args) {
-      const result = applyBottomSheetInsets(args, this._insetRefs);
-      if (result) {
-        this.insetTop = result.insetTop;
-        this.insetBottom = result.insetBottom;
-      }
+      const insetBottom = applyBottomSheetInsets(args, this._insetRefs);
+      if (insetBottom !== null) this.insetBottom = insetBottom;
     },
 
     onOpenHomepage() {

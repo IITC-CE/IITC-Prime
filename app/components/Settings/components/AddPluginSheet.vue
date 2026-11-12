@@ -6,7 +6,6 @@
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
     @androidOverflowInset="onAndroidInset"
-    :paddingTop="insetTop"
     :paddingBottom="insetBottom"
   >
     <FlexboxLayout class="sheet-content">
@@ -70,7 +69,6 @@ export default {
       isAndroid,
       pluginUrl: '',
       errorMessage: '',
-      insetTop: 0,
       insetBottom: 0,
     };
   },
@@ -83,11 +81,8 @@ export default {
     },
 
     onAndroidInset(args) {
-      const result = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
-      if (result) {
-        this.insetTop = result.insetTop;
-        this.insetBottom = result.insetBottom;
-      }
+      const insetBottom = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
+      if (insetBottom !== null) this.insetBottom = insetBottom;
     },
 
     async checkClipboard() {

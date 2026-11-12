@@ -264,6 +264,28 @@ export const getBottomSheetInsetRefs = args => {
   return { coordinator, designBottomSheet, nativeView };
 };
 
+// BottomSheetBehavior lays a sheet taller than the space under the status bar out below it at
+// full height, so the bottom of the sheet goes off screen
+const limitBottomSheetHeight = (refs, insetTop) => {
+  refs.insetTop = insetTop;
+  if (!refs.limitHeight) {
+    const sheet = refs.designBottomSheet;
+    const behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet);
+    refs.limitHeight = () => {
+      const maxHeight = refs.coordinator.getHeight() - refs.insetTop;
+      if (maxHeight <= 0 || behavior.getMaxHeight() === maxHeight) return;
+      behavior.setMaxHeight(maxHeight);
+      // Called from onLayoutChange, where a layout request is not applied
+      sheet.post(new java.lang.Runnable({ run: () => sheet.requestLayout() }));
+    };
+    // A rotation resizes the coordinator
+    refs.coordinator.addOnLayoutChangeListener(
+      new android.view.View.OnLayoutChangeListener({ onLayoutChange: refs.limitHeight })
+    );
+  }
+  refs.limitHeight();
+};
+
 /**
  * Apply safe-zone insets to a bottom sheet panel on Android 15+.
  *
@@ -273,6 +295,7 @@ export const getBottomSheetInsetRefs = args => {
  * - Consumes all insets so inner views receive Insets.NONE and apply no padding themselves.
  * - Narrows design_bottom_sheet via CoordinatorLayout.LayoutParams margins (pixels) so the
  *   panel background does not extend behind camera notches or side nav bars.
+ * - Caps the sheet height to the space under the status bar.
  * - Optionally translates the CoordinatorLayout up when the keyboard is visible.
  *   SOFT_INPUT_ADJUST_RESIZE is broken on Android 15+ edge-to-edge; translating the
  *   coordinator (not design_bottom_sheet) avoids conflicting with BottomSheetBehavior which
@@ -281,7 +304,7 @@ export const getBottomSheetInsetRefs = args => {
  * @param {object} args - NativeScript @androidOverflowInset event args
  * @param {{ coordinator, designBottomSheet, nativeView } | null} refs - from getBottomSheetInsetRefs
  * @param {{ translateForIme?: boolean }} [options]
- * @returns {{ insetTop: number, insetBottom: number } | null} DIP padding values for Vue reactive bindings
+ * @returns {number | null} bottom padding in DIP, for a Vue binding
  */
 export const applyBottomSheetInsets = (args, refs, options = {}) => {
   if (!isAndroid || !refs || android.os.Build.VERSION.SDK_INT < 35) return null;
@@ -312,17 +335,11 @@ export const applyBottomSheetInsets = (args, refs, options = {}) => {
     refs.designBottomSheet.setLayoutParams(lp);
   }
 
-  // Top padding only needed in landscape when the sheet fills the full coordinator
-  // height and its upper edge overlaps the status bar.
-  const sheetTopPx = refs.coordinator.getHeight() - refs.nativeView.getHeight();
-  const topPad = Math.max(0, (args.inset.top ?? 0) - sheetTopPx);
+  limitBottomSheetHeight(refs, args.inset.top ?? 0);
 
   // When keyboard is visible the nav bar sits behind it - no bottom padding needed.
   const padBottom =
     options.translateForIme && args.inset.imeBottom > 0 ? 0 : (args.inset.bottom ?? 0);
 
-  return {
-    insetTop: Utils.layout.toDeviceIndependentPixels(topPad),
-    insetBottom: Utils.layout.toDeviceIndependentPixels(padBottom),
-  };
+  return Utils.layout.toDeviceIndependentPixels(padBottom);
 };
