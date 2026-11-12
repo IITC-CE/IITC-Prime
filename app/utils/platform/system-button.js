@@ -38,6 +38,19 @@ export class SystemButton extends Button {
     this._configure();
   }
 
+  // After a width change, e.g. a rotation, the title stays where the last configuration update
+  // put it. iOS 26 ignores the same configuration set again, so it is cleared first
+  layoutNativeView(left, top, right, bottom) {
+    super.layoutNativeView(left, top, right, bottom);
+    const button = this.nativeViewProtected;
+    if (!button) return;
+    const width = button.bounds.size.width;
+    if (width === this._configuredWidth) return;
+    this._configuredWidth = width;
+    button.configuration = null;
+    this._configure();
+  }
+
   // UIKit would move a view backgroundColor into the configuration with its own corner radius
   _redrawNativeBackground() {
     this._configure();
