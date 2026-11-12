@@ -44,6 +44,7 @@ registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').L
 registerElement('MaterialTopAppBar', () => require('~/utils/platform/material').TopAppBar);
 registerElement('MaterialSearchView', () => require('~/utils/platform/material').SearchView);
 registerElement('SystemButton', () => require('~/utils/platform/system-button').SystemButton);
+registerElement('MenuButton', () => require('~/utils/platform/menu-button').MenuButton);
 registerElement('CheckBox', () => CheckBox, {
   model: {
     prop: 'checked',
