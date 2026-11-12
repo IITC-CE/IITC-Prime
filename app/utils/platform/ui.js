@@ -197,17 +197,85 @@ export const hideListSeparators = args => {
   }
 };
 
+// UIKit drops a cell's highlight once the touch turns into a scroll or a drag
+const TOUCH_SLOP = 10;
+
 const highlightOnTouch = args => {
-  if (args.action === 'down') args.object.addPseudoClass('highlighted');
-  else if (args.action === 'up' || args.action === 'cancel')
-    args.object.deletePseudoClass('highlighted');
+  const view = args.object;
+  if (args.action === 'down') {
+    view._touchStart = { x: args.getX(), y: args.getY() };
+    view.addPseudoClass('highlighted');
+  } else if (args.action === 'move') {
+    const { x, y } = view._touchStart;
+    if (Math.hypot(args.getX() - x, args.getY() - y) > TOUCH_SLOP)
+      view.deletePseudoClass('highlighted');
+  } else {
+    view.deletePseudoClass('highlighted');
+  }
+};
+
+const addRipple = args => {
+  const view = args.object.nativeViewProtected;
+  if (view.getForeground()) return;
+  const attrs = Array.create('int', 1);
+  attrs[0] = android.R.attr.selectableItemBackground;
+  const values = view.getContext().obtainStyledAttributes(attrs);
+  const layers = Array.create(android.graphics.drawable.Drawable, 1);
+  layers[0] = values.getDrawable(0);
+  values.recycle();
+  // Shaped by fitRipple: before Android 13 the outline clips only when all corners are equal
+  const mask = new android.graphics.drawable.GradientDrawable();
+  mask.setColor(android.graphics.Color.WHITE);
+  layers[0].setDrawableByLayerId(android.R.id.mask, mask);
+  // In a layer, which fitRipple insets
+  view.setForeground(new android.graphics.drawable.LayerDrawable(layers));
+};
+
+// Keeps the ripple inside the corners and off the borders, such as the gap between list rows.
+// Set on each touch: a list reuses rows with other classes
+const fitRipple = args => {
+  if (args.action !== 'down') return;
+  const view = args.object;
+  const layers = view.nativeViewProtected.getForeground();
+  const px = Math.round;
+  layers.setLayerInset(
+    0,
+    px(view.effectiveBorderLeftWidth),
+    px(view.effectiveBorderTopWidth),
+    px(view.effectiveBorderRightWidth),
+    px(view.effectiveBorderBottomWidth)
+  );
+  const bg = view.style.backgroundInternal;
+  const radii = Array.create('float', 8);
+  [
+    bg.borderTopLeftRadius,
+    bg.borderTopRightRadius,
+    bg.borderBottomRightRadius,
+    bg.borderBottomLeftRadius,
+  ].forEach((radius, i) => {
+    radii[2 * i] = radii[2 * i + 1] = radius;
+  });
+  layers.getDrawable(0).findDrawableByLayerId(android.R.id.mask).setCornerRadii(radii);
+  // The insets apply when the bounds change
+  const bounds = layers.copyBounds();
+  layers.setBounds(0, 0, 0, 0);
+  layers.setBounds(bounds);
 };
 
 /**
- * Listeners for v-on: a list row on iOS is highlighted while touched, as table cells are
- * (styled by `:highlighted`). Android rows draw a ripple, so there are none.
+ * Listeners for v-on on a tappable row, card or chip: while pressed it is highlighted on iOS, as
+ * table cells are (styled by `:highlighted`), and draws the system ripple on Android. A Label
+ * draws no ripple, so it goes inside a container that takes the listeners
  */
-export const rowHighlight = isIOS ? { touch: highlightOnTouch } : {};
+export const pressFeedback = isIOS
+  ? { touch: highlightOnTouch }
+  : { loaded: addRipple, touch: fitRipple };
+
+/**
+ * Listeners for v-on on a row with a switch: an Android row ripples, and its tap handler toggles
+ * the switch (Material 3); an iOS row is not highlighted, only the switch toggles
+ */
+export const switchRowFeedback = isIOS ? {} : pressFeedback;
 
 /**
  * Fix text input colors for system dark mode.

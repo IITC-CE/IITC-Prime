@@ -11,7 +11,7 @@
     }"
     columns="*, auto"
     rows="*"
-    v-on="type === 'switch' ? {} : rowHighlight"
+    v-on="type === 'switch' ? switchRowFeedback : pressFeedback"
     @tap="onTap"
   >
     <ContentView class="list-item-spacer" colSpan="2" />
@@ -61,7 +61,7 @@
 import { $navigateTo } from 'nativescript-vue';
 import { Utils, isIOS } from '@nativescript/core';
 import AppSwitch from '@/components/base/AppSwitch.vue';
-import { rowHighlight } from '@/utils/platform/ui';
+import { pressFeedback, switchRowFeedback } from '@/utils/platform/ui';
 
 export default {
   name: 'SettingsItem',
@@ -129,7 +129,7 @@ export default {
   },
 
   data() {
-    return { isIOS, rowHighlight };
+    return { isIOS, pressFeedback, switchRowFeedback };
   },
 
   methods: {
@@ -149,6 +149,8 @@ export default {
       } else if (this.type === 'action') {
         // Emit custom action event
         this.$emit('action');
+      } else if (this.type === 'switch' && !isIOS) {
+        this.$emit('change', !this.value);
       }
     },
 

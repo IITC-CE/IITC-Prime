@@ -4,7 +4,7 @@
   <GridLayout
     columns="*, auto"
     class="list-item select-field"
-    v-on="rowHighlight"
+    v-on="pressFeedback"
     @tap="showSelectDialog"
   >
     <Label
@@ -38,7 +38,7 @@
 <script>
 import { isIOS } from '@nativescript/core';
 import { RadioDialog } from 'nativescript-radio-dialog';
-import { rowHighlight } from '@/utils/platform/ui';
+import { pressFeedback } from '@/utils/platform/ui';
 
 export default {
   props: {
@@ -77,7 +77,7 @@ export default {
   data() {
     return {
       isIOS,
-      rowHighlight,
+      pressFeedback,
       currentSelectedIndex: this.selectedIndex,
     };
   },
@@ -165,10 +165,6 @@ export default {
 
 <style scoped lang="scss">
 @import '@/app';
-
-.select-field:active {
-  background-color: $state-pressed;
-}
 
 // Fits the layers tab, where the field takes half a row
 .select-field--compact .select-text {

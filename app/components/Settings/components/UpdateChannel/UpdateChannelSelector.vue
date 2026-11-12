@@ -11,7 +11,7 @@
         'list-item--last': index === channelOptions.length - 1,
       }"
       columns="auto, *, auto"
-      v-on="rowHighlight"
+      v-on="pressFeedback"
       @tap="$emit('channelSelected', option.id)"
     >
       <ContentView class="list-item-spacer" colSpan="3" />
@@ -36,7 +36,7 @@
 
 <script>
 import { isIOS } from '@nativescript/core';
-import { rowHighlight } from '@/utils/platform/ui';
+import { pressFeedback } from '@/utils/platform/ui';
 
 export default {
   name: 'UpdateChannelSelector',
@@ -49,7 +49,7 @@ export default {
   },
 
   data() {
-    return { isIOS, rowHighlight };
+    return { isIOS, pressFeedback };
   },
 
   computed: {

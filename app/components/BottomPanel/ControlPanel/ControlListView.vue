@@ -17,12 +17,12 @@
 
     <template #action-buttons-group="{ item }">
       <GridLayout columns="*, 8, *, 8, *, 8, *" class="block action-buttons-block">
-        <MDRipple
+        <StackLayout
           v-for="(button, index) in item.buttons"
           :key="button.id"
           :col="index * 2"
           class="btn-quick"
-          v-on="rowHighlight"
+          v-on="pressFeedback"
           @tap="onActionButtonTap(button.id)"
         >
           <StackLayout class="btn-quick-wrapper">
@@ -33,15 +33,15 @@
             />
             <Label class="btn-quick-text" :text="button.text" horizontalAlignment="center" />
           </StackLayout>
-        </MDRipple>
+        </StackLayout>
       </GridLayout>
     </template>
 
     <template #navigation-item="{ item }">
-      <MDRipple
+      <StackLayout
         class="list-item"
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-        v-on="rowHighlight"
+        v-on="pressFeedback"
         @tap="onNavigationItemTap(item.id)"
       >
         <GridLayout columns="auto, *" height="100%">
@@ -54,7 +54,7 @@
             :visibility="item.isLast ? 'collapse' : 'visible'"
           />
         </GridLayout>
-      </MDRipple>
+      </StackLayout>
     </template>
 
     <template #select-fields-group="{ item }">
@@ -116,6 +116,8 @@
             v-if="index <= 8"
             :col="index"
             class="portal-icon-cell"
+            v-on="pressFeedback"
+            @tap="onOverlayPortalToggle($event, portal.index)"
             :class="{
               'portal-icon-cell--active':
                 $store.state.map.overlayLayers[portal.index]?.active === true,
@@ -125,7 +127,6 @@
           >
             <SVGView
               class="overlay-portal"
-              @tap="onOverlayPortalToggle($event, portal.index)"
               :src="
                 '~/assets/icons/portals/portal_L' +
                 index +
@@ -163,6 +164,8 @@
           }"
           columns="*, auto"
           rows="*"
+          v-on="switchRowFeedback"
+          @tap="onOverlayToggle(switchItem.index)"
         >
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <AppSwitch
@@ -191,6 +194,8 @@
         :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
         columns="*, auto"
         rows="*"
+        v-on="switchRowFeedback"
+        @tap="onOverlayToggle(item.item.index)"
       >
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <AppSwitch
@@ -216,7 +221,12 @@ import SelectField from '@/components/base/SelectField.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { $navigateTo } from 'nativescript-vue';
 import { isIOS } from '@nativescript/core';
-import { disableListItemHighlight, hideListSeparators, rowHighlight } from '@/utils/platform/ui';
+import {
+  disableListItemHighlight,
+  hideListSeparators,
+  pressFeedback,
+  switchRowFeedback,
+} from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -241,7 +251,8 @@ export default {
       settingsScreen: SettingsView,
       pluginsScreen: PluginsView,
       isIOS,
-      rowHighlight,
+      pressFeedback,
+      switchRowFeedback,
       // iOS joins the two cells of a row into one card, Android keeps a gap between them
       pairColumns: isIOS ? '*, *' : '*, 2, *',
       pairStep: isIOS ? 1 : 2,
@@ -311,7 +322,8 @@ export default {
     onOverlayPortalToggle(e, index) {
       const currentLayer = this.$store.state.map.overlayLayers[index];
       const active = !currentLayer.active;
-      e.object.src = '~/assets/icons/portals/portal_L' + index + '_' + String(active) + '.svg';
+      e.object.getChildAt(0).src =
+        '~/assets/icons/portals/portal_L' + index + '_' + String(active) + '.svg';
       this.$store.dispatch('map/setOverlayLayerProperty', { index, active });
     },
 
@@ -320,8 +332,8 @@ export default {
         const currentLayer = this.$store.state.map.overlayLayers[index];
         if (!currentLayer || currentLayer.active === value) return;
         this.$store.dispatch('map/setOverlayLayerProperty', { index, active: value });
-      } else {
-        // Label tap - toggle current state
+      } else if (!isIOS) {
+        // Row tap, see switchRowFeedback
         const currentLayer = this.$store.state.map.overlayLayers[index];
         if (currentLayer) {
           this.$store.dispatch('map/setOverlayLayerProperty', {
@@ -399,11 +411,6 @@ export default {
   border-radius: $radius-large;
   background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
-  ripple-color: $ripple;
-}
-
-.ns-ios .btn-quick {
-  ripple-color: transparent;
 
   &:highlighted {
     background-color: $surface-container-high;
@@ -441,6 +448,14 @@ export default {
 .portal-icon-cell {
   &--active {
     background-color: $surface-container;
+  }
+
+  &:highlighted {
+    background-color: $surface-container;
+  }
+
+  &--active:highlighted {
+    background-color: $surface-container-high;
   }
 
   &--first {

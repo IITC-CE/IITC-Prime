@@ -25,25 +25,23 @@
 
     <Label :text="$L('custom_channel.examples')" class="examples-label section-note" once="true" />
     <WrapLayout class="examples-container section-note">
-      <Label
-        text="localhost:8000"
+      <StackLayout class="chip" v-on="pressFeedback" @tap="setExampleUrl('http://localhost:8000')">
+        <Label text="localhost:8000" class="chip-text" once="true" />
+      </StackLayout>
+      <StackLayout
         class="chip"
-        @tap="setExampleUrl('http://localhost:8000')"
-        once="true"
-      />
-      <Label
-        text="iitc.app/build/artifact/PR"
-        class="chip"
+        v-on="pressFeedback"
         @tap="setExampleUrl('https://iitc.app/build/artifact/PR')"
-        once="true"
-      />
+      >
+        <Label text="iitc.app/build/artifact/PR" class="chip-text" once="true" />
+      </StackLayout>
     </WrapLayout>
   </StackLayout>
 </template>
 
 <script>
 import { mapActions } from 'vuex';
-import { fixTextInputColors } from '@/utils/platform/ui';
+import { fixTextInputColors, pressFeedback } from '@/utils/platform/ui';
 
 export default {
   name: 'CustomChannelInput',
@@ -57,6 +55,7 @@ export default {
 
   data() {
     return {
+      pressFeedback,
       url: this.customUrl,
       urlStatus: 'unknown', // 'success', 'error', 'unknown'
     };

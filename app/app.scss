@@ -51,7 +51,6 @@ $ripple: rgba(255, 255, 255, 0.1);
 // States
 $state-hover: rgba(255, 255, 255, 0.08);
 $state-focus: rgba(255, 255, 255, 0.12);
-$state-pressed: rgba(255, 255, 255, 0.16);
 $state-drag: rgba(255, 255, 255, 0.16);
 
 $state-success: #43a047;
@@ -193,7 +192,6 @@ MDButton {
   background-color: $surface-container;
   color: $on-surface;
   height: $spacing-item;
-  ripple-color: $ripple;
   font-size: $font-size;
   padding: 0 $spacing-m;
   border-bottom-width: $spacing-xxs;
@@ -255,13 +253,12 @@ MDButton {
   vertical-align: center;
 }
 
-// iOS grouped lists as in system settings: a hairline instead of a gap, a highlight instead of a
-// ripple. iOS 26 values; older versions follow
+// iOS grouped lists as in system settings: a hairline instead of a gap. iOS 26 values; older
+// versions follow
 .ns-ios {
   .list-item {
     height: 52;
     border-bottom-width: 0;
-    ripple-color: transparent;
 
     &:highlighted {
       background-color: $surface-container-high;
@@ -371,12 +368,27 @@ MDButton {
   padding: 6 12;
   border-radius: $radius-large;
   background-color: $surface-container;
+
+  &--active {
+    background-color: $accent;
+  }
+
+  // iOS: a pressed chip changes its fill, as system buttons do
+  &:highlighted {
+    background-color: $surface-container-high;
+  }
+
+  &--active:highlighted {
+    background-color: darken($accent, 8%);
+  }
+}
+
+.chip-text {
   color: $on-surface;
   font-size: $font-size-small;
   text-align: center;
 
-  &--active {
-    background-color: $accent;
+  .chip--active & {
     font-weight: bold;
   }
 }

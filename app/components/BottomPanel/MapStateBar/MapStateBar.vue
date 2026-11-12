@@ -1,13 +1,13 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <MDRipple
+  <StackLayout
     class="map-state-bar"
     orientation="horizontal"
-    rippleColor="#ffffff"
     :marginLeft="effectiveLeftInset"
     :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
     :style="{ paddingBottom: navBarHeight + 8 }"
+    v-on="pressFeedback"
     @tap="handleTap"
     @pan="handlePan"
   >
@@ -20,13 +20,14 @@
 
     <!-- Map status component - right side -->
     <MapStatusView v-show="isIitcLoaded" class="mapStatusView" width="32%" :mapStatus="mapStatus" />
-  </MDRipple>
+  </StackLayout>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex';
 import PortalStatusView from './PortalStatusView';
 import MapStatusView from './MapStatusView';
+import { pressFeedback } from '@/utils/platform/ui';
 
 const SWIPE_DISTANCE_MINIMUM = 10;
 
@@ -65,6 +66,7 @@ export default {
 
   data() {
     return {
+      pressFeedback,
       isPanning: false,
       isDragging: false,
       lastDeltaY: 0,
@@ -216,6 +218,10 @@ export default {
   .portalStatusView,
   .mapStatusView {
     vertical-align: center;
+  }
+
+  &:highlighted {
+    background-color: $surface-container;
   }
 }
 </style>

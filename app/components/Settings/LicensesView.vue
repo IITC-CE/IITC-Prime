@@ -11,7 +11,6 @@
         separatorColor="transparent"
         @loaded="onLoaded"
         @itemLoading="disableListItemHighlight"
-        @itemTap="onItemTap"
       >
         <template #default="{ item }">
           <GridLayout
@@ -19,7 +18,8 @@
             :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
             columns="*"
             rows="auto, auto"
-            v-on="rowHighlight"
+            v-on="pressFeedback"
+            @tap="onItemTap(item)"
           >
             <Label
               :text="item.moduleName"
@@ -55,7 +55,7 @@ import {
   enableListEdgeToEdge,
   disableListItemHighlight,
   hideListSeparators,
-  rowHighlight,
+  pressFeedback,
 } from '@/utils/platform/ui';
 
 export default {
@@ -69,7 +69,7 @@ export default {
     return {
       licenses: [],
       isIOS,
-      rowHighlight,
+      pressFeedback,
       // Android: the gap is list padding, so rows scroll up to the app bar; the iOS list ignores it
       containerStyle: isAndroid ? {} : { paddingTop: 24 },
       listTopPadding: isAndroid ? 24 : 0,
@@ -123,12 +123,8 @@ export default {
       }));
     },
 
-    onItemTap(args) {
-      const item = this.licenses[args.index];
-
-      if (item?.moduleUrl) {
-        openUrl(item.moduleUrl);
-      }
+    onItemTap(item) {
+      if (item.moduleUrl) openUrl(item.moduleUrl);
     },
   },
 };

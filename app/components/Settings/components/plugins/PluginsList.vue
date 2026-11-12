@@ -37,9 +37,11 @@
           :rows="String(rowHeight)"
           :height="rowHeight"
           width="100%"
+          v-on="rowFeedback"
+          @tap="onRowTap($event, item)"
         >
           <!-- SVG Plugin icon with badge -->
-          <GridLayout col="0" class="plugin-icon-wrapper" @tap="onPluginTap(item)">
+          <GridLayout col="0" class="plugin-icon-wrapper">
             <AsyncSVGIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
             <Label
               v-if="item.user || item.override"
@@ -48,7 +50,7 @@
             />
           </GridLayout>
           <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
+          <StackLayout col="1" class="plugin-info">
             <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
             <Label
               :text="getPluginDescription(item)"
@@ -57,7 +59,12 @@
             />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
+          <GridLayout
+            id="switch-area"
+            col="2"
+            class="switch-area list-item-trailing"
+            @tap="onSwitchTap(item)"
+          >
             <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -73,19 +80,23 @@
             :visibility="item.isLast ? 'collapse' : 'visible'"
           />
         </GridLayout>
-        <Label
+        <GridLayout
           ~rightDrawer
           :class="
             item.user || item.override
               ? 'swipe-drawer swipe-drawer--delete'
               : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
-          class="ms"
           :width="rowHeight"
           :height="rowHeight"
+          v-on="pressFeedback"
           @tap="onSwipeAction(item)"
-        />
+        >
+          <Label
+            class="ms"
+            :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+          />
+        </GridLayout>
       </SwipeMenu>
     </template>
 
@@ -105,9 +116,11 @@
           :rows="String(rowHeight)"
           :height="rowHeight"
           width="100%"
+          v-on="rowFeedback"
+          @tap="onRowTap($event, item)"
         >
           <!-- Raster Plugin icon with badge -->
-          <GridLayout col="0" class="plugin-icon-wrapper" @tap="onPluginTap(item)">
+          <GridLayout col="0" class="plugin-icon-wrapper">
             <AsyncRasterIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
             <Label
               v-if="item.user || item.override"
@@ -116,7 +129,7 @@
             />
           </GridLayout>
           <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info" @tap="onPluginTap(item)">
+          <StackLayout col="1" class="plugin-info">
             <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
             <Label
               :text="getPluginDescription(item)"
@@ -125,7 +138,12 @@
             />
           </StackLayout>
           <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout col="2" class="switch-area list-item-trailing" @tap="onSwitchTap(item)">
+          <GridLayout
+            id="switch-area"
+            col="2"
+            class="switch-area list-item-trailing"
+            @tap="onSwitchTap(item)"
+          >
             <AppSwitch
               class="switch"
               :checked="item.status === 'on'"
@@ -141,19 +159,23 @@
             :visibility="item.isLast ? 'collapse' : 'visible'"
           />
         </GridLayout>
-        <Label
+        <GridLayout
           ~rightDrawer
           :class="
             item.user || item.override
               ? 'swipe-drawer swipe-drawer--delete'
               : 'swipe-drawer swipe-drawer--disable'
           "
-          :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
-          class="ms"
           :width="rowHeight"
           :height="rowHeight"
+          v-on="pressFeedback"
           @tap="onSwipeAction(item)"
-        />
+        >
+          <Label
+            class="ms"
+            :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+          />
+        </GridLayout>
       </SwipeMenu>
     </template>
   </CollectionView>
@@ -164,7 +186,7 @@ import { isIOS, Utils } from '@nativescript/core';
 import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
-import { enableListEdgeToEdge } from '@/utils/platform/ui';
+import { enableListEdgeToEdge, pressFeedback } from '@/utils/platform/ui';
 
 // A two-line row as the platform draws it: Material 3 and iOS 26 give 72, earlier iOS 60
 const ROW_HEIGHT = isIOS && Utils.SDK_VERSION < 26 ? 60 : 72;
@@ -219,10 +241,14 @@ export default {
   },
 
   data() {
-    return { isIOS, rowHeight: ROW_HEIGHT };
+    return { isIOS, pressFeedback, rowHeight: ROW_HEIGHT };
   },
 
   computed: {
+    rowFeedback() {
+      return isIOS ? { touch: this.onRowTouch } : pressFeedback;
+    },
+
     // Combine all data into single array with different item types
     combinedItems() {
       const items = [];
@@ -434,6 +460,26 @@ export default {
       }
     },
 
+    isOnSwitch(args) {
+      const row = args.object;
+      const area = row.getViewById('switch-area');
+      if (isIOS) return args.getX() >= area.getLocationRelativeTo(row).x;
+      // Android hands the row the switch area's tap in the area's coordinates
+      const x = Utils.layout.toDeviceIndependentPixels(args.android.getRawX());
+      return x >= area.getLocationOnScreen().x;
+    },
+
+    // The switch area handles its own taps
+    onRowTap(args, item) {
+      if (!this.isOnSwitch(args)) this.onPluginTap(item);
+    },
+
+    // iOS: the row is not highlighted for the switch, as in system settings
+    onRowTouch(args) {
+      if (args.action === 'down') this.touchOnSwitch = this.isOnSwitch(args);
+      if (!this.touchOnSwitch) pressFeedback.touch(args);
+    },
+
     onPluginTap(item) {
       this.$emit('info', item);
     },
@@ -519,9 +565,12 @@ export default {
 
 .swipe-drawer {
   color: #ffffff;
-  font-size: $icon-size-large;
   text-align: center;
-  vertical-align: center;
+
+  Label {
+    font-size: $icon-size-large;
+    vertical-align: center;
+  }
 
   &--delete {
     background-color: $state-error;
@@ -529,6 +578,15 @@ export default {
 
   &--disable {
     background-color: #666666;
+  }
+
+  // iOS: a pressed swipe action darkens, as in system lists
+  &--delete:highlighted {
+    background-color: darken($state-error, 10%);
+  }
+
+  &--disable:highlighted {
+    background-color: darken(#666666, 10%);
   }
 }
 </style>

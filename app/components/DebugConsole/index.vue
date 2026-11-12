@@ -17,9 +17,10 @@
       @loaded="onCollectionViewLoaded"
     >
       <template #default="{ item }">
-        <MDRipple
+        <StackLayout
           class="log-item"
           :class="'log-' + item.type"
+          v-on="pressFeedback"
           @longPress="copyLogToClipboard(item)"
         >
           <!-- Header row with timestamp, log level and source -->
@@ -27,7 +28,7 @@
 
           <!-- Message content -->
           <Label :text="item.message" textWrap="true" class="log-message" once="true" />
-        </MDRipple>
+        </StackLayout>
       </template>
     </CollectionView>
 
@@ -82,7 +83,7 @@ import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
 import AppButton from '@/components/base/AppButton.vue';
 import { isAndroid, isIOS, Application, CoreTypes, Utils } from '@nativescript/core';
-import { enableListEdgeToEdge } from '@/utils/platform/ui';
+import { enableListEdgeToEdge, pressFeedback } from '@/utils/platform/ui';
 
 // Cubic-bezier [x1, y1, x2, y2] approximating the keyboard's (non-public) easing for the
 // iOS panel translation. Tune to better match the keyboard motion.
@@ -113,6 +114,7 @@ export default {
 
   data() {
     return {
+      pressFeedback,
       command: '',
       isAtBottom: true,
       isUserScrolling: false,
@@ -479,7 +481,10 @@ export default {
   padding: 4 8;
   border-bottom-width: 1;
   border-bottom-color: rgba(255, 255, 255, 0.1);
-  ripple-color: $ripple;
+
+  &:highlighted {
+    background-color: $surface-container;
+  }
 }
 
 .log-header {
