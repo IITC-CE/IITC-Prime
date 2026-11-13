@@ -17,7 +17,7 @@
 
     <template #action-buttons-group="{ item }">
       <GridLayout columns="*, 8, *, 8, *, 8, *" class="block action-buttons-block">
-        <StackLayout
+        <GridLayout
           v-for="(button, index) in item.buttons"
           :key="button.id"
           :col="index * 2"
@@ -26,14 +26,36 @@
           @tap="onActionButtonTap(button.id)"
         >
           <StackLayout class="btn-quick-wrapper">
-            <Label
-              class="ms btn-quick-icon"
-              :text="$filters.fonticon(button.icon)"
-              horizontalAlignment="center"
-            />
-            <Label class="btn-quick-text" :text="button.text" horizontalAlignment="center" />
+            <Label class="ms btn-quick-icon" :text="$filters.fonticon(button.icon)" />
+            <Label class="btn-quick-text" :text="button.text" />
           </StackLayout>
-        </StackLayout>
+        </GridLayout>
+      </GridLayout>
+    </template>
+
+    <template #navigation-segments="{ item }">
+      <GridLayout :columns="segmentColumns" class="block">
+        <GridLayout
+          v-for="(segment, index) in item.segments"
+          :key="segment.id"
+          :col="index * pairStep"
+          class="list-item segment"
+          :class="{
+            'list-item--top-left list-item--bottom-left': index === 0,
+            'list-item--top-right list-item--bottom-right': index === item.segments.length - 1,
+          }"
+          v-on="pressFeedback"
+          @tap="onNavigationItemTap(segment.id)"
+        >
+          <StackLayout class="btn-quick-wrapper">
+            <Label class="ms btn-quick-icon" :text="$filters.fonticon(segment.icon)" />
+            <Label class="btn-quick-text" :text="segment.text" />
+          </StackLayout>
+        </GridLayout>
+        <template v-if="isIOS">
+          <ContentView col="1" class="list-separator list-separator--vertical" />
+          <ContentView col="2" class="list-separator list-separator--vertical" />
+        </template>
       </GridLayout>
     </template>
 
@@ -230,6 +252,12 @@ import {
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
+// iOS joins the cells of a row into one card, Android keeps a gap between them
+const cellColumns = count =>
+  Array(count)
+    .fill('*')
+    .join(isIOS ? ', ' : ', 2, ');
+
 export default {
   name: 'AppControlListView',
   inheritAttrs: false,
@@ -253,8 +281,8 @@ export default {
       isIOS,
       pressFeedback,
       switchRowFeedback,
-      // iOS joins the two cells of a row into one card, Android keeps a gap between them
-      pairColumns: isIOS ? '*, *' : '*, 2, *',
+      pairColumns: cellColumns(2),
+      segmentColumns: cellColumns(3),
       pairStep: isIOS ? 1 : 2,
     };
   },
@@ -274,6 +302,7 @@ export default {
     templateSelector(data) {
       const validTypes = [
         'action-buttons-group',
+        'navigation-segments',
         'navigation-item',
         'select-fields-group',
         'portal-icons-group',
@@ -389,6 +418,9 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
+// Material 3 two-line row height
+$quick-tile-height: 72;
+
 .list-view {
   margin-left: $spacing-panel;
   margin-right: $spacing-panel;
@@ -407,7 +439,8 @@ export default {
 }
 
 .btn-quick {
-  padding: $spacing-s $spacing-xxs;
+  height: $quick-tile-height;
+  padding: 0 $spacing-xxs;
   border-radius: $radius-large;
   background-color: $surface-container;
   box-shadow: 0 2 4 rgba(0, 0, 0, 0.05);
@@ -418,19 +451,35 @@ export default {
 }
 
 .btn-quick-wrapper {
-  padding: $spacing-xs 0;
+  vertical-align: center;
+  // A little above the centre, as in an M3 navigation bar item
+  margin-bottom: $spacing-xxs;
+
+  // The theme's label padding would push the caption out of the tile
+  Label {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 .btn-quick-icon {
   color: $on-surface;
   text-align: center;
-  margin-bottom: $spacing-xxs;
+  // The M3 navigation bar's 8, less the room the fonts leave around the glyphs
+  margin-bottom: 6;
 }
 
 .btn-quick-text {
   font-size: $font-size-small;
   color: $on-surface;
   text-align: center;
+}
+
+// Overrides the row height of .list-item and the gap it leaves under a row
+.list-item.segment {
+  height: $quick-tile-height;
+  padding: 0 $spacing-xs;
+  border-bottom-width: 0;
 }
 
 .select-label {

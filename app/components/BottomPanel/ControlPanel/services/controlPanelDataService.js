@@ -1,6 +1,9 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 import { l } from '@nativescript-community/l';
+import { DEFAULT_PANES } from '@/store/modules/navigation';
+
+const CHAT_PANES = 3;
 
 export class ControlPanelDataService {
   static generateListData(activeButton, store) {
@@ -31,16 +34,24 @@ export class ControlPanelDataService {
       },
     ];
 
-    // Add navigation items from store
-    const filteredPanes = this.getFilteredPanes(store.state.navigation.panes);
-    filteredPanes.forEach((pane, index) => {
+    // Wait for boot: IITC adds no pane for the chats, and plugin rows shown earlier would jump
+    if (!store.state.ui.isIitcLoaded) return data;
+
+    const toItem = pane => ({ id: pane.name, icon: pane.icon, text: l(pane.label) });
+    const panes = store.state.navigation.panes;
+    data.push({
+      type: 'navigation-segments',
+      id: 'navigation-segments',
+      segments: panes.slice(0, CHAT_PANES).map(toItem),
+    });
+
+    const pluginPanes = panes.slice(DEFAULT_PANES.length);
+    pluginPanes.forEach((pane, index) => {
       data.push({
         type: 'navigation-item',
-        id: pane.name,
-        icon: pane.icon,
-        text: l(pane.label),
+        ...toItem(pane),
         isFirst: index === 0,
-        isLast: index === filteredPanes.length - 1,
+        isLast: index === pluginPanes.length - 1,
       });
     });
 
@@ -166,11 +177,5 @@ export class ControlPanelDataService {
     });
 
     return items;
-  }
-
-  static getFilteredPanes(panes) {
-    const START_EXCLUDE = 3;
-    const END_EXCLUDE = 5;
-    return panes.filter((_, index) => index < START_EXCLUDE || index >= END_EXCLUDE);
   }
 }
