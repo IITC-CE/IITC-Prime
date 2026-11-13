@@ -19,6 +19,7 @@
           :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
           :listBottomPadding="mapStateBarHeight + navBarHeight"
+          :openingTrData="mapStateOpeningTrData"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -292,6 +293,10 @@ export default {
      */
     handleBottomSheetReady(bottomSheet) {
       this.bottomSheetInstance = bottomSheet;
+    },
+
+    mapStateOpeningTrData(progress) {
+      return this.$refs.mapStateBar?.openingTrData(progress);
     },
 
     onRestoreButtonLoaded(args) {

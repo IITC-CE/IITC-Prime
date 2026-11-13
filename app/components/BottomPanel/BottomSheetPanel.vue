@@ -132,6 +132,11 @@ export default {
       type: Number,
       default: 0,
     },
+    // (progress from BOTTOM to MIDDLE) => translation data for views outside the sheet
+    openingTrData: {
+      type: Function,
+      default: null,
+    },
   },
 
   data() {
@@ -248,13 +253,19 @@ export default {
      */
     backdropTranslationFunction() {
       return (value, max, progress) => {
-        const bottomStep = this.steps[1] || 0;
+        const [, bottomStep = 0, middleStep = 0] = this.steps;
         const threshold = max > 0 ? bottomStep / max : 0;
         const opacity = progress <= threshold ? 0 : (progress - threshold) / (1 - threshold);
-        return {
+        const data = {
           bottomSheet: { translateY: value },
           backDrop: { opacity },
         };
+        if (this.openingTrData) {
+          const span = middleStep - bottomStep;
+          const opening = span > 0 ? (progress * max - bottomStep) / span : 0;
+          Object.assign(data, this.openingTrData(Math.min(Math.max(opening, 0), 1)));
+        }
+        return data;
       };
     },
 

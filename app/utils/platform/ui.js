@@ -175,6 +175,17 @@ export const enableListEdgeToEdge = listView => {
 };
 
 /**
+ * Loaded handler for a layout whose children are moved into its padding by a transform: Android
+ * clips them at the padding edge, iOS doesn't.
+ * @param {object} args - NativeScript loaded event args
+ */
+export const drawOverPadding = args => {
+  if (isAndroid) {
+    args.object.nativeViewProtected.setClipToPadding(false);
+  }
+};
+
+/**
  * Disable iOS UITableViewCell selection highlight on list items.
  * On iOS, cells flash white on tap by default (UITableViewCellSelectionStyleDefault).
  * Call from the `@itemLoading` event handler of the ListView.

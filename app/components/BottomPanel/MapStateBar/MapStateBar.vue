@@ -15,11 +15,13 @@
       :style="{ paddingBottom: navBarHeight + 8 }"
       :isUserInteractionEnabled="isIitcLoaded"
       v-on="pressFeedback"
+      @loaded="drawOverPadding"
       @tap="handleTap"
       @pan="handlePan"
     >
       <!-- Portal status component - left side -->
       <PortalStatusView
+        ref="portalStatusView"
         class="portalStatusView"
         :width="isIitcLoaded ? '68%' : '100%'"
         :portalStatus="portalStatus"
@@ -27,12 +29,15 @@
 
       <!-- Map status component - right side -->
       <MapStatusView
+        ref="mapStatusView"
         v-show="isIitcLoaded"
         class="mapStatusView"
         width="32%"
         :mapStatus="mapStatus"
       />
     </StackLayout>
+
+    <ContentView ref="divider" class="divider" isUserInteractionEnabled="false" />
   </GridLayout>
 </template>
 
@@ -40,9 +45,12 @@
 import { mapState, mapActions } from 'vuex';
 import PortalStatusView from './PortalStatusView';
 import MapStatusView from './MapStatusView';
-import { pressFeedback } from '@/utils/platform/ui';
+import { drawOverPadding, pressFeedback } from '@/utils/platform/ui';
 
 const SWIPE_DISTANCE_MINIMUM = 10;
+// Content shift under the divider once the panel is open. Halved without a bottom inset
+// (three-button navigation in landscape, home-button iPhones): only the bar's padding is below
+const OPEN_CONTENT_OFFSET = 6;
 
 export default {
   name: 'MapStateBar',
@@ -92,6 +100,7 @@ export default {
       mapStatus: state => state.map.mapStatus,
       portalStatus: state => state.map.portalStatus,
       isIitcLoaded: state => state.ui.isIitcLoaded,
+      hasBottomInset: state => state.ui.screenSafeArea.bottom > 0,
     }),
 
     /**
@@ -110,6 +119,8 @@ export default {
     ...mapActions({
       setCurrentPane: 'navigation/setCurrentPane',
     }),
+
+    drawOverPadding,
 
     /**
      * Handle pan gesture on MapStateBar
@@ -199,6 +210,22 @@ export default {
     },
 
     /**
+     * Panel translation data for the views that follow its opening (0 at BOTTOM, 1 at MIDDLE).
+     * Transforms only: a padding change would relayout the screen on every frame of the drag.
+     */
+    openingTrData(progress) {
+      const divider = this.$refs.divider?.nativeView;
+      if (!divider) return null;
+      const offset = this.hasBottomInset ? OPEN_CONTENT_OFFSET : OPEN_CONTENT_OFFSET / 2;
+      const translateY = offset * progress;
+      return {
+        mapStateDivider: { target: divider, opacity: progress },
+        mapStatePortal: { target: this.$refs.portalStatusView.$el.nativeView, translateY },
+        mapStateMap: { target: this.$refs.mapStatusView.$el.nativeView, translateY },
+      };
+    },
+
+    /**
      * Handle tap gesture
      */
     handleTap() {
@@ -236,5 +263,12 @@ export default {
   &:highlighted {
     background-color: $surface-container;
   }
+}
+
+.divider {
+  height: 1;
+  vertical-align: top;
+  background-color: $accent-border;
+  opacity: 0;
 }
 </style>
