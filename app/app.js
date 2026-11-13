@@ -13,7 +13,6 @@ import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebViewX from '@modos189/nativescript-webview-x/vue';
 import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
-import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
 import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
 import { initSentry, setupVueErrorHandler } from './sentry';
@@ -92,6 +91,5 @@ app.use(ButtonPlugin);
 app.use(SwitchPlugin);
 if (isAndroid) app.use(BottomSheetPlugin);
 app.use(PersistentBottomSheetPlugin);
-app.use(SwipeMenuPlugin);
 
 app.start();

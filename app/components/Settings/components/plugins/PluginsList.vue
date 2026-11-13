@@ -23,160 +23,112 @@
 
     <!-- Template for plugin items with SVG icons -->
     <template #plugin-svg="{ item }">
-      <SwipeMenu
-        :startingSide="item.startingSide"
-        :translationFunction="drawerTranslationFunction"
-        :rightSwipeDistance="0"
-        backDropEnabled="false"
+      <GridLayout
+        class="list-item plugin-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        columns="auto, *, auto"
+        :rows="String(rowHeight)"
+        :height="rowHeight"
+        width="100%"
+        v-on="rowListeners"
+        @tap="onRowTap($event, item)"
+        @contextMenu="onContextMenu($event, item)"
       >
-        <GridLayout
-          ~mainContent
-          class="list-item plugin-item"
-          :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, auto"
-          :rows="String(rowHeight)"
-          :height="rowHeight"
-          width="100%"
-          v-on="rowFeedback"
-          @tap="onRowTap($event, item)"
-        >
-          <!-- SVG Plugin icon with badge -->
-          <GridLayout col="0" class="plugin-icon-wrapper">
-            <AsyncSVGIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
-            <Label
-              v-if="item.user || item.override"
-              class="plugin-badge"
-              :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
-            />
-          </GridLayout>
-          <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info">
-            <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
-            <Label
-              :text="getPluginDescription(item)"
-              class="list-item-subtitle plugin-description"
-              once="true"
-            />
-          </StackLayout>
-          <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout
-            id="switch-area"
-            col="2"
-            class="switch-area list-item-trailing"
-            @tap="onSwitchTap(item)"
-          >
-            <AppSwitch
-              class="switch"
-              :checked="item.status === 'on'"
-              :isEnabled="!item.isCore"
-              isUserInteractionEnabled="false"
-            />
-          </GridLayout>
-          <ContentView
-            v-if="isIOS"
-            col="1"
-            colSpan="2"
-            class="list-separator"
-            :visibility="item.isLast ? 'collapse' : 'visible'"
-          />
-        </GridLayout>
-        <GridLayout
-          ~rightDrawer
-          :class="
-            item.user || item.override
-              ? 'swipe-drawer swipe-drawer--delete'
-              : 'swipe-drawer swipe-drawer--disable'
-          "
-          :width="rowHeight"
-          :height="rowHeight"
-          v-on="pressFeedback"
-          @tap="onSwipeAction(item)"
-        >
+        <!-- SVG Plugin icon with badge -->
+        <GridLayout col="0" class="plugin-icon-wrapper">
+          <AsyncSVGIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
           <Label
-            class="ms"
-            :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+            v-if="item.user || item.override"
+            class="plugin-badge"
+            :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
           />
         </GridLayout>
-      </SwipeMenu>
+        <!-- Plugin info -->
+        <StackLayout col="1" class="plugin-info">
+          <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
+          <Label
+            :text="getPluginDescription(item)"
+            class="list-item-subtitle plugin-description"
+            once="true"
+          />
+        </StackLayout>
+        <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
+        <GridLayout
+          id="switch-area"
+          col="2"
+          class="switch-area list-item-trailing"
+          @tap="onSwitchTap(item)"
+        >
+          <AppSwitch
+            class="switch"
+            :checked="item.status === 'on'"
+            :isEnabled="!item.isCore"
+            isUserInteractionEnabled="false"
+          />
+        </GridLayout>
+        <ContentView
+          v-if="isIOS"
+          col="1"
+          colSpan="2"
+          class="list-separator"
+          :visibility="item.isLast ? 'collapse' : 'visible'"
+        />
+      </GridLayout>
     </template>
 
     <!-- Template for plugin items with raster icons -->
     <template #plugin-raster="{ item }">
-      <SwipeMenu
-        :startingSide="item.startingSide"
-        :translationFunction="drawerTranslationFunction"
-        :rightSwipeDistance="0"
-        backDropEnabled="false"
+      <GridLayout
+        class="list-item plugin-item"
+        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        columns="auto, *, auto"
+        :rows="String(rowHeight)"
+        :height="rowHeight"
+        width="100%"
+        v-on="rowListeners"
+        @tap="onRowTap($event, item)"
+        @contextMenu="onContextMenu($event, item)"
       >
-        <GridLayout
-          ~mainContent
-          class="list-item plugin-item"
-          :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
-          columns="auto, *, auto"
-          :rows="String(rowHeight)"
-          :height="rowHeight"
-          width="100%"
-          v-on="rowFeedback"
-          @tap="onRowTap($event, item)"
-        >
-          <!-- Raster Plugin icon with badge -->
-          <GridLayout col="0" class="plugin-icon-wrapper">
-            <AsyncRasterIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
-            <Label
-              v-if="item.user || item.override"
-              class="plugin-badge"
-              :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
-            />
-          </GridLayout>
-          <!-- Plugin info -->
-          <StackLayout col="1" class="plugin-info">
-            <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
-            <Label
-              :text="getPluginDescription(item)"
-              class="list-item-subtitle plugin-description"
-              once="true"
-            />
-          </StackLayout>
-          <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-          <GridLayout
-            id="switch-area"
-            col="2"
-            class="switch-area list-item-trailing"
-            @tap="onSwitchTap(item)"
-          >
-            <AppSwitch
-              class="switch"
-              :checked="item.status === 'on'"
-              :isEnabled="!item.isCore"
-              isUserInteractionEnabled="false"
-            />
-          </GridLayout>
-          <ContentView
-            v-if="isIOS"
-            col="1"
-            colSpan="2"
-            class="list-separator"
-            :visibility="item.isLast ? 'collapse' : 'visible'"
-          />
-        </GridLayout>
-        <GridLayout
-          ~rightDrawer
-          :class="
-            item.user || item.override
-              ? 'swipe-drawer swipe-drawer--delete'
-              : 'swipe-drawer swipe-drawer--disable'
-          "
-          :width="rowHeight"
-          :height="rowHeight"
-          v-on="pressFeedback"
-          @tap="onSwipeAction(item)"
-        >
+        <!-- Raster Plugin icon with badge -->
+        <GridLayout col="0" class="plugin-icon-wrapper">
+          <AsyncRasterIcon :src="getPluginIcon(item)" icon-class="plugin-icon" />
           <Label
-            class="ms"
-            :text="$filters.fonticon(item.user || item.override ? 'ms-delete' : 'ms-block')"
+            v-if="item.user || item.override"
+            class="plugin-badge"
+            :class="item.override ? 'plugin-badge--override' : 'plugin-badge--user'"
           />
         </GridLayout>
-      </SwipeMenu>
+        <!-- Plugin info -->
+        <StackLayout col="1" class="plugin-info">
+          <Label :text="getPluginName(item)" class="list-item-title plugin-name" once="true" />
+          <Label
+            :text="getPluginDescription(item)"
+            class="list-item-subtitle plugin-description"
+            once="true"
+          />
+        </StackLayout>
+        <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
+        <GridLayout
+          id="switch-area"
+          col="2"
+          class="switch-area list-item-trailing"
+          @tap="onSwitchTap(item)"
+        >
+          <AppSwitch
+            class="switch"
+            :checked="item.status === 'on'"
+            :isEnabled="!item.isCore"
+            isUserInteractionEnabled="false"
+          />
+        </GridLayout>
+        <ContentView
+          v-if="isIOS"
+          col="1"
+          colSpan="2"
+          class="list-separator"
+          :visibility="item.isLast ? 'collapse' : 'visible'"
+        />
+      </GridLayout>
     </template>
   </CollectionView>
 </template>
@@ -187,6 +139,8 @@ import AsyncSVGIcon from './AsyncSVGIcon.vue';
 import AsyncRasterIcon from './AsyncRasterIcon.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { enableListEdgeToEdge, pressFeedback } from '@/utils/platform/ui';
+import { contextMenu } from '@/utils/platform/context-menu';
+import { shareContent } from '@/utils/platform/system';
 
 // A two-line row as the platform draws it: Material 3 and iOS 26 give 72, earlier iOS 60
 const ROW_HEIGHT = isIOS && Utils.SDK_VERSION < 26 ? 60 : 72;
@@ -241,12 +195,12 @@ export default {
   },
 
   data() {
-    return { isIOS, pressFeedback, rowHeight: ROW_HEIGHT };
+    return { isIOS, rowHeight: ROW_HEIGHT };
   },
 
   computed: {
-    rowFeedback() {
-      return isIOS ? { touch: this.onRowTouch } : pressFeedback;
+    rowListeners() {
+      return { ...(isIOS ? { touch: this.onRowTouch } : pressFeedback), ...contextMenu };
     },
 
     // Combine all data into single array with different item types
@@ -319,9 +273,6 @@ export default {
   },
 
   watch: {
-    combinedItems() {
-      this.collectionViewRef?.closeCurrentMenu();
-    },
     underNavigationBar() {
       this.updateIosContentInset();
     },
@@ -376,20 +327,47 @@ export default {
       return plugin.icon64 || plugin.icon || '~/assets/icons/userscript-no-icon.png';
     },
 
-    drawerTranslationFunction(side, width, value, delta, progress) {
-      return {
-        mainContent: {
-          translateX: side === 'right' ? -delta : delta,
+    // The switch and the actions of the plugin sheet
+    onContextMenu(args, item) {
+      const name = this.getPluginName(item);
+      const on = item.status === 'on';
+      const share = url => () => shareContent(url, 'url', name);
+      args.title = name;
+      args.actions = [
+        !item.isCore && {
+          title: this.$L(on ? 'plugins.menu.disable' : 'plugins.menu.enable'),
+          icon: on ? 'xmark.circle' : 'checkmark.circle',
+          onSelect: () => this.onSwitchTap(item),
         },
-      };
-    },
-
-    onSwipeAction(item) {
-      if (item.user || item.override) {
-        this.$emit('delete', item);
-      } else {
-        this.collectionViewRef?.closeCurrentMenu();
-      }
+        item.homepageURL && {
+          title: this.$L('plugin_info.open_homepage'),
+          icon: 'safari',
+          onSelect: () => Utils.openUrl(item.homepageURL),
+        },
+        item.issueTracker && {
+          title: this.$L('plugin_info.open_issue_tracker'),
+          icon: 'ladybug',
+          onSelect: () => Utils.openUrl(item.issueTracker),
+        },
+        item.downloadURL && {
+          title: this.$L('plugin_info.share_download'),
+          icon: 'square.and.arrow.up',
+          onSelect: share(item.downloadURL),
+        },
+        item.updateURL && {
+          title: this.$L('plugin_info.share_update'),
+          icon: 'square.and.arrow.up',
+          onSelect: share(item.updateURL),
+        },
+        (item.user || item.override) && {
+          title: this.$L(
+            item.override ? 'plugin_info.remove_override' : 'plugin_info.delete_plugin'
+          ),
+          icon: item.override ? 'arrow.uturn.backward' : 'trash',
+          destructive: true,
+          onSelect: () => this.$emit('delete', item),
+        },
+      ].filter(Boolean);
     },
 
     onLoaded(args) {
@@ -561,32 +539,5 @@ export default {
 .switch {
   vertical-align: center;
   horizontal-align: center;
-}
-
-.swipe-drawer {
-  color: #ffffff;
-  text-align: center;
-
-  Label {
-    font-size: $icon-size-large;
-    vertical-align: center;
-  }
-
-  &--delete {
-    background-color: $state-error;
-  }
-
-  &--disable {
-    background-color: #666666;
-  }
-
-  // iOS: a pressed swipe action darkens, as in system lists
-  &--delete:highlighted {
-    background-color: darken($state-error, 10%);
-  }
-
-  &--disable:highlighted {
-    background-color: darken(#666666, 10%);
-  }
 }
 </style>
