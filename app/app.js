@@ -26,7 +26,7 @@ import { setAndroidDefaultUA } from '~/utils/webview/user-agent';
 initializeTracing();
 initSentry();
 
-loadLocaleJSON(require('./i18n/en.default.json'));
+loadLocaleJSON('en', require('./i18n/en.default.json'));
 
 // Install BottomSheet plugins. iOS shows sheets as system page sheets, see showSheet
 if (isAndroid) installBottomSheet();
