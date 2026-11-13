@@ -164,6 +164,7 @@
   "search.hint": "Search...",
 
   "debug.command_hint": "Enter JavaScript command...",
+  "debug.copy": "Copy",
 
   "select_field.no_elements": "No elements",
   "select_field.select": "Select...",

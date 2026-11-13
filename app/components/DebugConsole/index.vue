@@ -17,12 +17,7 @@
       @loaded="onCollectionViewLoaded"
     >
       <template #default="{ item }">
-        <StackLayout
-          class="log-item"
-          :class="'log-' + item.type"
-          v-on="pressFeedback"
-          @longPress="copyLogToClipboard(item)"
-        >
+        <StackLayout class="log-item" :class="'log-' + item.type" v-on="rowListeners(item)">
           <!-- Header row with timestamp, log level and source -->
           <Label :text="formatLogHeader(item)" once="true" class="log-header" />
 
@@ -82,8 +77,9 @@ import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
 import AppButton from '@/components/base/AppButton.vue';
-import { isAndroid, isIOS, Application, CoreTypes, Utils } from '@nativescript/core';
+import { isAndroid, isIOS, Application, CoreTypes, Utils, unsetValue } from '@nativescript/core';
 import { enableListEdgeToEdge, pressFeedback } from '@/utils/platform/ui';
+import { contextMenu } from '@/utils/platform/context-menu';
 
 // Cubic-bezier [x1, y1, x2, y2] approximating the keyboard's (non-public) easing for the
 // iOS panel translation. Tune to better match the keyboard motion.
@@ -114,7 +110,6 @@ export default {
 
   data() {
     return {
-      pressFeedback,
       command: '',
       isAtBottom: true,
       isUserScrolling: false,
@@ -389,10 +384,32 @@ export default {
       }
     },
 
-    // Copy log text to clipboard on long press
-    async copyLogToClipboard(item) {
-      const fullText = this.getFullLogText(item);
-      await copyToClipboard(fullText, 'Log copied to clipboard');
+    // iOS copies from a context menu, as system lists do, and needs no toast
+    rowListeners(item) {
+      if (!isIOS)
+        return { ...pressFeedback, longPress: args => this.copyLogOnLongPress(args, item) };
+      const copy = () => copyToClipboard(this.getFullLogText(item));
+      return {
+        ...pressFeedback,
+        ...contextMenu,
+        contextMenu: args =>
+          (args.actions = [{ title: this.$L('debug.copy'), icon: 'doc.on.doc', onSelect: copy }]),
+      };
+    },
+
+    // Android: the ripple, which stays while the finger is down, gives way to a flash that shows
+    // the copy
+    async copyLogOnLongPress(args, item) {
+      const view = args.object;
+      view.nativeViewProtected.setPressed(false);
+      view.nativeViewProtected.performHapticFeedback(
+        android.view.HapticFeedbackConstants.LONG_PRESS
+      );
+      copyToClipboard(this.getFullLogText(item), 'Log copied to clipboard');
+      view.backgroundColor = 'rgba(38, 166, 154, 0.3)';
+      await view.animate({ backgroundColor: 'rgba(38, 166, 154, 0)', duration: 500 });
+      // A cancel restores the flash color, on a row the list reuses for other items
+      view.backgroundColor = unsetValue;
     },
   },
 
