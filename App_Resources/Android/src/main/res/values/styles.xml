@@ -125,17 +125,12 @@
         <item name="colorOnSurfaceVariant">@color/ns_primary_light</item>
     </style>
 
-    <!-- Custom dialog style -->
-    <style name="AppAlertDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+    <!-- The app theme's primary is the page color; dialogs take the accent -->
+    <style name="AppAlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/ns_accent</item>
-        <item name="colorAccent">@color/ns_primary_light</item>
-        <item name="buttonBarPositiveButtonStyle">@style/AppDialogButtonStyle</item>
-        <item name="buttonBarNegativeButtonStyle">@style/AppDialogButtonStyle</item>
-        <item name="buttonBarNeutralButtonStyle">@style/AppDialogButtonStyle</item>
-    </style>
-
-    <style name="AppDialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/ns_primary_light</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_container</item>
+        <item name="colorOnSurface">@color/ns_text</item>
+        <item name="colorOnSurfaceVariant">@color/ns_primary_light</item>
     </style>
 
     <!-- Bottom sheet dialog theme -->
