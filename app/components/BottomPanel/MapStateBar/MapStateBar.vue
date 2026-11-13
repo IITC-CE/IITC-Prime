@@ -45,6 +45,7 @@
 import { mapState, mapActions } from 'vuex';
 import PortalStatusView from './PortalStatusView';
 import MapStatusView from './MapStatusView';
+import { VelocityTracker } from '@nativescript-community/ui-persistent-bottomsheet/VelocityTracker';
 import { drawOverPadding, pressFeedback } from '@/utils/platform/ui';
 
 const SWIPE_DISTANCE_MINIMUM = 10;
@@ -91,7 +92,6 @@ export default {
       isPanning: false,
       isDragging: false,
       lastDeltaY: 0,
-      initialTranslationY: 0,
     };
   },
 
@@ -136,7 +136,8 @@ export default {
       if (
         typeof this.bottomSheetRef.constrainY !== 'function' ||
         typeof this.bottomSheetRef.computeTranslationData !== 'function' ||
-        typeof this.bottomSheetRef.applyTrData !== 'function'
+        typeof this.bottomSheetRef.applyTrData !== 'function' ||
+        typeof this.bottomSheetRef.snapToStep !== 'function'
       ) {
         console.error('[MapStateBar] BottomSheet API methods not available');
         return;
@@ -150,12 +151,12 @@ export default {
           this.lastDeltaY = 0;
           this.isDragging = false;
           this.isPanning = false;
-
-          // Save initial translation
-          this.initialTranslationY = this.bottomSheetRef.translationY || 0;
+          this.velocityTracker = VelocityTracker.obtain();
           break;
 
         case 2: // Pan moving
+          this.velocityTracker?.addMovement(0, deltaY);
+
           // Check if movement exceeds threshold
           if (absDeltaY > SWIPE_DISTANCE_MINIMUM && !this.isDragging) {
             this.isDragging = true;
@@ -173,8 +174,8 @@ export default {
             // Update position
             this.bottomSheetRef.translationY = newTranslationY;
 
-            // Compute and apply transformation
-            const trData = this.bottomSheetRef.computeTranslationData();
+            // false: hiding the closed sheet under the iOS safe area would make it jump at the bottom
+            const trData = this.bottomSheetRef.computeTranslationData(false);
             this.bottomSheetRef.applyTrData(trData);
 
             this.lastDeltaY = deltaY;
@@ -185,13 +186,15 @@ export default {
           if (this.isDragging) {
             // Calculate final position with remaining delta
             const y = deltaY - this.lastDeltaY;
-            const totalDelta = (this.bottomSheetRef.translationY || 0) + y;
+            const position = -((this.bottomSheetRef.translationY || 0) + y);
 
-            // Animate to nearest step
-            if (typeof this.bottomSheetRef.computeAndAnimateEndGestureAnimation === 'function') {
-              this.bottomSheetRef.computeAndAnimateEndGestureAnimation(-totalDelta);
-            }
+            this.velocityTracker?.addMovement(0, deltaY);
+            this.velocityTracker?.computeCurrentVelocity(1000);
+            const velocityUp = -(this.velocityTracker?.getYVelocity() ?? 0);
+
+            this.bottomSheetRef.snapToStep('map-state-bar', position, velocityUp);
           }
+          this.velocityTracker = null;
 
           // Reset state with delay to prevent tap
           setTimeout(() => {
@@ -202,6 +205,7 @@ export default {
           break;
 
         case 4: // Pan cancelled
+          this.velocityTracker = null;
           this.isDragging = false;
           this.isPanning = false;
           this.lastDeltaY = 0;
