@@ -4,9 +4,19 @@ import { l } from '@nativescript-community/l';
 import { DEFAULT_PANES } from '@/store/modules/navigation';
 
 const CHAT_PANES = 3;
+// Unlike the blocks, these rows end without a gap: the list would run into the map state bar
+const ROWS_WITHOUT_GAP = ['navigation-item', 'switch-single'];
 
 export class ControlPanelDataService {
   static generateListData(activeButton, store) {
+    const data = this.getItems(activeButton, store);
+    if (ROWS_WITHOUT_GAP.includes(data[data.length - 1]?.type)) {
+      data.push({ type: 'list-end', id: 'list-end' });
+    }
+    return data;
+  }
+
+  static getItems(activeButton, store) {
     switch (activeButton) {
       case 'quick':
       case null:

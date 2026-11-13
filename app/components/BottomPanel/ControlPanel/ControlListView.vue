@@ -240,6 +240,11 @@
         />
       </GridLayout>
     </template>
+
+    <!-- Not a ContentView: the Android ListView wraps a root that is not a layout, and the gap doubled -->
+    <template #list-end>
+      <StackLayout class="list-end" />
+    </template>
   </ListView>
 </template>
 
@@ -313,6 +318,7 @@ export default {
         'portal-icons-group',
         'switch-pair',
         'switch-single',
+        'list-end',
       ];
       const itemType = data.item.type;
       return validTypes.includes(itemType) ? itemType : 'default';
@@ -557,6 +563,10 @@ $quick-tile-height: 72;
   &--last {
     padding-bottom: $spacing-m;
   }
+}
+
+.list-end {
+  height: $spacing-m;
 }
 
 // Smaller than row text elsewhere, so that a name and a switch fit into half a row
