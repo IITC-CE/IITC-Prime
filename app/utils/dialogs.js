@@ -6,6 +6,7 @@ import {
   confirm as confirmNative,
   alert as alertNative,
   action as actionNative,
+  prompt as promptNative,
 } from '@nativescript/core/ui/dialogs';
 
 // The core builds framework dialogs on Android, which take no Material 3 theme
@@ -13,6 +14,7 @@ const showMaterialDialog = ({
   title,
   message,
   items,
+  view,
   okButtonText,
   cancelButtonText,
   ok,
@@ -33,10 +35,12 @@ const showMaterialDialog = ({
     } else if (message) {
       builder.setMessage(message);
     }
+    const content = view?.(builder.getContext());
+    if (content) builder.setView(content);
     if (okButtonText) {
       builder.setPositiveButton(
         okButtonText,
-        new DialogInterface.OnClickListener({ onClick: () => resolve(ok?.()) })
+        new DialogInterface.OnClickListener({ onClick: () => resolve(ok?.(content)) })
       );
     }
     // Closes the dialog without a listener
@@ -45,7 +49,14 @@ const showMaterialDialog = ({
     builder.setOnDismissListener(
       new DialogInterface.OnDismissListener({ onDismiss: () => resolve(dismissed) })
     );
-    builder.show();
+    const dialog = builder.create();
+    // Otherwise the keyboard waits for a tap on the field
+    if (content) {
+      dialog
+        .getWindow()
+        .setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+    }
+    dialog.show();
   });
 
 /**
@@ -95,5 +106,45 @@ export function action(options) {
     ...options,
     items: options.actions,
     dismissed: options.cancelButtonText,
+  });
+}
+
+/**
+ * Show a dialog with a text field
+ *
+ * @param {Object} options - Dialog options
+ * @param {string} [options.title] - Dialog title
+ * @param {string} [options.message] - Dialog message
+ * @param {string} [options.defaultText] - Initial text of the field
+ * @param {string} [options.okButtonText='OK'] - OK button text
+ * @param {string} [options.cancelButtonText='Cancel'] - Cancel button text
+ * @returns {Promise<string|null>} The text if OK was pressed, null otherwise
+ */
+export function prompt(options) {
+  options = {
+    defaultText: '',
+    okButtonText: l('dialog.ok'),
+    cancelButtonText: l('dialog.cancel'),
+    ...options,
+  };
+  if (!isAndroid) return promptNative(options).then(({ result, text }) => (result ? text : null));
+  const { TextInputLayout, TextInputEditText } = com.google.android.material.textfield;
+  return showMaterialDialog({
+    ...options,
+    view: context => {
+      const layout = new TextInputLayout(context);
+      // The dialog's own content inset
+      const inset = Utils.layout.toDevicePixels(24);
+      layout.setPadding(inset, 0, inset, 0);
+      const input = new TextInputEditText(layout.getContext());
+      input.setSingleLine(true);
+      input.setText(options.defaultText);
+      input.selectAll();
+      layout.addView(input);
+      input.requestFocus();
+      return layout;
+    },
+    ok: layout => String(layout.getEditText().getText()),
+    dismissed: null,
   });
 }

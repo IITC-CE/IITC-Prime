@@ -21,7 +21,11 @@ import { isAndroid } from '@nativescript/core';
 import { applyWebViewSettings } from '@/utils/webview/webview-settings';
 import { isMainWebViewUrlAllowed, popupUrlTarget } from '@/utils/url-config';
 import { getBaseUserAgent, getFakeDesktopUserAgent } from '@/utils/webview/user-agent';
-import { alert as customAlert, confirm as customConfirm } from '@/utils/dialogs';
+import {
+  alert as customAlert,
+  confirm as customConfirm,
+  prompt as customPrompt,
+} from '@/utils/dialogs';
 import { mapState } from 'vuex';
 
 export default {
@@ -119,6 +123,7 @@ export default {
       this.webViewInstance.off('popupNavigate');
       this.webViewInstance.off('webAlert');
       this.webViewInstance.off('webConfirm');
+      this.webViewInstance.off('webPrompt');
 
       this.webViewInstance.on('webAlert', async args => {
         await customAlert({ message: args.message });
@@ -128,6 +133,10 @@ export default {
       this.webViewInstance.on('webConfirm', async args => {
         const result = await customConfirm({ message: args.message });
         args.callback(result);
+      });
+
+      this.webViewInstance.on('webPrompt', async args => {
+        args.callback(await customPrompt({ message: args.message, defaultText: args.defaultText }));
       });
 
       // Setup JSBridge event handler
