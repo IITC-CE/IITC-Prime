@@ -273,7 +273,7 @@ export default {
      * Effective bottom padding for the panel content area.
      * listBottomPadding reserves space above MapStateBar/navBar.
      * The extra gap (screenHeight - topPosition) compensates for the portion
-     * of the ListView that extends below the visible screen at TOP position,
+     * of the list that extends below the visible screen at TOP position,
      * ensuring content can scroll far enough to clear the MapStateBar.
      */
     effectiveListPaddingBottom() {

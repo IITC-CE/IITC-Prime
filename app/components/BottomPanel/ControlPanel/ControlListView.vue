@@ -1,15 +1,12 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <ListView
+  <CollectionView
     v-bind="$attrs"
     class="list-view"
     :items="listItems"
     :itemTemplateSelector="templateSelector"
-    separatorColor="#00000000"
-    iosEstimatedRowHeight="44"
-    @loaded="hideListSeparators"
-    @itemLoading="disableListItemHighlight"
+    @loaded="onListLoaded"
   >
     <template #default="{ item }">
       <Label text="Unknown item type" />
@@ -241,11 +238,10 @@
       </GridLayout>
     </template>
 
-    <!-- Not a ContentView: the Android ListView wraps a root that is not a layout, and the gap doubled -->
     <template #list-end>
       <StackLayout class="list-end" />
     </template>
-  </ListView>
+  </CollectionView>
 </template>
 
 <script>
@@ -253,12 +249,7 @@ import SelectField from '@/components/base/SelectField.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { $navigateTo } from 'nativescript-vue';
 import { isIOS } from '@nativescript/core';
-import {
-  disableListItemHighlight,
-  hideListSeparators,
-  pressFeedback,
-  switchRowFeedback,
-} from '@/utils/platform/ui';
+import { pressFeedback, switchRowFeedback } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -298,8 +289,13 @@ export default {
   },
 
   methods: {
-    disableListItemHighlight,
-    hideListSeparators,
+    // At the full step the sheet follows the list's own pan, which UIKit starts only when the
+    // content can scroll or bounce: a short list would hold the sheet up
+    onListLoaded(args) {
+      if (args.object.ios) {
+        args.object.ios.alwaysBounceVertical = true;
+      }
+    },
 
     onPortalRowLoaded(args) {
       if (args.object.android) {
@@ -308,8 +304,7 @@ export default {
       }
     },
 
-    // Template selector function - determines which template to use
-    templateSelector(data) {
+    templateSelector(item) {
       const validTypes = [
         'action-buttons-group',
         'navigation-segments',
@@ -320,8 +315,7 @@ export default {
         'switch-single',
         'list-end',
       ];
-      const itemType = data.item.type;
-      return validTypes.includes(itemType) ? itemType : 'default';
+      return validTypes.includes(item.type) ? item.type : 'default';
     },
 
     onActionButtonTap(buttonId) {
@@ -508,6 +502,7 @@ $quick-tile-height: 72;
 }
 
 .select-label {
+  padding-left: $spacing-xs;
   font-size: $font-size-small;
   color: $on-surface-variant;
 }

@@ -134,7 +134,7 @@ export class ControlPanelDataService {
     // Read only static props (layerId, name) - NOT active.
     // active is read directly from the store in templates so that
     // SET_OVERLAY_LAYER_PROPERTY does not invalidate currentListItems
-    // and trigger a full ListView rebind.
+    // and trigger a full list rebind.
     const filteredLayers = overlayLayers
       .map((layer, index) => ({ layerId: layer.layerId, name: layer.name, index }))
       .filter(layer => layer.index > 8);
