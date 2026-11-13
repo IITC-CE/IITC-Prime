@@ -11,7 +11,6 @@ import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebViewX from '@modos189/nativescript-webview-x/vue';
-import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
 import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
@@ -44,12 +43,6 @@ registerElement('MaterialSearchView', () => require('~/utils/platform/material')
 registerElement('SystemButton', () => require('~/utils/platform/system-button').SystemButton);
 registerElement('MenuButton', () => require('~/utils/platform/menu-button').MenuButton);
 registerElement('RadioMark', () => require('~/utils/platform/radio-mark').RadioMark);
-registerElement('CheckBox', () => CheckBox, {
-  model: {
-    prop: 'checked',
-    event: 'checkedChange',
-  },
-});
 
 if (isAndroid) {
   try {
