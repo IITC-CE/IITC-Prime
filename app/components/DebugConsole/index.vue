@@ -405,7 +405,7 @@ export default {
       view.nativeViewProtected.performHapticFeedback(
         android.view.HapticFeedbackConstants.LONG_PRESS
       );
-      copyToClipboard(this.getFullLogText(item), 'Log copied to clipboard');
+      copyToClipboard(this.getFullLogText(item), this.$L('debug.log_copied'));
       view.backgroundColor = 'rgba(38, 166, 154, 0.3)';
       await view.animate({ backgroundColor: 'rgba(38, 166, 154, 0)', duration: 500 });
       // A cancel restores the flash color, on a row the list reuses for other items

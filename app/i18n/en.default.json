@@ -165,6 +165,7 @@
 
   "debug.command_hint": "Enter JavaScript command...",
   "debug.copy": "Copy",
+  "debug.log_copied": "Log copied to clipboard",
 
   "select_field.no_elements": "No elements",
   "select_field.select": "Select...",
