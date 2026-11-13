@@ -43,6 +43,7 @@
           :class="{
             'list-item--top-left list-item--bottom-left': index === 0,
             'list-item--top-right list-item--bottom-right': index === item.segments.length - 1,
+            'list-item--active': segment.id === $store.state.navigation.currentPane,
           }"
           v-on="pressFeedback"
           @tap="onNavigationItemTap(segment.id)"
@@ -62,7 +63,11 @@
     <template #navigation-item="{ item }">
       <StackLayout
         class="list-item"
-        :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
+        :class="{
+          'list-item--first': item.isFirst,
+          'list-item--last': item.isLast,
+          'list-item--active': item.id === $store.state.navigation.currentPane,
+        }"
         v-on="pressFeedback"
         @tap="onNavigationItemTap(item.id)"
       >
@@ -480,6 +485,20 @@ $quick-tile-height: 72;
   height: $quick-tile-height;
   padding: 0 $spacing-xs;
   border-bottom-width: 0;
+}
+
+// The open pane
+.list-item--active {
+  background-color: mix($accent, $surface-container, 22%);
+
+  // Outweighs .ns-ios .list-item:highlighted
+  .ns-ios &:highlighted {
+    background-color: mix($accent, $surface-container, 32%);
+  }
+
+  .ms {
+    color: $accent;
+  }
 }
 
 .select-label {
