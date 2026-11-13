@@ -1,26 +1,39 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout
-    class="map-state-bar"
-    orientation="horizontal"
+  <GridLayout
     :marginLeft="effectiveLeftInset"
     :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
-    :style="{ paddingBottom: navBarHeight + 8 }"
-    v-on="pressFeedback"
-    @tap="handleTap"
-    @pan="handlePan"
   >
-    <!-- Portal status component - left side -->
-    <PortalStatusView
-      class="portalStatusView"
-      :width="isIitcLoaded ? '68%' : '100%'"
-      :portalStatus="portalStatus"
-    />
+    <!-- Catches the touches the disabled bar lets through to the panel. A sibling, not the
+         parent: on iOS the parent's pan would run along with the bar's -->
+    <ContentView @pan="handlePan" />
 
-    <!-- Map status component - right side -->
-    <MapStatusView v-show="isIitcLoaded" class="mapStatusView" width="32%" :mapStatus="mapStatus" />
-  </StackLayout>
+    <StackLayout
+      class="map-state-bar"
+      orientation="horizontal"
+      :style="{ paddingBottom: navBarHeight + 8 }"
+      :isUserInteractionEnabled="isIitcLoaded"
+      v-on="pressFeedback"
+      @tap="handleTap"
+      @pan="handlePan"
+    >
+      <!-- Portal status component - left side -->
+      <PortalStatusView
+        class="portalStatusView"
+        :width="isIitcLoaded ? '68%' : '100%'"
+        :portalStatus="portalStatus"
+      />
+
+      <!-- Map status component - right side -->
+      <MapStatusView
+        v-show="isIitcLoaded"
+        class="mapStatusView"
+        width="32%"
+        :mapStatus="mapStatus"
+      />
+    </StackLayout>
+  </GridLayout>
 </template>
 
 <script>
