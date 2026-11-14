@@ -191,6 +191,6 @@ export default {
 }
 
 .examples-container {
-  margin: 0 -$spacing-xxs;
+  margin: 0 (-$spacing-xxs);
 }
 </style>
