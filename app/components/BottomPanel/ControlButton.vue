@@ -1,8 +1,9 @@
 // Copyright (C) 2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <MDButton
-    variant="flat"
+  <AppButton
+    variant="plain"
+    icon
     class="ms app-control-button"
     :class="{ 'app-control-button--active': active }"
     :isUserInteractionEnabled="visible"
@@ -14,9 +15,12 @@
 
 <script>
 import { CoreTypes } from '@nativescript/core';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
   name: 'ControlButton',
+
+  components: { AppButton },
 
   emits: ['tap'],
 
@@ -138,5 +142,14 @@ export default {
   &--active {
     background-color: $surface-container;
   }
+}
+
+// iOS has no ripple: the same color lights the background up while pressed
+.ns-ios .app-control-button:highlighted {
+  background-color: $ripple;
+}
+
+.ns-ios .app-control-button--active:highlighted {
+  background-color: mix(rgba($ripple, 1), $surface-container, alpha($ripple) * 100%);
 }
 </style>

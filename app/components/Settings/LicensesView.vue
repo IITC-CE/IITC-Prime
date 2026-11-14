@@ -2,26 +2,43 @@
 
 <template>
   <SettingsBase :title="$L('licenses.title')" use-scroll="false" v-slot="{ bottomPadding }">
-    <GridLayout rows="*" class="licenses-list-container">
+    <GridLayout rows="*" class="licenses-list-container" :style="containerStyle">
       <ListView
         row="0"
         :items="licenses"
-        :style="{ paddingBottom: bottomPadding }"
+        :style="{ paddingTop: listTopPadding, paddingBottom: bottomPadding }"
         class="licenses-list"
         separatorColor="transparent"
         @loaded="onLoaded"
         @itemLoading="disableListItemHighlight"
-        @itemTap="onItemTap"
       >
         <template #default="{ item }">
           <GridLayout
-            class="list-item license-item"
+            class="list-item list-item--big license-item"
             :class="{ 'list-item--first': item.isFirst, 'list-item--last': item.isLast }"
             columns="*"
             rows="auto, auto"
+            v-on="pressFeedback"
+            @tap="onItemTap(item)"
           >
-            <Label :text="item.moduleName" class="license-name" textWrap="true" row="0" />
-            <Label v-if="item.moduleUrl" :text="item.moduleUrl" class="license-url" row="1" />
+            <Label
+              :text="item.moduleName"
+              class="list-item-title license-name"
+              textWrap="true"
+              row="0"
+            />
+            <Label
+              v-if="item.moduleUrl"
+              :text="item.moduleUrl"
+              class="list-item-subtitle license-url"
+              row="1"
+            />
+            <ContentView
+              v-if="isIOS"
+              rowSpan="2"
+              class="list-separator license-separator"
+              :visibility="item.isLast ? 'collapse' : 'visible'"
+            />
           </GridLayout>
         </template>
       </ListView>
@@ -31,9 +48,15 @@
 
 <script>
 import { markRaw } from 'vue';
+import { isAndroid, isIOS } from '@nativescript/core';
 import SettingsBase from './SettingsBase';
 import { openUrl } from '@nativescript/core/utils';
-import { enableListEdgeToEdge, disableListItemHighlight } from '@/utils/platform/ui';
+import {
+  enableListEdgeToEdge,
+  disableListItemHighlight,
+  hideListSeparators,
+  pressFeedback,
+} from '@/utils/platform/ui';
 
 export default {
   name: 'LicensesView',
@@ -45,6 +68,11 @@ export default {
   data() {
     return {
       licenses: [],
+      isIOS,
+      pressFeedback,
+      // Android: the gap is list padding, so rows scroll up to the app bar; the iOS list ignores it
+      containerStyle: isAndroid ? {} : { paddingTop: 24 },
+      listTopPadding: isAndroid ? 24 : 0,
     };
   },
 
@@ -55,6 +83,7 @@ export default {
   methods: {
     onLoaded(args) {
       enableListEdgeToEdge(args.object);
+      hideListSeparators(args);
     },
 
     disableListItemHighlight,
@@ -94,12 +123,8 @@ export default {
       }));
     },
 
-    onItemTap(args) {
-      const item = this.licenses[args.index];
-
-      if (item?.moduleUrl) {
-        openUrl(item.moduleUrl);
-      }
+    onItemTap(item) {
+      if (item.moduleUrl) openUrl(item.moduleUrl);
     },
   },
 };
@@ -108,28 +133,24 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.licenses-list-container {
-  padding-top: $spacing-l;
-}
-
 .licenses-list {
   width: 100%;
 }
 
 .license-item {
   padding: $spacing-m;
-  height: auto;
+}
+
+// The line lies on the row edge, below the padding
+.license-separator {
+  margin-bottom: -$spacing-m;
 }
 
 .license-name {
-  color: $on-surface;
-  font-size: $font-size;
   font-weight: 500;
 }
 
 .license-url {
-  color: $on-surface-variant;
-  font-size: $font-size-small;
   margin-top: $spacing-xxs;
 }
 </style>

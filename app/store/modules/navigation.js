@@ -2,7 +2,7 @@
 
 import { l } from '@nativescript-community/l';
 
-const DEFAULT_PANES = [
+export const DEFAULT_PANES = [
   { name: 'all', label: l('nav.pane.chat_all'), icon: 'ms-campaign' },
   { name: 'faction', label: l('nav.pane.chat_faction'), icon: 'ms-group' },
   { name: 'alerts', label: l('nav.pane.alerts'), icon: 'ms-notifications' },

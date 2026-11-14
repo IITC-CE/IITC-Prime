@@ -1,20 +1,44 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <GridLayout columns="*, auto" class="list-item select-field" @tap="showSelectDialog">
+  <GridLayout
+    columns="*, auto"
+    class="list-item select-field"
+    v-on="pressFeedback"
+    @tap="showSelectDialog"
+  >
     <Label
       col="0"
       :text="selectedText"
-      class="select-text"
+      class="list-item-title select-text"
       verticalAlignment="center"
       textWrap="true"
     />
-    <Label col="1" text="▼" class="select-icon" verticalAlignment="center" />
+    <template v-if="isIOS">
+      <!-- MenuButton draws the indicator in this column -->
+      <ContentView col="1" class="select-icon" />
+      <MenuButton
+        colSpan="2"
+        :items="itemTexts"
+        :selectedIndex="currentSelectedIndex"
+        @select="({ index }) => selectIndex(index)"
+      />
+    </template>
+    <!-- Material 3 exposed dropdown menus use this icon -->
+    <Label
+      v-else
+      col="1"
+      :text="$filters.fonticon('ms-arrow-drop-down')"
+      class="ms select-icon select-icon--android"
+      verticalAlignment="center"
+    />
   </GridLayout>
 </template>
 
 <script>
+import { isIOS } from '@nativescript/core';
 import { RadioDialog } from 'nativescript-radio-dialog';
+import { pressFeedback } from '@/utils/platform/ui';
 
 export default {
   props: {
@@ -52,6 +76,8 @@ export default {
 
   data() {
     return {
+      isIOS,
+      pressFeedback,
       currentSelectedIndex: this.selectedIndex,
     };
   },
@@ -64,6 +90,10 @@ export default {
   },
 
   computed: {
+    itemTexts() {
+      return this.items.map(item => this.getItemText(item));
+    },
+
     /**
      * Returns the text to display in the selector
      */
@@ -83,56 +113,31 @@ export default {
      */
     async showSelectDialog() {
       try {
-        // Convert items to string array for radio dialog
-        const dialogItems = this.items.map(item => this.getItemText(item));
-
         const options = {
           title: this.title,
-          items: dialogItems,
+          items: this.itemTexts,
           selectedIndex: this.currentSelectedIndex >= 0 ? this.currentSelectedIndex : undefined,
           cancelButtonText: this.immediateChange ? this.$L('dialog.ok') : this.$L('dialog.cancel'),
         };
 
         if (this.immediateChange) {
-          options.onItemSelect = ({ selectedIndex }) => {
-            this.onSelectionChanged({
-              selectedIndex,
-              selectedId: this.getItemId(this.items[selectedIndex]),
-              item: this.items[selectedIndex],
-            });
-          };
+          options.onItemSelect = ({ selectedIndex }) => this.selectIndex(selectedIndex);
         }
 
         const result = await RadioDialog.show(options);
 
         // liveSelection: onItemSelect already handled each tap; Promise resolves cancelled on Android
-        if (!this.immediateChange && !result.cancelled) {
-          this.onSelectionChanged({
-            selectedIndex: result.selectedIndex,
-            selectedId: this.getItemId(this.items[result.selectedIndex]),
-            item: this.items[result.selectedIndex],
-          });
-        }
+        if (!this.immediateChange && !result.cancelled) this.selectIndex(result.selectedIndex);
       } catch (error) {
         console.error('Error showing dialog:', error);
       }
     },
 
-    /**
-     * Handles selection changes from the dialog
-     */
-    onSelectionChanged(args) {
-      // Update the local currentSelectedIndex if changed
-      if (args.selectedIndex !== undefined && args.selectedIndex !== this.currentSelectedIndex) {
-        this.currentSelectedIndex = args.selectedIndex;
-
-        // Emit change event
-        this.$emit('change', {
-          selectedIndex: args.selectedIndex,
-          selectedId: args.selectedId,
-          item: args.item,
-        });
-      }
+    selectIndex(selectedIndex) {
+      if (selectedIndex === undefined || selectedIndex === this.currentSelectedIndex) return;
+      this.currentSelectedIndex = selectedIndex;
+      const item = this.items[selectedIndex];
+      this.$emit('change', { selectedIndex, selectedId: this.getItemId(item), item });
     },
 
     /**
@@ -161,22 +166,17 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.select-field {
-  height: 56;
-}
-
-.select-field:active {
-  background-color: $state-pressed;
-}
-
-.select-text {
-  color: $on-surface;
+// Fits the layers tab, where the field takes half a row
+.select-field--compact .select-text {
   font-size: $font-size;
 }
 
 .select-icon {
-  width: 24;
-  font-size: 14;
+  width: $icon-size;
+}
+
+.select-icon--android {
+  font-size: $icon-size;
   text-align: center;
   color: $accent;
 }

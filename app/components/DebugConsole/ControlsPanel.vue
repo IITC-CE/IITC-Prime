@@ -1,47 +1,82 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="controls-container">
+  <!-- Liquid Glass buttons stretch out of their bounds while dragged: nothing up to the wrapper in
+       index.vue may clip them -->
+  <StackLayout class="controls-container" ios:clipToBounds="false">
     <!-- Controls panel -->
-    <GridLayout row="0" class="controls-panel" columns="auto, *, auto, auto, auto">
-      <MDRipple col="0" class="control-button" @tap="handleClose">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-back')" />
-      </MDRipple>
-      <MDRipple col="2" class="control-button trash" @tap="$emit('clear')">
-        <Label class="ms" :text="$filters.fonticon('ms-delete')" />
-      </MDRipple>
-      <MDRipple col="3" class="control-button" @tap="navigateHistoryUp">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-upward')" />
-      </MDRipple>
-      <MDRipple col="4" class="control-button" @tap="navigateHistoryDown">
-        <Label class="ms" :text="$filters.fonticon('ms-arrow-downward')" />
-      </MDRipple>
+    <GridLayout
+      row="0"
+      class="controls-panel"
+      columns="auto, *, auto, auto, auto"
+      ios:clipToBounds="false"
+    >
+      <AppButton
+        col="0"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-back')"
+        @tap="handleClose"
+      />
+      <AppButton
+        col="2"
+        icon
+        destructive
+        class="ms control-button trash"
+        :text="$filters.fonticon('ms-delete')"
+        @tap="$emit('clear')"
+      />
+      <AppButton
+        col="3"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-upward')"
+        @tap="navigateHistoryUp"
+      />
+      <AppButton
+        col="4"
+        icon
+        class="ms control-button"
+        :text="$filters.fonticon('ms-arrow-downward')"
+        @tap="navigateHistoryDown"
+      />
     </GridLayout>
 
     <!-- Command input -->
-    <GridLayout row="1" columns="*, auto" class="command-input-container">
+    <GridLayout row="1" columns="*, auto" class="command-input-container" ios:clipToBounds="false">
       <TextView
         ref="commandInput"
         col="0"
         class="text-input command-input"
         v-model="commandText"
         @returnPress="executeCommand"
-        @loaded="fixTextInputColors"
+        @focus="$emit('input-focus')"
+        @loaded="onInputLoaded"
         :hint="$L('debug.command_hint')"
         autocorrect="false"
+        autocapitalizationType="none"
         maxLines="10"
       />
-      <MDRipple col="1" class="btn-primary send-button" @tap="executeCommand">
-        <Label class="ms" :text="$filters.fonticon('ms-send')" />
-      </MDRipple>
+      <AppButton
+        col="1"
+        variant="filled"
+        icon
+        class="ms send-button"
+        :text="$filters.fonticon('ms-send')"
+        @tap="executeCommand"
+      />
     </GridLayout>
   </StackLayout>
 </template>
 
 <script>
+import { isIOS } from '@nativescript/core';
 import { fixTextInputColors } from '@/utils/platform/ui';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
+  components: { AppButton },
+
   props: {
     command: {
       type: String,
@@ -73,7 +108,15 @@ export default {
   },
 
   methods: {
-    fixTextInputColors,
+    onInputLoaded(args) {
+      fixTextInputColors(args);
+      // autocorrect="false" leaves them on
+      if (isIOS) {
+        const textView = args.object.ios;
+        textView.smartQuotesType = UITextSmartQuotesType.No;
+        textView.smartDashesType = UITextSmartDashesType.No;
+      }
+    },
 
     // Execute command and emit result to parent
     executeCommand() {
@@ -129,32 +172,33 @@ export default {
 }
 
 .controls-panel {
-  background-color: $surface;
   padding: $spacing-s $spacing-m;
   margin: 0 -4;
 }
 
 .control-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4;
   margin: 0 $spacing-xs;
-  padding: 0;
   height: 40;
-  min-width: 40;
   width: 40;
-  text-align: center;
   vertical-align: center;
-  ripple-color: $ripple;
 }
 
 .control-button.trash {
   margin-right: $spacing-l;
+}
+
+.ns-android .control-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: $radius-small;
+  ripple-color: $ripple;
+}
+
+.ns-android .control-button.trash {
   ripple-color: rgba(255, 0, 0, 0.3);
 }
 
 .command-input-container {
-  background-color: $surface;
   padding: $spacing-s $spacing-m $spacing-s $spacing-m;
 }
 
@@ -166,13 +210,16 @@ export default {
 }
 
 .send-button {
-  background-color: $accent;
-  color: white;
-  margin-left: $spacing-s;
+  margin: $spacing-xs 0 $spacing-xs $spacing-s;
   height: 40;
   width: 50;
-  padding: 0;
   vertical-align: center;
-  text-align: center;
+}
+
+.ns-android .send-button {
+  background-color: $accent;
+  color: white;
+  border-radius: $radius-small;
+  ripple-color: $ripple;
 }
 </style>

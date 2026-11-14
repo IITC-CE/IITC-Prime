@@ -1,34 +1,57 @@
 // Copyright (C) 2024-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <MDRipple
-    class="map-state-bar"
-    orientation="horizontal"
-    rippleColor="#ffffff"
+  <GridLayout
     :marginLeft="effectiveLeftInset"
     :width="panelWidth ? panelWidth - effectiveLeftInset : '100%'"
-    :style="{ paddingBottom: navBarHeight + 8 }"
-    @tap="handleTap"
-    @pan="handlePan"
   >
-    <!-- Portal status component - left side -->
-    <PortalStatusView
-      class="portalStatusView"
-      :width="isIitcLoaded ? '68%' : '100%'"
-      :portalStatus="portalStatus"
-    />
+    <!-- Catches the touches the disabled bar lets through to the panel. A sibling, not the
+         parent: on iOS the parent's pan would run along with the bar's -->
+    <ContentView @pan="handlePan" />
 
-    <!-- Map status component - right side -->
-    <MapStatusView v-show="isIitcLoaded" class="mapStatusView" width="32%" :mapStatus="mapStatus" />
-  </MDRipple>
+    <StackLayout
+      class="map-state-bar"
+      orientation="horizontal"
+      :style="{ paddingBottom: navBarHeight + 8 }"
+      :isUserInteractionEnabled="isIitcLoaded"
+      v-on="pressFeedback"
+      @loaded="drawOverPadding"
+      @tap="handleTap"
+      @pan="handlePan"
+    >
+      <!-- Portal status component - left side -->
+      <PortalStatusView
+        ref="portalStatusView"
+        class="portalStatusView"
+        :width="isIitcLoaded ? '68%' : '100%'"
+        :portalStatus="portalStatus"
+      />
+
+      <!-- Map status component - right side -->
+      <MapStatusView
+        ref="mapStatusView"
+        v-show="isIitcLoaded"
+        class="mapStatusView"
+        width="32%"
+        :mapStatus="mapStatus"
+      />
+    </StackLayout>
+
+    <ContentView ref="divider" class="divider" isUserInteractionEnabled="false" />
+  </GridLayout>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex';
 import PortalStatusView from './PortalStatusView';
 import MapStatusView from './MapStatusView';
+import { VelocityTracker } from '@nativescript-community/ui-persistent-bottomsheet/VelocityTracker';
+import { drawOverPadding, pressFeedback } from '@/utils/platform/ui';
 
 const SWIPE_DISTANCE_MINIMUM = 10;
+// Content shift under the divider once the panel is open. Halved without a bottom inset
+// (three-button navigation in landscape, home-button iPhones): only the bar's padding is below
+const OPEN_CONTENT_OFFSET = 6;
 
 export default {
   name: 'MapStateBar',
@@ -65,10 +88,10 @@ export default {
 
   data() {
     return {
+      pressFeedback,
       isPanning: false,
       isDragging: false,
       lastDeltaY: 0,
-      initialTranslationY: 0,
     };
   },
 
@@ -77,6 +100,7 @@ export default {
       mapStatus: state => state.map.mapStatus,
       portalStatus: state => state.map.portalStatus,
       isIitcLoaded: state => state.ui.isIitcLoaded,
+      hasBottomInset: state => state.ui.screenSafeArea.bottom > 0,
     }),
 
     /**
@@ -96,6 +120,8 @@ export default {
       setCurrentPane: 'navigation/setCurrentPane',
     }),
 
+    drawOverPadding,
+
     /**
      * Handle pan gesture on MapStateBar
      * Directly manipulates BottomSheet translationY
@@ -110,7 +136,8 @@ export default {
       if (
         typeof this.bottomSheetRef.constrainY !== 'function' ||
         typeof this.bottomSheetRef.computeTranslationData !== 'function' ||
-        typeof this.bottomSheetRef.applyTrData !== 'function'
+        typeof this.bottomSheetRef.applyTrData !== 'function' ||
+        typeof this.bottomSheetRef.snapToStep !== 'function'
       ) {
         console.error('[MapStateBar] BottomSheet API methods not available');
         return;
@@ -124,12 +151,12 @@ export default {
           this.lastDeltaY = 0;
           this.isDragging = false;
           this.isPanning = false;
-
-          // Save initial translation
-          this.initialTranslationY = this.bottomSheetRef.translationY || 0;
+          this.velocityTracker = VelocityTracker.obtain();
           break;
 
         case 2: // Pan moving
+          this.velocityTracker?.addMovement(0, deltaY);
+
           // Check if movement exceeds threshold
           if (absDeltaY > SWIPE_DISTANCE_MINIMUM && !this.isDragging) {
             this.isDragging = true;
@@ -147,8 +174,8 @@ export default {
             // Update position
             this.bottomSheetRef.translationY = newTranslationY;
 
-            // Compute and apply transformation
-            const trData = this.bottomSheetRef.computeTranslationData();
+            // false: hiding the closed sheet under the iOS safe area would make it jump at the bottom
+            const trData = this.bottomSheetRef.computeTranslationData(false);
             this.bottomSheetRef.applyTrData(trData);
 
             this.lastDeltaY = deltaY;
@@ -159,13 +186,15 @@ export default {
           if (this.isDragging) {
             // Calculate final position with remaining delta
             const y = deltaY - this.lastDeltaY;
-            const totalDelta = (this.bottomSheetRef.translationY || 0) + y;
+            const position = -((this.bottomSheetRef.translationY || 0) + y);
 
-            // Animate to nearest step
-            if (typeof this.bottomSheetRef.computeAndAnimateEndGestureAnimation === 'function') {
-              this.bottomSheetRef.computeAndAnimateEndGestureAnimation(-totalDelta);
-            }
+            this.velocityTracker?.addMovement(0, deltaY);
+            this.velocityTracker?.computeCurrentVelocity(1000);
+            const velocityUp = -(this.velocityTracker?.getYVelocity() ?? 0);
+
+            this.bottomSheetRef.snapToStep('map-state-bar', position, velocityUp);
           }
+          this.velocityTracker = null;
 
           // Reset state with delay to prevent tap
           setTimeout(() => {
@@ -176,11 +205,28 @@ export default {
           break;
 
         case 4: // Pan cancelled
+          this.velocityTracker = null;
           this.isDragging = false;
           this.isPanning = false;
           this.lastDeltaY = 0;
           break;
       }
+    },
+
+    /**
+     * Panel translation data for the views that follow its opening (0 at BOTTOM, 1 at MIDDLE).
+     * Transforms only: a padding change would relayout the screen on every frame of the drag.
+     */
+    openingTrData(progress) {
+      const divider = this.$refs.divider?.nativeView;
+      if (!divider) return null;
+      const offset = this.hasBottomInset ? OPEN_CONTENT_OFFSET : OPEN_CONTENT_OFFSET / 2;
+      const translateY = offset * progress;
+      return {
+        mapStateDivider: { target: divider, opacity: progress },
+        mapStatePortal: { target: this.$refs.portalStatusView.$el.nativeView, translateY },
+        mapStateMap: { target: this.$refs.mapStatusView.$el.nativeView, translateY },
+      };
     },
 
     /**
@@ -217,5 +263,16 @@ export default {
   .mapStatusView {
     vertical-align: center;
   }
+
+  &:highlighted {
+    background-color: $surface-container;
+  }
+}
+
+.divider {
+  height: 1;
+  vertical-align: top;
+  background-color: $accent-border;
+  opacity: 0;
 }
 </style>

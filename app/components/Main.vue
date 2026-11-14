@@ -19,6 +19,7 @@
           :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
           :listBottomPadding="mapStateBarHeight + navBarHeight"
+          :openingTrData="mapStateOpeningTrData"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -46,29 +47,24 @@
           class="map-state-bar-overlay"
         />
 
-        <!-- Restore panel button (visible when panel is hidden) -->
-        <MDRipple
+        <!-- Restore panel button (visible when panel is hidden). Wrapped: on Android RootLayout
+             swallows touches on a direct child without gestures, and a button's tap isn't one -->
+        <ContentView
           v-if="isPanelHidden && !isDebugActive"
-          class="fab restore-panel-button"
-          accessible="true"
-          accessibilityRole="button"
-          :accessibilityLabel="$L('panel.show')"
-          :style="{
-            marginBottom: systemBottomInset + 16,
-            marginRight: safeAreaRightInset + 16,
-            backgroundColor: fabBackgroundColor,
-          }"
+          class="restore-panel-button"
+          :marginBottom="systemBottomInset + 16"
+          :marginRight="safeAreaRightInset + 16"
           @loaded="onRestoreButtonLoaded"
-          @tap="restorePanel"
         >
-          <Label
-            class="ms"
+          <AppButton
+            icon
+            class="ms fab"
             :text="$filters.fonticon('ms-keyboard-arrow-up')"
-            :color="fabIconColor"
-            horizontalAlignment="center"
-            verticalAlignment="center"
+            :accessibilityLabel="$L('panel.show')"
+            :style="restoreButtonColors"
+            @tap="restorePanel"
           />
-        </MDRipple>
+        </ContentView>
 
         <!-- Debug Console -->
         <AbsoluteLayout v-show="isDebugActive" class="page">
@@ -91,6 +87,7 @@ import {
   Application,
   CoreTypes,
   Frame,
+  Utils,
   isAndroid,
   isIOS,
 } from '@nativescript/core';
@@ -107,6 +104,7 @@ import ProgressBar from './ProgressBar';
 import BottomSheetPanel from './BottomPanel/BottomSheetPanel.vue';
 import MapStateBar from './BottomPanel/MapStateBar/MapStateBar.vue';
 import DebugConsole from './DebugConsole';
+import AppButton from './base/AppButton.vue';
 import PluginsView from './Settings/PluginsView.vue';
 
 export default {
@@ -118,6 +116,7 @@ export default {
     BottomSheetPanel,
     MapStateBar,
     DebugConsole,
+    AppButton,
   },
 
   data() {
@@ -159,11 +158,13 @@ export default {
       return this.$store.state.navigation.currentPane !== 'map' ? true : this.isMapDark;
     },
     // Restore-panel button
-    fabIconColor() {
-      return this.isMapDark ? '#111111' : '#eeeeee';
-    },
-    fabBackgroundColor() {
-      return this.isMapDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+    restoreButtonColors() {
+      // Liquid Glass picks its own contrast with the map
+      if (Utils.supportsGlass()) return null;
+      return {
+        color: this.isMapDark ? '#111111' : '#eeeeee',
+        backgroundColor: this.isMapDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+      };
     },
     safeAreaLeftInset() {
       return this.$store.state.ui.screenSafeArea.left;
@@ -292,6 +293,10 @@ export default {
      */
     handleBottomSheetReady(bottomSheet) {
       this.bottomSheetInstance = bottomSheet;
+    },
+
+    mapStateOpeningTrData(progress) {
+      return this.$refs.mapStateBar?.openingTrData(progress);
     },
 
     onRestoreButtonLoaded(args) {
@@ -597,6 +602,7 @@ export default {
 
 .restore-panel-button {
   horizontal-align: right;
+  vertical-align: bottom;
   z-index: 1000;
 }
 </style>

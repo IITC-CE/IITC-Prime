@@ -5,91 +5,98 @@
     class="sheet-root"
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
+    @showingModally="configureIosSheet"
     @androidOverflowInset="onAndroidInset"
-    :paddingTop="insetTop"
     :paddingBottom="insetBottom"
   >
-    <FlexboxLayout class="sheet-content">
-      <Label :text="$L('add_plugin.title')" class="sheet-title" />
+    <!-- Android warns about a stretched ScrollView in a StackLayout -->
+    <ScrollView verticalAlignment="top" iosContentInsetAdjustmentBehavior="always">
+      <FlexboxLayout class="sheet-content">
+        <Label :text="$L('add_plugin.title')" class="sheet-title" />
 
-      <!-- URL input -->
-      <TextField
-        ref="urlField"
-        class="text-input url-field"
-        :hint="$L('add_plugin.url_hint')"
-        v-model="pluginUrl"
-        autocorrect="false"
-        autocapitalizationType="none"
-        keyboardType="url"
-        returnKeyType="go"
-        @returnPress="loadPlugin"
-        @loaded="fixTextInputColors"
-      />
+        <!-- URL input -->
+        <TextField
+          ref="urlField"
+          class="text-input url-field"
+          :hint="$L('add_plugin.url_hint')"
+          v-model="pluginUrl"
+          autocorrect="false"
+          autocapitalizationType="none"
+          keyboardType="url"
+          returnKeyType="go"
+          @returnPress="loadPlugin"
+          @loaded="onUrlFieldLoaded"
+        />
 
-      <!-- Load button -->
-      <MDButton
-        class="btn-primary btn-load"
-        :text="$L('add_plugin.load_url')"
-        :isEnabled="!!pluginUrl.trim()"
-        @loaded="onLoadButtonLoaded"
-        @tap="loadPlugin"
-      />
+        <!-- Load button -->
+        <AppButton
+          class="btn-load"
+          :text="$L('add_plugin.load_url')"
+          :isEnabled="!!pluginUrl.trim()"
+          @tap="loadPlugin"
+        />
 
-      <!-- Divider -->
-      <FlexboxLayout class="divider-row" clipToBounds="true">
-        <StackLayout class="divider-line" />
-        <Label :text="$L('add_plugin.or')" :class="['divider-text', { android: isAndroid }]" />
-        <StackLayout class="divider-line" />
+        <!-- Divider -->
+        <FlexboxLayout class="divider-row" clipToBounds="true">
+          <StackLayout class="divider-line" />
+          <Label :text="$L('add_plugin.or')" :class="['divider-text', { android: isAndroid }]" />
+          <StackLayout class="divider-line" />
+        </FlexboxLayout>
+        <!-- Choose file -->
+        <AppButton class="btn-file" :text="$L('add_plugin.choose_file')" @tap="chooseFile" />
+
+        <!-- Error message -->
+        <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
       </FlexboxLayout>
-      <!-- Choose file -->
-      <MDButton
-        class="btn-primary btn-file"
-        :text="$L('add_plugin.choose_file')"
-        @tap="chooseFile"
-      />
-
-      <!-- Error message -->
-      <Label v-if="errorMessage" :text="errorMessage" class="error-message" textWrap="true" />
-    </FlexboxLayout>
+    </ScrollView>
   </StackLayout>
 </template>
 
 <script>
-import { isAndroid, isIOS } from '@nativescript/core';
+import { Color, Utils, isAndroid, isIOS } from '@nativescript/core';
 import {
+  closeSheet,
+  configureIosSheet,
   fixTextInputColors,
   getBottomSheetInsetRefs,
   applyBottomSheetInsets,
 } from '@/utils/platform/ui';
 import { getClipboardURLIfMatches } from '~/utils/clipboard';
 import { selectFiles } from '@/utils/file-manager';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
   name: 'AddPluginSheet',
+
+  components: { AppButton },
 
   data() {
     return {
       isAndroid,
       pluginUrl: '',
       errorMessage: '',
-      insetTop: 0,
       insetBottom: 0,
     };
   },
 
   methods: {
-    fixTextInputColors,
+    configureIosSheet,
+
+    onUrlFieldLoaded(args) {
+      fixTextInputColors(args);
+      // $ios-sheet-on-surface-variant: fixTextInputColors sets the placeholder over any CSS
+      if (isIOS && Utils.SDK_VERSION >= 26) {
+        args.object.style.placeholderColor = new Color('rgba(235, 235, 245, 0.6)');
+      }
+    },
 
     onSheetLoaded(args) {
       this._insetRefs = getBottomSheetInsetRefs(args);
     },
 
     onAndroidInset(args) {
-      const result = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
-      if (result) {
-        this.insetTop = result.insetTop;
-        this.insetBottom = result.insetBottom;
-      }
+      const insetBottom = applyBottomSheetInsets(args, this._insetRefs, { translateForIme: true });
+      if (insetBottom !== null) this.insetBottom = insetBottom;
     },
 
     async checkClipboard() {
@@ -99,16 +106,10 @@ export default {
       }
     },
 
-    onLoadButtonLoaded(args) {
-      if (isIOS) {
-        args.object.ios.setTitleColorForState(UIColor.whiteColor, UIControlState.Disabled);
-      }
-    },
-
     loadPlugin() {
       const url = this.pluginUrl.trim();
       if (!url) return;
-      this.$closeBottomSheet({ type: 'url', url });
+      closeSheet(this, { type: 'url', url });
     },
 
     async chooseFile() {
@@ -122,7 +123,7 @@ export default {
 
         if (!files.length) return;
 
-        this.$closeBottomSheet({ type: 'file', path: files[0].path });
+        closeSheet(this, { type: 'file', path: files[0].path });
       } catch (error) {
         console.error('Failed to choose file:', error);
         this.errorMessage = error.message || this.$L('add_plugin.unknown_error');
@@ -143,9 +144,17 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.sheet-root {
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
+.ns-ios .divider-text {
+  color: $ios-sheet-on-surface-variant;
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .divider-text {
+    color: $on-surface-variant;
+  }
 }
 
 .sheet-content {
@@ -153,8 +162,6 @@ export default {
   justify-content: flex-start;
   padding: $spacing-l;
   padding-bottom: $spacing-xl;
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
 }
 
 .sheet-title {
@@ -168,6 +175,11 @@ export default {
   margin: 0;
 }
 
+.btn-load,
+.btn-file {
+  margin: 0;
+}
+
 .btn-load {
   margin-top: $spacing-s;
 }
@@ -176,6 +188,7 @@ export default {
   flex-direction: row;
   align-items: center;
   height: 24;
+  margin: $spacing-s 0;
 }
 
 .divider-line {
@@ -193,10 +206,6 @@ export default {
 
 .divider-text.android {
   line-height: 1;
-}
-
-.btn-file {
-  margin-top: $spacing-s;
 }
 
 .error-message {

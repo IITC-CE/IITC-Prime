@@ -5,11 +5,12 @@
     class="sheet-root"
     androidOverflowEdge="dont-apply"
     @loaded="onSheetLoaded"
+    @showingModally="configureIosSheet"
     @androidOverflowInset="onAndroidInset"
-    :paddingTop="insetTop"
     :paddingBottom="insetBottom"
   >
-    <ScrollView id="mainScrollView">
+    <!-- Android warns about a stretched ScrollView in a StackLayout -->
+    <ScrollView verticalAlignment="top" iosContentInsetAdjustmentBehavior="always">
       <FlexboxLayout class="sheet-content">
         <!-- Header: icon + name / category -->
         <GridLayout class="plugin-header" columns="64, *" rows="auto">
@@ -71,38 +72,40 @@
         </StackLayout>
 
         <!-- Action buttons -->
-        <MDButton
+        <AppButton
           v-if="installMode && !isLoading && !hasLoadError"
+          variant="filled"
           :text="$L('plugin_info.install')"
           class="btn-install"
           @tap="onInstall"
         />
-        <MDButton
+        <AppButton
           v-if="plugin.homepageURL"
           :text="$L('plugin_info.open_homepage')"
-          class="btn-primary btn-action"
+          class="btn-action"
           @tap="onOpenHomepage"
         />
-        <MDButton
+        <AppButton
           v-if="plugin.issueTracker"
           :text="$L('plugin_info.open_issue_tracker')"
-          class="btn-primary btn-action"
+          class="btn-action"
           @tap="onOpenIssueTracker"
         />
-        <MDButton
+        <AppButton
           v-if="plugin.downloadURL"
           :text="$L('plugin_info.share_download')"
-          class="btn-primary btn-action"
+          class="btn-action"
           @tap="onShareDownload"
         />
-        <MDButton
+        <AppButton
           v-if="plugin.updateURL"
           :text="$L('plugin_info.share_update')"
-          class="btn-primary btn-action"
+          class="btn-action"
           @tap="onShareUpdate"
         />
-        <MDButton
+        <AppButton
           v-if="!installMode && (plugin.user || plugin.override)"
+          destructive
           :text="
             plugin.override ? $L('plugin_info.remove_override') : $L('plugin_info.delete_plugin')
           "
@@ -118,9 +121,15 @@
 import { Utils } from '@nativescript/core';
 import { getUID } from 'lib-iitc-manager';
 import { shareContent } from '@/utils/platform/system';
-import { getBottomSheetInsetRefs, applyBottomSheetInsets } from '@/utils/platform/ui';
+import {
+  closeSheet,
+  configureIosSheet,
+  getBottomSheetInsetRefs,
+  applyBottomSheetInsets,
+} from '@/utils/platform/ui';
 import AsyncSVGIcon from './plugins/AsyncSVGIcon.vue';
 import AsyncRasterIcon from './plugins/AsyncRasterIcon.vue';
+import AppButton from '@/components/base/AppButton.vue';
 
 export default {
   name: 'PluginInfoSheet',
@@ -128,6 +137,7 @@ export default {
   components: {
     AsyncSVGIcon,
     AsyncRasterIcon,
+    AppButton,
   },
 
   props: {
@@ -143,7 +153,6 @@ export default {
 
   data() {
     return {
-      insetTop: 0,
       insetBottom: 0,
     };
   },
@@ -203,16 +212,15 @@ export default {
   },
 
   methods: {
+    configureIosSheet,
+
     onSheetLoaded(args) {
       this._insetRefs = getBottomSheetInsetRefs(args);
     },
 
     onAndroidInset(args) {
-      const result = applyBottomSheetInsets(args, this._insetRefs);
-      if (result) {
-        this.insetTop = result.insetTop;
-        this.insetBottom = result.insetBottom;
-      }
+      const insetBottom = applyBottomSheetInsets(args, this._insetRefs);
+      if (insetBottom !== null) this.insetBottom = insetBottom;
     },
 
     onOpenHomepage() {
@@ -232,11 +240,11 @@ export default {
     },
 
     onInstall() {
-      this.$closeBottomSheet('install');
+      closeSheet(this, 'install');
     },
 
     onDelete() {
-      this.$closeBottomSheet('delete');
+      closeSheet(this, 'delete');
     },
   },
 
@@ -249,17 +257,39 @@ export default {
 <style scoped lang="scss">
 @import '@/app';
 
-.sheet-root {
-  background-color: $surface;
-  border-radius: $radius-large $radius-large 0 0;
+.ns-ios {
+  .notice-block,
+  .details {
+    background-color: $ios-sheet-fill;
+  }
+
+  .plugin-category,
+  .notice-text,
+  .detail-label {
+    color: $ios-sheet-on-surface-variant;
+  }
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .notice-block,
+  .details {
+    background-color: $surface-container;
+  }
+
+  .plugin-category,
+  .notice-text,
+  .detail-label {
+    color: $on-surface-variant;
+  }
 }
 
 .sheet-content {
   flex-direction: column;
-  background-color: $surface;
   padding: $spacing-l;
   padding-bottom: $spacing-xl;
-  border-radius: $radius-large $radius-large 0 0;
 }
 
 .plugin-header {
@@ -361,12 +391,7 @@ export default {
 }
 
 .btn-install {
-  background-color: $accent;
-  border-radius: $radius-small;
   margin: 0 0 $spacing-m 0;
-  color: #ffffff;
-  font-size: $font-size;
-  ripple-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-action {
@@ -374,11 +399,6 @@ export default {
 }
 
 .btn-delete {
-  background-color: $state-error;
-  border-radius: $radius-small;
   margin: 0;
-  color: #ffffff;
-  font-size: $font-size;
-  ripple-color: rgba(255, 255, 255, 0.2);
 }
 </style>

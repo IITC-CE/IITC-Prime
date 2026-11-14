@@ -1,0 +1,86 @@
+diff --git a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
+index 95fe0b0..eec2b4a 100644
+--- a/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
++++ b/node_modules/@nativescript-community/ui-persistent-bottomsheet/index.js
+@@ -560,10 +560,10 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+             if (this.scrollViewTouched) {
+                 this.isScrollEnabled = true;
+             }
+-            // Only reset touchStartY on 'up', not on 'cancel' (@tap elements send cancel mid-gesture)
+-            // if (event.action === 'up') {
+-            this.touchStartY = null;
+-            // }
++            // not on 'cancel': the list sends one ~8px into a drag and the finger goes on, a new start would let it scroll first
++            if (event.action === 'up') {
++                this.touchStartY = null;
++            }
+             this.lastTouchY = null;
+             this.touchIsHorizontal = false;
+             // Reset dragging state on any end event
+@@ -572,7 +572,7 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+         else if (event.action === 'move') {
+             // On Android sometimes we don't get the down event but we get move events
+             // so initialize touchStartY if needed
+-            if (this.touchStartY === undefined) {
++            if (this.touchStartY == null) {
+                 debugLog('touch move without down', this.debugState());
+                 this.touchActive = true;
+                 this.vt = VelocityTracker.obtain();
+@@ -621,17 +621,16 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+             // If not yet dragging panel, check if we should start (one-way transition)
+             if (!this.wasDraggingPanel) {
+                 let shouldStartDraggingPanel = false;
++                // deltaY is 0 on the first move: read as an UP swipe it would latch panel dragging on a downward gesture
++                if (absDeltaY >= SWIPE_DISTANCE_MINIMUM) {
+                 if (deltaY > 0) {
+                     // Swiping DOWN - start dragging panel if reached top
+                     shouldStartDraggingPanel = isAtTop;
+                 }
+                 else {
+-                    // Swiping UP - start dragging panel if at top AND panel not fully expanded
+-                    if (isAtTop) {
+-                        const maxOffset = this.translationMaxOffset;
+-                        const isPanelFullyExpanded = Math.abs(this.translationY + maxOffset) < 1;
+-                        shouldStartDraggingPanel = !isPanelFullyExpanded;
+-                    }
++                    // Swiping UP - expand the panel first whatever the list position: the list keeps
++                    // its offset below the full step, and a list at its end would leave the sheet stuck
++                    shouldStartDraggingPanel = !this.isFullyExpanded;
+                 }
+                 if (shouldStartDraggingPanel) {
+                     // Switch to panel dragging mode (one-way, won't switch back during this gesture)
+@@ -647,15 +646,19 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+                         this.isScrollEnabled = true;
+                     }
+                 }
++                }
+             }
+             else {
+                 const maxOffset = this.translationMaxOffset;
+                 const isPanelFullyExpanded = Math.abs(this.translationY + maxOffset) < 1;
+-                // if dragged to the top we can enable back scrolling
+-                if (isPanelFullyExpanded) {
++                // if dragged to the top we can enable back scrolling. Only going up: a swipe down
++                // from the full step would hand the touch straight back to the list
++                if (isPanelFullyExpanded && touchY < (this.lastTouchY ?? touchY)) {
+                     this.wasDraggingPanel = false;
+                     this.gestureModeDecided = true;
+                     this.isScrollEnabled = true;
++                    // no snap follows: the sheet rests at the full step
++                    stepIndexProperty.nativeValueChange(this, this.steps.length - 1);
+                 }
+             }
+             // Execute the current mode
+@@ -972,6 +975,12 @@ let PersistentBottomSheet = class PersistentBottomSheet extends AbsoluteLayout {
+                 }
+                 debugLog('animated', `to=${position}`, this.debugState());
+                 this.setPanHandlerEnabled(this.stepIndex !== 0);
++                // that stale write can also land after the commit above: once more later
++                setTimeout(() => {
++                    if (this.animationRun === runId && !this.animating) {
++                        this.applyTrData(this.computeTranslationData());
++                    }
++                }, 300);
+                 this.notify({ eventName: 'animated', position, duration });
+             }
+         }

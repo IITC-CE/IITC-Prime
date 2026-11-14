@@ -1,16 +1,11 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <SettingsBase :title="$L('update_channel.title')">
-    <template #headerRight>
-      <Label
-        :text="$L('update_channel.update_now')"
-        @tap="runForceUpdate"
-        :isEnabled="!isUpdating"
-        class="header-action"
-      />
-    </template>
-
+  <SettingsBase
+    :title="$L('update_channel.title')"
+    :actions="headerActions"
+    @action="runForceUpdate"
+  >
     <!-- Channel selection -->
     <SettingsSection :title="$L('update_channel.section.channel')" />
     <UpdateChannelSelector :currentChannel="currentChannel" @channelSelected="selectChannel" />
@@ -84,6 +79,10 @@ export default {
   },
 
   computed: {
+    headerActions() {
+      return [{ id: 'update', text: this.$L('update_channel.update_now') }];
+    },
+
     ...mapGetters('manager', ['currentChannel', 'customChannelUrl']),
 
     customUrl() {
@@ -188,6 +187,7 @@ export default {
      * Run force update
      */
     async runForceUpdate() {
+      if (this.isUpdating) return;
       this.isUpdating = true;
 
       try {

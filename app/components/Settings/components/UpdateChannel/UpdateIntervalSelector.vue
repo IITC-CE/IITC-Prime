@@ -2,7 +2,7 @@
 
 <template>
   <StackLayout class="update-interval-container">
-    <Label :text="intervalLabel" class="interval-label" />
+    <Label :text="intervalLabel" class="interval-label section-note" />
     <SelectField
       :items="updateIntervals"
       :selectedIndex="selectedIntervalIndex"

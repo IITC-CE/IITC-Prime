@@ -1,7 +1,7 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
 <template>
-  <StackLayout class="custom-url-container">
+  <StackLayout>
     <GridLayout
       columns="*, auto"
       class="list-item list-item--first list-item--last url-input-container"
@@ -23,27 +23,25 @@
       />
     </GridLayout>
 
-    <Label :text="$L('custom_channel.examples')" class="examples-label" once="true" />
-    <WrapLayout class="examples-container">
-      <Label
-        text="localhost:8000"
+    <Label :text="$L('custom_channel.examples')" class="examples-label section-note" once="true" />
+    <WrapLayout class="examples-container section-note">
+      <StackLayout class="chip" v-on="pressFeedback" @tap="setExampleUrl('http://localhost:8000')">
+        <Label text="localhost:8000" class="chip-text" once="true" />
+      </StackLayout>
+      <StackLayout
         class="chip"
-        @tap="setExampleUrl('http://localhost:8000')"
-        once="true"
-      />
-      <Label
-        text="iitc.app/build/artifact/PR"
-        class="chip"
+        v-on="pressFeedback"
         @tap="setExampleUrl('https://iitc.app/build/artifact/PR')"
-        once="true"
-      />
+      >
+        <Label text="iitc.app/build/artifact/PR" class="chip-text" once="true" />
+      </StackLayout>
     </WrapLayout>
   </StackLayout>
 </template>
 
 <script>
 import { mapActions } from 'vuex';
-import { fixTextInputColors } from '@/utils/platform/ui';
+import { fixTextInputColors, pressFeedback } from '@/utils/platform/ui';
 
 export default {
   name: 'CustomChannelInput',
@@ -57,6 +55,7 @@ export default {
 
   data() {
     return {
+      pressFeedback,
       url: this.customUrl,
       urlStatus: 'unknown', // 'success', 'error', 'unknown'
     };
@@ -150,10 +149,6 @@ export default {
 
 <style scoped lang="scss">
 @import '@/app';
-
-.custom-url-container {
-  padding-bottom: $spacing-m;
-}
 
 .url-input-container {
   margin-bottom: $spacing-s;

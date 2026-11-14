@@ -66,6 +66,8 @@
   "plugins.add_plugin": "Add plugin",
   "plugins.no_plugins": "No plugins",
   "plugins.no_plugins_in_category": "No plugins in %s category",
+  "plugins.menu.enable": "Enable",
+  "plugins.menu.disable": "Disable",
   "plugins.delete.title_override": "Remove override",
   "plugins.delete.title_plugin": "Delete plugin",
   "plugins.delete.message_override": "Remove the user override for \"%s\"? The official version will be used instead.",
@@ -162,6 +164,8 @@
   "search.hint": "Search...",
 
   "debug.command_hint": "Enter JavaScript command...",
+  "debug.copy": "Copy",
+  "debug.log_copied": "Log copied to clipboard",
 
   "select_field.no_elements": "No elements",
   "select_field.select": "Select...",

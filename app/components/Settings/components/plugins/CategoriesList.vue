@@ -2,18 +2,22 @@
 
 <template>
   <WrapLayout orientation="horizontal" class="categories">
-    <Label
+    <StackLayout
       v-for="(category, key) in categories"
       :key="key"
-      :text="getCategoryText(category)"
       class="chip"
-      :class="{ 'chip--active': activeCategory === category.name, 'has-new': category.hasNew }"
+      :class="{ 'chip--active': activeCategory === category.name }"
+      v-on="pressFeedback"
       @tap="onCategoryTap(category.name)"
-    />
+    >
+      <Label :text="getCategoryText(category)" class="chip-text" />
+    </StackLayout>
   </WrapLayout>
 </template>
 
 <script>
+import { pressFeedback } from '@/utils/platform/ui';
+
 export default {
   name: 'CategoriesList',
 
@@ -26,6 +30,10 @@ export default {
       type: String,
       required: true,
     },
+  },
+
+  data() {
+    return { pressFeedback };
   },
 
   methods: {

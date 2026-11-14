@@ -29,6 +29,7 @@ $icon-size-large: 32; // Large touch targets
 $surface: #0a2329;
 $surface-container: #133840; // card, section, list row
 $surface-container-high: #1d4853; // active chip, pressed tile
+$separator: rgba(255, 255, 255, 0.1); // iOS list hairline
 
 // Accent - interactive: toggles, icons, buttons
 $accent: #26a69a;
@@ -39,13 +40,17 @@ $accent-border: rgba(38, 166, 154, 0.42); // active border ring
 $on-surface: #ffffff;
 $on-surface-variant: #71a0a6; // secondary / muted text
 
+// iOS 26 sheets show grey glass, where the teal ones above look out of place: tertiarySystemFill
+// and secondaryLabel in the dark appearance
+$ios-sheet-fill: rgba(118, 118, 128, 0.24);
+$ios-sheet-on-surface-variant: rgba(235, 235, 245, 0.6);
+
 // Interaction
 $ripple: rgba(255, 255, 255, 0.1);
 
 // States
 $state-hover: rgba(255, 255, 255, 0.08);
 $state-focus: rgba(255, 255, 255, 0.12);
-$state-pressed: rgba(255, 255, 255, 0.16);
 $state-drag: rgba(255, 255, 255, 0.16);
 
 $state-success: #43a047;
@@ -105,7 +110,6 @@ $spacing-xl: 32;
 $spacing-xxl: 48;
 $spacing-panel: 15;
 $spacing-item: 56;
-$spacing-item-big: 82;
 
 // Border radius
 $radius-small: 4;
@@ -149,16 +153,12 @@ MDButton {
   height: 50;
   vertical-align: bottom;
   border-radius: $radius-full;
-  background-color: rgba(255, 255, 255, 0.1);
-  ripple-color: $ripple;
+}
 
-  .ms {
-    color: white;
-    horizontal-align: center;
-    vertical-align: center;
-    margin-top: -50;
-    height: 50;
-  }
+.ns-android .fab {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  ripple-color: $ripple;
 }
 
 .btn-text {
@@ -168,46 +168,43 @@ MDButton {
   padding: $spacing-s $spacing-m;
 }
 
-.header-action {
-  color: $on-surface;
-  font-size: $font-size;
-  padding: $spacing-s $spacing-m;
-  vertical-align: center;
+// Lists
+@mixin list-item-corners($radius) {
+  &--top-left,
+  &--first {
+    border-top-left-radius: $radius;
+  }
+  &--top-right,
+  &--first {
+    border-top-right-radius: $radius;
+  }
+  &--bottom-left,
+  &--last {
+    border-bottom-left-radius: $radius;
+  }
+  &--bottom-right,
+  &--last {
+    border-bottom-right-radius: $radius;
+  }
 }
 
-// Lists
 .list-item {
   background-color: $surface-container;
   color: $on-surface;
   height: $spacing-item;
-  ripple-color: $ripple;
   font-size: $font-size;
   padding: 0 $spacing-m;
   border-bottom-width: $spacing-xxs;
   border-bottom-color: $surface;
   border-top-left-radius: 0;
 
+  // The content sets the height, see .list-item-spacer
   &--big {
-    height: $spacing-item-big;
-    padding: 0 $spacing-l;
+    height: auto;
   }
 
-  &--top-left,
-  &--first {
-    border-top-left-radius: $radius-large;
-  }
-  &--top-right,
-  &--first {
-    border-top-right-radius: $radius-large;
-  }
-  &--bottom-left,
-  &--last {
-    border-bottom-left-radius: $radius-large;
-  }
-  &--bottom-right,
-  &--last {
-    border-bottom-right-radius: $radius-large;
-  }
+  @include list-item-corners($radius-large);
+
   // No separator under the last row: Android draws it straight across the rounded corners
   &--bottom-left,
   &--bottom-right,
@@ -215,9 +212,151 @@ MDButton {
     border-bottom-width: 0;
   }
 
-  &--icon-text {
-    padding-left: $spacing-m;
+  // The theme pads labels in a ListView, which would set the text off the row padding
+  Label {
+    padding-left: 0;
+    padding-right: 0;
   }
+}
+
+// Row text: Material 3 body large and body medium
+.list-item-title {
+  color: $on-surface;
+  font-size: 16;
+}
+
+.list-item-subtitle {
+  color: $on-surface-variant;
+  font-size: 14;
+}
+
+// Text of a .list-item--big row
+.list-item-text {
+  padding: $spacing-s 0;
+  margin-right: $spacing-m;
+}
+
+// Material 3 row heights, carried by an empty cell: a min-height on the grid itself doesn't
+// stretch its row, so centred text would sit at the top
+.list-item-spacer {
+  min-height: $spacing-item;
+}
+
+.list-item--two-line .list-item-spacer {
+  min-height: 72;
+}
+
+.list-item-icon {
+  width: $icon-size;
+  margin-right: $spacing-m;
+  text-align: center;
+  vertical-align: center;
+}
+
+// iOS grouped lists as in system settings: a hairline instead of a gap. iOS 26 values; older
+// versions follow
+.ns-ios {
+  .list-item {
+    height: 52;
+    border-bottom-width: 0;
+
+    &:highlighted {
+      background-color: $surface-container-high;
+    }
+
+    @include list-item-corners(26);
+
+    // UIKit counts row heights from the bare text height, without the theme's label padding
+    Label {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
+
+  .list-item-title {
+    font-size: 17;
+  }
+
+  .list-item-subtitle {
+    font-size: 15;
+  }
+
+  .list-item-text {
+    padding: 15 0;
+  }
+
+  .list-item-spacer {
+    min-height: 52;
+  }
+
+  .list-separator {
+    height: 1px;
+    vertical-align: bottom;
+    background-color: $separator;
+
+    // Between the halves of a paired row, through the whole group
+    &--vertical {
+      width: 1px;
+      height: auto;
+      horizontal-align: left;
+      vertical-align: stretch;
+    }
+  }
+
+  .section-header {
+    padding: 28 $spacing-m 6 $spacing-m;
+    font-size: 17;
+    font-weight: 600;
+  }
+
+  // Labels and chips between groups, in line with the headers
+  .section-note {
+    padding: 0 $spacing-m;
+  }
+}
+
+.ns-ios-15,
+.ns-ios-16,
+.ns-ios-17,
+.ns-ios-18 {
+  .list-item {
+    height: 44;
+
+    @include list-item-corners(10);
+  }
+
+  .list-item-subtitle {
+    font-size: 12;
+  }
+
+  .list-item-text {
+    padding: 11 0;
+  }
+
+  .list-item-spacer {
+    min-height: 44;
+  }
+
+  // Up to iOS 18 the line runs to the right edge
+  .list-separator {
+    margin-right: -$spacing-m;
+
+    &--vertical {
+      margin-right: 0;
+    }
+  }
+
+  .section-header {
+    padding: 34 $spacing-m 6 $spacing-m;
+    font-size: 13;
+    font-weight: normal;
+    text-transform: uppercase;
+  }
+}
+
+// After the iOS row heights, so that it wins over them
+.ns-ios .list-item--big {
+  height: auto;
 }
 
 .list-item-trailing {
@@ -229,12 +368,27 @@ MDButton {
   padding: 6 12;
   border-radius: $radius-large;
   background-color: $surface-container;
+
+  &--active {
+    background-color: $accent;
+  }
+
+  // iOS: a pressed chip changes its fill, as system buttons do
+  &:highlighted {
+    background-color: $surface-container-high;
+  }
+
+  &--active:highlighted {
+    background-color: darken($accent, 8%);
+  }
+}
+
+.chip-text {
   color: $on-surface;
   font-size: $font-size-small;
   text-align: center;
 
-  &--active {
-    background-color: $accent;
+  .chip--active & {
     font-weight: bold;
   }
 }
@@ -250,6 +404,25 @@ MDButton {
   font-weight: bold;
   margin-bottom: $spacing-m;
   color: $on-surface;
+}
+
+// Root of a sheet shown with showSheet. The iOS system sheet draws its own corners, and from
+// iOS 26 its own glass background
+.sheet-root {
+  background-color: $surface;
+  border-radius: $radius-large $radius-large 0 0;
+}
+
+.ns-ios.sheet-root {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.ns-ios-15.sheet-root,
+.ns-ios-16.sheet-root,
+.ns-ios-17.sheet-root,
+.ns-ios-18.sheet-root {
+  background-color: $surface;
 }
 
 // Text inputs
@@ -276,7 +449,8 @@ MDButton {
 }
 
 .section-header {
-  padding: 12 16 8 0;
+  height: 56;
+  padding: 28 16 10 0;
   color: $on-surface-variant;
   font-size: $font-size;
   font-weight: bold;

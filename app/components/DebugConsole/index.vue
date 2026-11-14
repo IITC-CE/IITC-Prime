@@ -2,10 +2,11 @@
 
 <template>
   <GridLayout rows="*, auto" class="debug-console">
-    <!-- Logs list -->
+    <!-- Logs list. With Liquid Glass it runs under the controls, as under system toolbars -->
     <CollectionView
       ref="logsList"
       row="0"
+      :rowSpan="liquidGlass ? 2 : 1"
       class="logs-list"
       :items="displayLogs"
       :style="{ paddingTop: topInset }"
@@ -16,17 +17,13 @@
       @loaded="onCollectionViewLoaded"
     >
       <template #default="{ item }">
-        <MDRipple
-          class="log-item"
-          :class="'log-' + item.type"
-          @longPress="copyLogToClipboard(item)"
-        >
+        <StackLayout class="log-item" :class="'log-' + item.type" v-on="rowListeners(item)">
           <!-- Header row with timestamp, log level and source -->
           <Label :text="formatLogHeader(item)" once="true" class="log-header" />
 
           <!-- Message content -->
           <Label :text="item.message" textWrap="true" class="log-message" once="true" />
-        </MDRipple>
+        </StackLayout>
       </template>
     </CollectionView>
 
@@ -45,6 +42,10 @@
       row="1"
       :paddingBottom="navBarPadding"
       class="controls-wrapper"
+      :class="{ 'controls-wrapper--liquid-glass': liquidGlass }"
+      ios:clipToBounds="false"
+      @loaded="onControlsLoaded"
+      @layoutChanged="updateListInsets"
     >
       <ControlsPanel
         v-model:command="command"
@@ -54,23 +55,19 @@
         @command-executed="onCommandExecuted"
         @history-navigate="handleHistoryNavigation"
         @close="closeDebugConsole"
+        @input-focus="scrollToBottom"
         ref="controlsPanel"
       />
     </StackLayout>
 
-    <MDRipple
+    <AppButton
       ref="scrollBottomBtn"
       v-show="!isAtBottom"
-      class="fab scroll-bottom-button"
+      icon
+      class="ms fab scroll-bottom-button"
+      :text="$filters.fonticon('ms-arrow-downward')"
       @tap="scrollToBottom"
-    >
-      <Label
-        class="ms"
-        :text="$filters.fonticon('ms-arrow-downward')"
-        horizontalAlignment="center"
-        verticalAlignment="center"
-      />
-    </MDRipple>
+    />
   </GridLayout>
 </template>
 
@@ -79,8 +76,10 @@ import { mapState, mapActions } from 'vuex';
 import logFormattingMixin from './mixins/logFormatting';
 import { copyToClipboard } from '@/utils/clipboard';
 import ControlsPanel from './ControlsPanel.vue';
-import { isAndroid, isIOS, Application, CoreTypes } from '@nativescript/core';
-import { enableListEdgeToEdge } from '@/utils/platform/ui';
+import AppButton from '@/components/base/AppButton.vue';
+import { isAndroid, isIOS, Application, CoreTypes, Utils, unsetValue } from '@nativescript/core';
+import { enableListEdgeToEdge, pressFeedback } from '@/utils/platform/ui';
+import { contextMenu } from '@/utils/platform/context-menu';
 
 // Cubic-bezier [x1, y1, x2, y2] approximating the keyboard's (non-public) easing for the
 // iOS panel translation. Tune to better match the keyboard motion.
@@ -89,6 +88,7 @@ const PANEL_CURVE = [0.2, 0.5, 0.7, 1.0];
 export default {
   components: {
     ControlsPanel,
+    AppButton,
   },
 
   mixins: [logFormattingMixin],
@@ -115,8 +115,10 @@ export default {
       isUserScrolling: false,
       logsVisible: false, // Controls whether logs should be shown or not
       localKeyboardHeight: 0,
+      liquidGlass: Utils.supportsGlass(),
 
       _collectionView: null,
+      _edgeContainers: null,
       _keyboardObserver: null,
     };
   },
@@ -182,6 +184,11 @@ export default {
       }
     },
 
+    // Editing the command returns to the latest logs
+    command() {
+      if (!this.isAtBottom) this.scrollToBottom();
+    },
+
     displayLogs() {
       if (this.isVisible && this.isAtBottom && !this.isUserScrolling) {
         this.scrollToBottom();
@@ -196,7 +203,11 @@ export default {
       if (isAndroid) {
         const targetY = newValue ? -(this.keyboardPaddingBottom - this.navBarPadding) : 0;
         this._animateAndroidTranslateY(this.$refs.controlsWrapper?.nativeView, targetY, newValue);
-        this._animateAndroidTranslateY(this.$refs.scrollBottomBtn?.nativeView, targetY, newValue);
+        this._animateAndroidTranslateY(
+          this.$refs.scrollBottomBtn?.$el?.nativeView,
+          targetY,
+          newValue
+        );
       }
     },
 
@@ -212,11 +223,7 @@ export default {
 
       if (!isIOS) return;
       const nativeView = this._collectionView.ios;
-
-      // Re-apply topInset here too, or opening the keyboard would reset it to 0
-      const insets = UIEdgeInsetsMake(this.topInset, 0, newVal, 0);
-      nativeView.contentInset = insets;
-      nativeView.scrollIndicatorInsets = insets;
+      this.updateListInsets();
 
       // Offset shift when opening
       if (newVal > oldVal && oldVal === 0 && !this.isAtBottom) {
@@ -228,7 +235,9 @@ export default {
       if (newVal === 0 && oldVal > 0) {
         const maxOffset = Math.max(
           0,
-          nativeView.contentSize.height - nativeView.bounds.size.height
+          nativeView.contentSize.height +
+            nativeView.contentInset.bottom -
+            nativeView.bounds.size.height
         );
         const current = nativeView.contentOffset;
         if (current.y > maxOffset) {
@@ -336,10 +345,34 @@ export default {
         const nativeView = this._collectionView.ios;
         nativeView.keyboardDismissMode = 1;
         nativeView.automaticallyAdjustsContentInsets = false;
-        // CollectionView maps paddingTop -> contentInset.top; disable UIKit auto-adding
-        // safe-area inset on top of our manual paddingTop to avoid double-counting
+        // CollectionView turns paddingTop into a section inset; keep UIKit from adding the
+        // safe area on top of it
         nativeView.contentInsetAdjustmentBehavior = 2; // UIScrollViewContentInsetAdjustmentBehavior.never
       }
+    },
+
+    updateListInsets() {
+      const nativeView = this._collectionView?.ios;
+      if (!nativeView) return;
+      let bottom = this.keyboardPaddingBottom;
+      if (this.liquidGlass) {
+        // The list reaches the screen bottom, under the controls and the home indicator
+        const controls = this.$refs.controlsWrapper?.nativeView;
+        bottom +=
+          (controls?.getActualSize()?.height ?? 0) + this.$store.state.ui.screenSafeArea.bottom;
+      }
+      // No top content inset: paddingTop is already a section inset
+      nativeView.contentInset = UIEdgeInsetsMake(0, 0, bottom, 0);
+      nativeView.scrollIndicatorInsets = UIEdgeInsetsMake(this.topInset, 0, bottom, 0);
+    },
+
+    // UIKit's edge effect fades the logs under the controls; core's helper registers them
+    // again whenever they reload
+    onControlsLoaded(args) {
+      if (!this.liquidGlass || this._edgeContainers || !this._collectionView) return;
+      const { ScrollEdgeContainers } = require('@nativescript/core/ui/core/view/view-helper');
+      this._edgeContainers = new ScrollEdgeContainers(this._collectionView);
+      this._edgeContainers.add(args.object, 'bottom');
     },
 
     // Purely decorative overlay: must not intercept touches meant for the list below.
@@ -351,10 +384,32 @@ export default {
       }
     },
 
-    // Copy log text to clipboard on long press
-    async copyLogToClipboard(item) {
-      const fullText = this.getFullLogText(item);
-      await copyToClipboard(fullText, 'Log copied to clipboard');
+    // iOS copies from a context menu, as system lists do, and needs no toast
+    rowListeners(item) {
+      if (!isIOS)
+        return { ...pressFeedback, longPress: args => this.copyLogOnLongPress(args, item) };
+      const copy = () => copyToClipboard(this.getFullLogText(item));
+      return {
+        ...pressFeedback,
+        ...contextMenu,
+        contextMenu: args =>
+          (args.actions = [{ title: this.$L('debug.copy'), icon: 'doc.on.doc', onSelect: copy }]),
+      };
+    },
+
+    // Android: the ripple, which stays while the finger is down, gives way to a flash that shows
+    // the copy
+    async copyLogOnLongPress(args, item) {
+      const view = args.object;
+      view.nativeViewProtected.setPressed(false);
+      view.nativeViewProtected.performHapticFeedback(
+        android.view.HapticFeedbackConstants.LONG_PRESS
+      );
+      copyToClipboard(this.getFullLogText(item), this.$L('debug.log_copied'));
+      view.backgroundColor = 'rgba(38, 166, 154, 0.3)';
+      await view.animate({ backgroundColor: 'rgba(38, 166, 154, 0)', duration: 500 });
+      // A cancel restores the flash color, on a row the list reuses for other items
+      view.backgroundColor = unsetValue;
     },
   },
 
@@ -365,7 +420,7 @@ export default {
           const translateY = -this.keyboardPaddingBottom;
           const wrapper = this.$refs.controlsWrapper?.nativeView;
           if (wrapper) wrapper.translateY = translateY;
-          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          const fab = this.$refs.scrollBottomBtn?.$el?.nativeView;
           if (fab) fab.translateY = translateY;
         });
       }
@@ -383,7 +438,7 @@ export default {
           const safeAreaBottom = this.$store.state.ui.screenSafeArea.bottom;
           const translateY = -Math.max(0, height - safeAreaBottom);
           const wrapper = this.$refs.controlsWrapper?.nativeView;
-          const fab = this.$refs.scrollBottomBtn?.nativeView;
+          const fab = this.$refs.scrollBottomBtn?.$el?.nativeView;
 
           // Translate via NativeScript's translateY property (animate()), not a raw layer
           // transform: NS preserves the property across relayouts, so a multi-line paste
@@ -443,7 +498,10 @@ export default {
   padding: 4 8;
   border-bottom-width: 1;
   border-bottom-color: rgba(255, 255, 255, 0.1);
-  ripple-color: $ripple;
+
+  &:highlighted {
+    background-color: $surface-container;
+  }
 }
 
 .log-header {
@@ -502,6 +560,10 @@ export default {
 
 .controls-wrapper {
   background-color: $surface;
+}
+
+.controls-wrapper--liquid-glass {
+  background-color: transparent;
 }
 
 .scroll-bottom-button {
