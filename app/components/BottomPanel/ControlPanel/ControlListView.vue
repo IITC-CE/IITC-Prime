@@ -140,7 +140,7 @@
             v-if="index <= 8"
             :col="index"
             class="portal-icon-cell"
-            v-on="pressFeedback"
+            v-on="iconPressFeedback"
             @tap="onOverlayPortalToggle($event, portal.index)"
             :class="{
               'portal-icon-cell--active':
@@ -249,7 +249,7 @@ import SelectField from '@/components/base/SelectField.vue';
 import AppSwitch from '@/components/base/AppSwitch.vue';
 import { $navigateTo } from 'nativescript-vue';
 import { isIOS } from '@nativescript/core';
-import { pressFeedback, switchRowFeedback } from '@/utils/platform/ui';
+import { iconPressFeedback, pressFeedback, switchRowFeedback } from '@/utils/platform/ui';
 import SettingsView from '@/components/Settings/SettingsView';
 import PluginsView from '@/components/Settings/PluginsView';
 
@@ -281,6 +281,7 @@ export default {
       pluginsScreen: PluginsView,
       isIOS,
       pressFeedback,
+      iconPressFeedback,
       switchRowFeedback,
       pairColumns: cellColumns(2),
       segmentColumns: cellColumns(3),
@@ -519,12 +520,8 @@ $quick-tile-height: 72;
     background-color: $surface-container;
   }
 
-  &:highlighted {
-    background-color: $surface-container;
-  }
-
-  &--active:highlighted {
-    background-color: $surface-container-high;
+  &:highlighted .overlay-portal {
+    opacity: 0.4;
   }
 
   &--first {

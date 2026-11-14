@@ -225,15 +225,20 @@ const highlightOnTouch = args => {
   }
 };
 
+const themeDrawable = (view, attr) => {
+  const attrs = Array.create('int', 1);
+  attrs[0] = attr;
+  const values = view.getContext().obtainStyledAttributes(attrs);
+  const drawable = values.getDrawable(0);
+  values.recycle();
+  return drawable;
+};
+
 const addRipple = args => {
   const view = args.object.nativeViewProtected;
   if (view.getForeground()) return;
-  const attrs = Array.create('int', 1);
-  attrs[0] = android.R.attr.selectableItemBackground;
-  const values = view.getContext().obtainStyledAttributes(attrs);
   const layers = Array.create(android.graphics.drawable.Drawable, 1);
-  layers[0] = values.getDrawable(0);
-  values.recycle();
+  layers[0] = themeDrawable(view, android.R.attr.selectableItemBackground);
   // Shaped by fitRipple: before Android 13 the outline clips only when all corners are equal
   const mask = new android.graphics.drawable.GradientDrawable();
   mask.setColor(android.graphics.Color.WHITE);
@@ -281,6 +286,38 @@ const fitRipple = args => {
 export const pressFeedback = isIOS
   ? { touch: highlightOnTouch }
   : { loaded: addRipple, touch: fitRipple };
+
+// Material icon button: a 40dp circle around the icon
+const addIconRipple = args => {
+  const view = args.object.nativeViewProtected;
+  if (view.getForeground()) return;
+  const ripple = themeDrawable(view, android.R.attr.selectableItemBackgroundBorderless);
+  ripple.setRadius(Utils.layout.toDevicePixels(20));
+  view.setForeground(ripple);
+};
+
+// The first and last cells are padded, so their icon is off the cell's center
+const centerIconRipple = args => {
+  if (args.action !== 'down') return;
+  const view = args.object.nativeViewProtected;
+  view
+    .getForeground()
+    .setHotspotBounds(
+      view.getPaddingLeft(),
+      view.getPaddingTop(),
+      view.getWidth() - view.getPaddingRight(),
+      view.getHeight() - view.getPaddingBottom()
+    );
+};
+
+/**
+ * Listeners for v-on on a cell holding only an icon, where a pressed cell would show as a block:
+ * the icon dims on iOS, as in a UIButton (styled by `:highlighted`), and a round ripple draws
+ * around it on Android
+ */
+export const iconPressFeedback = isIOS
+  ? { touch: highlightOnTouch }
+  : { loaded: addIconRipple, touch: centerIconRipple };
 
 /**
  * Listeners for v-on on a row with a switch: an Android row ripples, and its tap handler toggles
