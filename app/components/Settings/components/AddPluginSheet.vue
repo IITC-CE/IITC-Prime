@@ -9,7 +9,8 @@
     @androidOverflowInset="onAndroidInset"
     :paddingBottom="insetBottom"
   >
-    <ScrollView iosContentInsetAdjustmentBehavior="always">
+    <!-- Android warns about a stretched ScrollView in a StackLayout -->
+    <ScrollView verticalAlignment="top" iosContentInsetAdjustmentBehavior="always">
       <FlexboxLayout class="sheet-content">
         <Label :text="$L('add_plugin.title')" class="sheet-title" />
 
