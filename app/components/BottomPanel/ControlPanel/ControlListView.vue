@@ -422,6 +422,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @use '@/variables' as *;
 
 $quick-tile-height: $spacing-item-two-line;
@@ -489,11 +490,11 @@ $quick-tile-height: $spacing-item-two-line;
 
 // The open pane
 .list-item--active {
-  background-color: mix($accent, $surface-container, 22%);
+  background-color: color.mix($accent, $surface-container, 22%);
 
   // Outweighs .ns-ios .list-item:highlighted
   .ns-ios &:highlighted {
-    background-color: mix($accent, $surface-container, 32%);
+    background-color: color.mix($accent, $surface-container, 32%);
   }
 
   .ms {

@@ -1,5 +1,6 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+@use 'sass:color';
 @import '@nativescript/theme/core';
 @import '@nativescript/theme/default';
 @import 'variables';
@@ -252,7 +253,7 @@ MDButton {
   }
 
   &--active:highlighted {
-    background-color: darken($accent, 8%);
+    background-color: color.adjust($accent, $lightness: -8%);
   }
 }
 

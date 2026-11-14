@@ -123,6 +123,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:color';
 @use '@/variables' as *;
 
 .app-control-button {
@@ -150,6 +151,6 @@ export default {
 }
 
 .ns-ios .app-control-button--active:highlighted {
-  background-color: mix(rgba($ripple, 1), $surface-container, alpha($ripple) * 100%);
+  background-color: color.mix(rgba($ripple, 1), $surface-container, color.alpha($ripple) * 100%);
 }
 </style>
