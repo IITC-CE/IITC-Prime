@@ -193,7 +193,7 @@
         >
           <Label class="overlay-item-label" :text="switchItem.name" col="0" row="0" />
           <AppSwitch
-            class="switch list-item-trailing"
+            class="switch"
             @checkedChange="args => onOverlayToggle(switchItem.index, args.value)"
             :checked="$store.state.map.overlayLayers[switchItem.index]?.active"
             col="1"
@@ -223,7 +223,7 @@
       >
         <Label class="overlay-item-label" :text="item.item.name" col="0" row="0" />
         <AppSwitch
-          class="switch list-item-trailing"
+          class="switch"
           @checkedChange="args => onOverlayToggle(item.item.index, args.value)"
           :checked="$store.state.map.overlayLayers[item.item.index]?.active"
           col="1"

@@ -53,12 +53,7 @@
           />
         </StackLayout>
         <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-        <GridLayout
-          id="switch-area"
-          col="2"
-          class="switch-area list-item-trailing"
-          @tap="onSwitchTap(item)"
-        >
+        <GridLayout id="switch-area" col="2" @tap="onSwitchTap(item)">
           <AppSwitch
             class="switch"
             :checked="item.status === 'on'"
@@ -108,12 +103,7 @@
           />
         </StackLayout>
         <!-- Toggle switch (non-interactive visual; tap handled by wrapper) -->
-        <GridLayout
-          id="switch-area"
-          col="2"
-          class="switch-area list-item-trailing"
-          @tap="onSwitchTap(item)"
-        >
+        <GridLayout id="switch-area" col="2" @tap="onSwitchTap(item)">
           <AppSwitch
             class="switch"
             :checked="item.status === 'on'"
@@ -538,6 +528,5 @@ export default {
 
 .switch {
   vertical-align: center;
-  horizontal-align: center;
 }
 </style>

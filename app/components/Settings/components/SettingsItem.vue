@@ -49,8 +49,13 @@
         once="true"
       />
 
-      <!-- Switch toggle -->
-      <AppSwitch v-else-if="type === 'switch'" :checked="value" @checkedChange="onSwitchChange" />
+      <!-- UISwitch keeps its own size: up to iOS 18 it is narrower than the column and draws at its left -->
+      <AppSwitch
+        v-else-if="type === 'switch'"
+        horizontalAlignment="right"
+        :checked="value"
+        @checkedChange="onSwitchChange"
+      />
     </StackLayout>
 
     <ContentView v-if="isIOS && !isLast" colSpan="2" class="list-separator" />
