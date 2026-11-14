@@ -110,3 +110,23 @@ $radius-full: 9999; // For circular elements
     border-bottom-right-radius: $radius;
   }
 }
+
+// iOS 15–18: the look from before the iOS 26 glass. At the top level it wraps rules (`&.x` there
+// matches a root view, which carries the version class); inside a rule it matches that rule's views
+@mixin ios-before-26 {
+  @if & {
+    .ns-ios-15 &,
+    .ns-ios-16 &,
+    .ns-ios-17 &,
+    .ns-ios-18 & {
+      @content;
+    }
+  } @else {
+    .ns-ios-15,
+    .ns-ios-16,
+    .ns-ios-17,
+    .ns-ios-18 {
+      @content;
+    }
+  }
+}

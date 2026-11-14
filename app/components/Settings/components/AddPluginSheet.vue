@@ -148,10 +148,7 @@ export default {
   color: $ios-sheet-on-surface-variant;
 }
 
-.ns-ios-15,
-.ns-ios-16,
-.ns-ios-17,
-.ns-ios-18 {
+@include ios-before-26 {
   .divider-text {
     color: $on-surface-variant;
   }

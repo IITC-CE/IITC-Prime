@@ -208,10 +208,7 @@ MDButton {
   }
 }
 
-.ns-ios-15,
-.ns-ios-16,
-.ns-ios-17,
-.ns-ios-18 {
+@include ios-before-26 {
   .list-item {
     height: 44;
 
@@ -311,11 +308,10 @@ MDButton {
   border-radius: 0;
 }
 
-.ns-ios-15.sheet-root,
-.ns-ios-16.sheet-root,
-.ns-ios-17.sheet-root,
-.ns-ios-18.sheet-root {
-  background-color: $surface;
+@include ios-before-26 {
+  &.sheet-root {
+    background-color: $surface;
+  }
 }
 
 // Text inputs

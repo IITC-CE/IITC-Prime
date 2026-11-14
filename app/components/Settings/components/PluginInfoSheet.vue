@@ -270,10 +270,7 @@ export default {
   }
 }
 
-.ns-ios-15,
-.ns-ios-16,
-.ns-ios-17,
-.ns-ios-18 {
+@include ios-before-26 {
   .notice-block,
   .details {
     background-color: $surface-container;

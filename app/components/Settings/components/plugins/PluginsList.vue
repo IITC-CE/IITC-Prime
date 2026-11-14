@@ -467,13 +467,8 @@ export default {
 .section-header.section-header--first {
   height: 40;
   padding-top: 12;
-}
 
-.ns-ios-15,
-.ns-ios-16,
-.ns-ios-17,
-.ns-ios-18 {
-  .section-header.section-header--first {
+  @include ios-before-26 {
     padding-top: 18;
   }
 }
