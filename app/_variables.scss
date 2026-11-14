@@ -51,6 +51,9 @@ $team-resistance: #0088ff;
 $team-enlightened: #03dc03;
 $team-machina: #ff0028;
 
+// User-installed plugins
+$plugin-user: #6b7c3a;
+
 // Elevation overlay (for depth effect)
 $elevation-level1: rgba(255, 255, 255, 0.05);
 $elevation-level2: rgba(255, 255, 255, 0.08);
@@ -84,7 +87,10 @@ $spacing-l: 24;
 $spacing-xl: 32;
 $spacing-xxl: 48;
 $spacing-panel: 15;
+
+// Material 3 list row heights, one and two lines
 $spacing-item: 56;
+$spacing-item-two-line: 72;
 
 // Border radius
 $radius-small: 4;

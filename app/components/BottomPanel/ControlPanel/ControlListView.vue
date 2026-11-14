@@ -424,8 +424,7 @@ export default {
 <style scoped lang="scss">
 @use '@/variables' as *;
 
-// Material 3 two-line row height
-$quick-tile-height: 72;
+$quick-tile-height: $spacing-item-two-line;
 
 .list-view {
   margin-left: $spacing-panel;

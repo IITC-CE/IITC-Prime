@@ -500,7 +500,7 @@ export default {
   vertical-align: bottom;
 
   &--user {
-    background-color: #6b7c3a;
+    background-color: $plugin-user;
   }
 
   &--override {

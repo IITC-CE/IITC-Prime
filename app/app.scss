@@ -136,7 +136,7 @@ MDButton {
 }
 
 .list-item--two-line .list-item-spacer {
-  min-height: 72;
+  min-height: $spacing-item-two-line;
 }
 
 .list-item-icon {

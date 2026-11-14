@@ -338,7 +338,7 @@ export default {
   flex-shrink: 0;
 
   &--user {
-    color: #6b7c3a;
+    color: $plugin-user;
   }
 
   &--warning {
