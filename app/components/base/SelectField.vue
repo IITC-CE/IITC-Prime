@@ -164,7 +164,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 // Fits the layers tab, where the field takes half a row
 .select-field--compact .select-text {

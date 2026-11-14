@@ -57,7 +57,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .update-interval-container {
   padding-bottom: $spacing-m;

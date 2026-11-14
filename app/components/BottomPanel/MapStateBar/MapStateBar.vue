@@ -251,7 +251,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .map-state-bar {
   width: 100%;

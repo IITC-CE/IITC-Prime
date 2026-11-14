@@ -77,7 +77,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 // The radio drawable is padded by 6: the circle 18 from the row edge and the text, the text on
 // the M3 keyline at 56

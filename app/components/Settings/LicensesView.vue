@@ -131,7 +131,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .licenses-list {
   width: 100%;

@@ -148,7 +148,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .url-input-container {
   margin-bottom: $spacing-s;

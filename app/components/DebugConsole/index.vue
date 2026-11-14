@@ -478,7 +478,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .debug-console {
   background-color: $surface;

@@ -142,7 +142,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .ns-ios .divider-text {
   color: $ios-sheet-on-surface-variant;

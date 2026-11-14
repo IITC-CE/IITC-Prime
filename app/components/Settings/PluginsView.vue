@@ -419,7 +419,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .main-container {
   width: 100%;

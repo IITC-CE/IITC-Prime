@@ -167,7 +167,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .settings-item-title {
   font-weight: 500;

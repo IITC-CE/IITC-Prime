@@ -422,7 +422,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 // Material 3 two-line row height
 $quick-tile-height: 72;

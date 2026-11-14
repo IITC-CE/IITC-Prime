@@ -78,7 +78,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .about-container {
   padding: $spacing-l;

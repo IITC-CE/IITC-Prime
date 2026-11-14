@@ -586,7 +586,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .panel-container {
   background-color: $surface;
