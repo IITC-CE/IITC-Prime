@@ -33,16 +33,6 @@ Page {
 // COMPONENT STYLES
 //-----------------------------------------------
 
-.half {
-  width: 50%;
-}
-
-// Elevated surfaces (dialogs, dropdowns, etc.)
-.elevated-surface {
-  background-color: $surface-container;
-  border-radius: $radius-medium;
-}
-
 // Buttons
 MDButton {
   text-transform: none;
@@ -71,13 +61,6 @@ MDButton {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
   ripple-color: $ripple;
-}
-
-.btn-text {
-  color: $accent;
-  font-size: $font-size;
-  font-weight: bold;
-  padding: $spacing-s $spacing-m;
 }
 
 // Lists
@@ -283,19 +266,6 @@ MDButton {
   }
 }
 
-// Dialog styles
-.dialog-container {
-  background-color: $surface-container;
-  padding: $spacing-l;
-}
-
-.dialog-title {
-  font-size: $font-size-headline;
-  font-weight: bold;
-  margin-bottom: $spacing-m;
-  color: $on-surface;
-}
-
 // Root of a sheet shown with showSheet. The iOS system sheet draws its own corners, and from
 // iOS 26 its own glass background
 .sheet-root {
@@ -325,16 +295,6 @@ MDButton {
   placeholder-color: $on-surface-variant;
   border-bottom-width: 0;
   border-color: transparent;
-}
-
-// Form elements
-.form-field {
-  margin-bottom: $spacing-m;
-}
-
-.form-label {
-  font-size: $font-size-small;
-  margin-bottom: $spacing-xs;
 }
 
 .section-header {

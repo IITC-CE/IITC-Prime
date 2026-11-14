@@ -20,7 +20,6 @@ $separator: rgba(255, 255, 255, 0.1); // iOS list hairline
 
 // Accent - interactive: toggles, icons, buttons
 $accent: #26a69a;
-$accent-container: rgba(38, 166, 154, 0.14); // icon background, subtle fill
 $accent-border: rgba(38, 166, 154, 0.42); // active border ring
 
 // Text on dark surfaces
@@ -36,10 +35,6 @@ $ios-sheet-on-surface-variant: rgba(235, 235, 245, 0.6);
 $ripple: rgba(255, 255, 255, 0.1);
 
 // States
-$state-hover: rgba(255, 255, 255, 0.08);
-$state-focus: rgba(255, 255, 255, 0.12);
-$state-drag: rgba(255, 255, 255, 0.16);
-
 $state-success: #43a047;
 $state-warning: #ff9800;
 $state-error: #e53935;
@@ -54,11 +49,6 @@ $team-machina: #ff0028;
 // User-installed plugins
 $plugin-user: #6b7c3a;
 
-// Elevation overlay (for depth effect)
-$elevation-level1: rgba(255, 255, 255, 0.05);
-$elevation-level2: rgba(255, 255, 255, 0.08);
-$elevation-level3: rgba(255, 255, 255, 0.11);
-
 //-----------------------------------------------
 // TYPOGRAPHY SYSTEM
 //-----------------------------------------------
@@ -69,10 +59,6 @@ $font-size-headline: 20; // Section headers
 $font-size-title: 16; // Content titles
 $font-size: 14; // Body text
 $font-size-small: 12; // Captions, labels
-
-// Line heights
-$line-height-relaxed: 1.5;
-$line-height-tight: 1.2;
 
 //-----------------------------------------------
 // SPACING SYSTEM
