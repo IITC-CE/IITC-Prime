@@ -214,16 +214,18 @@ export default {
     },
 
     /**
-     * Panel translation data for the views that follow its opening (0 at BOTTOM, 1 at MIDDLE).
+     * Panel translation data for the views that follow it: the content shifts as the panel opens
+     * (`opening` 0 at BOTTOM, 1 at MIDDLE), the whole bar sinks with it below BOTTOM.
      * Transforms only: a padding change would relayout the screen on every frame of the drag.
      */
-    openingTrData(progress) {
+    panelTrData(opening, sunk) {
       const divider = this.$refs.divider?.nativeView;
       if (!divider) return null;
       const offset = this.hasBottomInset ? OPEN_CONTENT_OFFSET : OPEN_CONTENT_OFFSET / 2;
-      const translateY = offset * progress;
+      const translateY = offset * opening;
       return {
-        mapStateDivider: { target: divider, opacity: progress },
+        mapStateBar: { target: this.$el.nativeView, translateY: sunk },
+        mapStateDivider: { target: divider, opacity: opening },
         mapStatePortal: { target: this.$refs.portalStatusView.$el.nativeView, translateY },
         mapStateMap: { target: this.$refs.mapStatusView.$el.nativeView, translateY },
       };

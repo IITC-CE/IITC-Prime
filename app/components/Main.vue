@@ -19,7 +19,7 @@
           :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
           :listBottomPadding="mapStateBarHeight + navBarHeight"
-          :openingTrData="mapStateOpeningTrData"
+          :followerTrData="mapStateTrData"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
@@ -198,9 +198,6 @@ export default {
   },
 
   watch: {
-    isPanelHidden(hidden) {
-      this.updateMapStateBarVisibility(hidden, true);
-    },
     isStatusBarDark(isDark) {
       if (!this.isMainPageActive()) return;
       setStatusBarForMapTheme(isDark);
@@ -213,31 +210,6 @@ export default {
   },
 
   methods: {
-    updateMapStateBarVisibility(hidden, animate) {
-      const bar = this.$refs.mapStateBar?.$el?.nativeView;
-      if (!bar) return;
-
-      const slideDistance = this.mapStateBarHeight + this.systemBottomInset;
-      const y = hidden ? slideDistance : 0;
-      this._mapStateBarTargetY = y;
-
-      if (animate) {
-        bar
-          .animate({
-            translate: { x: 0, y },
-            duration: 200,
-            curve: CoreTypes.AnimationCurve.easeOut,
-          })
-          .catch(() => {})
-          .finally(() => {
-            // Overlapping hide/show animations: converge on the last requested target
-            bar.translateY = this._mapStateBarTargetY;
-          });
-      } else {
-        bar.translateY = y;
-      }
-    },
-
     /**
      * Called when RootLayout changes size
      * This captures real available space including keyboard state
@@ -261,11 +233,6 @@ export default {
      */
     handleLayoutChanged(args) {
       const { dimensions } = args;
-
-      // Re-apply MapStateBar position after layout change
-      if (this.isPanelHidden) {
-        this.$nextTick(() => this.updateMapStateBarVisibility(true, false));
-      }
 
       // Update local layout state
       this.layout = {
@@ -295,8 +262,8 @@ export default {
       this.bottomSheetInstance = bottomSheet;
     },
 
-    mapStateOpeningTrData(progress) {
-      return this.$refs.mapStateBar?.openingTrData(progress);
+    mapStateTrData(opening, sunk) {
+      return this.$refs.mapStateBar?.panelTrData(opening, sunk);
     },
 
     onRestoreButtonLoaded(args) {
@@ -443,33 +410,25 @@ export default {
       if (!isIOS) return;
       const owner = this.bottomSheetInstance;
       const sheet = owner?.bottomSheet;
-      if (owner && sheet && !owner.animating && !owner.animation) {
-        const expected = owner.computeTranslationData()?.bottomSheet?.translateY;
-        const actual = sheet.translateY || 0;
-        if (typeof expected === 'number' && Math.abs(actual - expected) > 1) {
-          captureWarning('BottomSheet transform desync healed on resume', {
-            actual,
-            expected,
-            translationY: owner.translationY,
-            stepIndex: owner.stepIndex,
-          });
-          owner.applyTrData(owner.computeTranslationData());
-        }
-      }
+      if (!owner || !sheet || owner.animating || owner.animation) return;
 
-      const bar = this.$refs.mapStateBar?.$el?.nativeView;
-      if (bar) {
-        const expected = this.isPanelHidden ? this.mapStateBarHeight + this.systemBottomInset : 0;
-        const actual = bar.translateY || 0;
-        if (Math.abs(actual - expected) > 1) {
-          captureWarning('MapStateBar transform desync healed on resume', {
-            actual,
-            expected,
-            isPanelHidden: this.isPanelHidden,
-          });
-          bar.translateY = expected;
-        }
+      const trData = owner.computeTranslationData();
+      let healed = false;
+      for (const [name, view, expected] of [
+        ['BottomSheet', sheet, trData?.bottomSheet?.translateY],
+        ['MapStateBar', trData?.mapStateBar?.target, trData?.mapStateBar?.translateY],
+      ]) {
+        const actual = view?.translateY || 0;
+        if (!view || typeof expected !== 'number' || Math.abs(actual - expected) <= 1) continue;
+        captureWarning(`${name} transform desync healed on resume`, {
+          actual,
+          expected,
+          translationY: owner.translationY,
+          stepIndex: owner.stepIndex,
+        });
+        healed = true;
       }
+      if (healed) owner.applyTrData(trData);
     },
 
     onMainPageNavigatingFrom() {

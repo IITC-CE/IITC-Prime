@@ -132,8 +132,9 @@ export default {
       type: Number,
       default: 0,
     },
-    // (progress from BOTTOM to MIDDLE) => translation data for views outside the sheet
-    openingTrData: {
+    // (progress from BOTTOM to MIDDLE, distance sunk below BOTTOM) => translation data for views
+    // outside the sheet
+    followerTrData: {
       type: Function,
       default: null,
     },
@@ -260,10 +261,12 @@ export default {
           bottomSheet: { translateY: value },
           backDrop: { opacity },
         };
-        if (this.openingTrData) {
+        if (this.followerTrData) {
           const span = middleStep - bottomStep;
           const opening = span > 0 ? (progress * max - bottomStep) / span : 0;
-          Object.assign(data, this.openingTrData(Math.min(Math.max(opening, 0), 1)));
+          // From value, not progress: it includes the iOS safe area the hidden sheet goes under
+          const sunk = Math.max(bottomStep + value, 0);
+          Object.assign(data, this.followerTrData(Math.min(Math.max(opening, 0), 1), sunk));
         }
         return data;
       };
