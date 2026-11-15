@@ -127,7 +127,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 @mixin portal-animation {
   animation-duration: 0.2s;

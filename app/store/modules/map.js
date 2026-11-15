@@ -55,7 +55,14 @@ export const map = {
       state.baseLayerSelected = index;
     },
     SET_BASE_LAYERS_LIST(state, layers) {
-      state.baseLayersList = layers;
+      // IITC resends the list with every layer toggle: a new array would rebuild the panel list
+      const existing = state.baseLayersList;
+      const same =
+        existing.length === layers.length &&
+        layers.every((l, i) => l.layerId === existing[i].layerId && l.name === existing[i].name);
+      if (!same) {
+        state.baseLayersList = layers;
+      }
     },
     SET_OVERLAY_LAYERS(state, layers) {
       const existing = state.overlayLayers;

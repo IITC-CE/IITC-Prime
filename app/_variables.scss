@@ -1,0 +1,129 @@
+// Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
+
+// Variables and mixins only, for component styles: importing app.scss there would copy the theme
+// and the global rules into every component, and each view would be matched against all copies
+
+// Icon sizes (Material Symbols is optically tuned for 24)
+$icon-size-small: 20; // Inline with text
+$icon-size: 24; // Default
+$icon-size-large: 32; // Large touch targets
+
+//-----------------------------------------------
+// COLOR SYSTEM
+//-----------------------------------------------
+
+// Surfaces
+$surface: #0a2329;
+$surface-container: #133840; // card, section, list row
+$surface-container-high: #1d4853; // active chip, pressed tile
+$separator: rgba(255, 255, 255, 0.1); // iOS list hairline
+
+// Accent - interactive: toggles, icons, buttons
+$accent: #26a69a;
+$accent-border: rgba(38, 166, 154, 0.42); // active border ring
+
+// Text on dark surfaces
+$on-surface: #ffffff;
+$on-surface-variant: #71a0a6; // secondary / muted text
+
+// iOS 26 sheets show grey glass, where the teal ones above look out of place: tertiarySystemFill
+// and secondaryLabel in the dark appearance
+$ios-sheet-fill: rgba(118, 118, 128, 0.24);
+$ios-sheet-on-surface-variant: rgba(235, 235, 245, 0.6);
+
+// Interaction
+$ripple: rgba(255, 255, 255, 0.1);
+
+// States
+$state-success: #43a047;
+$state-warning: #ff9800;
+$state-error: #e53935;
+$state-disabled: #888;
+
+// Ingress faction colors
+$team-neutral: #ff6600;
+$team-resistance: #0088ff;
+$team-enlightened: #03dc03;
+$team-machina: #ff0028;
+
+// User-installed plugins
+$plugin-user: #6b7c3a;
+
+// Map land colours and IITC's page background, repeated in assets/css/iitc-prime.css
+$map-land-dark: #0e0e0e;
+$map-land-light: #fafaf8;
+$iitc-background: #0e3d4e;
+
+//-----------------------------------------------
+// TYPOGRAPHY SYSTEM
+//-----------------------------------------------
+
+// Font sizes
+$font-size-display: 24; // Large titles
+$font-size-headline: 20; // Section headers
+$font-size-title: 16; // Content titles
+$font-size: 14; // Body text
+$font-size-small: 12; // Captions, labels
+
+//-----------------------------------------------
+// SPACING SYSTEM
+//-----------------------------------------------
+
+// Based on 8dp grid system
+$spacing-xxs: 2;
+$spacing-xs: 4;
+$spacing-s: 8;
+$spacing-m: 16;
+$spacing-l: 24;
+$spacing-xl: 32;
+$spacing-xxl: 48;
+$spacing-panel: 15;
+
+// Material 3 list row heights, one and two lines
+$spacing-item: 56;
+$spacing-item-two-line: 72;
+
+// Border radius
+$radius-small: 4;
+$radius-medium: 8;
+$radius-large: 16;
+$radius-full: 9999; // For circular elements
+
+@mixin list-item-corners($radius) {
+  &--top-left,
+  &--first {
+    border-top-left-radius: $radius;
+  }
+  &--top-right,
+  &--first {
+    border-top-right-radius: $radius;
+  }
+  &--bottom-left,
+  &--last {
+    border-bottom-left-radius: $radius;
+  }
+  &--bottom-right,
+  &--last {
+    border-bottom-right-radius: $radius;
+  }
+}
+
+// iOS 15–18: the look from before the iOS 26 glass. At the top level it wraps rules (`&.x` there
+// matches a root view, which carries the version class); inside a rule it matches that rule's views
+@mixin ios-before-26 {
+  @if & {
+    .ns-ios-15 &,
+    .ns-ios-16 &,
+    .ns-ios-17 &,
+    .ns-ios-18 & {
+      @content;
+    }
+  } @else {
+    .ns-ios-15,
+    .ns-ios-16,
+    .ns-ios-17,
+    .ns-ios-18 {
+      @content;
+    }
+  }
+}

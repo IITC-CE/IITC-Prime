@@ -6,6 +6,19 @@ body {
   min-width: initial;
 }
 
+/* The area the WebView grows over when the panel hides shows the page background until the next
+   frame (iOS: body's): match the map's land, as the spacer under the panel does. Other panes show
+   the body through translucent backgrounds, so they keep IITC's */
+html.iitc-prime-map-dark:not(.iitc-prime-pane),
+html.iitc-prime-map-dark:not(.iitc-prime-pane) body {
+  background-color: #0e0e0e;
+}
+
+html.iitc-prime-map-light:not(.iitc-prime-pane),
+html.iitc-prime-map-light:not(.iitc-prime-pane) body {
+  background-color: #fafaf8;
+}
+
 /* login page */
 #dashboard_container {
   display: flex;
