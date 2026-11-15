@@ -162,6 +162,15 @@ const buildBridgeScript = () => {
     events.dialogOpened = ['id', 'open'];
   }
 
+  // Classes on <html> that iitc-prime.css colours the page by
+  const pageEffects = {
+    setMapDarkMode:
+      'var c = document.documentElement.classList;' +
+      " c.toggle('iitc-prime-map-dark', !!isDark);" +
+      " c.toggle('iitc-prime-map-light', !isDark);",
+    switchToPane: "document.documentElement.classList.toggle('iitc-prime-pane', id !== 'map');",
+  };
+
   // regular sync bridge functions
   Object.entries(events).forEach(entry => {
     const [key, value] = entry;
@@ -171,6 +180,7 @@ const buildBridgeScript = () => {
       ' = function(' +
       value.join(', ') +
       ') {' +
+      (pageEffects[key] ? ' ' + pageEffects[key] : '') +
       " return window.nsWebViewBridge.emit('JSBridge', ['" +
       key +
       "', {" +

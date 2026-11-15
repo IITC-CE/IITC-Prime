@@ -26,7 +26,7 @@
             <!-- Main content with WebView (hidden when debug is active) -->
             <GridLayout rows="*, auto" columns="*" class="main-content">
               <AppWebView ref="appWebView" row="0" col="0" @console-log="onConsoleLog" />
-              <label row="1" col="0" :height="contentBottomPadding" />
+              <label row="1" col="0" :height="contentBottomPadding" :class="contentBackdropClass" />
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
@@ -177,6 +177,13 @@ export default {
      */
     systemBottomInset() {
       return this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
+    },
+
+    // Same colour as the page background (assets/css/iitc-prime.css)
+    contentBackdropClass() {
+      if (!this.$store.state.ui.isIitcLoaded) return null;
+      if (this.$store.state.navigation.currentPane !== 'map') return 'content-backdrop--iitc';
+      return this.isMapDark ? 'content-backdrop--dark' : 'content-backdrop--light';
     },
 
     /**
@@ -529,6 +536,20 @@ export default {
 
 .page {
   background-color: $surface;
+}
+
+.content-backdrop {
+  &--dark {
+    background-color: $map-land-dark;
+  }
+
+  &--light {
+    background-color: $map-land-light;
+  }
+
+  &--iitc {
+    background-color: $iitc-background;
+  }
 }
 
 .main-content {
