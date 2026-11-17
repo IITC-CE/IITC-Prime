@@ -1,6 +1,6 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { Frame } from '@nativescript/core';
+import { Application, Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager/manager-service';
@@ -8,6 +8,20 @@ import { managerErrorText } from '@/utils/manager/error-text';
 import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
+let nextCheckTimer = null;
+
+/** Without a daemon the library schedules no checks: run the next one in the foreground when due */
+function scheduleNextCheck(status, dispatch) {
+  clearTimeout(nextCheckTimer);
+  if (Application.suspended || !status || status.internal.checking || status.external.checking) {
+    return;
+  }
+  const wait = Math.min(status.internal.nextCheck, status.external.nextCheck) * 1000 - Date.now();
+  // At least a second, so that a status that lags behind a check does not spin;
+  // at most what setTimeout accepts, a longer delay fires at once
+  const delay = Math.min(Math.max(wait, 1000), 2 ** 31 - 1);
+  nextCheckTimer = setTimeout(() => dispatch('checkUpdates'), delay);
+}
 
 export const manager = {
   namespaced: true,
@@ -59,6 +73,10 @@ export const manager = {
      * Initialize manager and setup event listeners
      */
     async run({ commit, dispatch }) {
+      // A resume catches up on checks that came due while suspended
+      Application.on(Application.suspendEvent, () => clearTimeout(nextCheckTimer));
+      Application.on(Application.resumeEvent, () => dispatch('checkUpdates'));
+
       // Set callbacks for handling Manager events
       managerService.setCallbacks({
         onInjectPlugin: plugin => {
@@ -73,6 +91,7 @@ export const manager = {
         },
         onUpdateStatusChanged: status => {
           commit('SET_UPDATE_STATUS', status);
+          scheduleNextCheck(status, dispatch);
         },
       });
 
@@ -87,10 +106,28 @@ export const manager = {
     },
 
     /**
-     * Force update check
+     * Check for updates if a check is due, then re-arm the check timer
+     */
+    async checkUpdates({ state, dispatch }) {
+      try {
+        return await managerService.checkUpdates(false);
+      } catch (error) {
+        console.error('Update check failed:', error);
+      } finally {
+        // A check that was not due sends no new status to reschedule from
+        scheduleNextCheck(state.updateStatus, dispatch);
+      }
+    },
+
+    /**
+     * Force update check; the update status shows its result
      */
     async forceUpdate() {
-      return await managerService.checkUpdates(true);
+      try {
+        return await managerService.checkUpdates(true);
+      } catch (error) {
+        console.error('Force update failed:', error);
+      }
     },
 
     async getEnabledPluginScripts() {

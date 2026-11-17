@@ -40,6 +40,7 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 import { checkCustomChannelUrl } from 'lib-iitc-manager';
 import { fixTextInputColors, pressFeedback } from '@/utils/platform/ui';
 
@@ -62,6 +63,8 @@ export default {
   },
 
   computed: {
+    ...mapGetters('manager', ['updateStatus']),
+
     // URL status icon based on validation state
     urlStatusIcon() {
       if (this.urlStatus === 'success') return 'ms-check';
@@ -87,6 +90,7 @@ export default {
 
   methods: {
     fixTextInputColors,
+    ...mapActions('manager', ['forceUpdate']),
 
     /**
      * Save a changed URL and show whether it serves a channel
@@ -112,6 +116,12 @@ export default {
       if (this.url !== enteredUrl) return;
 
       this.urlStatus = ok ? 'success' : 'error';
+
+      // A server that came up after its URL failed would otherwise wait out the retry pause
+      const status = this.updateStatus;
+      if (ok && status?.channel === 'custom' && status.internal.retry) {
+        this.forceUpdate();
+      }
     },
 
     /**
