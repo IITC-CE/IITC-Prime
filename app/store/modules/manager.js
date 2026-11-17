@@ -2,7 +2,6 @@
 
 import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
-import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager/manager-service';
 import { webviewService } from '@/utils/webview/webview-service';
@@ -24,7 +23,6 @@ export const manager = {
   state: () => ({
     isInitialized: false,
     isRunning: false,
-    inProgress: false,
     plugins: {},
     core: null,
     lastPluginUpdate: null,
@@ -38,9 +36,6 @@ export const manager = {
     },
     SET_RUNNING(state, value) {
       state.isRunning = value;
-    },
-    SET_PROGRESS(state, value) {
-      state.inProgress = value;
     },
     SET_PLUGINS(state, plugins) {
       state.plugins = plugins;
@@ -73,9 +68,6 @@ export const manager = {
         onMessage: (message, args) => {
           showManagerMessage(message, args);
         },
-        onProgress: isShow => {
-          commit('SET_PROGRESS', isShow);
-        },
         onInjectPlugin: plugin => {
           dispatch('map/setInjectPlugin', plugin, { root: true });
         },
@@ -88,33 +80,21 @@ export const manager = {
         },
       });
 
-      commit('SET_PROGRESS', true);
+      const data = await managerService.startup();
 
-      try {
-        const data = await managerService.startup();
+      commit('SET_RUNNING', data.isRunning);
+      commit('SET_CURRENT_CHANNEL', data.currentChannel);
+      commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
+      commit('SET_INITIALIZED', true);
 
-        commit('SET_RUNNING', data.isRunning);
-        commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-        commit('SET_INITIALIZED', true);
-
-        return data;
-      } finally {
-        commit('SET_PROGRESS', false);
-      }
+      return data;
     },
 
     /**
      * Force update check
      */
-    async forceUpdate({ commit }) {
-      commit('SET_PROGRESS', true);
-
-      try {
-        return await managerService.checkUpdates(true);
-      } finally {
-        commit('SET_PROGRESS', false);
-      }
+    async forceUpdate() {
+      return await managerService.checkUpdates(true);
     },
 
     async getEnabledPluginScripts() {
@@ -182,9 +162,9 @@ export const manager = {
      * Set custom channel URL
      */
     async setCustomChannelUrl({ commit }, url) {
-      const data = await managerService.setCustomChannelUrl(url);
-      commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-      return data;
+      // Committed before the check, so that a newer edit compares with this URL
+      commit('SET_CUSTOM_CHANNEL_URL', url);
+      await managerService.setCustomChannelUrl(url);
     },
 
     /**
@@ -214,13 +194,6 @@ export const manager = {
         }
         throw error;
       }
-    },
-
-    /**
-     * Validate custom channel URL
-     */
-    async checkCustomChannelUrl(_, url) {
-      return await validateCustomChannelUrl(url);
     },
 
     /**
@@ -324,11 +297,6 @@ export const manager = {
      * Check if Manager is running
      */
     isRunning: state => state.isRunning,
-
-    /**
-     * Check if Manager in progress
-     */
-    inProgress: state => state.inProgress,
 
     /**
      * Get all plugins from Vuex state

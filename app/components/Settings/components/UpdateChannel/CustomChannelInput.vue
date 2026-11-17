@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { checkCustomChannelUrl } from 'lib-iitc-manager';
 import { fixTextInputColors, pressFeedback } from '@/utils/platform/ui';
 
 export default {
@@ -87,43 +87,31 @@ export default {
 
   methods: {
     fixTextInputColors,
-    ...mapActions('manager', ['checkCustomChannelUrl', 'forceUpdate']),
 
     /**
-     * Check if custom URL is valid
+     * Save a changed URL and show whether it serves a channel
      */
     async checkCustomUrl() {
-      if (!this.url) {
-        this.urlStatus = 'unknown';
-        return;
-      }
-
       this.urlStatus = 'unknown';
+      if (!this.url) return;
 
       const enteredUrl = this.url;
 
-      try {
-        // Normalized only for checking and saving
-        let urlToCheck = enteredUrl;
-        if (!/^https?:\/\//i.test(urlToCheck)) {
-          urlToCheck = 'http://' + urlToCheck;
-        }
-
-        const isValid = await this.checkCustomChannelUrl(urlToCheck);
-
-        // A slower check of an older value must not override a newer one
-        if (this.url !== enteredUrl) return;
-
-        this.urlStatus = isValid ? 'success' : 'error';
-
-        this.$emit('urlChanged', urlToCheck);
-        if (isValid) {
-          await this.forceUpdate();
-        }
-      } catch (error) {
-        console.error('Error checking custom URL:', error);
-        if (this.url === enteredUrl) this.urlStatus = 'error';
+      // Normalized only for checking and saving
+      let urlToCheck = enteredUrl;
+      if (!/^https?:\/\//i.test(urlToCheck)) {
+        urlToCheck = 'http://' + urlToCheck;
       }
+
+      // Saved even if it fails the check: the server may not be up yet
+      if (urlToCheck !== this.customUrl) this.$emit('urlChanged', urlToCheck);
+
+      const { ok } = await checkCustomChannelUrl(urlToCheck);
+
+      // A slower check of an older value must not override a newer one
+      if (this.url !== enteredUrl) return;
+
+      this.urlStatus = ok ? 'success' : 'error';
     },
 
     /**

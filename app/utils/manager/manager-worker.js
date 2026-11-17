@@ -82,9 +82,6 @@ const getManager = () => {
     message: (message, args) => {
       emitCallback('onMessage', [message, args]);
     },
-    onProgress: isShow => {
-      emitCallback('onProgress', [isShow]);
-    },
     injectPlugin: async plugin => {
       // Write to disk so plugin code never crosses the worker boundary via postMessage
       if (!plugin || !plugin.code) return;
@@ -144,7 +141,9 @@ const handlers = {
   },
 
   async getUpdateChannel() {
-    return getManager().channel;
+    const m = getManager();
+    await m.ready;
+    return m.channel;
   },
 
   async setUpdateChannel(channel) {
@@ -168,7 +167,9 @@ const handlers = {
   },
 
   async getCustomChannelUrl() {
-    return getManager().networkHost?.custom ?? '';
+    const m = getManager();
+    await m.ready;
+    return m.networkHost?.custom ?? '';
   },
 
   async setCustomChannelUrl(url) {

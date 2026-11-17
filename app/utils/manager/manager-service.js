@@ -16,7 +16,6 @@ export class ManagerService {
     this.pending = new Map();
     this.callbacks = {
       onMessage: null,
-      onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
       onPluginsViewChanged: null,
@@ -168,7 +167,6 @@ export class ManagerService {
     this._rejectAllPending(new Error('ManagerService cleaned up'));
     this.callbacks = {
       onMessage: null,
-      onProgress: null,
       onInjectPlugin: null,
       onPluginEvent: null,
       onPluginsViewChanged: null,
