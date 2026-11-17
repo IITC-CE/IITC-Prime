@@ -283,39 +283,18 @@ export const manager = {
     },
 
     /**
-     * Handle plugin state changes from manager
+     * Handle plugin script changes from manager; statuses come with onPluginsViewChanged
      */
-    async handlePluginEvent({ commit, dispatch }, event) {
-      try {
-        for (const [uid, plugin] of Object.entries(event.plugins)) {
-          const status = event.event === 'add' ? 'on' : 'off';
-          commit('UPDATE_PLUGIN_STATUS', { uid, status });
-
-          // Handle user-location plugin changes - only for add/remove, not update
-          if (
-            uid === 'User Location+https://github.com/IITC-CE/ingress-intel-total-conversion' &&
-            event.event !== 'update'
-          ) {
-            const isEnabled = event.event === 'add';
-            await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
-          }
+    handlePluginEvent({ dispatch }, event) {
+      // Reload WebView if user is on settings screen and plugin was changed or removed
+      if (event.event === 'update' || event.event === 'remove') {
+        const frame = Frame.topmost();
+        if (frame?.backStack?.length > 0) {
+          clearTimeout(pendingWebViewReload);
+          pendingWebViewReload = setTimeout(() => {
+            dispatch('ui/reloadWebView', null, { root: true });
+          }, 500);
         }
-
-        // Reload full plugins list
-        await dispatch('loadPlugins');
-
-        // Reload WebView if user is on settings screen and plugin was changed or removed
-        if (event.event === 'update' || event.event === 'remove') {
-          const frame = Frame.topmost();
-          if (frame?.backStack?.length > 0) {
-            clearTimeout(pendingWebViewReload);
-            pendingWebViewReload = setTimeout(() => {
-              dispatch('ui/reloadWebView', null, { root: true });
-            }, 500);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to handle plugin state change:', error);
       }
     },
   },
