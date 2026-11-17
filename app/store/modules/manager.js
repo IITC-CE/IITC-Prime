@@ -20,6 +20,7 @@ export const manager = {
     lastPluginUpdate: null,
     currentChannel: 'release',
     customChannelUrl: '',
+    updateStatus: null,
   }),
 
   mutations: {
@@ -48,6 +49,9 @@ export const manager = {
     SET_CUSTOM_CHANNEL_URL(state, url) {
       state.customChannelUrl = url;
     },
+    SET_UPDATE_STATUS(state, status) {
+      state.updateStatus = status;
+    },
   },
 
   actions: {
@@ -66,6 +70,9 @@ export const manager = {
         onPluginsViewChanged: (plugins, core) => {
           commit('SET_PLUGINS', plugins);
           commit('SET_CORE', core);
+        },
+        onUpdateStatusChanged: status => {
+          commit('SET_UPDATE_STATUS', status);
         },
       });
 
@@ -122,13 +129,6 @@ export const manager = {
      */
     async getUpdateInterval(_, channel) {
       return await managerService.getUpdateInterval(channel);
-    },
-
-    /**
-     * Get last check timestamp (seconds) from storage
-     */
-    async getLastCheckTime() {
-      return await managerService.getLastCheckTime();
     },
 
     /**
@@ -327,5 +327,16 @@ export const manager = {
      * Custom channel URL
      */
     customChannelUrl: state => state.customChannelUrl,
+
+    /**
+     * Status of update checks from lib-iitc-manager, null until the manager starts
+     */
+    updateStatus: state => state.updateStatus,
+
+    /**
+     * Update check status of the current channel, null until the channel reaches the library
+     */
+    channelStatus: state =>
+      state.updateStatus?.channel === state.currentChannel ? state.updateStatus.internal : null,
   },
 };

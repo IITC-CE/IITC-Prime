@@ -88,6 +88,9 @@ const getManager = () => {
     onPluginEvent: event => {
       emitCallback('onPluginEvent', [event]);
     },
+    onUpdateStatusChanged: status => {
+      emitCallback('onUpdateStatusChanged', [status]);
+    },
     onPluginsViewChanged: view => {
       emitCallback('onPluginsViewChanged', [
         stripCodeMap(view.plugins),
@@ -151,11 +154,6 @@ const handlers = {
 
   async getUpdateInterval(channel) {
     return await getManager().getUpdateCheckInterval(channel);
-  },
-
-  async getLastCheckTime() {
-    const data = await storage.get(['last_check_update']);
-    return data.last_check_update ?? null;
   },
 
   async setUpdateInterval(interval, channel) {

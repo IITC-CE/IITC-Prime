@@ -74,7 +74,6 @@ export default {
       selectedIntervalValue: '86400',
       externalIntervalValue: '86400',
       isUpdating: false,
-      lastCheckTime: null,
     };
   },
 
@@ -83,16 +82,17 @@ export default {
       return [{ id: 'update', text: this.$L('update_channel.update_now') }];
     },
 
-    ...mapGetters('manager', ['currentChannel', 'customChannelUrl']),
+    ...mapGetters('manager', ['currentChannel', 'customChannelUrl', 'channelStatus']),
 
     customUrl() {
       return this.customChannelUrl;
     },
 
     formattedLastCheckTime() {
-      if (!this.lastCheckTime) return '';
+      const lastCheck = this.channelStatus?.lastCheck;
+      if (!lastCheck) return '';
 
-      const diff = Math.floor((Date.now() - this.lastCheckTime) / 1000);
+      const diff = Math.floor(Date.now() / 1000 - lastCheck);
       if (diff < 60) return this.$L('update_channel.time.just_now');
       if (diff < 3600) return this.$L('update_channel.time.minutes_ago', Math.floor(diff / 60));
       if (diff < 86400) return this.$L('update_channel.time.hours_ago', Math.floor(diff / 3600));
@@ -109,7 +109,6 @@ export default {
       'loadCustomChannelUrl',
       'setCustomChannelUrl',
       'forceUpdate',
-      'getLastCheckTime',
     ]),
 
     /**
@@ -192,17 +191,11 @@ export default {
 
       try {
         await this.forceUpdate();
-        this.lastCheckTime = Date.now();
       } catch (error) {
         console.error('Force update failed:', error);
       } finally {
         this.isUpdating = false;
       }
-    },
-
-    async loadLastCheckTime() {
-      const seconds = await this.getLastCheckTime();
-      if (seconds) this.lastCheckTime = seconds * 1000;
     },
   },
 
@@ -211,7 +204,6 @@ export default {
     await Promise.all([
       this.loadChannelInterval(),
       this.loadExternalInterval(),
-      this.loadLastCheckTime(),
       ...(this.currentChannel === 'custom' ? [this.loadCustomUrl()] : []),
     ]);
   },
