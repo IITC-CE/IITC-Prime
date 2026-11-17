@@ -28,6 +28,7 @@
       :title="$L('settings.location.title')"
       :description="$L('settings.location.description')"
       :value="showLocation"
+      :disabled="userLocationMissing"
       @change="updateShowLocation"
       :isFirst="true"
     />
@@ -122,6 +123,7 @@ import BackupView from './BackupView';
 import { clearWebViewCookies } from '~/utils/webview/cookie-manager';
 import { confirm, alert } from '~/utils/dialogs';
 import { goBack } from '~/utils/platform/navigation';
+import { USER_LOCATION_UID } from '~/utils/user-location';
 
 export default {
   name: 'SettingsView',
@@ -150,7 +152,18 @@ export default {
       'isPersistentZoom',
       'isShowLocation',
     ]),
-    ...mapGetters('manager', ['currentChannel', 'enabledPlugins', 'channelError']),
+    ...mapGetters('manager', [
+      'currentChannel',
+      'enabledPlugins',
+      'plugins',
+      'lastPluginUpdate',
+      'channelError',
+    ]),
+
+    // Not before the plugin list arrives: an empty list would disable the switch for a moment
+    userLocationMissing() {
+      return this.lastPluginUpdate !== null && !this.plugins[USER_LOCATION_UID];
+    },
 
     desktopMode() {
       return this.isDesktopMode;

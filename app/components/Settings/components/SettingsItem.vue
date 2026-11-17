@@ -56,6 +56,7 @@
         v-else-if="type === 'switch'"
         horizontalAlignment="right"
         :checked="value"
+        :isEnabled="!disabled"
         @checkedChange="onSwitchChange"
       />
     </StackLayout>
@@ -96,6 +97,10 @@ export default {
 
     // Switch-specific props
     value: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       default: false,
     },
@@ -160,7 +165,7 @@ export default {
       } else if (this.type === 'action') {
         // Emit custom action event
         this.$emit('action');
-      } else if (this.type === 'switch' && !isIOS) {
+      } else if (this.type === 'switch' && !isIOS && !this.disabled) {
         this.$emit('change', !this.value);
       }
     },
