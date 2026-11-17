@@ -4,18 +4,10 @@ import { Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager/manager-service';
+import { managerErrorText } from '@/utils/manager/error-text';
 import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
-
-const MESSAGES = {
-  serverNotAvailableRetry: args => l('manager.server_not_available', args),
-};
-
-function showManagerMessage(message, args) {
-  const text = MESSAGES[message]?.(args) ?? message;
-  new Toasty({ text }).show();
-}
 
 export const manager = {
   namespaced: true,
@@ -65,9 +57,6 @@ export const manager = {
     async run({ commit, dispatch }) {
       // Set callbacks for handling Manager events
       managerService.setCallbacks({
-        onMessage: (message, args) => {
-          showManagerMessage(message, args);
-        },
         onInjectPlugin: plugin => {
           dispatch('map/setInjectPlugin', plugin, { root: true });
         },
@@ -178,22 +167,29 @@ export const manager = {
     },
 
     /**
-     * Enable/disable/delete plugin
+     * Enable/disable/delete plugin. Reports a failed enable with a toast
      */
     async managePlugin({ commit, state }, { uid, action }) {
       // Optimistic UI update
       const previousStatus = state.plugins[uid]?.status;
       commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
 
+      let result;
       try {
-        await managerService.managePlugin(uid, action);
-      } catch (error) {
-        // Revert on error
-        if (previousStatus) {
+        result = await managerService.managePlugin(uid, action);
+      } finally {
+        // Revert on a worker error or a failed enable
+        if (!result?.ok && previousStatus) {
           commit('UPDATE_PLUGIN_STATUS', { uid, status: previousStatus });
         }
-        throw error;
       }
+
+      if (!result.ok) {
+        const name = state.plugins[uid]?.name ?? uid;
+        const reason = managerErrorText(result.error);
+        new Toasty({ text: l('plugins.toast.enable_failed', name, reason) }).show();
+      }
+      return result;
     },
 
     /**

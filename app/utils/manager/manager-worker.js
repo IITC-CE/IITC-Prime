@@ -79,9 +79,6 @@ const getManager = () => {
     },
     appName: 'IITC Prime',
     fallbackCore: FALLBACK_CORE,
-    message: (message, args) => {
-      emitCallback('onMessage', [message, args]);
-    },
     injectPlugin: async plugin => {
       // Write to disk so plugin code never crosses the worker boundary via postMessage
       if (!plugin || !plugin.code) return;
@@ -183,8 +180,7 @@ const handlers = {
   },
 
   async managePlugin(uid, action) {
-    await getManager().managePlugin(uid, action);
-    return { success: true };
+    return await getManager().managePlugin(uid, action);
   },
 
   async addUserScripts(scripts) {

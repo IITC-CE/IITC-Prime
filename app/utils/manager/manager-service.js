@@ -15,7 +15,6 @@ export class ManagerService {
     // id -> { resolve, reject } for in-flight RPC calls
     this.pending = new Map();
     this.callbacks = {
-      onMessage: null,
       onInjectPlugin: null,
       onPluginEvent: null,
       onPluginsViewChanged: null,
@@ -82,9 +81,6 @@ export class ManagerService {
 
   _dispatchCallback(name, args) {
     const cb = this.callbacks[name];
-    if (name === 'onMessage') {
-      console.log(`[ManagerService] message: ${args[0]}`, args[1]);
-    }
     if (cb) cb(...args);
   }
 
@@ -134,7 +130,7 @@ export class ManagerService {
   }
 
   async managePlugin(uid, action) {
-    await this._call('managePlugin', uid, action);
+    return this._call('managePlugin', uid, action);
   }
 
   async addUserScripts(scripts) {
@@ -166,7 +162,6 @@ export class ManagerService {
     }
     this._rejectAllPending(new Error('ManagerService cleaned up'));
     this.callbacks = {
-      onMessage: null,
       onInjectPlugin: null,
       onPluginEvent: null,
       onPluginsViewChanged: null,

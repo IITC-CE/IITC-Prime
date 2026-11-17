@@ -75,6 +75,7 @@
   "plugins.delete.ok_override": "Remove",
   "plugins.delete.ok_plugin": "Delete",
   "plugins.toast.install_failed": "Failed to install plugin",
+  "plugins.toast.enable_failed": "Could not enable %s: %s",
   "plugins.toast.delete_failed": "Failed to delete plugin",
 
   "update_channel.title": "Update channel",
@@ -199,7 +200,10 @@
 
   "location.toast.failed": "Could not determine your location",
 
-  "manager.server_not_available": "Server is not available. Retry after %s seconds",
+  "manager.server_not_available": "Server is not available",
+  "manager.server_error": "Server responded with error %s",
+  "manager.invalid_response": "Server returned an unexpected response",
+  "manager.not_in_catalog": "Plugin is not in the channel catalog",
 
   "clipboard.copy_failed": "Failed to copy to clipboard",
 
