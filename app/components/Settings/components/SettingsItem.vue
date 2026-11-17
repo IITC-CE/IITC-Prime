@@ -34,12 +34,14 @@
     <!-- Right side content based on type -->
     <StackLayout col="1" class="list-item-trailing" verticalAlignment="center">
       <!-- Navigation arrow -->
-      <Label
-        v-if="type === 'nav'"
-        class="ms settings-nav-icon"
-        :text="$filters.fonticon('ms-chevron-right')"
-        once="true"
-      />
+      <StackLayout v-if="type === 'nav'" orientation="horizontal" horizontalAlignment="right">
+        <Label v-if="error" class="ms settings-error-icon" :text="$filters.fonticon('ms-error')" />
+        <Label
+          class="ms settings-nav-icon"
+          :text="$filters.fonticon('ms-chevron-right')"
+          once="true"
+        />
+      </StackLayout>
 
       <!-- External link icon -->
       <Label
@@ -99,6 +101,10 @@ export default {
     },
 
     // Navigation-specific props
+    error: {
+      type: Boolean,
+      default: false,
+    },
     targetScreen: {
       type: Object,
       default: null,
@@ -190,6 +196,13 @@ export default {
   font-size: $icon-size-small;
   margin-right: 4;
   text-align: right;
+  vertical-align: center;
+}
+
+.settings-error-icon {
+  color: $state-error;
+  font-size: $icon-size-small;
+  margin-right: 4;
   vertical-align: center;
 }
 

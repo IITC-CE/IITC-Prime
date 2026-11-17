@@ -4,11 +4,38 @@
   <SettingsBase
     :title="$L('update_channel.title')"
     :actions="headerActions"
-    @action="runForceUpdate"
+    @action="forceUpdate()"
   >
     <!-- Channel selection -->
     <SettingsSection :title="$L('update_channel.section.channel')" />
     <UpdateChannelSelector :currentChannel="currentChannel" @channelSelected="selectChannel" />
+
+    <!-- Update status of the current channel -->
+    <GridLayout v-if="statusText" columns="*, auto" class="update-status">
+      <StackLayout col="0" verticalAlignment="center">
+        <Label
+          :text="statusText"
+          :class="['status-label', { 'status-label--error': shownError }]"
+          textWrap="true"
+        />
+        <Label v-if="shownError" :text="statusDetail" class="status-label" />
+      </StackLayout>
+      <!-- Hidden, not removed: the taller button keeps the height while a check runs -->
+      <GridLayout col="1" verticalAlignment="center">
+        <AppButton
+          v-if="shownError"
+          variant="plain"
+          :text="$L('update_channel.retry')"
+          :visibility="isChecking ? 'hidden' : 'visible'"
+          @tap="forceUpdate()"
+        />
+        <ActivityIndicator
+          busy="true"
+          class="update-indicator"
+          :visibility="isChecking ? 'visible' : 'hidden'"
+        />
+      </GridLayout>
+    </GridLayout>
 
     <!-- Custom Channel URL -->
     <SettingsSection
@@ -34,22 +61,14 @@
       :selectedInterval="externalIntervalValue"
       @intervalSelected="updateExternalInterval"
     />
-
-    <!-- Update Status -->
-    <StackLayout class="update-status">
-      <Label
-        v-if="formattedLastCheckTime"
-        :text="$L('update_channel.last_check', formattedLastCheckTime)"
-        class="last-check-label"
-      />
-      <ActivityIndicator v-if="isUpdating" busy="true" class="update-indicator" />
-    </StackLayout>
   </SettingsBase>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { markRaw } from 'vue';
+import { statusErrorText } from '@/utils/manager/error-text';
+import AppButton from '@/components/base/AppButton.vue';
 import SettingsBase from './SettingsBase';
 import SettingsSection from './components/SettingsSection';
 import UpdateChannelSelector from './components/UpdateChannel/UpdateChannelSelector';
@@ -61,6 +80,7 @@ export default {
   name: 'UpdateChannelView',
 
   components: {
+    AppButton: markRaw(AppButton),
     SettingsBase: markRaw(SettingsBase),
     SettingsSection: markRaw(SettingsSection),
     UpdateChannelSelector: markRaw(UpdateChannelSelector),
@@ -73,7 +93,9 @@ export default {
     return {
       selectedIntervalValue: '86400',
       externalIntervalValue: '86400',
-      isUpdating: false,
+      // Ticks while the screen is open, so that relative times stay current
+      now: Date.now(),
+      shownStatus: null,
     };
   },
 
@@ -88,15 +110,43 @@ export default {
       return this.customChannelUrl;
     },
 
-    formattedLastCheckTime() {
-      const lastCheck = this.channelStatus?.lastCheck;
-      if (!lastCheck) return '';
+    isChecking() {
+      return !!this.channelStatus?.checking;
+    },
 
-      const diff = Math.floor(Date.now() / 1000 - lastCheck);
-      if (diff < 60) return this.$L('update_channel.time.just_now');
-      if (diff < 3600) return this.$L('update_channel.time.minutes_ago', Math.floor(diff / 60));
-      if (diff < 86400) return this.$L('update_channel.time.hours_ago', Math.floor(diff / 3600));
-      return this.$L('update_channel.time.days_ago', Math.floor(diff / 86400));
+    shownError() {
+      return statusErrorText(this.shownStatus);
+    },
+
+    statusText() {
+      const status = this.shownStatus;
+      if (this.shownError) return this.$L('update_channel.check_failed', this.shownError);
+      if (status?.lastCheck) {
+        return this.$L('update_channel.last_check', this.timeAgo(status.lastCheck));
+      }
+      return this.isChecking ? this.$L('update_channel.checking') : '';
+    },
+
+    statusDetail() {
+      if (this.isChecking) return this.$L('update_channel.checking');
+      return this.$L('update_channel.next_attempt', this.timeUntil(this.shownStatus.nextCheck));
+    },
+  },
+
+  watch: {
+    // A new URL resets the check state, and every check flips `checking`:
+    // keep the last result until the next one, so that the URL field below does not jump
+    channelStatus: {
+      handler(status) {
+        if (status && !status.checking && (status.lastCheck || status.retry)) {
+          this.shownStatus = status;
+        }
+      },
+      immediate: true,
+    },
+
+    currentChannel() {
+      this.shownStatus = null;
     },
   },
 
@@ -182,30 +232,36 @@ export default {
       await this.setCustomChannelUrl(url);
     },
 
-    /**
-     * Run force update
-     */
-    async runForceUpdate() {
-      if (this.isUpdating) return;
-      this.isUpdating = true;
+    /** Relative time of a past unix time in seconds */
+    timeAgo(time) {
+      const diff = Math.floor(this.now / 1000 - time);
+      if (diff < 60) return this.$L('update_channel.time.just_now');
+      if (diff < 3600) return this.$L('update_channel.time.minutes_ago', Math.floor(diff / 60));
+      if (diff < 86400) return this.$L('update_channel.time.hours_ago', Math.floor(diff / 3600));
+      return this.$L('update_channel.time.days_ago', Math.floor(diff / 86400));
+    },
 
-      try {
-        await this.forceUpdate();
-      } catch (error) {
-        console.error('Force update failed:', error);
-      } finally {
-        this.isUpdating = false;
-      }
+    /** Relative time of a future unix time in seconds */
+    timeUntil(time) {
+      const diff = Math.max(Math.ceil(time - this.now / 1000), 1);
+      if (diff < 60) return this.$L('update_channel.time.in_seconds', diff);
+      if (diff < 3600) return this.$L('update_channel.time.in_minutes', Math.ceil(diff / 60));
+      return this.$L('update_channel.time.in_hours', Math.ceil(diff / 3600));
     },
   },
 
   async mounted() {
+    this.clock = setInterval(() => (this.now = Date.now()), 1000);
     await this.loadUpdateChannel();
     await Promise.all([
       this.loadChannelInterval(),
       this.loadExternalInterval(),
       ...(this.currentChannel === 'custom' ? [this.loadCustomUrl()] : []),
     ]);
+  },
+
+  beforeUnmount() {
+    clearInterval(this.clock);
   },
 };
 </script>
@@ -214,20 +270,22 @@ export default {
 @use '@/variables' as *;
 
 .update-status {
-  padding: 16;
-  text-align: center;
+  padding: 8 16 0 16;
 }
 
-.last-check-label {
+.status-label {
   font-size: 14;
   color: $on-surface-variant;
-  margin-bottom: 8;
+}
+
+.status-label--error {
+  color: $state-error;
 }
 
 .update-indicator {
   color: $accent;
-  width: 24;
-  height: 24;
-  horizontal-align: center;
+  width: 20;
+  height: 20;
+  margin: 0 12;
 }
 </style>

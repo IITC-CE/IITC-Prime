@@ -13,3 +13,8 @@ const ERROR_MESSAGES = {
 export function managerErrorText(error) {
   return l(ERROR_MESSAGES[error?.kind] ?? ERROR_MESSAGES.network, error?.status);
 }
+
+/** Why the check of an update status failed, empty if it did not */
+export function statusErrorText(status) {
+  return status?.retry ? managerErrorText(status.retry.error) : '';
+}

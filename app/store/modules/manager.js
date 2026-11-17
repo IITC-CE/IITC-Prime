@@ -4,7 +4,7 @@ import { Application, Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
 import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager/manager-service';
-import { managerErrorText } from '@/utils/manager/error-text';
+import { managerErrorText, statusErrorText } from '@/utils/manager/error-text';
 import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
@@ -375,5 +375,10 @@ export const manager = {
      */
     channelStatus: state =>
       state.updateStatus?.channel === state.currentChannel ? state.updateStatus.internal : null,
+
+    /**
+     * Why the last check of the current channel failed, empty if it did not
+     */
+    channelError: (_, getters) => statusErrorText(getters.channelStatus),
   },
 };

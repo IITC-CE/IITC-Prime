@@ -16,6 +16,7 @@
       type="nav"
       :title="$L('settings.update_channel.title')"
       :description="updateChannelDescription"
+      :error="!!channelError"
       :targetScreen="updateChannelScreen"
       :isLast="true"
     />
@@ -149,7 +150,7 @@ export default {
       'isPersistentZoom',
       'isShowLocation',
     ]),
-    ...mapGetters('manager', ['currentChannel', 'enabledPlugins']),
+    ...mapGetters('manager', ['currentChannel', 'enabledPlugins', 'channelError']),
 
     desktopMode() {
       return this.isDesktopMode;
@@ -177,7 +178,8 @@ export default {
     },
 
     updateChannelDescription() {
-      return this.$L('settings.update_channel.description', this.currentChannel);
+      const current = this.$L('settings.update_channel.description', this.currentChannel);
+      return this.channelError ? `${current} · ${this.channelError}` : current;
     },
   },
 

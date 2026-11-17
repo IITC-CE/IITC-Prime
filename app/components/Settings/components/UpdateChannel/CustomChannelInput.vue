@@ -65,6 +65,11 @@ export default {
   computed: {
     ...mapGetters('manager', ['updateStatus']),
 
+    customChecking() {
+      const status = this.updateStatus;
+      return status?.channel === 'custom' && status.internal.checking;
+    },
+
     // URL status icon based on validation state
     urlStatusIcon() {
       if (this.urlStatus === 'success') return 'ms-check';
@@ -85,6 +90,11 @@ export default {
     url() {
       clearTimeout(this.checkTimer);
       this.checkTimer = setTimeout(() => this.checkCustomUrl(), 100);
+    },
+
+    // A finished check (Retry, the timer) may follow the server going down or coming up
+    customChecking(checking, wasChecking) {
+      if (wasChecking && !checking) this.checkCustomUrl();
     },
   },
 
@@ -108,7 +118,8 @@ export default {
       }
 
       // Saved even if it fails the check: the server may not be up yet
-      if (urlToCheck !== this.customUrl) this.$emit('urlChanged', urlToCheck);
+      const isNew = urlToCheck !== this.customUrl;
+      if (isNew) this.$emit('urlChanged', urlToCheck);
 
       const { ok } = await checkCustomChannelUrl(urlToCheck);
 
@@ -117,11 +128,11 @@ export default {
 
       this.urlStatus = ok ? 'success' : 'error';
 
-      // A server that came up after its URL failed would otherwise wait out the retry pause
+      // The library checks a new URL itself, but the status of the stored one may predate
+      // the server going down or coming up
       const status = this.updateStatus;
-      if (ok && status?.channel === 'custom' && status.internal.retry) {
-        this.forceUpdate();
-      }
+      if (isNew || status?.channel !== 'custom' || status.internal.checking) return;
+      if (ok === !!status.internal.retry) this.forceUpdate();
     },
 
     /**

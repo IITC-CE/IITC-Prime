@@ -37,7 +37,7 @@ export default {
     androidClass() {
       if (this.icon) return null;
       if (this.destructive) return 'btn-destructive';
-      return { filled: 'btn-filled', tinted: 'btn-primary' }[this.variant];
+      return { filled: 'btn-filled', tinted: 'btn-primary', plain: 'btn-plain' }[this.variant];
     },
   },
 };
@@ -60,5 +60,12 @@ export default {
 
 .btn-destructive {
   background-color: $state-error;
+}
+
+.btn-plain {
+  background-color: transparent;
+  color: $accent;
+  font-size: $font-size;
+  ripple-color: $ripple;
 }
 </style>
