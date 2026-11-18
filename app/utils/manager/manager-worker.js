@@ -79,12 +79,6 @@ const getManager = () => {
     },
     appName: 'IITC Prime',
     fallbackCore: FALLBACK_CORE,
-    message: (message, args) => {
-      emitCallback('onMessage', [message, args]);
-    },
-    onProgress: isShow => {
-      emitCallback('onProgress', [isShow]);
-    },
     injectPlugin: async plugin => {
       // Write to disk so plugin code never crosses the worker boundary via postMessage
       if (!plugin || !plugin.code) return;
@@ -93,6 +87,9 @@ const getManager = () => {
     },
     onPluginEvent: event => {
       emitCallback('onPluginEvent', [event]);
+    },
+    onUpdateStatusChanged: status => {
+      emitCallback('onUpdateStatusChanged', [status]);
     },
     onPluginsViewChanged: view => {
       emitCallback('onPluginsViewChanged', [
@@ -144,7 +141,9 @@ const handlers = {
   },
 
   async getUpdateChannel() {
-    return getManager().channel;
+    const m = getManager();
+    await m.ready;
+    return m.channel;
   },
 
   async setUpdateChannel(channel) {
@@ -157,18 +156,15 @@ const handlers = {
     return await getManager().getUpdateCheckInterval(channel);
   },
 
-  async getLastCheckTime() {
-    const data = await storage.get(['last_check_update']);
-    return data.last_check_update ?? null;
-  },
-
   async setUpdateInterval(interval, channel) {
     await getManager().setUpdateCheckInterval(interval, channel);
     return { success: true };
   },
 
   async getCustomChannelUrl() {
-    return getManager().networkHost?.custom ?? '';
+    const m = getManager();
+    await m.ready;
+    return m.networkHost?.custom ?? '';
   },
 
   async setCustomChannelUrl(url) {
@@ -182,8 +178,7 @@ const handlers = {
   },
 
   async managePlugin(uid, action) {
-    await getManager().managePlugin(uid, action);
-    return { success: true };
+    return await getManager().managePlugin(uid, action);
   },
 
   async addUserScripts(scripts) {

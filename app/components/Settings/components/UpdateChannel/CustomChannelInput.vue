@@ -40,7 +40,8 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
+import { checkCustomChannelUrl } from 'lib-iitc-manager';
 import { fixTextInputColors, pressFeedback } from '@/utils/platform/ui';
 
 export default {
@@ -62,6 +63,13 @@ export default {
   },
 
   computed: {
+    ...mapGetters('manager', ['updateStatus']),
+
+    customChecking() {
+      const status = this.updateStatus;
+      return status?.channel === 'custom' && status.internal.checking;
+    },
+
     // URL status icon based on validation state
     urlStatusIcon() {
       if (this.urlStatus === 'success') return 'ms-check';
@@ -83,47 +91,48 @@ export default {
       clearTimeout(this.checkTimer);
       this.checkTimer = setTimeout(() => this.checkCustomUrl(), 100);
     },
+
+    // A finished check (Retry, the timer) may follow the server going down or coming up
+    customChecking(checking, wasChecking) {
+      if (wasChecking && !checking) this.checkCustomUrl();
+    },
   },
 
   methods: {
     fixTextInputColors,
-    ...mapActions('manager', ['checkCustomChannelUrl', 'forceUpdate']),
+    ...mapActions('manager', ['forceUpdate']),
 
     /**
-     * Check if custom URL is valid
+     * Save a changed URL and show whether it serves a channel
      */
     async checkCustomUrl() {
-      if (!this.url) {
-        this.urlStatus = 'unknown';
-        return;
-      }
-
       this.urlStatus = 'unknown';
+      if (!this.url) return;
 
       const enteredUrl = this.url;
 
-      try {
-        // Normalized only for checking and saving
-        let urlToCheck = enteredUrl;
-        if (!/^https?:\/\//i.test(urlToCheck)) {
-          urlToCheck = 'http://' + urlToCheck;
-        }
-
-        const isValid = await this.checkCustomChannelUrl(urlToCheck);
-
-        // A slower check of an older value must not override a newer one
-        if (this.url !== enteredUrl) return;
-
-        this.urlStatus = isValid ? 'success' : 'error';
-
-        this.$emit('urlChanged', urlToCheck);
-        if (isValid) {
-          await this.forceUpdate();
-        }
-      } catch (error) {
-        console.error('Error checking custom URL:', error);
-        if (this.url === enteredUrl) this.urlStatus = 'error';
+      // Normalized only for checking and saving
+      let urlToCheck = enteredUrl;
+      if (!/^https?:\/\//i.test(urlToCheck)) {
+        urlToCheck = 'http://' + urlToCheck;
       }
+
+      // Saved even if it fails the check: the server may not be up yet
+      const isNew = urlToCheck !== this.customUrl;
+      if (isNew) this.$emit('urlChanged', urlToCheck);
+
+      const { ok } = await checkCustomChannelUrl(urlToCheck);
+
+      // A slower check of an older value must not override a newer one
+      if (this.url !== enteredUrl) return;
+
+      this.urlStatus = ok ? 'success' : 'error';
+
+      // The library checks a new URL itself, but the status of the stored one may predate
+      // the server going down or coming up
+      const status = this.updateStatus;
+      if (isNew || status?.channel !== 'custom' || status.internal.checking) return;
+      if (ok === !!status.internal.retry) this.forceUpdate();
     },
 
     /**

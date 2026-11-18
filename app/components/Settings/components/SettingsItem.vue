@@ -34,12 +34,14 @@
     <!-- Right side content based on type -->
     <StackLayout col="1" class="list-item-trailing" verticalAlignment="center">
       <!-- Navigation arrow -->
-      <Label
-        v-if="type === 'nav'"
-        class="ms settings-nav-icon"
-        :text="$filters.fonticon('ms-chevron-right')"
-        once="true"
-      />
+      <StackLayout v-if="type === 'nav'" orientation="horizontal" horizontalAlignment="right">
+        <Label v-if="error" class="ms settings-error-icon" :text="$filters.fonticon('ms-error')" />
+        <Label
+          class="ms settings-nav-icon"
+          :text="$filters.fonticon('ms-chevron-right')"
+          once="true"
+        />
+      </StackLayout>
 
       <!-- External link icon -->
       <Label
@@ -54,6 +56,7 @@
         v-else-if="type === 'switch'"
         horizontalAlignment="right"
         :checked="value"
+        :isEnabled="!disabled"
         @checkedChange="onSwitchChange"
       />
     </StackLayout>
@@ -97,8 +100,16 @@ export default {
       type: Boolean,
       default: false,
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
 
     // Navigation-specific props
+    error: {
+      type: Boolean,
+      default: false,
+    },
     targetScreen: {
       type: Object,
       default: null,
@@ -154,7 +165,7 @@ export default {
       } else if (this.type === 'action') {
         // Emit custom action event
         this.$emit('action');
-      } else if (this.type === 'switch' && !isIOS) {
+      } else if (this.type === 'switch' && !isIOS && !this.disabled) {
         this.$emit('change', !this.value);
       }
     },
@@ -190,6 +201,13 @@ export default {
   font-size: $icon-size-small;
   margin-right: 4;
   text-align: right;
+  vertical-align: center;
+}
+
+.settings-error-icon {
+  color: $state-error;
+  font-size: $icon-size-small;
+  margin-right: 4;
   vertical-align: center;
 }
 

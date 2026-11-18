@@ -75,6 +75,7 @@
   "plugins.delete.ok_override": "Remove",
   "plugins.delete.ok_plugin": "Delete",
   "plugins.toast.install_failed": "Failed to install plugin",
+  "plugins.toast.enable_failed": "Could not enable %s: %s",
   "plugins.toast.delete_failed": "Failed to delete plugin",
 
   "update_channel.title": "Update channel",
@@ -83,6 +84,10 @@
   "update_channel.section.custom_url": "Custom URL",
   "update_channel.section.frequency": "Update frequency",
   "update_channel.last_check": "Last check: %s",
+  "update_channel.checking": "Checking for updates…",
+  "update_channel.check_failed": "Update failed: %s",
+  "update_channel.next_attempt": "Next attempt %s",
+  "update_channel.retry": "Retry",
   "update_channel.release": "Release",
   "update_channel.release_sub": "Stable IITC-CE release",
   "update_channel.beta": "Beta",
@@ -93,6 +98,9 @@
   "update_channel.time.minutes_ago": "%s min ago",
   "update_channel.time.hours_ago": "%s h ago",
   "update_channel.time.days_ago": "%s days ago",
+  "update_channel.time.in_seconds": "in %s s",
+  "update_channel.time.in_minutes": "in %s min",
+  "update_channel.time.in_hours": "in %s h",
 
   "update_interval.select_title": "Select update interval",
   "update_interval.channel_label": "%s channel update frequency:",
@@ -199,7 +207,10 @@
 
   "location.toast.failed": "Could not determine your location",
 
-  "manager.server_not_available": "Server is not available. Retry after %s seconds",
+  "manager.server_not_available": "Server is not available",
+  "manager.server_error": "Server responded with error %s",
+  "manager.invalid_response": "Server returned an unexpected response",
+  "manager.not_in_catalog": "Plugin is not in the channel catalog",
 
   "clipboard.copy_failed": "Failed to copy to clipboard",
 

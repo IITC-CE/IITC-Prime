@@ -6,6 +6,9 @@ import { GPS } from '@nativescript-community/gps';
 import { Compass } from 'nativescript-compass';
 import { isFineLocationGranted } from '@/utils/platform/system';
 
+export const USER_LOCATION_UID =
+  'User Location+https://github.com/IITC-CE/ingress-intel-total-conversion';
+
 const gps = new GPS();
 
 const BASE_LOCATION_OPTIONS = {
@@ -63,11 +66,22 @@ export default class UserLocation {
       async enabled => {
         if (enabled) {
           await this.toggleUserLocationPlugin(true);
-          this.startContinuousTracking().then();
+          // Turned back off if the plugin could not be enabled
+          if (store.getters['settings/isShowLocation']) this.startContinuousTracking().then();
         } else {
           await this.toggleUserLocationPlugin(false);
           this.stopTracking();
         }
+      }
+    );
+
+    // The setting follows the plugin status, shared by all channels; a channel without the
+    // plugin turns it off. Null until the first plugin list, so that one without it counts too
+    store.watch(
+      ({ manager }) =>
+        manager.lastPluginUpdate && (manager.plugins[USER_LOCATION_UID]?.status ?? 'missing'),
+      status => {
+        if (status) store.dispatch('settings/updateShowLocationFromManager', status === 'on');
       }
     );
 
@@ -309,6 +323,7 @@ export default class UserLocation {
    * Toggle user-location plugin
    */
   async toggleUserLocationPlugin(enable) {
+    let ok = true;
     try {
       let plugins = store.getters['manager/plugins'];
       if (!plugins || Object.keys(plugins).length === 0) {
@@ -316,23 +331,23 @@ export default class UserLocation {
         plugins = store.getters['manager/plugins'];
       }
 
-      const userLocationPlugin = Object.values(plugins).find(
-        plugin =>
-          plugin.uid &&
-          plugin.uid === 'User Location+https://github.com/IITC-CE/ingress-intel-total-conversion'
-      );
-
-      const targetStatus = enable ? 'on' : 'off';
-      const action = enable ? 'on' : 'off';
-
-      if (userLocationPlugin && userLocationPlugin.status !== targetStatus) {
-        await store.dispatch('manager/managePlugin', {
-          uid: userLocationPlugin.uid,
-          action,
+      const status = plugins[USER_LOCATION_UID]?.status;
+      // Only from a settled status: not 'delete' in flight, not missing from the channel
+      if (enable ? status === 'off' : status === 'on') {
+        const result = await store.dispatch('manager/managePlugin', {
+          uid: USER_LOCATION_UID,
+          action: enable ? 'on' : 'off',
         });
+        ok = result.ok;
       }
     } catch (error) {
+      ok = false;
       console.error(`Failed to ${enable ? 'enable' : 'disable'} user-location plugin:`, error);
+    }
+
+    // The plugin draws the marker: without it the setting would stay on and show nothing
+    if (enable && !ok) {
+      await store.dispatch('settings/updateShowLocationFromManager', false);
     }
   }
 
@@ -362,8 +377,14 @@ export default class UserLocation {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Location request timed out')), ms);
       promise.then(
-        value => { clearTimeout(timer); resolve(value); },
-        error => { clearTimeout(timer); reject(error); }
+        value => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        error => {
+          clearTimeout(timer);
+          reject(error);
+        }
       );
     });
   }

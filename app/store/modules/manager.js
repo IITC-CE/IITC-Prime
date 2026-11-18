@@ -1,21 +1,26 @@
 // Copyright (C) 2025-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
-import { Frame } from '@nativescript/core';
+import { Application, Frame } from '@nativescript/core';
 import { Toasty } from '@triniwiz/nativescript-toasty';
-import { validateCustomChannelUrl } from 'lib-iitc-manager';
 import { l } from '@nativescript-community/l';
 import { managerService } from '@/utils/manager/manager-service';
+import { managerErrorText, statusErrorText } from '@/utils/manager/error-text';
 import { webviewService } from '@/utils/webview/webview-service';
 
 let pendingWebViewReload = null;
+let nextCheckTimer = null;
 
-const MESSAGES = {
-  serverNotAvailableRetry: args => l('manager.server_not_available', args),
-};
-
-function showManagerMessage(message, args) {
-  const text = MESSAGES[message]?.(args) ?? message;
-  new Toasty({ text }).show();
+/** Without a daemon the library schedules no checks: run the next one in the foreground when due */
+function scheduleNextCheck(status, dispatch) {
+  clearTimeout(nextCheckTimer);
+  if (Application.suspended || !status || status.internal.checking || status.external.checking) {
+    return;
+  }
+  const wait = Math.min(status.internal.nextCheck, status.external.nextCheck) * 1000 - Date.now();
+  // At least a second, so that a status that lags behind a check does not spin;
+  // at most what setTimeout accepts, a longer delay fires at once
+  const delay = Math.min(Math.max(wait, 1000), 2 ** 31 - 1);
+  nextCheckTimer = setTimeout(() => dispatch('checkUpdates'), delay);
 }
 
 export const manager = {
@@ -24,12 +29,12 @@ export const manager = {
   state: () => ({
     isInitialized: false,
     isRunning: false,
-    inProgress: false,
     plugins: {},
     core: null,
     lastPluginUpdate: null,
     currentChannel: 'release',
     customChannelUrl: '',
+    updateStatus: null,
   }),
 
   mutations: {
@@ -38,9 +43,6 @@ export const manager = {
     },
     SET_RUNNING(state, value) {
       state.isRunning = value;
-    },
-    SET_PROGRESS(state, value) {
-      state.inProgress = value;
     },
     SET_PLUGINS(state, plugins) {
       state.plugins = plugins;
@@ -61,6 +63,9 @@ export const manager = {
     SET_CUSTOM_CHANNEL_URL(state, url) {
       state.customChannelUrl = url;
     },
+    SET_UPDATE_STATUS(state, status) {
+      state.updateStatus = status;
+    },
   },
 
   actions: {
@@ -68,14 +73,12 @@ export const manager = {
      * Initialize manager and setup event listeners
      */
     async run({ commit, dispatch }) {
+      // A resume catches up on checks that came due while suspended
+      Application.on(Application.suspendEvent, () => clearTimeout(nextCheckTimer));
+      Application.on(Application.resumeEvent, () => dispatch('checkUpdates'));
+
       // Set callbacks for handling Manager events
       managerService.setCallbacks({
-        onMessage: (message, args) => {
-          showManagerMessage(message, args);
-        },
-        onProgress: isShow => {
-          commit('SET_PROGRESS', isShow);
-        },
         onInjectPlugin: plugin => {
           dispatch('map/setInjectPlugin', plugin, { root: true });
         },
@@ -86,34 +89,44 @@ export const manager = {
           commit('SET_PLUGINS', plugins);
           commit('SET_CORE', core);
         },
+        onUpdateStatusChanged: status => {
+          commit('SET_UPDATE_STATUS', status);
+          scheduleNextCheck(status, dispatch);
+        },
       });
 
-      commit('SET_PROGRESS', true);
+      const data = await managerService.startup();
 
+      commit('SET_RUNNING', data.isRunning);
+      commit('SET_CURRENT_CHANNEL', data.currentChannel);
+      commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
+      commit('SET_INITIALIZED', true);
+
+      return data;
+    },
+
+    /**
+     * Check for updates if a check is due, then re-arm the check timer
+     */
+    async checkUpdates({ state, dispatch }) {
       try {
-        const data = await managerService.startup();
-
-        commit('SET_RUNNING', data.isRunning);
-        commit('SET_CURRENT_CHANNEL', data.currentChannel);
-        commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-        commit('SET_INITIALIZED', true);
-
-        return data;
+        return await managerService.checkUpdates(false);
+      } catch (error) {
+        console.error('Update check failed:', error);
       } finally {
-        commit('SET_PROGRESS', false);
+        // A check that was not due sends no new status to reschedule from
+        scheduleNextCheck(state.updateStatus, dispatch);
       }
     },
 
     /**
-     * Force update check
+     * Force update check; the update status shows its result
      */
-    async forceUpdate({ commit }) {
-      commit('SET_PROGRESS', true);
-
+    async forceUpdate() {
       try {
         return await managerService.checkUpdates(true);
-      } finally {
-        commit('SET_PROGRESS', false);
+      } catch (error) {
+        console.error('Force update failed:', error);
       }
     },
 
@@ -156,13 +169,6 @@ export const manager = {
     },
 
     /**
-     * Get last check timestamp (seconds) from storage
-     */
-    async getLastCheckTime() {
-      return await managerService.getLastCheckTime();
-    },
-
-    /**
      * Set update check interval for a channel
      */
     async setUpdateInterval(_, { interval, channel }) {
@@ -182,9 +188,9 @@ export const manager = {
      * Set custom channel URL
      */
     async setCustomChannelUrl({ commit }, url) {
-      const data = await managerService.setCustomChannelUrl(url);
-      commit('SET_CUSTOM_CHANNEL_URL', data.customChannelUrl);
-      return data;
+      // Committed before the check, so that a newer edit compares with this URL
+      commit('SET_CUSTOM_CHANNEL_URL', url);
+      await managerService.setCustomChannelUrl(url);
     },
 
     /**
@@ -198,29 +204,29 @@ export const manager = {
     },
 
     /**
-     * Enable/disable/delete plugin
+     * Enable/disable/delete plugin. Reports a failed enable with a toast
      */
     async managePlugin({ commit, state }, { uid, action }) {
       // Optimistic UI update
       const previousStatus = state.plugins[uid]?.status;
       commit('UPDATE_PLUGIN_STATUS', { uid, status: action });
 
+      let result;
       try {
-        await managerService.managePlugin(uid, action);
-      } catch (error) {
-        // Revert on error
-        if (previousStatus) {
+        result = await managerService.managePlugin(uid, action);
+      } finally {
+        // Revert on a worker error or a failed enable
+        if (!result?.ok && previousStatus) {
           commit('UPDATE_PLUGIN_STATUS', { uid, status: previousStatus });
         }
-        throw error;
       }
-    },
 
-    /**
-     * Validate custom channel URL
-     */
-    async checkCustomChannelUrl(_, url) {
-      return await validateCustomChannelUrl(url);
+      if (!result.ok) {
+        const name = state.plugins[uid]?.name ?? uid;
+        const reason = managerErrorText(result.error);
+        new Toasty({ text: l('plugins.toast.enable_failed', name, reason) }).show();
+      }
+      return result;
     },
 
     /**
@@ -277,39 +283,18 @@ export const manager = {
     },
 
     /**
-     * Handle plugin state changes from manager
+     * Handle plugin script changes from manager; statuses come with onPluginsViewChanged
      */
-    async handlePluginEvent({ commit, dispatch }, event) {
-      try {
-        for (const [uid, plugin] of Object.entries(event.plugins)) {
-          const status = event.event === 'add' ? 'on' : 'off';
-          commit('UPDATE_PLUGIN_STATUS', { uid, status });
-
-          // Handle user-location plugin changes - only for add/remove, not update
-          if (
-            uid === 'User Location+https://github.com/IITC-CE/ingress-intel-total-conversion' &&
-            event.event !== 'update'
-          ) {
-            const isEnabled = event.event === 'add';
-            await dispatch('settings/updateShowLocationFromManager', isEnabled, { root: true });
-          }
+    handlePluginEvent({ dispatch }, event) {
+      // Reload WebView if user is on settings screen and plugin was changed or removed
+      if (event.event === 'update' || event.event === 'remove') {
+        const frame = Frame.topmost();
+        if (frame?.backStack?.length > 0) {
+          clearTimeout(pendingWebViewReload);
+          pendingWebViewReload = setTimeout(() => {
+            dispatch('ui/reloadWebView', null, { root: true });
+          }, 500);
         }
-
-        // Reload full plugins list
-        await dispatch('loadPlugins');
-
-        // Reload WebView if user is on settings screen and plugin was changed or removed
-        if (event.event === 'update' || event.event === 'remove') {
-          const frame = Frame.topmost();
-          if (frame?.backStack?.length > 0) {
-            clearTimeout(pendingWebViewReload);
-            pendingWebViewReload = setTimeout(() => {
-              dispatch('ui/reloadWebView', null, { root: true });
-            }, 500);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to handle plugin state change:', error);
       }
     },
   },
@@ -324,11 +309,6 @@ export const manager = {
      * Check if Manager is running
      */
     isRunning: state => state.isRunning,
-
-    /**
-     * Check if Manager in progress
-     */
-    inProgress: state => state.inProgress,
 
     /**
      * Get all plugins from Vuex state
@@ -363,5 +343,21 @@ export const manager = {
      * Custom channel URL
      */
     customChannelUrl: state => state.customChannelUrl,
+
+    /**
+     * Status of update checks from lib-iitc-manager, null until the manager starts
+     */
+    updateStatus: state => state.updateStatus,
+
+    /**
+     * Update check status of the current channel, null until the channel reaches the library
+     */
+    channelStatus: state =>
+      state.updateStatus?.channel === state.currentChannel ? state.updateStatus.internal : null,
+
+    /**
+     * Why the last check of the current channel failed, empty if it did not
+     */
+    channelError: (_, getters) => statusErrorText(getters.channelStatus),
   },
 };
