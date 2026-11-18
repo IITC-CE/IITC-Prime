@@ -3,7 +3,6 @@
     android:height="108dp"
     android:viewportWidth="144"
     android:viewportHeight="144">
-
   <group>
     <clip-path
         android:pathData="M0,0L144,0L144,144L0,144Z"/>
