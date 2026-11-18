@@ -22,29 +22,33 @@ export default {
   name: 'UpdateIntervalSelector',
 
   components: {
-    SelectField
+    SelectField,
   },
 
   props: {
     currentChannel: {
       type: String,
-      required: true
+      required: true,
     },
     selectedInterval: {
       type: String,
-      default: '86400'
-    }
+      default: '86400',
+    },
   },
 
   computed: {
     updateIntervals() {
-      return [
-        { name: this.$L('update_interval.every_5s'), value: '5' },
+      const intervals = [
         { name: this.$L('update_interval.every_6h'), value: '21600' },
         { name: this.$L('update_interval.every_12h'), value: '43200' },
         { name: this.$L('update_interval.every_day'), value: '86400' },
         { name: this.$L('update_interval.every_week'), value: '604800' },
       ];
+      // For a local build server only
+      if (this.currentChannel === 'custom' || this.selectedInterval === '5') {
+        intervals.unshift({ name: this.$L('update_interval.every_5s'), value: '5' });
+      }
+      return intervals;
     },
 
     selectedIntervalIndex() {
@@ -64,8 +68,8 @@ export default {
     onIntervalSelected(args) {
       if (!args.selectedId) return;
       this.$emit('intervalSelected', args.selectedId);
-    }
-  }
+    },
+  },
 };
 </script>
 
