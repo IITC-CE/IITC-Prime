@@ -67,7 +67,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .map-status-view {
   font-size: $font-size-small;

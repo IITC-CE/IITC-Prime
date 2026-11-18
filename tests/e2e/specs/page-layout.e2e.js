@@ -2,7 +2,8 @@ import { mainPage, native, resetApp } from '../helpers/app.js';
 import { MENU_BUTTON, openDemo, resetPanel, tap, waitForPanel } from '../helpers/panel.js';
 
 const SETTINGS_BUTTON = 'Settings';
-const BACK_BUTTON = 'Back';
+// UIKit's own back button: its accessibility id, the label is "Back"
+const BACK_BUTTON = 'BackButton';
 // Back exists only on Settings, so it marks that screen as open
 const BACK = `~${BACK_BUTTON}`;
 const PANEL_TITLE = '~IITC Prime';

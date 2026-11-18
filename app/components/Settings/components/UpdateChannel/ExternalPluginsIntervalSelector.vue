@@ -2,7 +2,7 @@
 
 <template>
   <StackLayout class="update-interval-container">
-    <Label :text="$L('update_interval.external_label')" class="interval-label" />
+    <Label :text="$L('update_interval.external_label')" class="interval-label section-note" />
     <SelectField
       :items="updateIntervals"
       :selectedIndex="selectedIntervalIndex"
@@ -57,7 +57,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .update-interval-container {
   padding-bottom: $spacing-m;

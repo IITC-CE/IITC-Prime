@@ -19,13 +19,14 @@
           :safeAreaRightInset="safeAreaRightInset"
           :navBarHeight="navBarHeight"
           :listBottomPadding="mapStateBarHeight + navBarHeight"
+          :followerTrData="mapStateTrData"
           @bottomSheetReady="handleBottomSheetReady"
         >
           <AbsoluteLayout class="page">
             <!-- Main content with WebView (hidden when debug is active) -->
             <GridLayout rows="*, auto" columns="*" class="main-content">
               <AppWebView ref="appWebView" row="0" col="0" @console-log="onConsoleLog" />
-              <label row="1" col="0" :height="contentBottomPadding" />
+              <label row="1" col="0" :height="contentBottomPadding" :class="contentBackdropClass" />
             </GridLayout>
 
             <ProgressBar class="progress-bar" />
@@ -46,29 +47,24 @@
           class="map-state-bar-overlay"
         />
 
-        <!-- Restore panel button (visible when panel is hidden) -->
-        <MDRipple
+        <!-- Restore panel button (visible when panel is hidden). Wrapped: on Android RootLayout
+             swallows touches on a direct child without gestures, and a button's tap isn't one -->
+        <ContentView
           v-if="isPanelHidden && !isDebugActive"
-          class="fab restore-panel-button"
-          accessible="true"
-          accessibilityRole="button"
-          :accessibilityLabel="$L('panel.show')"
-          :style="{
-            marginBottom: systemBottomInset + 16,
-            marginRight: safeAreaRightInset + 16,
-            backgroundColor: fabBackgroundColor,
-          }"
+          class="restore-panel-button"
+          :marginBottom="systemBottomInset + 16"
+          :marginRight="safeAreaRightInset + 16"
           @loaded="onRestoreButtonLoaded"
-          @tap="restorePanel"
         >
-          <Label
-            class="ms"
+          <AppButton
+            icon
+            class="ms fab"
             :text="$filters.fonticon('ms-keyboard-arrow-up')"
-            :color="fabIconColor"
-            horizontalAlignment="center"
-            verticalAlignment="center"
+            :accessibilityLabel="$L('panel.show')"
+            :style="restoreButtonColors"
+            @tap="restorePanel"
           />
-        </MDRipple>
+        </ContentView>
 
         <!-- Debug Console -->
         <AbsoluteLayout v-show="isDebugActive" class="page">
@@ -91,6 +87,7 @@ import {
   Application,
   CoreTypes,
   Frame,
+  Utils,
   isAndroid,
   isIOS,
 } from '@nativescript/core';
@@ -107,6 +104,7 @@ import ProgressBar from './ProgressBar';
 import BottomSheetPanel from './BottomPanel/BottomSheetPanel.vue';
 import MapStateBar from './BottomPanel/MapStateBar/MapStateBar.vue';
 import DebugConsole from './DebugConsole';
+import AppButton from './base/AppButton.vue';
 import PluginsView from './Settings/PluginsView.vue';
 
 export default {
@@ -118,6 +116,7 @@ export default {
     BottomSheetPanel,
     MapStateBar,
     DebugConsole,
+    AppButton,
   },
 
   data() {
@@ -159,11 +158,13 @@ export default {
       return this.$store.state.navigation.currentPane !== 'map' ? true : this.isMapDark;
     },
     // Restore-panel button
-    fabIconColor() {
-      return this.isMapDark ? '#111111' : '#eeeeee';
-    },
-    fabBackgroundColor() {
-      return this.isMapDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+    restoreButtonColors() {
+      // Liquid Glass picks its own contrast with the map
+      if (Utils.supportsGlass()) return null;
+      return {
+        color: this.isMapDark ? '#111111' : '#eeeeee',
+        backgroundColor: this.isMapDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+      };
     },
     safeAreaLeftInset() {
       return this.$store.state.ui.screenSafeArea.left;
@@ -176,6 +177,13 @@ export default {
      */
     systemBottomInset() {
       return this.navBarHeight || this.$store.state.ui.screenSafeArea.bottom;
+    },
+
+    // Same colour as the page background (assets/css/iitc-prime.css)
+    contentBackdropClass() {
+      if (!this.$store.state.ui.isIitcLoaded) return null;
+      if (this.$store.state.navigation.currentPane !== 'map') return 'content-backdrop--iitc';
+      return this.isMapDark ? 'content-backdrop--dark' : 'content-backdrop--light';
     },
 
     /**
@@ -197,9 +205,6 @@ export default {
   },
 
   watch: {
-    isPanelHidden(hidden) {
-      this.updateMapStateBarVisibility(hidden, true);
-    },
     isStatusBarDark(isDark) {
       if (!this.isMainPageActive()) return;
       setStatusBarForMapTheme(isDark);
@@ -212,31 +217,6 @@ export default {
   },
 
   methods: {
-    updateMapStateBarVisibility(hidden, animate) {
-      const bar = this.$refs.mapStateBar?.$el?.nativeView;
-      if (!bar) return;
-
-      const slideDistance = this.mapStateBarHeight + this.systemBottomInset;
-      const y = hidden ? slideDistance : 0;
-      this._mapStateBarTargetY = y;
-
-      if (animate) {
-        bar
-          .animate({
-            translate: { x: 0, y },
-            duration: 200,
-            curve: CoreTypes.AnimationCurve.easeOut,
-          })
-          .catch(() => {})
-          .finally(() => {
-            // Overlapping hide/show animations: converge on the last requested target
-            bar.translateY = this._mapStateBarTargetY;
-          });
-      } else {
-        bar.translateY = y;
-      }
-    },
-
     /**
      * Called when RootLayout changes size
      * This captures real available space including keyboard state
@@ -260,11 +240,6 @@ export default {
      */
     handleLayoutChanged(args) {
       const { dimensions } = args;
-
-      // Re-apply MapStateBar position after layout change
-      if (this.isPanelHidden) {
-        this.$nextTick(() => this.updateMapStateBarVisibility(true, false));
-      }
 
       // Update local layout state
       this.layout = {
@@ -292,6 +267,10 @@ export default {
      */
     handleBottomSheetReady(bottomSheet) {
       this.bottomSheetInstance = bottomSheet;
+    },
+
+    mapStateTrData(opening, sunk) {
+      return this.$refs.mapStateBar?.panelTrData(opening, sunk);
     },
 
     onRestoreButtonLoaded(args) {
@@ -438,33 +417,25 @@ export default {
       if (!isIOS) return;
       const owner = this.bottomSheetInstance;
       const sheet = owner?.bottomSheet;
-      if (owner && sheet && !owner.animating && !owner.animation) {
-        const expected = owner.computeTranslationData()?.bottomSheet?.translateY;
-        const actual = sheet.translateY || 0;
-        if (typeof expected === 'number' && Math.abs(actual - expected) > 1) {
-          captureWarning('BottomSheet transform desync healed on resume', {
-            actual,
-            expected,
-            translationY: owner.translationY,
-            stepIndex: owner.stepIndex,
-          });
-          owner.applyTrData(owner.computeTranslationData());
-        }
-      }
+      if (!owner || !sheet || owner.animating || owner.animation) return;
 
-      const bar = this.$refs.mapStateBar?.$el?.nativeView;
-      if (bar) {
-        const expected = this.isPanelHidden ? this.mapStateBarHeight + this.systemBottomInset : 0;
-        const actual = bar.translateY || 0;
-        if (Math.abs(actual - expected) > 1) {
-          captureWarning('MapStateBar transform desync healed on resume', {
-            actual,
-            expected,
-            isPanelHidden: this.isPanelHidden,
-          });
-          bar.translateY = expected;
-        }
+      const trData = owner.computeTranslationData();
+      let healed = false;
+      for (const [name, view, expected] of [
+        ['BottomSheet', sheet, trData?.bottomSheet?.translateY],
+        ['MapStateBar', trData?.mapStateBar?.target, trData?.mapStateBar?.translateY],
+      ]) {
+        const actual = view?.translateY || 0;
+        if (!view || typeof expected !== 'number' || Math.abs(actual - expected) <= 1) continue;
+        captureWarning(`${name} transform desync healed on resume`, {
+          actual,
+          expected,
+          translationY: owner.translationY,
+          stepIndex: owner.stepIndex,
+        });
+        healed = true;
       }
+      if (healed) owner.applyTrData(trData);
     },
 
     onMainPageNavigatingFrom() {
@@ -561,10 +532,24 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '../app';
+@use '../variables' as *;
 
 .page {
   background-color: $surface;
+}
+
+.content-backdrop {
+  &--dark {
+    background-color: $map-land-dark;
+  }
+
+  &--light {
+    background-color: $map-land-light;
+  }
+
+  &--iitc {
+    background-color: $iitc-background;
+  }
 }
 
 .main-content {
@@ -597,6 +582,7 @@ export default {
 
 .restore-panel-button {
   horizontal-align: right;
+  vertical-align: bottom;
   z-index: 1000;
 }
 </style>

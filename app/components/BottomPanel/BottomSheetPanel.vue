@@ -132,6 +132,12 @@ export default {
       type: Number,
       default: 0,
     },
+    // (progress from BOTTOM to MIDDLE, distance sunk below BOTTOM) => translation data for views
+    // outside the sheet
+    followerTrData: {
+      type: Function,
+      default: null,
+    },
   },
 
   data() {
@@ -248,13 +254,21 @@ export default {
      */
     backdropTranslationFunction() {
       return (value, max, progress) => {
-        const bottomStep = this.steps[1] || 0;
+        const [, bottomStep = 0, middleStep = 0] = this.steps;
         const threshold = max > 0 ? bottomStep / max : 0;
         const opacity = progress <= threshold ? 0 : (progress - threshold) / (1 - threshold);
-        return {
+        const data = {
           bottomSheet: { translateY: value },
           backDrop: { opacity },
         };
+        if (this.followerTrData) {
+          const span = middleStep - bottomStep;
+          const opening = span > 0 ? (progress * max - bottomStep) / span : 0;
+          // From value, not progress: it includes the iOS safe area the hidden sheet goes under
+          const sunk = Math.max(bottomStep + value, 0);
+          Object.assign(data, this.followerTrData(Math.min(Math.max(opening, 0), 1), sunk));
+        }
+        return data;
       };
     },
 
@@ -262,7 +276,7 @@ export default {
      * Effective bottom padding for the panel content area.
      * listBottomPadding reserves space above MapStateBar/navBar.
      * The extra gap (screenHeight - topPosition) compensates for the portion
-     * of the ListView that extends below the visible screen at TOP position,
+     * of the list that extends below the visible screen at TOP position,
      * ensuring content can scroll far enough to clear the MapStateBar.
      */
     effectiveListPaddingBottom() {
@@ -575,7 +589,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@/app';
+@use '@/variables' as *;
 
 .panel-container {
   background-color: $surface;

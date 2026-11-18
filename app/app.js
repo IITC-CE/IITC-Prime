@@ -11,10 +11,7 @@ import CanvasSVG from '@nativescript-community/ui-svg/vue';
 import ButtonPlugin from '@nativescript-community/ui-material-button/vue';
 import SwitchPlugin from '@nativescript-community/ui-material-switch/vue';
 import WebViewX from '@modos189/nativescript-webview-x/vue';
-import { CheckBox } from '@nstudio/nativescript-checkbox';
 import CollectionView from '@nativescript-community/ui-collectionview/vue3';
-import SwipeMenuPlugin from '@nativescript-community/ui-collectionview-swipemenu/vue3';
-import RipplePlugin from '@nativescript-community/ui-material-ripple/vue';
 import { install as installPersistentBottomSheet } from '@nativescript-community/ui-persistent-bottomsheet';
 import PersistentBottomSheetPlugin from '@nativescript-community/ui-persistent-bottomsheet/vue3';
 import { initSentry, setupVueErrorHandler } from './sentry';
@@ -29,10 +26,10 @@ import { setAndroidDefaultUA } from '~/utils/webview/user-agent';
 initializeTracing();
 initSentry();
 
-loadLocaleJSON(require('./i18n/en.default.json'));
+loadLocaleJSON('en', require('./i18n/en.default.json'));
 
-// Install BottomSheet plugins
-installBottomSheet();
+// Install BottomSheet plugins. iOS shows sheets as system page sheets, see showSheet
+if (isAndroid) installBottomSheet();
 installPersistentBottomSheet();
 
 FontIcon.paths = {
@@ -41,12 +38,11 @@ FontIcon.paths = {
 FontIcon.loadCssSync();
 
 registerElement('HTMLLabel', () => require('@nativescript-community/ui-label').Label);
-registerElement('CheckBox', () => CheckBox, {
-  model: {
-    prop: 'checked',
-    event: 'checkedChange',
-  },
-});
+registerElement('MaterialTopAppBar', () => require('~/utils/platform/material').TopAppBar);
+registerElement('MaterialSearchView', () => require('~/utils/platform/material').SearchView);
+registerElement('SystemButton', () => require('~/utils/platform/system-button').SystemButton);
+registerElement('MenuButton', () => require('~/utils/platform/menu-button').MenuButton);
+registerElement('RadioMark', () => require('~/utils/platform/radio-mark').RadioMark);
 
 if (isAndroid) {
   try {
@@ -86,9 +82,7 @@ app.use(CollectionView);
 app.use(CanvasSVG);
 app.use(ButtonPlugin);
 app.use(SwitchPlugin);
-app.use(RipplePlugin);
-app.use(BottomSheetPlugin);
+if (isAndroid) app.use(BottomSheetPlugin);
 app.use(PersistentBottomSheetPlugin);
-app.use(SwipeMenuPlugin);
 
 app.start();

@@ -1,7 +1,9 @@
 // Copyright (C) 2021-2026 IITC-CE - GPL-3.0 with Store Exception - see LICENSE and COPYING.STORE
 
+@use 'sass:color';
 @import '@nativescript/theme/core';
 @import '@nativescript/theme/default';
+@import 'variables';
 
 // Place any CSS rules you want to apply on both iOS and Android here.
 // This is where the vast majority of your CSS code goes.
@@ -10,59 +12,11 @@
 // TYPOGRAPHY AND ICONS
 //-----------------------------------------------
 
-// Icon sizes (Material Symbols is optically tuned for 24)
-$icon-size-small: 20; // Inline with text
-$icon-size: 24; // Default
-$icon-size-large: 32; // Large touch targets
-
 .ms {
   font-family: 'Material Symbols Outlined', 'material-symbols-outlined';
   font-weight: 400;
   font-size: $icon-size;
 }
-
-//-----------------------------------------------
-// COLOR SYSTEM
-//-----------------------------------------------
-
-// Surfaces
-$surface: #0a2329;
-$surface-container: #133840; // card, section, list row
-$surface-container-high: #1d4853; // active chip, pressed tile
-
-// Accent - interactive: toggles, icons, buttons
-$accent: #26a69a;
-$accent-container: rgba(38, 166, 154, 0.14); // icon background, subtle fill
-$accent-border: rgba(38, 166, 154, 0.42); // active border ring
-
-// Text on dark surfaces
-$on-surface: #ffffff;
-$on-surface-variant: #71a0a6; // secondary / muted text
-
-// Interaction
-$ripple: rgba(255, 255, 255, 0.1);
-
-// States
-$state-hover: rgba(255, 255, 255, 0.08);
-$state-focus: rgba(255, 255, 255, 0.12);
-$state-pressed: rgba(255, 255, 255, 0.16);
-$state-drag: rgba(255, 255, 255, 0.16);
-
-$state-success: #43a047;
-$state-warning: #ff9800;
-$state-error: #e53935;
-$state-disabled: #888;
-
-// Ingress faction colors
-$team-neutral: #ff6600;
-$team-resistance: #0088ff;
-$team-enlightened: #03dc03;
-$team-machina: #ff0028;
-
-// Elevation overlay (for depth effect)
-$elevation-level1: rgba(255, 255, 255, 0.05);
-$elevation-level2: rgba(255, 255, 255, 0.08);
-$elevation-level3: rgba(255, 255, 255, 0.11);
 
 //-----------------------------------------------
 // GLOBAL PAGE STYLES
@@ -77,55 +31,8 @@ Page {
 }
 
 //-----------------------------------------------
-// TYPOGRAPHY SYSTEM
-//-----------------------------------------------
-
-// Font sizes
-$font-size-display: 24; // Large titles
-$font-size-headline: 20; // Section headers
-$font-size-title: 16; // Content titles
-$font-size: 14; // Body text
-$font-size-small: 12; // Captions, labels
-
-// Line heights
-$line-height-relaxed: 1.5;
-$line-height-tight: 1.2;
-
-//-----------------------------------------------
-// SPACING SYSTEM
-//-----------------------------------------------
-
-// Based on 8dp grid system
-$spacing-xxs: 2;
-$spacing-xs: 4;
-$spacing-s: 8;
-$spacing-m: 16;
-$spacing-l: 24;
-$spacing-xl: 32;
-$spacing-xxl: 48;
-$spacing-panel: 15;
-$spacing-item: 56;
-$spacing-item-big: 82;
-
-// Border radius
-$radius-small: 4;
-$radius-medium: 8;
-$radius-large: 16;
-$radius-full: 9999; // For circular elements
-
-//-----------------------------------------------
 // COMPONENT STYLES
 //-----------------------------------------------
-
-.half {
-  width: 50%;
-}
-
-// Elevated surfaces (dialogs, dropdowns, etc.)
-.elevated-surface {
-  background-color: $surface-container;
-  border-radius: $radius-medium;
-}
 
 // Buttons
 MDButton {
@@ -149,30 +56,12 @@ MDButton {
   height: 50;
   vertical-align: bottom;
   border-radius: $radius-full;
+}
+
+.ns-android .fab {
   background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   ripple-color: $ripple;
-
-  .ms {
-    color: white;
-    horizontal-align: center;
-    vertical-align: center;
-    margin-top: -50;
-    height: 50;
-  }
-}
-
-.btn-text {
-  color: $accent;
-  font-size: $font-size;
-  font-weight: bold;
-  padding: $spacing-s $spacing-m;
-}
-
-.header-action {
-  color: $on-surface;
-  font-size: $font-size;
-  padding: $spacing-s $spacing-m;
-  vertical-align: center;
 }
 
 // Lists
@@ -180,34 +69,19 @@ MDButton {
   background-color: $surface-container;
   color: $on-surface;
   height: $spacing-item;
-  ripple-color: $ripple;
   font-size: $font-size;
   padding: 0 $spacing-m;
   border-bottom-width: $spacing-xxs;
   border-bottom-color: $surface;
   border-top-left-radius: 0;
 
+  // The content sets the height, see .list-item-spacer
   &--big {
-    height: $spacing-item-big;
-    padding: 0 $spacing-l;
+    height: auto;
   }
 
-  &--top-left,
-  &--first {
-    border-top-left-radius: $radius-large;
-  }
-  &--top-right,
-  &--first {
-    border-top-right-radius: $radius-large;
-  }
-  &--bottom-left,
-  &--last {
-    border-bottom-left-radius: $radius-large;
-  }
-  &--bottom-right,
-  &--last {
-    border-bottom-right-radius: $radius-large;
-  }
+  @include list-item-corners($radius-large);
+
   // No separator under the last row: Android draws it straight across the rounded corners
   &--bottom-left,
   &--bottom-right,
@@ -215,9 +89,148 @@ MDButton {
     border-bottom-width: 0;
   }
 
-  &--icon-text {
-    padding-left: $spacing-m;
+  // The theme pads labels in a ListView, which would set the text off the row padding
+  Label {
+    padding-left: 0;
+    padding-right: 0;
   }
+}
+
+// Row text: Material 3 body large and body medium
+.list-item-title {
+  color: $on-surface;
+  font-size: 16;
+}
+
+.list-item-subtitle {
+  color: $on-surface-variant;
+  font-size: 14;
+}
+
+// Text of a .list-item--big row
+.list-item-text {
+  padding: $spacing-s 0;
+  margin-right: $spacing-m;
+}
+
+// Material 3 row heights, carried by an empty cell: a min-height on the grid itself doesn't
+// stretch its row, so centred text would sit at the top
+.list-item-spacer {
+  min-height: $spacing-item;
+}
+
+.list-item--two-line .list-item-spacer {
+  min-height: $spacing-item-two-line;
+}
+
+.list-item-icon {
+  width: $icon-size;
+  margin-right: $spacing-m;
+  text-align: center;
+  vertical-align: center;
+}
+
+// iOS grouped lists as in system settings: a hairline instead of a gap. iOS 26 values; older
+// versions follow
+.ns-ios {
+  .list-item {
+    height: 52;
+    border-bottom-width: 0;
+
+    &:highlighted {
+      background-color: $surface-container-high;
+    }
+
+    @include list-item-corners(26);
+
+    // UIKit counts row heights from the bare text height, without the theme's label padding
+    Label {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
+
+  .list-item-title {
+    font-size: 17;
+  }
+
+  .list-item-subtitle {
+    font-size: 15;
+  }
+
+  .list-item-text {
+    padding: 15 0;
+  }
+
+  .list-item-spacer {
+    min-height: 52;
+  }
+
+  .list-separator {
+    height: 1px;
+    vertical-align: bottom;
+    background-color: $separator;
+
+    // Between the halves of a paired row, through the whole group
+    &--vertical {
+      width: 1px;
+      height: auto;
+      horizontal-align: left;
+      vertical-align: stretch;
+    }
+  }
+
+  .section-header {
+    padding: 28 $spacing-m 6 $spacing-m;
+    font-size: 17;
+    font-weight: 600;
+  }
+
+  // Labels and chips between groups, in line with the headers
+  .section-note {
+    padding: 0 $spacing-m;
+  }
+}
+
+@include ios-before-26 {
+  .list-item {
+    height: 44;
+
+    @include list-item-corners(10);
+  }
+
+  .list-item-subtitle {
+    font-size: 12;
+  }
+
+  .list-item-text {
+    padding: 11 0;
+  }
+
+  .list-item-spacer {
+    min-height: 44;
+  }
+
+  // Up to iOS 18 the line runs to the right edge
+  .list-separator {
+    margin-right: -$spacing-m;
+
+    &--vertical {
+      margin-right: 0;
+    }
+  }
+
+  .section-header {
+    padding: 34 $spacing-m 6 $spacing-m;
+    font-size: 13;
+    font-weight: normal;
+    text-transform: uppercase;
+  }
+}
+
+// After the iOS row heights, so that it wins over them
+.ns-ios .list-item--big {
+  height: auto;
 }
 
 .list-item-trailing {
@@ -229,27 +242,47 @@ MDButton {
   padding: 6 12;
   border-radius: $radius-large;
   background-color: $surface-container;
+
+  &--active {
+    background-color: $accent;
+  }
+
+  // iOS: a pressed chip changes its fill, as system buttons do
+  &:highlighted {
+    background-color: $surface-container-high;
+  }
+
+  &--active:highlighted {
+    background-color: color.adjust($accent, $lightness: -8%);
+  }
+}
+
+.chip-text {
   color: $on-surface;
   font-size: $font-size-small;
   text-align: center;
 
-  &--active {
-    background-color: $accent;
+  .chip--active & {
     font-weight: bold;
   }
 }
 
-// Dialog styles
-.dialog-container {
-  background-color: $surface-container;
-  padding: $spacing-l;
+// Root of a sheet shown with showSheet. The iOS system sheet draws its own corners, and from
+// iOS 26 its own glass background
+.sheet-root {
+  background-color: $surface;
+  border-radius: $radius-large $radius-large 0 0;
 }
 
-.dialog-title {
-  font-size: $font-size-headline;
-  font-weight: bold;
-  margin-bottom: $spacing-m;
-  color: $on-surface;
+.ns-ios.sheet-root {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+@include ios-before-26 {
+  &.sheet-root {
+    background-color: $surface;
+  }
 }
 
 // Text inputs
@@ -265,18 +298,9 @@ MDButton {
   border-color: transparent;
 }
 
-// Form elements
-.form-field {
-  margin-bottom: $spacing-m;
-}
-
-.form-label {
-  font-size: $font-size-small;
-  margin-bottom: $spacing-xs;
-}
-
 .section-header {
-  padding: 12 16 8 0;
+  height: 56;
+  padding: 28 16 10 0;
   color: $on-surface-variant;
   font-size: $font-size;
   font-weight: bold;
