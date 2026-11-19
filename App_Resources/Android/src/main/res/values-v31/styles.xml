@@ -7,7 +7,7 @@
         <item name="android:windowSplashScreenBackground">@color/ns_primary</item>
 
         <!-- Splash screen icon -->
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
 
         <!-- Navigation bar color for splash screen -->
         <item name="android:windowLightNavigationBar">false</item>
