@@ -4,5 +4,5 @@
             <solid android:color="@color/ns_primary" />
         </shape>
     </item>
-    <item android:gravity="center" android:drawable="@drawable/ic_launcher_foreground" />
+    <item android:gravity="center" android:drawable="@drawable/splash_icon" />
 </layer-list>
