@@ -1,0 +1,22 @@
+diff --git a/node_modules/@nativescript-community/ui-collectionview/index.android.js b/node_modules/@nativescript-community/ui-collectionview/index.android.js
+index a172ca1..a6952ef 100644
+--- a/node_modules/@nativescript-community/ui-collectionview/index.android.js
++++ b/node_modules/@nativescript-community/ui-collectionview/index.android.js
+@@ -801,11 +801,15 @@ export class CollectionView extends CollectionViewBase {
+             // for some reason it gets animated even with setSupportsChangeAnimations(false)
+             // so we clear until it is done
+             const nativeView = this.nativeViewProtected;
+-            const animator = nativeView.getItemAnimator();
++            // A detached animator is held only by its JS wrapper, which the runtime may have made weak,
++            // so Java can collect it before the timeout; a new default animator replaces it
++            const hadAnimator = !!nativeView.getItemAnimator();
+             nativeView.setItemAnimator(null);
+             this.refreshVisibleItems();
+             setTimeout(() => {
+-                nativeView.setItemAnimator(animator);
++                if (hadAnimator) {
++                    this.nativeViewProtected?.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
++                }
+             }, 0);
+         }
+         const p = CollectionViewBase.plugins[this.layoutStyle];
