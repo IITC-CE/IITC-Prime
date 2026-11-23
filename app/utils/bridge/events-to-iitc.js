@@ -73,7 +73,7 @@ export const userLocationOrientation = direction => {
  */
 export const setView = (lat, lng, persistentZoom) => {
   const zoom = persistentZoom ? 'window.map.getZoom()' : 'window.DEFAULT_ZOOM';
-  return `(window.map.setView([${lat}, ${lng}], ${zoom}), true)`;
+  return `(window.map?.setView([${lat}, ${lng}], ${zoom}), true)`;
 };
 
 /**
