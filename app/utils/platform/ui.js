@@ -476,9 +476,13 @@ const ANDROID_SHEET_OPTIONS = {
  */
 export const showSheet = async (vm, component, { props, android } = {}) => {
   if (isIOS) {
+    // A page with an active search is presenting its UISearchController and refuses a second
+    // presentation; its frame shows the sheet over the search instead
+    const page = vm.$el?.nativeView?.page;
+    const target = page?.ios?.presentedViewController && page.frame ? page.frame : vm;
     return vm.$showModal(component, {
       props,
-      target: vm,
+      target,
       ios: { presentationStyle: UIModalPresentationStyle.PageSheet },
     });
   }

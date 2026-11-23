@@ -1,6 +1,7 @@
 import vm from 'node:vm';
 import { describe, expect, test, vi } from 'vitest';
 import {
+  setView,
   switchToPane,
   userLocationLocate,
   userLocationOrientation,
@@ -12,6 +13,7 @@ const run = (script, window = {}) => vm.runInNewContext(script, { window });
 describe('scripts sent before IITC has booted', () => {
   test.each([
     ['switchToPane', switchToPane('map')],
+    ['setView', setView(1, 2, true)],
     ['userLocationLocate', userLocationLocate(1, 2, 10, true)],
     ['userLocationUpdate', userLocationUpdate(1, 2)],
     ['userLocationOrientation', userLocationOrientation(90)],
