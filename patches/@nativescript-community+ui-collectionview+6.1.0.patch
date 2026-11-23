@@ -1,5 +1,5 @@
 diff --git a/node_modules/@nativescript-community/ui-collectionview/index.android.js b/node_modules/@nativescript-community/ui-collectionview/index.android.js
-index a172ca1..a6952ef 100644
+index a172ca1..14afdc7 100644
 --- a/node_modules/@nativescript-community/ui-collectionview/index.android.js
 +++ b/node_modules/@nativescript-community/ui-collectionview/index.android.js
 @@ -801,11 +801,15 @@ export class CollectionView extends CollectionViewBase {
@@ -20,3 +20,31 @@ index a172ca1..a6952ef 100644
              }, 0);
          }
          const p = CollectionViewBase.plugins[this.layoutStyle];
+@@ -1009,6 +1013,12 @@ export class CollectionView extends CollectionViewBase {
+         if (!view) {
+             return;
+         }
++        // A cell disposed while notifyDataSetChanged moves cached views to the pool can re-render the
++        // owner, which sets `items` and lands here; a nested call would clear the cache under that loop.
++        // The running call already makes the RecyclerView rebind from the current items.
++        if (this._notifyingDataSetChanged) {
++            return;
++        }
+         // seems like we refresh sooner
+         // not sure why it was needed before and not now.
+         if (!forceRefresh && (!this.isLoaded || !this.nativeView)) {
+@@ -1042,7 +1052,13 @@ export class CollectionView extends CollectionViewBase {
+             view.setAdapter(adapter);
+         }
+         this.updateSpanCount(updateSpanCountRequestsLayout);
+-        adapter.notifyDataSetChanged();
++        this._notifyingDataSetChanged = true;
++        try {
++            adapter.notifyDataSetChanged();
++        }
++        finally {
++            this._notifyingDataSetChanged = false;
++        }
+         this.notify({ eventName: CollectionViewBase.dataPopulatedEvent });
+     }
+     //@ts-ignore
